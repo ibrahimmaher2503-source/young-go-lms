@@ -86,10 +86,10 @@ Student/public UI = Blade + Livewire 4 + Alpine + Tailwind v4 (R-026, unchanged)
   which keeps the host choice open; AI does not need PostgreSQL (ED-011: full-context default, MySQL fallback
   for chunked mode; AI spec §5).
 - To keep it reversible: no engine-specific SQL in Actions/queries without a portable fallback; JSON columns
-  via Laravel's schema builder only; CI runs the suite on MySQL 8.4 (T-P0-03). Switching to PostgreSQL
+  via Laravel's schema builder only; CI verifies framework migrations against MySQL 8.4 (T-P0-03). Switching to PostgreSQL
   before P1 data exists only costs CI config.
 - Local dev gap: XAMPP has MariaDB 10.4.32 (end-of-life, not MySQL 8.4) and the 5432 Postgres belongs to Odoo.
-  A local MySQL 8.4 is still needed (B-04).
+  Native Windows uses SQLite for bootstrap, with file cache and synchronous queues. MySQL 8.4 and Redis/Horizon were verified in Linux CI (run 43882611107).
 - Cache/queue: Redis + Horizon on staging/prod (R-005). Windows dev uses `database` queue + `file`/`database`
   cache until Redis is available (no phpredis/pcntl locally).
 
@@ -120,5 +120,5 @@ Student/public UI = Blade + Livewire 4 + Alpine + Tailwind v4 (R-026, unchanged)
 - Conventions §2 and Decision Register R-001/R-002/R-004 are updated in the same change.
 - Staging/prod host must offer PHP 8.4, MySQL 8.4 (or PostgreSQL 16+), Redis, Node ≥ 22.12, Chromium
   (spatie/laravel-pdf), poppler-utils and Tesseract 5 with Arabic data. Unverified until B-05.
-- T-P0-03 still needs Composer installed and a git repo (B-02, B-03).
+- B-02 and B-03 were resolved. Composer 2.11.2 and the Git remote are recorded in the Environment Inventory.
 - Versions are re-checked when T-P0-03 runs `composer require`; any drift is recorded here.
