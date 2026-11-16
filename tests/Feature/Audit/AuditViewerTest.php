@@ -2,18 +2,34 @@
 
 declare(strict_types=1);
 
+use App\Domain\Audit\AuditLogger;
 use App\Filament\Resources\Audit\AuditLogResource;
 use App\Models\User;
-use Illuminate\Support\Facades\Gate;
+use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
 
+uses(RefreshDatabase::class);
+
 it('requires audit view permission and exposes no audit mutations', function () {
-    Gate::define('audit.view', static fn (User $user): bool => $user->getKey() === 1);
+    $this->seed(RolePermissionSeeder::class);
+    $this->withoutVite();
+
+    $url = route('filament.admin.resources.audit.audit-logs.index');
+    $this->get($url)->assertRedirect('/admin/login');
 
     expect(AuditLogResource::canViewAny())->toBeFalse();
-    $this->actingAs((new User)->forceFill(['id' => 2]));
+    $denied = User::factory()->create();
+    $denied->givePermissionTo('panel.admin.access');
+    $this->actingAs($denied)->get($url)->assertForbidden();
     expect(AuditLogResource::canViewAny())->toBeFalse();
-    $this->actingAs((new User)->forceFill(['id' => 1]));
+    $allowed = User::factory()->create();
+    $allowed->givePermissionTo('panel.admin.access', 'audit.view');
+    app(AuditLogger::class)->record('audit-visible-event', $allowed, $allowed->id);
+    activity('application')->event('non-audit-event')->log('Non-audit activity');
+    $this->actingAs($allowed)->get($url)->assertOk()
+        ->assertSee('audit-visible-event')
+        ->assertDontSee('non-audit-event');
     expect(AuditLogResource::canViewAny())->toBeTrue()
         ->and(AuditLogResource::canCreate())->toBeFalse()
         ->and(AuditLogResource::canEdit(new Activity))->toBeFalse()

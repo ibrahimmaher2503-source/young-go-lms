@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Audit;
 
+use App\Domain\Audit\AuditLogger;
 use App\Filament\Resources\Audit\Pages\ListAuditLogs;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
@@ -53,6 +54,11 @@ final class AuditLogResource extends Resource
     public static function canDeleteAny(): bool
     {
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('log_name', AuditLogger::LOG_NAME);
     }
 
     public static function table(Table $table): Table
