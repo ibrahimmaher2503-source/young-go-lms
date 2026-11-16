@@ -4,3 +4,4 @@ parameters:
     level: 6
     paths:
         - app
+        - tests/Unit/Fixtures/SearchableRecord.php
