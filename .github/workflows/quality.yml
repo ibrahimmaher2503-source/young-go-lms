@@ -42,6 +42,33 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: php artisan key:generate
       - run: php artisan migrate --seed --force
+      - name: Verify Horizon processes a Redis job
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/horizon-smoke.php" <<'PHP'
+          <?php
+          require getcwd().'/vendor/autoload.php';
+          $app = require getcwd().'/bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+          dispatch(static function (): void {
+              Illuminate\Support\Facades\Cache::store('redis')->put('ci:horizon:processed', true, 60);
+          })->onConnection('redis');
+          PHP
+          php "$RUNNER_TEMP/horizon-smoke.php"
+          php artisan horizon > "$RUNNER_TEMP/horizon.log" 2>&1 &
+          worker=$!
+          trap 'kill -TERM "$worker" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if redis-cli --scan --pattern '*ci:horizon:processed' | grep -q .; then
+              echo 'Horizon processed the Redis job.'
+              exit 0
+            fi
+            kill -0 "$worker" 2>/dev/null || break
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/horizon.log"
+          exit 1
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --no-progress
       - name: Tests and coverage
