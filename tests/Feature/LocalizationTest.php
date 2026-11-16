@@ -85,3 +85,20 @@ it('selects a JSON translation and falls back when it is absent', function () {
 it('keeps Arabic and English translation keys in parity', function () {
     $this->artisan('app:check-translations')->assertSuccessful();
 })->group('T-P1-01', 'A4', 'D-011');
+
+it('blocks a suspended account from changing its persisted locale', function () {
+    $user = User::factory()->create(['locale' => 'en', 'status' => 'suspended']);
+    $this->actingAs($user)->postJson('/locale', ['locale' => 'ar'])->assertForbidden();
+    expect($user->refresh()->getAttribute('locale'))->toBe('en');
+})->group('T-P1-02', 'A2');
+
+it('rejects a stale password session before saving a locale', function () {
+    $user = User::factory()->create(['locale' => 'en']);
+    $staleHash = $user->getAuthPassword();
+    $user->forceFill(['password' => 'replacement-password'])->save();
+
+    $this->actingAs($user)->withSession(['password_hash_web' => $staleHash])
+        ->postJson('/locale', ['locale' => 'ar'])->assertUnauthorized();
+
+    expect($user->refresh()->getAttribute('locale'))->toBe('en');
+})->group('T-P1-02', 'A2');

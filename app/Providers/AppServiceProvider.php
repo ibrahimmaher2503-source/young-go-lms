@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Settings\PlatformFlag;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Fortify;
 use Laravel\Pennant\Feature;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        Fortify::ignoreRoutes();
     }
 
     /**
@@ -23,6 +28,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('login', static function (Request $request): array {
+            $login = $request->input('login');
+            $identity = is_string($login) ? mb_strtolower(trim($login)) : '';
+
+            return [
+                Limit::perMinute(Config::integer('identity.login_max_attempts'))->by(hash('sha256', $identity).'|'.$request->ip()),
+                Limit::perMinute(30)->by('address:'.$request->ip()),
+            ];
+        });
+        RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
+        RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+
         foreach (PlatformFlag::cases() as $flag) {
             Feature::define($flag->value, false);
         }

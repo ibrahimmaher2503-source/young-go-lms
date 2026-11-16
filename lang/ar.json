@@ -1,0 +1,14 @@
+{
+    "Reset your password": "أعد تعيين كلمة المرور",
+    "You are receiving this email because we received a password reset request for your account.": "وصلتك هذه الرسالة لأننا تلقينا طلبًا لإعادة تعيين كلمة مرور حسابك.",
+    "Reset Password": "إعادة تعيين كلمة المرور",
+    "This password reset link will expire in :count minutes.": "تنتهي صلاحية الرابط بعد :count دقيقة.",
+    "If you did not request a password reset, no further action is required.": "إذا لم تطلب إعادة تعيين كلمة المرور، فلا يلزم اتخاذ أي إجراء.",
+    "Verify your email address": "تحقّق من بريدك الإلكتروني",
+    "Please click the button below to verify your email address.": "اضغط على الزر أدناه للتحقق من بريدك الإلكتروني.",
+    "Verify Email Address": "التحقق من البريد الإلكتروني",
+    "If you did not create an account, no further action is required.": "إذا لم تُنشئ حسابًا، فلا يلزم اتخاذ أي إجراء.",
+    "Hello!": "مرحبًا!",
+    "Regards,": "مع التحية،",
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "إذا تعذّر الضغط على زر «:actionText»، انسخ الرابط أدناه والصقه في متصفحك:"
+}
