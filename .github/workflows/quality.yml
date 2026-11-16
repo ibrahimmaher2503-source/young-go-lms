@@ -78,6 +78,10 @@ jobs:
       - name: Tests and coverage
         env:
           XDEBUG_MODE: coverage
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
         run: vendor/bin/pest --exclude-group=browser --parallel --coverage --coverage-clover="${{ runner.temp }}/young-go-clover.xml"
       - name: Enforce module coverage
         run: python3 scripts/check-module-coverage.py "${{ runner.temp }}/young-go-clover.xml"
