@@ -1,6 +1,6 @@
-# Pending invariant tests
+# Product invariants
 
-All entries below are pending until the owning features are built. I08 and I09 are the AI checks.
+I14 and I15 run against the foundation. I01–I13 await their owning features; I08 and I09 are the AI checks. I16 is verified by release and cutover evidence.
 
 1.  Access derives from unified entitlement service.
 2.  Student/parent/instructor access is object-scoped and enforced

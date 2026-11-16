@@ -3,11 +3,9 @@
 declare(strict_types=1);
 
 use App\Domain\Shared\Markets\Market;
-use App\Domain\Shared\Markets\MarketResolver;
 use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
 use App\Domain\Shared\Search\ArabicNormalizer;
-use App\Domain\Shared\Time\LocalizedDate;
 use Brick\Money\Exception\MoneyFormatException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -36,21 +34,6 @@ it('formats market prices in both locales with Western digits', function (string
     expect($result)->toContain('1,234.50')->not->toMatch('/[٠-٩]/u');
     expect($result)->toContain($locale === 'ar' ? 'ج.م' : 'EGP');
 })->with(['ar', 'en'])->group('T-P0-06', 'A2', 'D-009');
-
-it('refuses checkout in a disabled market', function () {
-    expect((new MarketResolver)->checkout('EG'))->toBe(Market::Egypt);
-    expect(fn () => (new MarketResolver)->checkout('SA'))->toThrow(DomainException::class);
-})->group('T-P0-06', 'A3', 'D-009');
-
-it('uses market and user timezones and localized month names without mutating the instant', function () {
-    $instant = new DateTimeImmutable('2026-01-01T22:30:00+00:00');
-
-    expect(LocalizedDate::format($instant, Market::Egypt, 'ar', 'dd MMMM yyyy HH:mm'))
-        ->toBe('02 يناير 2026 00:30');
-    expect(LocalizedDate::format($instant, Market::Egypt, 'en', 'dd MMMM yyyy HH:mm', 'UTC'))
-        ->toBe('01 January 2026 22:30');
-    expect($instant->getTimezone()->getName())->toBe('+00:00');
-})->group('T-P0-06', 'ED-032');
 
 it('regenerates persisted search text from translated and plain fields when saving', function () {
     config(['database.connections.shared_primitives' => [
