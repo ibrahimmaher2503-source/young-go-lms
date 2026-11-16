@@ -65,6 +65,7 @@ return [
         ['name' => 'system.integrations.manage'],
         ['name' => 'system.security.manage'],
         ['name' => 'system.settings.manage'],
+        ['name' => 'user.export'],
         ['name' => 'user.manage'],
         ['name' => 'user.roles.assign'],
         ['name' => 'user.roles.manage'],

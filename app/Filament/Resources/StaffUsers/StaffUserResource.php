@@ -6,6 +6,7 @@ namespace App\Filament\Resources\StaffUsers;
 
 use App\Domain\Identity\Actions\AssignStaffRoles;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
+use App\Filament\Shared\Actions\ExportCsvAction;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -60,6 +61,12 @@ final class StaffUserResource extends Resource
                 'suspended' => __('staff.suspended'),
                 'deactivated' => __('staff.deactivated'),
             ]),
+        ])->headerActions([
+            ExportCsvAction::make('user.export', [
+                __('staff.name') => 'name',
+                __('staff.email') => 'email',
+                __('staff.status') => 'status',
+            ], 'users.csv'),
         ])->recordActions([
             Action::make('assign_roles')->label(__('staff.roles'))
                 ->visible(static fn (User $record): bool => auth()->user()?->getAttribute('status') === 'active'

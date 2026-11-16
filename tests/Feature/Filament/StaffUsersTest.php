@@ -84,3 +84,28 @@ it('prevents non-super-admins from submitting the role assignment action', funct
 
     expect($target->fresh()->getRoleNames()->all())->toBe(['student']);
 });
+
+it('exports the current user filter only with the separate export permission', function () {
+    $actor = User::factory()->create()->assignRole('super_admin');
+    User::factory()->create(['name' => 'Visible export', 'email' => 'export@example.test', 'status' => 'active']);
+    User::factory()->create(['name' => 'Hidden export', 'email' => 'hidden@example.test', 'status' => 'suspended']);
+    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))->assertOk();
+
+    $component = Livewire::test(ListStaffUsers::class)
+        ->filterTable('status', 'active')->searchTable('export@example.test')
+        ->callAction(TestAction::make('exportCsv')->table())
+        ->assertFileDownloaded('users.csv');
+
+    $csv = base64_decode($component->effects['download']['content'], true);
+    expect($csv)->toContain('Visible export', 'export@example.test')->not->toContain('Hidden export', 'hidden@example.test');
+})->group('T-P1-08', 'A3');
+
+it('does not download users for a viewer without export permission', function () {
+    $actor = User::factory()->create();
+    $actor->givePermissionTo('panel.admin.access', 'user.view');
+    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))->assertOk();
+
+    Livewire::test(ListStaffUsers::class)
+        ->assertActionHidden(TestAction::make('exportCsv')->table())
+        ->assertNoFileDownloaded();
+})->group('T-P1-08', 'A3');
