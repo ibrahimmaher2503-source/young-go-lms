@@ -27,6 +27,9 @@ it('T-P1-04 A1 redacts sensitive values recursively from before, after and conte
         after: [
             'finance' => [
                 'bank_account_number' => 'secret-bank-account',
+                'account' => 'secret-short-account',
+                'card' => 'secret-short-card',
+                'id_doc' => 'secret-short-id-doc',
             ],
             'payout_details' => 'secret-payout-details',
         ],
@@ -53,6 +56,9 @@ it('T-P1-04 A1 redacts sensitive values recursively from before, after and conte
         'secret-refresh-token',
         'secret-id-document',
         'secret-bank-account',
+        'secret-short-account',
+        'secret-short-card',
+        'secret-short-id-doc',
         'secret-payout-details',
         'secret-authorization',
         'secret-object-token',
