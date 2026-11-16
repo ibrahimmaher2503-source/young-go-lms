@@ -60,7 +60,7 @@ jobs:
           worker=$!
           trap 'kill -TERM "$worker" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if redis-cli --scan --pattern '*ci:horizon:processed' | grep -q .; then
+            if [ "$(redis-cli -n 1 --scan --pattern '*ci:horizon:processed')" != "" ]; then
               echo 'Horizon processed the Redis job.'
               exit 0
             fi
