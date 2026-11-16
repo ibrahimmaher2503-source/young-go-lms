@@ -15,7 +15,10 @@ final class LocaleController
 {
     public function __invoke(Request $request, UpdatePreferredLocale $updatePreferredLocale): RedirectResponse
     {
-        $validated = $request->validate(['locale' => ['required', 'string', Rule::in(Config::array('app.supported_locales'))]]);
+        $validated = $request->validate([
+            'locale' => ['required', 'string', Rule::in(Config::array('app.supported_locales'))],
+            'return_panel' => ['sometimes', 'required', 'string', Rule::in(['admin', 'instructor', 'finance'])],
+        ]);
         $locale = $validated['locale'];
 
         $user = $request->user();
@@ -25,6 +28,8 @@ final class LocaleController
 
         $request->session()->put('locale', $locale);
 
-        return redirect('/', 303)->withCookie(cookie('locale', $locale, 60 * 24 * 365));
+        $destination = isset($validated['return_panel']) ? '/'.$validated['return_panel'] : '/';
+
+        return redirect($destination, 303)->withCookie(cookie('locale', $locale, 60 * 24 * 365));
     }
 }
