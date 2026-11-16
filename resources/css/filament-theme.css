@@ -15,3 +15,13 @@
     --primary-950: var(--yg-brand-950);
     --font-family: var(--font-sans);
 }
+
+.fi-btn.fi-color-primary {
+    background-color: var(--yg-color-primary);
+    color: var(--yg-color-on-primary);
+}
+
+.fi-btn.fi-color-primary:hover {
+    background-color: var(--yg-color-primary);
+    color: var(--yg-color-on-primary);
+}

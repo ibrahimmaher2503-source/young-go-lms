@@ -109,3 +109,13 @@ it('does not download users for a viewer without export permission', function ()
         ->assertActionHidden(TestAction::make('exportCsv')->table())
         ->assertNoFileDownloaded();
 })->group('T-P1-08', 'A3');
+
+it('renders localized user headings and account statuses in both locales', function (string $locale) {
+    $actor = User::factory()->create(['locale' => $locale])->assignRole('super_admin');
+    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))
+        ->assertOk()
+        ->assertSee(__('staff.users'));
+
+    Livewire::test(ListStaffUsers::class)
+        ->assertTableColumnFormattedStateSet('status', __('staff.active'), $actor);
+})->with(['ar', 'en'])->group('T-P1-08', 'A4');

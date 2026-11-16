@@ -12,14 +12,25 @@ it('redirects guests to the matching staff panel login', function (string $panel
     $this->get('/'.$panel)->assertRedirect('/'.$panel.'/login');
 })->with(['admin', 'instructor', 'finance'])->group('T-P1-08', 'A1');
 
-it('permits only the assigned panel routes for each role', function (string $role, array $allowed) {
+it('permits only the assigned panel routes for each role', function (string $role, array $allowed, string $panel) {
     $this->seed(RolePermissionSeeder::class);
     $this->withoutVite();
     $user = User::factory()->create()->assignRole($role);
     $this->actingAs($user);
 
-    foreach (['admin', 'instructor', 'finance'] as $panel) {
-        $this->get('/'.$panel)->assertStatus(in_array($panel, $allowed, true) ? 200 : 403);
+    $response = $this->get('/'.$panel)->assertStatus(in_array($panel, $allowed, true) ? 200 : 403);
+    $menus = [
+        'staff-users' => in_array($role, ['super_admin', 'admin', 'support'], true),
+        'audit.audit-logs' => in_array($role, ['super_admin', 'admin'], true),
+        'role-permissions' => $role === 'super_admin',
+    ];
+    foreach ($menus as $resource => $visible) {
+        $link = 'href="'.route('filament.admin.resources.'.$resource.'.index').'"';
+        if ($panel === 'admin' && $visible) {
+            $response->assertSee($link, false);
+        } else {
+            $response->assertDontSee($link, false);
+        }
     }
 })->with([
     ['super_admin', ['admin', 'instructor', 'finance']],
@@ -32,7 +43,7 @@ it('permits only the assigned panel routes for each role', function (string $rol
     ['finance', ['finance']],
     ['student', []],
     ['parent', []],
-])->group('T-P1-08', 'A1');
+])->with(['admin', 'instructor', 'finance'])->group('T-P1-08', 'A1');
 
 it('persists the panel language and returns to the same panel', function () {
     $this->seed(RolePermissionSeeder::class);

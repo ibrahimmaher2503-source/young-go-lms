@@ -31,3 +31,7 @@ Thumbs.db
 /agents/logs/
 /.claude/settings.local.json
 /database/*.sqlite*
+
+/public/js/filament/
+/public/css/filament/
+/public/fonts/filament/

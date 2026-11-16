@@ -8,6 +8,7 @@ use BackedEnum;
 use DateTimeInterface;
 use Filament\Actions\Action;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Support\Facades\Gate;
 use InvalidArgumentException;
 use RuntimeException;
 use Stringable;
@@ -39,7 +40,9 @@ final class ExportCsvAction
         return Action::make('exportCsv')
             ->label(__('common.export_csv'))
             ->authorize($ability)
-            ->action(static function (HasTable $livewire) use ($columns, $filename): StreamedResponse {
+            ->action(static function (HasTable $livewire) use ($ability, $columns, $filename): StreamedResponse {
+                Gate::authorize($ability);
+
                 $query = $livewire->getTableQueryForExport();
 
                 return response()->streamDownload(

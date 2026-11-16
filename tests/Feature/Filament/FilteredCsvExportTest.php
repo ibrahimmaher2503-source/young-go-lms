@@ -6,6 +6,7 @@ use App\Filament\Shared\Actions\ExportCsvAction;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -84,4 +85,21 @@ it('denies CSV export when the explicitly named permission is missing', function
     );
 
     expect($action->isAuthorized())->toBeFalse();
+})->group('T-P1-08', 'A3');
+
+it('rechecks export authorization at execution after a permission is revoked', function () {
+    $user = User::factory()->create();
+    Auth::login($user);
+    $allowed = true;
+    Gate::define('staff.users.export', static function (User $actor) use (&$allowed): bool {
+        return $allowed;
+    });
+    $action = ExportCsvAction::make('staff.users.export', ['Name' => 'name']);
+    expect($action->isAuthorized())->toBeTrue();
+
+    $allowed = false;
+    $table = Mockery::mock(HasTable::class);
+    $table->shouldNotReceive('getTableQueryForExport');
+    expect(fn () => $action->getActionFunction()($table))
+        ->toThrow(AuthorizationException::class);
 })->group('T-P1-08', 'A3');

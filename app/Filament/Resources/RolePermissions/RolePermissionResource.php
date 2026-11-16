@@ -68,7 +68,7 @@ final class RolePermissionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('name')->label(__('staff.roles'))->searchable(),
+            TextColumn::make('name')->extraAttributes(['tabindex' => '0'])->label(__('staff.roles'))->searchable(),
             TextColumn::make('permissions_count')->counts('permissions')->label(__('staff.permissions')),
         ])->recordActions([
             Action::make('permissions')->label(__('staff.permissions'))

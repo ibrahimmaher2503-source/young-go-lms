@@ -7,6 +7,7 @@ namespace App\Filament\Resources\StaffUsers;
 use App\Domain\Identity\Actions\AssignStaffRoles;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Shared\Actions\ExportCsvAction;
+use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -23,6 +24,16 @@ final class StaffUserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $slug = 'staff-users';
+
+    public static function getModelLabel(): string
+    {
+        return __('staff.user');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('staff.users');
+    }
 
     public static function canViewAny(): bool
     {
@@ -52,9 +63,11 @@ final class StaffUserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('name')->label(__('staff.name'))->searchable(),
+            TextColumn::make('name')->extraAttributes(['tabindex' => '0'])->label(__('staff.name'))->searchable(),
             TextColumn::make('email')->label(__('staff.email'))->searchable(),
-            TextColumn::make('status')->label(__('staff.status'))->badge(),
+            StatusBadgeColumn::make('status', ['active' => 'success', 'suspended' => 'warning', 'deactivated' => 'gray'])
+                ->label(__('staff.status'))
+                ->formatStateUsing(static fn (string $state): string => __('staff.'.$state)),
         ])->filters([
             SelectFilter::make('status')->label(__('staff.status'))->options([
                 'active' => __('staff.active'),

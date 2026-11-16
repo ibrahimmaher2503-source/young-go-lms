@@ -40,6 +40,7 @@ jobs:
           cache: npm
       - run: cp .env.example .env
       - run: composer install --no-interaction --prefer-dist
+      - run: php artisan filament:assets
       - run: php artisan key:generate
       - run: php artisan migrate --seed --force
       - name: Verify Horizon processes a Redis job
