@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Domain\Identity\AuthMail;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -16,21 +18,36 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
+use Spatie\Permission\Traits\HasRoles;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /** @property string|null $locale */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $attributes = ['status' => 'active', 'timezone' => 'UTC'];
 
     public function preferredLocale(): ?string
     {
         return $this->locale;
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        $permission = match ($panel->getId()) {
+            'admin' => 'panel.admin.access',
+            'instructor' => 'panel.instructor.access',
+            'finance' => 'panel.finance.access',
+            default => null,
+        };
+
+        return $this->getAttribute('status') === 'active'
+            && $permission !== null
+            && $this->can($permission);
     }
 
     public function sendEmailVerificationNotification(): void
