@@ -1,0 +1,17 @@
+@import '../../vendor/filament/filament/resources/css/theme.css';
+@import './tokens.css';
+
+:root {
+    --primary-50: var(--yg-brand-50);
+    --primary-100: var(--yg-brand-100);
+    --primary-200: var(--yg-brand-200);
+    --primary-300: var(--yg-brand-300);
+    --primary-400: var(--yg-brand-400);
+    --primary-500: var(--yg-brand-500);
+    --primary-600: var(--yg-brand-600);
+    --primary-700: var(--yg-brand-700);
+    --primary-800: var(--yg-brand-800);
+    --primary-900: var(--yg-brand-900);
+    --primary-950: var(--yg-brand-950);
+    --font-family: var(--font-sans);
+}
