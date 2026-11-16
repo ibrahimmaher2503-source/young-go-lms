@@ -23,6 +23,11 @@ it('passes with an explicit local profile and a fresh scheduler heartbeat', func
         ->assertSuccessful();
 })->group('T-P0-07', 'A2', 'ED-022', 'YG-GAP-OPS-003');
 
+it('accepts a fresh heartbeat returned as a Redis numeric string', function () {
+    Cache::put('app:scheduler-heartbeat', (string) now()->timestamp);
+    $this->artisan('app:doctor')->expectsOutputToContain('Scheduler: OK')->assertSuccessful();
+})->group('T-P0-07', 'A2', 'ED-022');
+
 it('reports a stale scheduler heartbeat', function () {
     Cache::put('app:scheduler-heartbeat', now()->subMinutes(10)->timestamp);
     $this->artisan('app:doctor')->expectsOutputToContain('Scheduler: FAIL')->assertFailed();

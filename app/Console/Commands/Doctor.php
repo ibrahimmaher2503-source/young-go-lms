@@ -70,8 +70,9 @@ final class Doctor extends Command
             },
             'Scheduler' => static function (): string {
                 $heartbeat = Cache::get(self::HEARTBEAT_KEY);
+                $heartbeat = filter_var($heartbeat, FILTER_VALIDATE_INT);
                 $current = now()->timestamp;
-                if (! is_int($heartbeat) || $heartbeat < $current - 180 || $heartbeat > $current) {
+                if ($heartbeat === false || $heartbeat < $current - 180 || $heartbeat > $current) {
                     throw new RuntimeException('Heartbeat is missing or stale.');
                 }
 
