@@ -71,12 +71,16 @@ jobs:
           done
           cat "$RUNNER_TEMP/horizon.log"
           exit 1
+      - run: php artisan schedule:run
+      - run: php artisan app:doctor
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --no-progress
       - name: Tests and coverage
         env:
           XDEBUG_MODE: coverage
-        run: vendor/bin/pest --exclude-group=browser --parallel --coverage
+        run: vendor/bin/pest --exclude-group=browser --parallel --coverage --coverage-clover="${{ runner.temp }}/young-go-clover.xml"
+      - name: Enforce module coverage
+        run: python3 scripts/check-module-coverage.py "${{ runner.temp }}/young-go-clover.xml"
       - run: php artisan app:check-translations
       - run: php artisan app:check-rtl
       - run: composer audit --locked
