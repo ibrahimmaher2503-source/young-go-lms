@@ -91,3 +91,11 @@ jobs:
       - run: composer audit --locked
       - run: npm ci
       - run: npm run build
+      - run: npx playwright install --with-deps chromium --only-shell
+      - name: Browser acceptance
+        env:
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+        run: vendor/bin/pest tests/Browser --group=browser
