@@ -45,6 +45,13 @@ final class CheckRequirementCoverage extends Command
         $evidence = $files->exists($progress) ? $files->get($progress) : '';
         $missing = false;
         foreach ($tasks as $id => $items) {
+            if ($items === []) {
+                $this->error("Task has no numbered acceptance criteria: {$id}");
+                $missing = true;
+
+                continue;
+            }
+
             foreach ($items as $item) {
                 $key = "{$id}:{$item}";
                 if (isset($tests[$id][$item])
@@ -82,7 +89,7 @@ final class CheckRequirementCoverage extends Command
                     preg_match_all('/\b'.self::REQUIREMENT.'\b/', $refs[1] ?? '', $requirements);
                     preg_match('/^\*\*Acceptance\*\*\h*\R(.*?)(?=^\*\*|\z)/ms', $body, $acceptance);
                     preg_match_all('/^-\h+(A\d+)\b/m', $acceptance[1] ?? '', $items);
-                    $tasks[$id] = array_values(array_unique([...$items[1], ...$requirements[0]]));
+                    $tasks[$id] = $items[1] === [] ? [] : array_values(array_unique([...$items[1], ...$requirements[0]]));
                 }
             }
         }

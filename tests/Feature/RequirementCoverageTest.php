@@ -61,3 +61,10 @@ it('refreshes only scoped matrix rows using tests and accepts recorded evidence'
         ->toContain('| ED-020 | Testing | T-P0-07 | `tests/FixtureTest.php` |')
         ->toContain('| ED-021 | Observability | T-P0-08 | External evidence |');
 })->group('T-P0-07', 'A3', 'ED-020', 'ED-028');
+
+it('fails closed when a task has no numbered acceptance criteria', function () {
+    (new Filesystem)->put($this->coverageRoot.'/agents/tasks/P00.md', "### T-P0-07 Fixture\n- refs: ED-020");
+    $this->artisan('app:req-coverage', ['--task' => 'T-P0-07'])
+        ->expectsOutput('Task has no numbered acceptance criteria: T-P0-07')
+        ->assertFailed();
+})->group('T-P0-07', 'A3', 'ED-020', 'ED-028');
