@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Filament\Resources\Audit\AuditLogResource;
+use App\Filament\Resources\StaffUsers\StaffUserResource;
 use App\Http\Middleware\EnsureActiveAccount;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -31,7 +32,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->viteTheme('resources/css/filament-theme.css')
                 ->renderHook(PanelsRenderHook::TOPBAR_END, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages([Dashboard::class])
-                ->resources($id === 'admin' ? [AuditLogResource::class] : [])
+                ->resources($id === 'admin' ? [AuditLogResource::class, StaffUserResource::class] : [])
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class], isPersistent: true));
         }
