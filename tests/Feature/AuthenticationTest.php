@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\URL;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->seed(RolePermissionSeeder::class);
     Notification::fake();
     config(['identity.terms_version' => 'test-terms', 'identity.privacy_version' => 'test-privacy']);
 });
@@ -127,3 +129,12 @@ it('never sends authentication secrets to configured log mailers', function (str
     expect(DB::table('password_reset_tokens')->count())->toBe(0);
     expect(DB::table('consents')->where('user_id', $user->id)->count())->toBe(2);
 })->with(['log', 'failover'])->group('T-P1-02', 'YG-GAP-ID-002');
+
+it('gives a newly registered learner only the student role regardless of submitted staff fields', function () {
+    $this->postJson('/register', identityRegistration(['roles' => ['super_admin'], 'status' => 'suspended']))->assertCreated();
+    $user = User::where('email', 'new@example.test')->firstOrFail();
+    expect($user->getRoleNames()->all())->toBe(['student'])
+        ->and($user->can('course.view'))->toBeTrue()
+        ->and($user->can('panel.admin.access'))->toBeFalse()
+        ->and($user->status)->toBe('active');
+})->group('T-P1-02', 'T-P1-03', 'A5', 'PRD-06');

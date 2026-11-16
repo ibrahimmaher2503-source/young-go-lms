@@ -29,6 +29,8 @@ final class RegisterAccount
                     'locale' => App::currentLocale(),
                 ])->save();
 
+                $user->assignRole('student');
+
                 $grantedAt = now();
                 DB::table('consents')->insert([
                     ['user_id' => $user->getKey(), 'type' => 'terms', 'version' => $termsVersion, 'granted_at' => $grantedAt],
