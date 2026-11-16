@@ -85,6 +85,7 @@ jobs:
         run: vendor/bin/pest --exclude-group=browser --parallel --coverage --coverage-clover="${{ runner.temp }}/young-go-clover.xml"
       - name: Enforce module coverage
         run: python3 scripts/check-module-coverage.py "${{ runner.temp }}/young-go-clover.xml"
+      - run: php artisan app:req-coverage --task=T-P0-07
       - run: php artisan app:check-translations
       - run: php artisan app:check-rtl
       - run: composer audit --locked

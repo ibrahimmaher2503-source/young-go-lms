@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -62,6 +63,7 @@ return [
 
         'single' => [
             'driver' => 'single',
+            'formatter' => JsonFormatter::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
@@ -69,6 +71,7 @@ return [
 
         'daily' => [
             'driver' => 'daily',
+            'formatter' => JsonFormatter::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => env('LOG_DAILY_DAYS', 14),
@@ -77,6 +80,7 @@ return [
 
         'monthly' => [
             'driver' => 'monthly',
+            'formatter' => JsonFormatter::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => 3,
@@ -111,7 +115,7 @@ return [
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
-            'formatter' => env('LOG_STDERR_FORMATTER'),
+            'formatter' => env('LOG_STDERR_FORMATTER', JsonFormatter::class),
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
