@@ -44,6 +44,8 @@ jobs:
       - run: php artisan migrate --seed --force
       - name: Verify Horizon processes a Redis job
         shell: bash
+        env:
+          CI_REDIS_CONTAINER: ${{ job.services.redis.id }}
         run: |
           cat > "$RUNNER_TEMP/horizon-smoke.php" <<'PHP'
           <?php
@@ -60,7 +62,7 @@ jobs:
           worker=$!
           trap 'kill -TERM "$worker" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if [ "$(redis-cli -n 1 --scan --pattern '*ci:horizon:processed')" != "" ]; then
+            if [ "$(docker exec "$CI_REDIS_CONTAINER" redis-cli -n 1 --scan --pattern '*ci:horizon:processed')" != "" ]; then
               echo 'Horizon processed the Redis job.'
               exit 0
             fi
