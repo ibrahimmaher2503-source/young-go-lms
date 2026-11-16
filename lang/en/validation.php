@@ -13,6 +13,7 @@ return [
     'alpha_dash' => 'The :attribute may only contain letters, numbers, dashes, and underscores.',
     'confirmed' => 'The :attribute confirmation does not match.',
     'integer' => 'The :attribute must be an integer.',
+    'age_range' => 'Age values must be non-negative, and the maximum age must not be less than the minimum age.',
     'required_with' => 'The :attribute field is required when :values is present.',
     'required_without' => 'The :attribute field is required when :values is absent.',
     'max' => ['string' => 'The :attribute field must not exceed :max characters.'],

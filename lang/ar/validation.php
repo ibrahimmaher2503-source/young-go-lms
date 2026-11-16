@@ -13,6 +13,7 @@ return [
     'alpha_dash' => 'حقل :attribute يقبل الحروف والأرقام والشرطات فقط.',
     'confirmed' => 'تأكيد :attribute غير مطابق.',
     'integer' => 'حقل :attribute يجب أن يكون عددًا صحيحًا.',
+    'age_range' => 'يجب أن تكون الأعمار غير سالبة، وألا يزيد الحد الأدنى عن الحد الأقصى.',
     'required_with' => 'حقل :attribute مطلوب عند إدخال :values.',
     'required_without' => 'حقل :attribute مطلوب في غياب :values.',
     'max' => ['string' => 'حقل :attribute يجب ألا يتجاوز :max حرفًا.'],
