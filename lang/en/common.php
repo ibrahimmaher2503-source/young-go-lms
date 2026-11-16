@@ -9,4 +9,5 @@ return [
     'save' => 'Save',
     'cancel' => 'Cancel',
     'continue' => 'Continue',
+    'export_csv' => 'Export CSV',
 ];
