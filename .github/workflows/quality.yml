@@ -75,6 +75,8 @@ jobs:
       - run: php artisan app:doctor
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --no-progress
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium --only-shell
       - name: Tests and coverage
         env:
           XDEBUG_MODE: coverage
@@ -89,9 +91,7 @@ jobs:
       - run: php artisan app:check-translations
       - run: php artisan app:check-rtl
       - run: composer audit --locked
-      - run: npm ci
       - run: npm run build
-      - run: npx playwright install --with-deps chromium --only-shell
       - name: Browser acceptance
         env:
           CACHE_STORE: array
