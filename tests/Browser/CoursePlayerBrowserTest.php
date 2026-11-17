@@ -8,9 +8,11 @@ use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Media\Actions\ManageLessonResources;
 use App\Domain\Media\Actions\ManageSubtitleTracks;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\LessonCurriculumDocument;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +73,58 @@ it('renders the course player and the curriculum drawer accessibly in both direc
         $page->screenshot(fullPage: false, filename: "T-P4-03/curriculum-drawer-{$locale}-{$width}");
     }
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P4-03', 'A3', 'YG-GAP-UX-001');
+
+it('renders the PDF and attachment tabs in both directions, sizes and themes', function (string $locale, int $width, int $height, string $theme = 'light'): void {
+    [$course, $video, $learner] = browserPlayer($locale);
+    $lesson = $video->itemable;
+    Storage::disk('local')->put('media/clip.mp4', file_get_contents(base_path('tests/Fixtures/lesson-player.mp4')));
+    Storage::disk('local')->put('documents/lesson.pdf', 'test fixture');
+    $lesson->curriculumDocuments()->create([
+        'version' => 1, 'path' => 'documents/lesson.pdf', 'sha256' => str_repeat('b', 64),
+        'size' => 12, 'pages' => 1, 'status' => LessonCurriculumDocument::STATUS_READY, 'active' => true,
+    ]);
+    $instructor = $course->instructors()->firstOrFail();
+    app(ManageLessonResources::class)->addLink($instructor, $lesson, [
+        'title' => ['en' => 'Practice sheet', 'ar' => 'ورقة تدريب'], 'url' => 'https://example.org/practice',
+    ]);
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($learner);
+
+    $page = $this->visit("/learn/{$course->id}/{$video->id}")->resize($width, $height);
+    $page->script("() => localStorage.setItem('theme', '{$theme}')");
+    $page->refresh();
+    expect($page->script('() => document.documentElement.dataset.theme'))->toBe($theme);
+    expect($page->script('async () => {
+        const media = document.querySelector("[data-player-media]");
+        if (!media.readyState && !media.error) {
+            await new Promise(resolve => {
+                media.addEventListener("loadedmetadata", resolve, {once: true});
+                media.addEventListener("error", resolve, {once: true});
+                setTimeout(resolve, 3000);
+            });
+        }
+        return media.duration;
+    }'))->toBe(2);
+    $page->assertVisible('#lesson-materials-panel-pdf a[href*="/files/document/"]')
+        ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
+    expect($page->script('() => { const {width, height} = document.querySelector("[data-player-media]").getBoundingClientRect(); return Math.abs(width / height - 16 / 9) < 0.01; }'))->toBeTrue();
+    $directory = base_path('tests/Browser/Screenshots/T-P4-06');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $suffix = "{$locale}-{$width}".($theme === 'dark' ? '-dark' : '');
+    $page->screenshot(fullPage: true, filename: "T-P4-06/pdf-{$suffix}");
+    $page->click('#lesson-materials-tab-attachments')
+        ->assertVisible('#lesson-materials-panel-attachments a[href="https://example.org/practice"]')
+        ->assertNotPresent('#lesson-materials-panel-pdf:visible')
+        ->assertNoAccessibilityIssues()
+        ->screenshot(fullPage: true, filename: "T-P4-06/attachments-{$suffix}");
+})->with([
+    ['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900],
+    ['ar', 390, 844, 'dark'], ['ar', 1440, 900, 'dark'], ['en', 390, 844, 'dark'], ['en', 1440, 900, 'dark'],
+    ['ar', 1568, 1003], ['ar', 852, 1846],
+])->group('browser', 'T-P4-06', 'A2');
 
 it('answers keyboard shortcuts and remembers the playback speed', function (): void {
     [$course, $video, $learner] = browserPlayer('en');

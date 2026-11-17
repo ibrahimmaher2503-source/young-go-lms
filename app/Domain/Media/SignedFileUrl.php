@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Media;
 
+use App\Domain\Identity\ActingLearner;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
 use App\Models\SubtitleTrack;
@@ -18,7 +19,7 @@ final class SignedFileUrl
 {
     public const array TYPES = ['resource' => LessonResource::class, 'document' => LessonCurriculumDocument::class, 'subtitle' => SubtitleTrack::class];
 
-    public function __construct(private readonly PrivateFileAccess $access) {}
+    public function __construct(private readonly PrivateFileAccess $access, private readonly ActingLearner $acting) {}
 
     /** Returns null when the user may not open the file, so callers never hand out a link they would then refuse. */
     public function for(User $user, Model $file): ?string
@@ -32,10 +33,16 @@ final class SignedFileUrl
             return null;
         }
 
+        $parameters = ['type' => $type, 'id' => $file->getKey(), 'u' => $user->getKey()];
+        $parent = $this->acting->actingParent();
+        if ($parent !== null && $this->acting->current()?->is($user)) {
+            $parameters['actor'] = $parent->getKey();
+        }
+
         return URL::temporarySignedRoute(
             'files.download',
             now()->addSeconds(Config::integer('media.signed_ttl')),
-            ['type' => $type, 'id' => $file->getKey(), 'u' => $user->getKey()],
+            $parameters,
         );
     }
 }

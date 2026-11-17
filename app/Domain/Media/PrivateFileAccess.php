@@ -6,6 +6,7 @@ namespace App\Domain\Media;
 
 use App\Domain\Catalog\Queries\CourseDirectory;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
+use App\Domain\Entitlements\EntitlementService;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class PrivateFileAccess
 {
-    public function __construct(private readonly LessonAccessChecker $entitlements) {}
+    public function __construct(private readonly LessonAccessChecker $entitlements, private readonly EntitlementService $previewAccess) {}
 
     public function allows(User $user, Model $file): bool
     {
@@ -40,11 +41,15 @@ final class PrivateFileAccess
             return true; // authors and admins of this course
         }
 
+        if ($file instanceof LessonCurriculumDocument && (! $file->active || $file->status !== LessonCurriculumDocument::STATUS_READY)) {
+            return false;
+        }
+
         if ($file instanceof LessonResource) {
             if ($file->type === LessonResource::TYPE_LINK || ! $file->downloadable) {
                 return false;
             }
-            if ($file->isPublicPreview()) {
+            if ($file->isPublicPreview() && $this->previewAccess->canAccessPublicResource($user, $lesson)) {
                 return true;
             }
         }

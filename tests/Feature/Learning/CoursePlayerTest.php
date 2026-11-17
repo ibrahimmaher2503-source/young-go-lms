@@ -12,9 +12,11 @@ use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Media\Actions\ManageLessonResources;
 use App\Domain\Media\Actions\ManageSubtitleTracks;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\LessonCurriculumDocument;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -117,6 +119,50 @@ it('opens only the free preview lesson to a learner who is not enrolled', functi
     expect(collect($sections[0]['items'])->pluck('state', 'title')->all())->toBe(['Intro video' => 'locked', 'Later lesson' => 'locked', 'Free preview' => 'preview', 'Unit quiz' => 'locked']);
     $this->actingAs($learner)->get("/learn/{$course->id}")->assertRedirect(route('learn.show', ['course' => $course->id, 'item' => $items['preview']->id]));
 })->group('T-P4-03', 'A2');
+
+it('shows only designated preview links until the learner gains the course entitlement', function (): void {
+    [$course, $items, $learner, $admin] = cpBuild();
+    $item = $items['preview'];
+    $lesson = $item->itemable;
+    $resources = app(ManageLessonResources::class);
+    $resources->addLink($admin, $lesson, ['title' => ['en' => 'Private link'], 'url' => 'https://example.org/private']);
+    $resources->addLink($admin, $lesson, ['title' => ['en' => 'Sample link'], 'url' => 'https://example.org/sample', 'is_preview' => true]);
+    $document = $lesson->curriculumDocuments()->create([
+        'version' => 1, 'path' => 'docs/approved.pdf', 'sha256' => str_repeat('a', 64),
+        'size' => 10, 'pages' => 1, 'status' => LessonCurriculumDocument::STATUS_READY, 'active' => true,
+    ]);
+    Storage::disk('local')->put($document->path, 'sample PDF');
+    $lesson->curriculumDocuments()->create([
+        'version' => 2, 'path' => 'docs/pending.pdf', 'sha256' => str_repeat('b', 64),
+        'size' => 10, 'pages' => 1, 'status' => LessonCurriculumDocument::STATUS_UPLOADED, 'active' => false,
+    ]);
+    $path = "/learn/{$course->id}/{$item->id}";
+
+    $this->actingAs($learner)->get($path)->assertOk()->assertSee('https://example.org/sample')
+        ->assertDontSee('https://example.org/private')->assertDontSee("/files/document/{$document->id}");
+    $course->update(['status' => 'private']);
+    $this->get($path)->assertOk()->assertDontSee('https://example.org/sample');
+    $course->update(['status' => 'published']);
+
+    cpEntitle($learner, $course);
+    $page = $this->get($path)->assertOk()->assertSee('https://example.org/private');
+    $url = $page->viewData('curriculumPdfUrl');
+    $page->assertSee($url)->assertDontSee('/files/document/'.($document->id + 1));
+    $this->get($url)->assertOk();
+
+    $parent = User::factory()->create()->assignRole('parent', 'super_admin');
+    $link = GuardianChildLink::query()->create(['guardian_id' => $parent->id, 'child_id' => $learner->id, 'status' => 'verified', 'method' => 'created_by_parent', 'verified_at' => now()]);
+    $this->actingAs($parent)->withSession([ActingLearner::SESSION_KEY => $learner->id]);
+    $parentUrl = $this->get($path)->assertOk()->viewData('curriculumPdfUrl');
+    $this->get($parentUrl)->assertOk();
+    $this->get($url)->assertForbidden();
+    $link->delete();
+    $this->get($parentUrl)->assertForbidden();
+    $this->withSession([ActingLearner::SESSION_KEY => null])->get($parentUrl)->assertForbidden();
+    $this->actingAs($learner)->get($parentUrl)->assertForbidden();
+    $document->update(['active' => false]);
+    $this->get($url)->assertForbidden();
+})->group('T-P4-06', 'A1', 'A2');
 
 it('sends an enrolled learner from the course link to the first open lesson and shows quizzes as coming soon', function (): void {
     [$course, $items, $learner] = cpBuild();

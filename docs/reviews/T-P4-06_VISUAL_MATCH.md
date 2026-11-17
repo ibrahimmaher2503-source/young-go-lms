@@ -1,0 +1,9 @@
+# T-P4-06 lesson PDF and materials
+
+References: 07 recorded player and 17 mobile lesson assistant in the 2026-11-17 reference pack. The course detail reference (06) is context for previews. This change stays in the existing lesson player.
+
+Reviewed the Arabic light captures at the reference viewport widths: [1568x1003](../../tests/Browser/screenshots/T-P4-06/pdf-ar-1568.png) and [852x1846](../../tests/Browser/screenshots/T-P4-06/pdf-ar-852.png). The materials card uses shared tabs, an active underline, compact desktop tab widths, a PDF tile, the lesson title, the stored file size and a 44px download target. Attachment rows use a bordered link and a reading-direction chevron. The browser fixture uses a 16:9 two-second generated clip and synthetic PDF metadata. The test waits for native video metadata before capture.
+
+The test matrix also captures the PDF and materials tabs at AR/EN 390x844 and 1440x900, light and dark, under `tests/Browser/screenshots/T-P4-06`. [English dark mobile](../../tests/Browser/screenshots/T-P4-06/attachments-en-390-dark.png) shows the alternate tab. Tests cover tab activation, authorized hrefs, visible panels, overflow, viewport geometry and axe.
+
+The independent screenshot review progressed from 3.67 to 3.92 to 4.08/5. The existing player has a narrower desktop shell with a different curriculum column and progress placement. Moving the card ahead of keyboard hints and completion reduced the video-to-card gap to about 69px; the reference shows about 22px. The mobile title and progress still appear before the media, and the header differs from the mobile reference. The final player displays the valid fixture duration and play control, though the stills retain a centered loading indicator. The course-detail preview comparison remains open. AI UI is outside this task. G7 remains open after three reviews.

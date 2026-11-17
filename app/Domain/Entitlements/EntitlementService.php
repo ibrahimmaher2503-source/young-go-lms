@@ -38,8 +38,7 @@ final class EntitlementService implements LessonAccessChecker
         }
 
         $entity = $item->itemable;
-        $archived = $entity !== null && $entity->getAttribute('archived_at') !== null;
-        if ($item->status !== CurriculumItem::STATUS_PUBLISHED || $archived || ! $item->section->published) {
+        if (! $this->itemPublished($item)) {
             return AccessDecision::deny('item_unpublished');
         }
 
@@ -65,6 +64,16 @@ final class EntitlementService implements LessonAccessChecker
             && $this->canAccessItem($user, $item)->allowed;
     }
 
+    public function canAccessPublicResource(User $user, Lesson $lesson): bool
+    {
+        $item = $lesson->item()->with(['course', 'section'])->first();
+
+        return $user->getAttribute('status') === 'active'
+            && $item !== null
+            && $item->course->status === CourseStatus::Published
+            && $this->itemPublished($item);
+    }
+
     /** The learner's current entitlement for a course, or null. */
     public function currentFor(User $learner, Course $course): ?Entitlement
     {
@@ -81,6 +90,13 @@ final class EntitlementService implements LessonAccessChecker
     {
         // Suspended, archived, upcoming and draft courses are closed to learners until the owner defines otherwise.
         return in_array($course->status, [CourseStatus::Published, CourseStatus::Private], true);
+    }
+
+    private function itemPublished(CurriculumItem $item): bool
+    {
+        return $item->status === CurriculumItem::STATUS_PUBLISHED
+            && $item->itemable?->getAttribute('archived_at') === null
+            && $item->section->published;
     }
 
     /** @return array{0: AccessDecision, 1: Entitlement|null} */

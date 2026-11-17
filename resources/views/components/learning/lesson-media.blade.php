@@ -2,7 +2,7 @@
 @props(['descriptor', 'title'])
 @switch($descriptor->type)
     @case('video')
-        <video class="block w-full bg-black" controls preload="metadata" playsinline src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media controlslist="nodownload">
+        <video class="block aspect-video w-full bg-black object-contain" controls preload="metadata" playsinline src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media controlslist="nodownload">
             @foreach($descriptor->tracks as $track)
                 <track kind="captions" src="{{ $track['url'] }}" srclang="{{ $track['locale'] }}" label="{{ $track['label'] }}" @if($track['default']) default @endif>
             @endforeach

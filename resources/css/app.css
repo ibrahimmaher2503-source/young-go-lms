@@ -3,3 +3,28 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+
+.lesson-materials [role="tablist"] {
+    border-block-end: 1px solid var(--yg-color-border);
+}
+
+.lesson-materials [role="tab"] {
+    flex: 1;
+    border-block-end: 2px solid transparent;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+    background: var(--yg-color-surface-muted);
+}
+
+@media (min-width: 64rem) {
+    .lesson-materials [role="tab"] {
+        flex: 0 0 auto;
+        min-inline-size: 7rem;
+    }
+}
+
+.lesson-materials [aria-selected="true"] {
+    border-block-end-color: var(--yg-color-primary);
+    background: var(--yg-color-surface);
+    color: var(--yg-color-primary);
+}

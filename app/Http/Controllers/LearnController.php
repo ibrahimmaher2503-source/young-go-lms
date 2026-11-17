@@ -9,11 +9,13 @@ use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Media\Queries\LessonPlayback;
+use App\Domain\Media\SignedFileUrl;
 use App\Domain\Progress\LessonProgress;
 use App\Domain\Progress\Queries\ContinueLearning;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LessonResource;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -61,8 +63,25 @@ final class LearnController
         $lessonProgress = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('curriculum_item_id', $item->getKey())->first() : null;
         $courseProgress = $entitled ? $this->continue->progress($learner, $course) : null;
         $completed = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('status', LessonProgress::COMPLETED)->pluck('curriculum_item_id')->map(fn ($id): int => (int) $id)->all() : [];
+        $openLesson = $decision->allowed ? $lesson : null;
+        $urls = app(SignedFileUrl::class);
+        $document = $entitled ? $openLesson?->activeCurriculumDocument() : null;
+        $canPreview = ! $entitled && $openLesson !== null && $this->access->canAccessPublicResource($learner, $openLesson);
+        $resources = $openLesson?->resources
+            ->map(function (LessonResource $resource) use ($entitled, $learner, $urls, $canPreview): array {
+                $url = $resource->type === LessonResource::TYPE_LINK
+                    ? ($entitled || ($canPreview && $resource->isPublicPreview()) ? $resource->url : null)
+                    : $urls->for($learner, $resource);
+
+                return ['title' => (string) $resource->title, 'url' => $url];
+            })
+            ->filter(fn (array $resource): bool => filled($resource['url']))
+            ->all() ?? [];
 
         return view('learn.show', [
+            'curriculumPdfUrl' => $document === null ? null : $urls->for($learner, $document),
+            'curriculumPdfSize' => $document === null ? null : (int) $document->getAttribute('size'),
+            'resources' => $resources,
             'entitled' => $entitled,
             'lessonProgress' => $lessonProgress,
             'courseProgress' => $courseProgress,

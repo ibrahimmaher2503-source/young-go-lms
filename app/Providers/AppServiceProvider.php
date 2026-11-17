@@ -49,6 +49,11 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
 
+            // Acting as a child always requires a verified relationship, including for staff.
+            if ($ability === 'guardian.child.access') {
+                return null;
+            }
+
             if ($user->hasRole('super_admin', (string) config('permissions.guard', 'web'))) {
                 return true;
             }

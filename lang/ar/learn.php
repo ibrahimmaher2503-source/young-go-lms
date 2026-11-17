@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'lesson_pdf' => 'ملف الدرس',
+    'lesson_pdf_title' => 'ملف درس :title',
+    'download_lesson_pdf' => 'تنزيل ملف الدرس PDF',
     'curriculum' => 'محتوى الدورة',
     'open_curriculum' => 'محتوى الدورة',
     'previous' => 'الدرس السابق',

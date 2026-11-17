@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Identity\ActingLearner;
 use App\Domain\Media\PrivateFileAccess;
 use App\Domain\Media\SignedFileUrl;
 use App\Models\User;
@@ -18,10 +19,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 final class PrivateFileController
 {
-    public function __invoke(Request $request, string $type, int $id, PrivateFileAccess $access): StreamedResponse
+    public function __invoke(Request $request, string $type, int $id, PrivateFileAccess $access, ActingLearner $acting): StreamedResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
+        if ($request->query->has('actor')) {
+            abort_unless((int) $request->query('actor') === (int) $user->getKey() && $user->status === 'active', 403);
+            $user = $acting->current();
+            abort_unless($user instanceof User && $acting->isParentContext(), 403);
+        }
         abort_unless((int) $request->query('u') === (int) $user->getKey(), 403);
 
         $class = SignedFileUrl::TYPES[$type] ?? null;

@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'lesson_pdf' => 'Lesson PDF',
+    'lesson_pdf_title' => ':title PDF',
+    'download_lesson_pdf' => 'Download lesson PDF',
     'curriculum' => 'Course content',
     'open_curriculum' => 'Course content',
     'previous' => 'Previous lesson',

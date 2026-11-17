@@ -246,7 +246,11 @@ it('rechecks access when the link is used: a revoked author gets nothing', funct
 })->group('T-P3-08', 'A1');
 
 it('opens public previews to any signed-in account but never non-downloadable files or links', function (): void {
-    [$instructor, $lesson] = filesLesson();
+    [$instructor, $lesson, $course] = filesLesson();
+    $course->update(['status' => 'published']);
+    $item = $lesson->item()->firstOrFail();
+    $item->section->update(['published' => true]);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
     $resources = app(ManageLessonResources::class);
     $preview = $resources->addFile($instructor, $lesson, fileOf(pdfBytes(1)), ['title' => ['en' => 'Free sample'], 'is_preview' => true]);
     $locked = $resources->addFile($instructor, $lesson, fileOf(pdfBytes(2)), ['title' => ['en' => 'Locked'], 'is_preview' => true, 'downloadable' => false]);
@@ -258,10 +262,35 @@ it('opens public previews to any signed-in account but never non-downloadable fi
     $this->actingAs($learner)->get($urls->for($learner, $preview))->assertOk();
 })->group('T-P3-08', 'A1');
 
+it('invalidates a flagged preview download when its published curriculum is withdrawn', function (string $state): void {
+    [$instructor, $lesson, $course] = filesLesson();
+    $course->update(['status' => 'published']);
+    $item = $lesson->item()->firstOrFail();
+    $item->section->update(['published' => true]);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+
+    $preview = app(ManageLessonResources::class)->addFile($instructor, $lesson, fileOf(pdfBytes(1)), [
+        'title' => ['en' => 'Public sample'], 'is_preview' => true,
+    ]);
+    $learner = User::factory()->create()->assignRole('student');
+    $urls = app(SignedFileUrl::class);
+    $url = $urls->for($learner, $preview);
+    $this->actingAs($learner)->get($url)->assertOk();
+
+    match ($state) {
+        'course' => $course->update(['status' => 'draft']),
+        'section' => $item->section->update(['published' => false]),
+        'lesson' => $lesson->update(['archived_at' => now()]),
+    };
+    expect($urls->for($learner, $preview))->toBeNull();
+    $this->get($url)->assertForbidden();
+})->with(['course', 'section', 'lesson'])->group('T-P4-06', 'A2', 'I01');
+
 it('opens protected files to entitled learners through the entitlement checker', function (): void {
     [$instructor, $lesson] = filesLesson();
     $resource = app(ManageLessonResources::class)->addFile($instructor, $lesson, fileOf(pdfBytes(1)), ['title' => ['en' => 'Sheet']]);
     $document = app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(3)));
+    $document->update(['status' => LessonCurriculumDocument::STATUS_READY, 'active' => true]);
     $learner = User::factory()->create()->assignRole('student');
     $suspended = User::factory()->create(['status' => 'suspended'])->assignRole('student');
 
@@ -290,7 +319,8 @@ it('exposes only flagged downloads on a preview lesson until the learner is gran
     $preview = $resources->addFile($instructor, $lesson, fileOf(pdfBytes(1)), ['title' => ['en' => 'Sample'], 'is_preview' => true]);
     $protected = match ($kind) {
         'resource' => $resources->addFile($instructor, $lesson, fileOf(pdfBytes(2)), ['title' => ['en' => 'Worksheet']]),
-        'curriculum PDF' => app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(3))),
+        'curriculum PDF' => tap(app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(3))))
+            ->update(['status' => LessonCurriculumDocument::STATUS_READY, 'active' => true]),
     };
     $learner = User::factory()->create()->assignRole('student');
     $urls = app(SignedFileUrl::class);

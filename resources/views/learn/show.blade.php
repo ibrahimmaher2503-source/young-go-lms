@@ -59,6 +59,43 @@
                                     <x-ui.button type="button" variant="secondary" data-player-fullscreen>{{ __('learn.fullscreen') }}</x-ui.button>
                                 @endif
                             </div>
+                        @endif
+
+                        @if($curriculumPdfUrl || $resources)
+                            <x-ui.card class="p-3 sm:p-4">
+                                <x-ui.tabs id="lesson-materials" class="lesson-materials" :label="__('learn.resources')" :items="array_filter(['pdf' => $curriculumPdfUrl ? __('learn.lesson_pdf') : null, 'attachments' => $resources ? __('learn.resources') : null])">
+                                    <x-slot:pdf>
+                                        @if($curriculumPdfUrl)
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="flex min-w-0 items-center gap-2">
+                                                    <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-danger text-sm font-semibold text-on-danger" aria-hidden="true">PDF</span>
+                                                    <div>
+                                                        <p class="font-semibold break-words">{{ __('learn.lesson_pdf_title', ['title' => $title]) }}</p>
+                                                        <p class="text-sm text-muted"><bdi>{{ \Illuminate\Support\Number::fileSize($curriculumPdfSize, 1) }}</bdi></p>
+                                                    </div>
+                                                </div>
+                                                <x-ui.link :href="$curriculumPdfUrl" class="min-w-11 justify-center border border-border" :aria-label="__('learn.download_lesson_pdf')">
+                                                    <x-ui.icon name="download" />
+                                                </x-ui.link>
+                                            </div>
+                                        @endif
+                                    </x-slot:pdf>
+                                    <x-slot:attachments>
+                                        <ul class="space-y-2">
+                                            @foreach($resources as $resource)
+                                                <li>
+                                                    <x-ui.link :href="$resource['url']" class="w-full justify-between gap-2 border border-border px-3 no-underline hover:bg-page">
+                                                        <span class="break-words">{{ __('learn.open_file', ['name' => $resource['title']]) }}</span>
+                                                        <x-ui.icon name="chevron" />
+                                                    </x-ui.link>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </x-slot:attachments>
+                                </x-ui.tabs>
+                            </x-ui.card>
+                        @endif
+                        @if($descriptor !== null && in_array($descriptor->type, ['video', 'audio'], true))
                             <p class="text-sm">{{ __('learn.shortcuts') }}</p>
                         @endif
 
@@ -72,17 +109,6 @@
                             <div data-ai-slot aria-label="{{ __('learn.assistant') }}"></div>
                         @endif
                     </section>
-
-                    @php($resources = $lesson->resources->map(fn ($r) => ['title' => (string) $r->title, 'url' => $r->type === 'link' ? $r->url : app(\App\Domain\Media\SignedFileUrl::class)->for($learner, $r)])->filter(fn ($r) => filled($r['url'])))
-                    @if($resources->isNotEmpty())
-                        <x-ui.card :title="__('learn.resources')">
-                            <ul class="space-y-2">
-                                @foreach($resources as $resource)
-                                    <li><x-ui.link :href="$resource['url']">{{ __('learn.open_file', ['name' => $resource['title']]) }}</x-ui.link></li>
-                                @endforeach
-                            </ul>
-                        </x-ui.card>
-                    @endif
                 @endif
 
                 <div class="flex flex-wrap items-center justify-between gap-2">

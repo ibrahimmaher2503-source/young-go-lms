@@ -5,7 +5,7 @@ LOOP_STATE: RUN
 Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped`. Only the orchestrator edits this file.
 
 ## Current
-- Owner goal: complete the remaining task board. Active review: T-P4-01 access checks used by the course player and upcoming progress work.
+- Owner goal: complete the remaining task board. The next independent implementation is T-P4-07; T-P4-06 learner downloads have landed locally with visual closure open.
 - Milestone focus: P1 closure (owner requested T-P1-08 visual rework followed by T-P1-MG follow-up).
 - Active scope: verify existing P1 work, repair the staff workspace and record unmet requirements. Later development is tracked on its own task rows.
 - Branch: feat/lms-build; origin https://github.com/ibrahimmaher2503-source/young-go-lms.git.
@@ -76,7 +76,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P4-03 | Course player and curriculum navigation | review | T-P4-01, T-P3-05, T-P1-09 | ui-builder, implementer, test-writer | L | normal | | |
 | T-P4-04 | Progress, resume and completion state | review | T-P4-03 | implementer, test-writer | M | high | | |
 | T-P4-05 | Student dashboard and library | todo | T-P4-04 | ui-builder, implementer, test-writer | M | normal | | |
-| T-P4-06 | Protected PDFs, resources and previews | in_progress | T-P4-03, T-P3-08 | implementer, ui-builder, test-writer | S | high | | Private download authorization; player resource list and G7 pending |
+| T-P4-06 | Protected PDFs, resources and previews | blocked | T-P4-03, T-P3-08 | implementer, ui-builder, test-writer | S | high | | Learner downloads implemented; G7 reached three review cycles at 4.08/5 against 4.5. See docs/reviews/T-P4-06_VISUAL_MATCH.md |
 | T-P4-07 | Watermark, session and device limits | todo | T-P4-03, T-P1-02 | implementer, ui-builder, test-writer | M | normal | | |
 | T-P4-08 | Parent dashboard | todo | T-P4-05, T-P1-06 | ui-builder, implementer, test-writer | M | high | | |
 | T-P4-09 | Layered access: sequence and drip with reason codes | todo | T-P4-01, T-P4-04, T-P3-04 | implementer, ui-builder, test-writer | M | high | | |
@@ -166,6 +166,8 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 - A1/A2 evidence plan: use the real entitlement binding with a published preview lesson to distinguish a flagged resource from unflagged materials and curriculum PDF; then exercise a same-account grant, forwarding and expiry in the signed route. Preserve the T-P3-08 domain tests.
 - UI follows the lesson toolbar and existing authorized download primitives. Match the 07/17/06 task references when extending the resource list, with AR/EN viewport captures and visible state review before G7 closure.
 - Authorization slice: both unflagged preview-attachment issuance cases failed before the fix. The real file checker now requires an active course entitlement for private attachments in addition to item access; explicitly public resources retain the existing preview path. Signed forwarding/expiry acceptance passed. PrivateFiles, SubtitleTracks, EntitlementService and AssistantEligibility passed 83 tests / 338 assertions with one existing TODO. Scoped Pint, Larastan and G10 passed. The player still needs the approved PDF link and preview checks for external resources. T-P4-04 landed separately at `5244e00` on the development branch while this worktree was in use; integrate that revision before editing the player.
+- Follow-up integrated T-P4-04 (`5244e00`). The player now shows the current READY PDF and authorized attachments. External preview links and downloadable previews require the same published curriculum check. Redemption denies superseded PDFs, withdrawn curriculum and expired, copied or stale guardian-context links. Staff historical PDF review remains available. `guardian.child.access` always runs its verified-link gate even for super admins. A1/A2: PrivateFilesTest and CoursePlayerTest, including the private-course and revoked-link regressions.
+- Evidence: broad focused run 122 tests / 618 assertions, 2 existing TODOs; latest targeted player authorization test 18 assertions. Final player matrix 15 tests / 134 assertions (AR/EN desktop/mobile dark/light plus matching reference viewport widths, video metadata, keyboard and axe). Scoped Pint, Larastan, build, G10, translation and RTL checks passed. Independent scoped PRD and high-risk QA approved the access changes. UX rework 3.67 → 3.92 → 4.08/5. G7 remains open at the cycle limit. Staff authoring still needs resource preview controls under the lesson editor work.
 
 ### T-P2-01 — Categories and disciplines
 
