@@ -77,7 +77,11 @@ final class DuplicateCourse
                     ]);
                 }
 
-                $copy->instructors()->sync($source->instructors->mapWithKeys(fn (User $u): array => [$u->getKey() => ['role' => $u->pivot->role, 'scope' => $u->pivot->scope]])->all());
+                $copy->instructors()->sync($source->instructors->mapWithKeys(function (User $u): array {
+                    $pivot = $u->getRelation('pivot');
+
+                    return [$u->getKey() => ['role' => $pivot->getAttribute('role'), 'scope' => $pivot->getAttribute('scope')]];
+                })->all());
 
                 if ($this->audit->record('course.duplicated', $copy, (int) $actor->getKey(), null, ['source_course_id' => $source->getKey()]) === null) {
                     throw new RuntimeException('Unable to record course audit.');
