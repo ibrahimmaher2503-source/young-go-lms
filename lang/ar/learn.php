@@ -31,4 +31,10 @@ return [
     'completed' => 'مكتمل',
     'mark_complete' => 'تحديد كمكتمل',
     'cannot_mark_complete' => 'يكتمل هذا الدرس تلقائيًا عند إنهاء مشاهدته.',
+    'not_entitled_hint' => 'انتهى وصولك إلى هذه الدورة.',
+    'back_to_courses' => 'العودة إلى دوراتي',
+    'by_instructor' => 'بواسطة :name',
+    'lessons_count' => ':count درسًا',
+    'lesson_of' => 'الدرس :number من :total',
+    'next_titled' => 'الدرس التالي: :title',
 ];

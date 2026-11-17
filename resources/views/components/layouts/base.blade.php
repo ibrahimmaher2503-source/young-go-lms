@@ -6,8 +6,8 @@
     $child = ($user && ! $minimal) ? (app(\App\Domain\Identity\ActingLearner::class)->isParentContext() ? app(\App\Domain\Identity\ActingLearner::class)->current() : null) : null;
     $name = $user ? ($user->display_name ?: $user->name) : null;
     $nav = match ($variant) {
-        'parent' => [['/family', __('pages.nav_family')], ['/profile', __('pages.nav_profile')]],
-        'student' => [['/link', __('pages.nav_link')], ['/profile', __('pages.nav_profile')]],
+        'parent' => [['/family', __('pages.nav_family')], ['/my', __('pages.nav_learning')], ['/profile', __('pages.nav_profile')]],
+        'student' => [['/my', __('pages.nav_learning')], ['/my/courses', __('pages.nav_courses')], ['/link', __('pages.nav_link')], ['/profile', __('pages.nav_profile')]],
         default => [],
     };
 @endphp

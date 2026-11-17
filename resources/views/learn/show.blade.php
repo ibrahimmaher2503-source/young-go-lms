@@ -1,26 +1,54 @@
-@php($title = (string) ($entity?->title ?? $course->title))
-<x-layouts.base :title="$title" variant="student">
-    <div class="space-y-4">
-        <nav aria-label="{{ __('pages.main_nav') }}" class="flex flex-wrap items-center gap-2 text-sm">
-            <span class="font-semibold">{{ $course->title }}</span>
-            <x-ui.badge>{{ __('learn.types.'.($lesson?->type ?? $item->itemable_type)) }}</x-ui.badge>
-            @if($item->itemable instanceof \App\Models\Lesson && $item->itemable->is_preview && ! $learner->can('viewAny', $course))
-                {{-- preview badge is shown from the curriculum list state --}}
-            @endif
-        </nav>
+@php
+    $title = (string) ($entity?->title ?? $course->title);
+    $flat = collect($sections)->flatMap(fn ($s) => $s['items'])->values();
+    $position = $flat->search(fn ($i) => $i['id'] === $item->id);
+    $nextEntry = $neighbours['next'] ? $flat->firstWhere('id', $neighbours['next']) : null;
+    $previousEntry = $neighbours['previous'] ? $flat->firstWhere('id', $neighbours['previous']) : null;
+    $instructors = $course->instructors->where('status', 'active')->pluck('name')->implode(', ');
+@endphp
+<x-layouts.learner :title="$title" wide>
+    <div class="space-y-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 space-y-1">
+                <a href="{{ route('learner.courses') }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back" /> {{ __('learn.back_to_courses') }}</a>
+                <h1 class="break-words text-3xl font-extrabold" data-course-title>{{ $course->title }}</h1>
+                <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted">
+                    @if($instructors !== '')<span class="inline-flex items-center gap-1"><x-ui.icon name="user" class="size-4" /> {{ __('learn.by_instructor', ['name' => $instructors]) }}</span>@endif
+                    <span>{{ __('learn.lessons_count', ['count' => $flat->count()]) }}</span>
+                </p>
+            </div>
+        </div>
 
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-            <div class="min-w-0 space-y-4">
-                <h1 class="text-2xl font-bold break-words">{{ $title }}</h1>
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]{{ $aiAvailable ? ' 2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,22rem)]' : '' }}">
+            {{-- Curriculum (first column: right in Arabic, left in English) --}}
+            <aside class="hidden space-y-3 lg:block" aria-label="{{ __('learn.curriculum') }}">
                 @if($courseProgress)
-                    <div class="space-y-1" data-course-progress>
-                        <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-                            <span>{{ __('learn.course_progress', ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</span>
+                    <div class="space-y-2 rounded-card border border-border bg-surface p-4 shadow-card" data-course-progress>
+                        <div class="flex items-center justify-between gap-2 font-bold">
+                            <span>{{ __('learn.course_progress_label') }}</span>
                             <span data-course-percent>{{ $courseProgress->percent }}%</span>
                         </div>
                         <x-ui.progress-bar :label="__('learn.course_progress_label')" :value="$courseProgress->percent" />
+                        <p class="text-sm text-muted">{{ __('learn.course_progress', ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</p>
                     </div>
                 @endif
+                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="side" />
+            </aside>
+
+            {{-- Lesson --}}
+            <div class="min-w-0 space-y-4">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-sm text-muted">{{ __('learn.lesson_of', ['number' => ($position === false ? 0 : $position) + 1, 'total' => $flat->count()]) }}</p>
+                        <h2 class="break-words text-3xl font-extrabold" data-lesson-title>{{ $title }}</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <x-ui.badge tone="info">{{ __('learn.types.'.($lesson?->type ?? $item->itemable_type)) }}</x-ui.badge>
+                        @if($lessonProgress?->status === 'completed')
+                            <x-ui.badge tone="success" data-lesson-completed><x-ui.icon name="check" class="me-1 size-4" /> {{ __('learn.completed') }}</x-ui.badge>
+                        @endif
+                    </div>
+                </div>
 
                 @if(! $decision->allowed)
                     <x-ui.card :title="__('learn.locked_title')">
@@ -29,24 +57,24 @@
                 @elseif($lesson === null)
                     <x-ui.card><p>{{ __('learn.assessment_soon') }}</p></x-ui.card>
                 @else
-                    <section aria-label="{{ __('learn.now_playing') }}" data-player data-ai-available="{{ $aiAvailable ? 'true' : 'false' }}" class="space-y-3"
+                    <section aria-label="{{ __('learn.now_playing') }}" data-player data-ai-available="{{ $aiAvailable ? 'true' : 'false' }}" class="space-y-4"
                         @if($entitled) data-progress-url="{{ route('learn.progress', ['course' => $course->id, 'item' => $item->id]) }}" data-complete-url="{{ route('learn.complete', ['course' => $course->id, 'item' => $item->id]) }}" data-resume="{{ $lessonProgress?->position_seconds ?? 0 }}" @endif>
-                        <div class="relative overflow-hidden rounded-xl border border-border bg-surface" data-player-stage>
+                        <div class="relative overflow-hidden rounded-card border border-border bg-black shadow-card" data-player-stage>
                             @if($descriptor === null)
-                                <p class="p-6">{{ __('learn.no_media') }}</p>
+                                <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
                             @else
                                 <x-learning.lesson-media :descriptor="$descriptor" :title="$title" />
                                 @if(in_array($descriptor->type, ['video', 'audio'], true))
-                                    <span class="pointer-events-none absolute end-3 top-3 select-none text-sm opacity-40" data-watermark aria-hidden="true">{{ $learner->display_name ?: $learner->name }}</span>
+                                    <span class="pointer-events-none absolute end-3 top-3 select-none rounded bg-black/30 px-2 py-0.5 text-sm text-white/80" data-watermark aria-hidden="true">{{ $learner->display_name ?: $learner->name }}</span>
                                 @endif
                             @endif
                         </div>
 
                         @if($descriptor !== null && in_array($descriptor->type, ['video', 'audio'], true))
                             <div role="toolbar" aria-label="{{ __('learn.toolbar') }}" class="flex flex-wrap items-center gap-2">
-                                <label class="inline-flex items-center gap-2">
+                                <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3">
                                     <span class="font-semibold">{{ __('learn.speed') }}</span>
-                                    <select data-player-speed class="min-h-11 rounded-lg border border-border bg-surface px-2">
+                                    <select data-player-speed class="min-h-11 bg-transparent px-1">
                                         @foreach([0.75, 1, 1.25, 1.5, 2] as $speed)
                                             <option value="{{ $speed }}" @selected($speed === 1)>{{ $speed }}×</option>
                                         @endforeach
@@ -58,7 +86,12 @@
                                 @if($descriptor->type === 'video')
                                     <x-ui.button type="button" variant="secondary" data-player-fullscreen>{{ __('learn.fullscreen') }}</x-ui.button>
                                 @endif
+                                @if($canMarkComplete)
+                                    <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
+                                @endif
                             </div>
+                        @elseif($canMarkComplete)
+                            <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
                         @endif
 
                         @if($curriculumPdfUrl || $resources)
@@ -67,7 +100,7 @@
                                     <x-slot:pdf>
                                         @if($curriculumPdfUrl)
                                             <div class="flex items-center justify-between gap-3">
-                                                <div class="flex min-w-0 items-center gap-2">
+                                                <div class="flex min-w-0 items-center gap-3">
                                                     <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-danger text-sm font-semibold text-on-danger" aria-hidden="true">PDF</span>
                                                     <div>
                                                         <p class="font-semibold break-words">{{ __('learn.lesson_pdf_title', ['title' => $title]) }}</p>
@@ -95,40 +128,39 @@
                                 </x-ui.tabs>
                             </x-ui.card>
                         @endif
+
                         @if($descriptor !== null && in_array($descriptor->type, ['video', 'audio'], true))
-                            <p class="text-sm">{{ __('learn.shortcuts') }}</p>
-                        @endif
-
-                        @if($lessonProgress?->status === 'completed')
-                            <x-ui.badge tone="success" data-lesson-completed>{{ __('learn.completed') }}</x-ui.badge>
-                        @elseif($canMarkComplete)
-                            <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
-                        @endif
-
-                        @if($aiAvailable)
-                            <div data-ai-slot aria-label="{{ __('learn.assistant') }}"></div>
+                            <p class="text-sm text-muted">{{ __('learn.shortcuts') }}</p>
                         @endif
                     </section>
                 @endif
 
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    @if($neighbours['previous'])
-                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $neighbours['previous']]) }}" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 font-semibold" rel="prev">{{ __('learn.previous') }}</a>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    @if($previousEntry)
+                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $previousEntry['id']]) }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold" rel="prev"><x-ui.icon name="back" /> {{ __('learn.previous') }}</a>
                     @else <span></span> @endif
-                    @if($neighbours['next'])
-                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $neighbours['next']]) }}" class="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 font-semibold text-on-primary" rel="next">{{ __('learn.next') }}</a>
+                    @if($nextEntry)
+                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $nextEntry['id']]) }}" class="inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-on-primary shadow-card" rel="next" data-next-lesson>
+                            <span class="break-words">{{ __('learn.next_titled', ['title' => $nextEntry['title']]) }}</span> <x-ui.icon name="arrow" />
+                        </a>
                     @endif
+                </div>
+
+                <div class="lg:hidden">
+                    <x-ui.drawer id="curriculum-drawer" :title="__('learn.curriculum')" :trigger="__('learn.open_curriculum')">
+                        <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="drawer" />
+                    </x-ui.drawer>
                 </div>
             </div>
 
-            <div class="lg:hidden">
-                <x-ui.drawer id="curriculum-drawer" :title="__('learn.curriculum')" :trigger="__('learn.open_curriculum')">
-                    <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="drawer" />
-                </x-ui.drawer>
-            </div>
-            <aside class="hidden lg:block" aria-label="{{ __('learn.curriculum') }}">
-                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="side" />
-            </aside>
+            @if($aiAvailable)
+                {{-- The assistant (P7) fills this column; it exists only when the learner is eligible. --}}
+                <aside class="hidden space-y-3 2xl:block" aria-label="{{ __('learn.assistant') }}">
+                    <div class="space-y-3 rounded-card border border-border bg-surface p-4 shadow-card" data-ai-slot>
+                        <h2 class="flex items-center justify-between gap-2 text-xl font-bold"><span>{{ __('learn.assistant') }}</span> <x-ui.icon name="sparkle" class="size-6 text-primary" /></h2>
+                    </div>
+                </aside>
+            @endif
         </div>
     </div>
-</x-layouts.base>
+</x-layouts.learner>

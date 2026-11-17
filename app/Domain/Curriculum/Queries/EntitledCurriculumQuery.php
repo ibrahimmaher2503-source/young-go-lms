@@ -19,7 +19,7 @@ final class EntitledCurriculumQuery
     public function __construct(private readonly EntitlementService $access) {}
 
     /**
-     * @return list<array{id: int, title: string, items: list<array{id: int, title: string, type: string, state: string, reason: string|null, unlock_at: string|null}>}>
+     * @return list<array{id: int, title: string, items: list<array{id: int, title: string, type: string, state: string, reason: string|null, unlock_at: string|null, minutes: int}>}>
      */
     public function for(User $learner, Course $course): array
     {
@@ -44,6 +44,7 @@ final class EntitledCurriculumQuery
                     'state' => $state,
                     'reason' => $decision->message(),
                     'unlock_at' => $decision->unlockAt?->toIso8601String(),
+                    'minutes' => $entity instanceof Lesson ? (int) round((int) ($entity->media->duration_seconds ?? $entity->duration_seconds ?? 0) / 60) : 0,
                 ];
             }
             $sections[] = ['id' => (int) $section->getKey(), 'title' => (string) $section->title, 'items' => $items];

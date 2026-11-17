@@ -69,7 +69,7 @@ final class PageController
             }
         }
 
-        return redirect($user->hasRole('parent') ? '/family' : '/profile');
+        return redirect($user->hasRole('parent') ? '/family' : '/my');
     }
 
     public function profile(Request $request): View

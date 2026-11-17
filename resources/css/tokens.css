@@ -205,7 +205,7 @@
     --color-on-ai-failed: var(--yg-color-on-ai-failed);
     --color-ai-ready: var(--yg-color-ai-ready);
     --color-on-ai-ready: var(--yg-color-on-ai-ready);
-    --font-sans: system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    --font-sans: "Noto Sans Arabic", system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
     --radius-lg: 1rem;

@@ -151,4 +151,6 @@ return [
     'login_copied' => 'Sign-in details copied (without the password).',
     'copy_login' => 'Copy sign-in details',
     'sending' => 'Please wait…',
+    'nav_learning' => 'My learning',
+    'nav_courses' => 'My courses',
 ];

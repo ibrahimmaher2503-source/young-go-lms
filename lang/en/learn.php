@@ -31,4 +31,10 @@ return [
     'completed' => 'Completed',
     'mark_complete' => 'Mark as complete',
     'cannot_mark_complete' => 'This lesson completes by itself when you finish watching it.',
+    'not_entitled_hint' => 'Your access to this course has ended.',
+    'back_to_courses' => 'Back to my courses',
+    'by_instructor' => 'By :name',
+    'lessons_count' => ':count lessons',
+    'lesson_of' => 'Lesson :number of :total',
+    'next_titled' => 'Next lesson: :title',
 ];

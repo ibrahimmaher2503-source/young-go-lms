@@ -28,3 +28,28 @@
     background: var(--yg-color-surface);
     color: var(--yg-color-primary);
 }
+
+/* Progress (C13): a rounded pill track with a teal fill, filling from the reading start in both directions. */
+progress {
+    appearance: none;
+    block-size: 0.75rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: var(--yg-color-hover);
+}
+
+progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: var(--yg-color-hover);
+}
+
+progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--yg-color-primary);
+}
+
+progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--yg-color-primary);
+}
