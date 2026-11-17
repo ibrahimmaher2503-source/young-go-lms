@@ -5,6 +5,7 @@ LOOP_STATE: RUN
 Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped`. Only the orchestrator edits this file.
 
 ## Current
+- Owner goal: complete the remaining task board. Active review: T-P4-01 access checks used by the course player and upcoming progress work.
 - Milestone focus: P1 closure (owner requested T-P1-08 visual rework followed by T-P1-MG follow-up).
 - Active scope: verify existing P1 work, repair the staff workspace and record unmet requirements. Later development is tracked on its own task rows.
 - Branch: feat/lms-build; origin https://github.com/ibrahimmaher2503-source/young-go-lms.git.
@@ -149,6 +150,21 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P4-01 — Preview access review
+
+- Ready: an inactive learner must be denied item and file access even when the lesson is a preview (A2, I01, PRD §10). Reuse EntitlementService, LessonAccessChecker and EntitlementServiceTest. At-risk entry points: player, private files and curriculum query.
+- AI: hook — AI eligibility consumes EntitlementService; replace AI stub. This correction preserves the existing LessonAccessChecker binding and assistant eligibility integration. No provider, UI or schema changes.
+- Evidence: extend A2 to cover suspended and deactivated accounts with a preview lesson and a current entitlement. Run the Entitlements, Learning and Invariants suites and requirement coverage before independent review.
+- Result: both inactive preview cases failed before the fix. Entitlements, Learning and Invariants passed 47 tests / 223 assertions with two existing TODOs using the English fixture locale. Requirement coverage, Pint and independent scoped QA review passed. Full T-P4-01 closure remains in review. The archived and unflagged attachment branches need separate T-P4-06 verification.
+- Worktree sync: base advanced to `7df6c04` (T-P4-03) from the local development branch. The previously reviewed P1 edits and captures are present in that history; the missing row geometry thresholds were restored in `ac60a95` and the actual 1568px browser case passed 36 assertions. The earlier isolated snapshot remains backed up.
+
+### T-P4-06 — Protected PDFs, resources and previews
+
+- Ready for the authorization slice after T-P4-03 and T-P3-08 implementations in review. PRD §9.7 and Checklist §6 require entitled download and explicit preview flags. Reuse SignedFileUrl, PrivateFileAccess, PrivateFileController and EntitlementService. No new tables.
+- AI: none — add nothing AI-related. Preserve assistant eligibility behavior except where its existing access dependency requires the authoritative entitlement.
+- A1/A2 evidence plan: use the real entitlement binding with a published preview lesson to distinguish a flagged resource from unflagged materials and curriculum PDF; then exercise a same-account grant, forwarding and expiry in the signed route. Preserve the T-P3-08 domain tests.
+- UI follows the lesson toolbar and existing authorized download primitives. Match the 07/17/06 task references when extending the resource list, with AR/EN viewport captures and visible state review before G7 closure.
 
 ### T-P2-01 — Categories and disciplines
 

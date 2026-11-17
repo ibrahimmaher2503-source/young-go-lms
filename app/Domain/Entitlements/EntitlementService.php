@@ -43,7 +43,7 @@ final class EntitlementService implements LessonAccessChecker
             return AccessDecision::deny('item_unpublished');
         }
 
-        if ($entity instanceof Lesson && $entity->is_preview) {
+        if ($entity instanceof Lesson && $entity->is_preview && $learner->getAttribute('status') === 'active') {
             return AccessDecision::allow();
         }
 

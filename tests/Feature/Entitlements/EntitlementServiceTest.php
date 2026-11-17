@@ -169,13 +169,16 @@ it('drops the request cache the moment access is granted or revoked', function (
     expect($service->canAccessItem($learner, $item)->allowed)->toBeFalse();
 })->group('T-P4-01', 'A2');
 
-it('denies suspended learners even with a current entitlement', function (): void {
+it('denies inactive learners even with a current entitlement or a preview lesson', function (string $status, bool $preview): void {
     [$course, $item, $learner] = entBuilt();
     entGrant($learner, $course);
-    $learner->forceFill(['status' => 'suspended'])->save();
+    $learner->forceFill(['status' => $status])->save();
+    $item->itemable->update(['is_preview' => $preview]);
 
-    expect(app(EntitlementService::class)->canAccessItem($learner, $item)->reason)->toBe('not_entitled');
-})->group('T-P4-01', 'A2');
+    $access = app(EntitlementService::class);
+    expect($access->canAccessItem($learner, $item->refresh())->reason)->toBe('not_entitled')
+        ->and($access->canAccessLessonFiles($learner, $item->itemable))->toBeFalse();
+})->with(['suspended', 'deactivated'])->with([true, false])->group('T-P4-01', 'A2', 'I01');
 
 it('lets staff grant access by hand without any payment (I05) and refuses everyone else', function (): void {
     [$course, , $learner, $admin] = entBuilt();
