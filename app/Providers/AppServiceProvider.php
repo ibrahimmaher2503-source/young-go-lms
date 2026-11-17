@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Entitlements\Contracts\LessonAccessChecker;
+use App\Domain\Entitlements\DenyLessonAccess;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\Lesson;
@@ -51,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Relation::morphMap(['lesson' => Lesson::class]);
+        // Fails closed until the EntitlementService exists (T-P4-01), which replaces this binding.
+        $this->app->bind(LessonAccessChecker::class, DenyLessonAccess::class);
 
         Gate::define('guardian.child.access', [GuardianAccess::class, 'parentCanAccessChild']);
 

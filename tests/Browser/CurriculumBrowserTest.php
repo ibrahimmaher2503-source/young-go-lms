@@ -6,10 +6,12 @@ use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Media\Actions\UploadCurriculumDocument;
 use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\HttpFoundation\File\File;
 
 uses(RefreshDatabase::class);
 
@@ -93,3 +95,27 @@ it('renders the lesson editor with the upload field accessibly in both direction
     }
     $page->screenshot(fullPage: false, filename: "T-P3-06/lesson-editor-{$locale}-{$width}");
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-06', 'A3', 'PRD-09.6');
+
+it('shows the curriculum PDF and material fields and the PDF badge accessibly', function (string $locale, int $width, int $height): void {
+    [$course, $instructor, , $items] = browserCurriculum($locale);
+    $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+    $path = tempnam(sys_get_temp_dir(), 'ygp');
+    file_put_contents($path, $pdf);
+    app(UploadCurriculumDocument::class)($instructor, $items[0]->itemable, new File($path));
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($instructor);
+
+    $page = $this->visit("/instructor/courses/{$course->id}/curriculum")->resize($width, $height);
+    $page->assertSee(__('curriculum.pdf_version', ['version' => 1], $locale));
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    $directory = base_path('tests/Browser/screenshots/T-P3-08');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: true, filename: "T-P3-08/lesson-pdf-badge-{$locale}-{$width}");
+
+    $page->click("[data-item=\"{$items[0]->id}\"] .yg-cur-actions button:nth-child(3)")->wait(1.5);
+    $page->script("() => document.querySelector('[id\$=\"curriculum_pdf\"]')?.scrollIntoView({block: 'center'})");
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    $page->screenshot(fullPage: false, filename: "T-P3-08/lesson-editor-pdf-{$locale}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-08', 'A2', 'PRD-09.7');

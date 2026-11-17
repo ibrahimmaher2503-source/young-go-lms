@@ -31,7 +31,7 @@ final class CurriculumOutline
     public static function forManager(Course $course): Collection
     {
         return CourseSection::query()->where('course_id', $course->getKey())->whereNull('archived_at')->orderBy('sort')->orderBy('id')
-            ->with(['items' => static fn ($items) => self::activeItems($items)->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media']])])->orderBy('sort')->orderBy('id')])->get();
+            ->with(['items' => static fn ($items) => self::activeItems($items)->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media', 'resources', 'curriculumDocuments']])])->orderBy('sort')->orderBy('id')])->get();
     }
 
     /** @return Collection<int, CourseSection> */

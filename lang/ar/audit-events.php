@@ -27,4 +27,8 @@ return [
     'curriculum.lesson_archived' => 'أرشفة درس',
     'media.attached' => 'إرفاق وسائط بدرس',
     'media.exception_granted' => 'منح استثناء لوسائط مفتوحة',
+    'curriculum_document.uploaded' => 'رفع ملف المنهج PDF',
+    'curriculum_document.approved' => 'اعتماد ملف المنهج PDF',
+    'lesson_resource.added' => 'إضافة مورد للدرس',
+    'lesson_resource.removed' => 'حذف مورد من الدرس',
 ];

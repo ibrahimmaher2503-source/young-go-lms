@@ -199,3 +199,37 @@ it('rejects a wrong file type from the lesson editor and saves links and text so
     $test->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), ['title' => ['en' => 'Tools renamed'], 'type' => 'video']);
     expect($items[0]->itemable->refresh()->media->provider)->toBe('youtube');
 })->group('T-P3-06', 'A1', 'A2');
+
+it('saves a curriculum PDF and lesson material from the lesson editor and shows them on the row', function (): void {
+    Storage::fake('local');
+    [$course, $instructor, , $items] = cpBuilt();
+    $this->actingAs($instructor);
+    $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 2>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\n4 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
+            'title' => ['en' => 'Tools'], 'type' => 'video',
+            'curriculum_pdf' => UploadedFile::fake()->createWithContent('plan.pdf', $pdf),
+            'resource_file' => UploadedFile::fake()->createWithContent('sheet.pdf', $pdf), 'resource_title' => ['en' => 'Practice sheet'], 'resource_downloadable' => true,
+        ])->assertHasNoActionErrors()->assertSee(__('curriculum.pdf_version', ['version' => 1]))->assertSee(__('curriculum.resources_count', ['count' => 1]));
+
+    $lesson = $items[0]->itemable->refresh();
+    expect($lesson->curriculumDocuments)->toHaveCount(1)->and($lesson->resources)->toHaveCount(1)->and($lesson->resources->first()->getTranslation('title', 'en'))->toBe('Practice sheet')
+        ->and(Storage::disk('local')->allFiles('documents/uploads'))->toBe([])
+        ->and(Storage::disk('local')->allFiles('resources/uploads'))->toBe([]);
+})->group('T-P3-08', 'A2');
+
+it('refuses an encrypted curriculum PDF from the editor and keeps nothing', function (): void {
+    Storage::fake('local');
+    [$course, $instructor, , $items] = cpBuilt();
+    $this->actingAs($instructor);
+    $bad = "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\ntrailer<</Root 1 0 R/Encrypt 9 0 R>>\n%%EOF\n";
+
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
+            'title' => ['en' => 'Tools renamed'], 'type' => 'video', 'curriculum_pdf' => UploadedFile::fake()->createWithContent('plan.pdf', $bad),
+        ])->assertNotified();
+
+    expect($items[0]->itemable->refresh()->curriculumDocuments)->toHaveCount(0)->and($items[0]->itemable->getTranslation('title', 'en'))->toBe('Tools')
+        ->and(Storage::disk('local')->allFiles())->toBe([]);
+})->group('T-P3-08', 'A3');

@@ -29,4 +29,10 @@ return [
         'ready' => 'Ready',
         'failed' => 'Failed',
     ],
+    'pdf_invalid' => 'This is not a readable PDF.',
+    'pdf_encrypted' => 'Password-protected PDFs are not accepted. Remove the protection and upload again.',
+    'pdf_active_content' => 'This PDF contains scripts or embedded files and cannot be accepted.',
+    'pdf_too_large' => 'The PDF is empty or larger than :mb MB.',
+    'pdf_too_many_pages' => 'The PDF has more than :max pages.',
+    'pdf_failed_version' => 'This version failed checks and cannot be approved.',
 ];

@@ -75,4 +75,17 @@ return [
         'rich_text' => 'Write text',
         'image' => 'Upload an image (protected)',
     ],
+    'curriculum_pdf' => 'Curriculum PDF',
+    'curriculum_pdf_help' => 'One PDF per lesson, up to 25 MB and 120 pages, not password-protected. A new file becomes a new version; the current one stays in use until the new one is approved.',
+    'resource_file' => 'Lesson material',
+    'resource_file_help' => 'A PDF, text file or image students can download.',
+    'resource_title' => 'Material title',
+    'resource_downloadable' => 'Students can download it',
+    'pdf_version' => 'PDF v:version',
+    'pdf_status' => [
+        'uploaded' => 'Uploaded',
+        'ready' => 'Approved',
+        'failed' => 'Failed',
+    ],
+    'resources_count' => ':count materials',
 ];

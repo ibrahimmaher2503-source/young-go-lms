@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
@@ -36,6 +37,24 @@ final class Lesson extends Model
     public function media(): HasOne
     {
         return $this->hasOne(MediaAsset::class);
+    }
+
+    /** @return HasMany<LessonResource, $this> */
+    public function resources(): HasMany
+    {
+        return $this->hasMany(LessonResource::class)->orderBy('sort')->orderBy('id');
+    }
+
+    /** @return HasMany<LessonCurriculumDocument, $this> */
+    public function curriculumDocuments(): HasMany
+    {
+        return $this->hasMany(LessonCurriculumDocument::class)->orderByDesc('version');
+    }
+
+    /** The version learners and the AI use: active and READY. Null when nothing has been approved yet. */
+    public function activeCurriculumDocument(): ?LessonCurriculumDocument
+    {
+        return $this->curriculumDocuments()->where('active', true)->where('status', LessonCurriculumDocument::STATUS_READY)->first();
     }
 
     /** @return MorphOne<CurriculumItem, $this> */

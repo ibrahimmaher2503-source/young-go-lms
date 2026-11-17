@@ -27,4 +27,8 @@ return [
     'curriculum.lesson_archived' => 'Lesson archived',
     'media.attached' => 'Lesson media attached',
     'media.exception_granted' => 'Open media exception granted',
+    'curriculum_document.uploaded' => 'Curriculum PDF uploaded',
+    'curriculum_document.approved' => 'Curriculum PDF approved',
+    'lesson_resource.added' => 'Lesson resource added',
+    'lesson_resource.removed' => 'Lesson resource removed',
 ];

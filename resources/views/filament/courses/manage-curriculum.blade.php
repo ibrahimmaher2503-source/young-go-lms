@@ -116,6 +116,13 @@
                                 @if($lesson->media)
                                     <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.$lesson->media->protection_tier) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
                                 @endif
+                                @php($document = $lesson->curriculumDocuments->first())
+                                @if($document)
+                                    <span class="yg-cur-badge" title="{{ __('curriculum.curriculum_pdf') }}">{{ __('curriculum.pdf_version', ['version' => $document->version]) }} · {{ __('curriculum.pdf_status.'.$document->status) }}</span>
+                                @endif
+                                @if($lesson->resources->count() > 0)
+                                    <span class="yg-cur-meta">{{ __('curriculum.resources_count', ['count' => $lesson->resources->count()]) }}</span>
+                                @endif
                                 @if($lesson->media && $lesson->media->status !== 'ready')
                                     <span class="yg-cur-badge">{{ __('media.status.'.$lesson->media->status) }}</span>
                                 @endif

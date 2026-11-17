@@ -75,4 +75,17 @@ return [
         'rich_text' => 'كتابة نص',
         'image' => 'رفع صورة (محمي)',
     ],
+    'curriculum_pdf' => 'ملف المنهج PDF',
+    'curriculum_pdf_help' => 'ملف PDF واحد لكل درس، حتى 25 ميجابايت و120 صفحة، دون كلمة مرور. الملف الجديد يصبح إصداراً جديداً، ويبقى الحالي قيد الاستخدام حتى يُعتمد الجديد.',
+    'resource_file' => 'مادة الدرس',
+    'resource_file_help' => 'ملف PDF أو نص أو صورة يمكن للطلاب تنزيله.',
+    'resource_title' => 'عنوان المادة',
+    'resource_downloadable' => 'يمكن للطلاب تنزيلها',
+    'pdf_version' => 'PDF إصدار :version',
+    'pdf_status' => [
+        'uploaded' => 'مرفوع',
+        'ready' => 'معتمد',
+        'failed' => 'فشل',
+    ],
+    'resources_count' => ':count مواد',
 ];

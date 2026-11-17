@@ -11,6 +11,8 @@ use App\Domain\Curriculum\Actions\ReorderCurriculum;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Media\Actions\ManageLessonResources;
+use App\Domain\Media\Actions\UploadCurriculumDocument;
 use App\Domain\Media\Actions\UploadLessonMedia;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\Providers\PrivateFileProvider;
@@ -251,6 +253,15 @@ final class ManageCurriculum extends Page
                 ->visible(static fn (Get $get): bool => in_array($get('media_provider'), self::LINK_PROVIDERS, true)),
             Textarea::make('media_text')->label(__('curriculum.media_text'))->rows(5)->maxLength(20000)
                 ->visible(static fn (Get $get): bool => $get('media_provider') === 'rich_text'),
+            FileUpload::make('curriculum_pdf')->label(__('curriculum.curriculum_pdf'))->helperText(__('curriculum.curriculum_pdf_help'))
+                ->disk(Config::string('media.disk'))->directory('documents/uploads')->visibility('private')->maxSize(Config::integer('media.pdf_max_kilobytes'))
+                ->extraInputAttributes(['accept' => 'application/pdf'])->preserveFilenames(false),
+            FileUpload::make('resource_file')->label(__('curriculum.resource_file'))->helperText(__('curriculum.resource_file_help'))
+                ->disk(Config::string('media.disk'))->directory('resources/uploads')->visibility('private')->maxSize(Config::integer('media.resource_max_kilobytes'))
+                ->extraInputAttributes(['accept' => 'application/pdf,text/plain,image/png,image/jpeg,image/webp'])->preserveFilenames(false),
+            TextInput::make('resource_title.ar')->label(__('curriculum.resource_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+            TextInput::make('resource_title.en')->label(__('curriculum.resource_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+            Toggle::make('resource_downloadable')->label(__('curriculum.resource_downloadable'))->default(true),
         ]));
     }
 
@@ -266,6 +277,42 @@ final class ManageCurriculum extends Page
             $action->halt();
 
             return false;
+        }
+    }
+
+    /**
+     * Curriculum PDF and lesson material from the lesson form. The staging copies Filament made are always removed.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function saveDocuments(Lesson $lesson, array $data): void
+    {
+        $disk = Storage::disk(Config::string('media.disk'));
+        $stage = static function (mixed $value): ?string {
+            $value = is_array($value) ? (reset($value) ?: null) : $value;
+
+            return is_string($value) && $value !== '' ? $value : null;
+        };
+
+        $pdf = $stage($data['curriculum_pdf'] ?? null);
+        if ($pdf !== null) {
+            try {
+                app(UploadCurriculumDocument::class)($this->actor(), $lesson, new File($disk->path($pdf)));
+            } finally {
+                $disk->delete($pdf);
+            }
+        }
+
+        $resource = $stage($data['resource_file'] ?? null);
+        if ($resource !== null) {
+            try {
+                $title = array_filter((array) ($data['resource_title'] ?? []), static fn ($v): bool => is_string($v) && trim($v) !== '');
+                app(ManageLessonResources::class)->addFile($this->actor(), $lesson, new File($disk->path($resource)), [
+                    'title' => $title === [] ? ['en' => basename($resource)] : $title, 'downloadable' => (bool) ($data['resource_downloadable'] ?? true),
+                ]);
+            } finally {
+                $disk->delete($resource);
+            }
         }
     }
 
@@ -307,6 +354,8 @@ final class ManageCurriculum extends Page
      */
     private function saveMedia(Lesson $lesson, array $data): void
     {
+        $this->saveDocuments($lesson, $data);
+
         $provider = $data['media_provider'] ?? null;
         if (! is_string($provider) || $provider === '') {
             return;

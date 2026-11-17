@@ -17,4 +17,11 @@ return [
 
     // Upload ceiling for private files, in kilobytes (used by T-P3-06).
     'max_kilobytes' => 2097152,
+
+    // Lesson materials (PDF, text, images) in kilobytes.
+    'resource_max_kilobytes' => 51200,
+
+    // Curriculum PDF limits (AI spec 6.1 defaults): 25 MB and 120 pages.
+    'pdf_max_kilobytes' => 25600,
+    'pdf_max_pages' => 120,
 ];

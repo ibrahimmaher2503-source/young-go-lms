@@ -60,6 +60,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | CurriculumOutline + curriculum Actions | `app/Domain/Curriculum/` | Section/lesson management, atomic reorder, bulk status, one ordered query for authors and students | built | T-P3-04 |
 | MediaProviders + VideoDeliveryProvider drivers, AttachLessonMedia, GrantMediaException, LessonPublishRule | `app/Domain/Media/` | Provider-neutral lesson media, protection tiers, paid-lesson T3 rule | built | T-P3-05 |
 | UploadLessonMedia + ImageReencoder | `app/Domain/Media/Actions/UploadLessonMedia.php`, `app/Domain/Media/ImageReencoder.php` | Safe private uploads: content-based type check, random names, EXIF stripping | built | T-P3-06 |
+| SignedFileUrl + PrivateFileAccess + PrivateFileController, LessonAccessChecker | `app/Domain/Media/`, `app/Domain/Entitlements/`, `app/Http/Controllers/PrivateFileController.php` | Signed, account-bound private downloads; entitlement stub that fails closed | built | T-P3-08 |
+| UploadCurriculumDocument + ApproveCurriculumDocument + PdfInspector + ManageLessonResources | `app/Domain/Media/Actions/`, `app/Domain/Media/PdfInspector.php` | Versioned curriculum PDF (AI source foundation) and lesson materials | built | T-P3-08 |
 | LocalizedDateColumn | `app/Filament/Shared/Tables/` | Date in user tz | built | T-P1-08 |
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |
 | SeoFieldsGroup | `app/Filament/Shared/Forms/` | Bilingual SEO fields | planned | T-P2-05 |
