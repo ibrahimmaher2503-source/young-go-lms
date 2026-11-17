@@ -15,6 +15,7 @@ use App\Filament\Resources\Courses\Pages\CourseLearnersPage;
 use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
+use App\Filament\Resources\Courses\Pages\ManageCourseCohorts;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
 use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
@@ -108,6 +109,9 @@ final class CourseResource extends FilamentResource
             Action::make('curriculum')->label(__('curriculum.curriculum'))->icon('heroicon-o-queue-list')
                 ->url(static fn (Course $record): string => self::getUrl('curriculum', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => Gate::allows('update', $record)),
+            Action::make('cohorts')->label(__('cohorts.title'))->icon('heroicon-o-user-group')
+                ->url(static fn (Course $record): string => self::getUrl('cohorts', ['record' => $record]))
+                ->visible(static fn (Course $record): bool => in_array($record->format, ['live', 'hybrid'], true) && Auth::user()?->can('live_session.manage') === true && Gate::allows('update', $record)),
             Action::make('learners')->label(__('courses.learners_title'))->icon('heroicon-o-users')
                 ->url(static fn (Course $record): string => self::getUrl('learners', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => Auth::user()?->can('learner.progress.view') === true && Gate::allows('view', $record)),
@@ -166,6 +170,7 @@ final class CourseResource extends FilamentResource
             'view' => ViewCourse::route('/{record}'),
             'edit' => EditCourse::route('/{record}/edit'),
             'curriculum' => ManageCurriculum::route('/{record}/curriculum'),
+            'cohorts' => ManageCourseCohorts::route('/{record}/cohorts'),
             'learners' => CourseLearnersPage::route('/{record}/learners'),
             'document' => ReviewCurriculumDocument::route('/{record}/curriculum/documents/{document}'),
         ];

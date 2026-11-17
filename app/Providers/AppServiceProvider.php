@@ -11,6 +11,7 @@ use App\Domain\AI\Ingestion\PdftoppmRenderer;
 use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
+use App\Domain\Cohorts\CohortHistory;
 use App\Domain\Entitlements\Contracts\CompletionLookup;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\EntitlementHistory;
@@ -82,7 +83,7 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
-        $this->app->tag([EntitlementHistory::class, ProgressHistory::class], 'course.history');
+        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);

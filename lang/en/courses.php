@@ -73,7 +73,7 @@ return [
     'deleted' => 'Course deleted.',
     'delete_confirm' => 'A course is deleted only if nobody ever had access to it. Otherwise archive it instead.',
     'delete_blocked' => 'This course cannot be deleted because it has history (:reasons). Archive it instead.',
-    'blocked' => ['entitlements' => 'access grants', 'progress' => 'learner progress', 'orders' => 'orders', 'attempts' => 'quiz attempts'],
+    'blocked' => ['cohorts' => 'cohorts', 'entitlements' => 'access grants', 'progress' => 'learner progress', 'orders' => 'orders', 'attempts' => 'quiz attempts'],
     'sequence_mode' => 'Lesson order',
     'sequence_mode_help' => 'Free: learners may open any open lesson. Sequential: a lesson opens after the required lessons before it are completed.',
     'sequence' => ['free' => 'Free order', 'sequential' => 'Sequential'],

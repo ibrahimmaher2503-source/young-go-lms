@@ -43,6 +43,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ErrorReporter | `app/Domain/Shared/Observability/` | Local exception reporting adapter | built | T-P0-07 |
 | app:doctor / app:req-coverage | `app/Console/Commands/` | Health check / requirement coverage (G10, G11) | built | T-P0-07 |
 | AccessDecision + canAccessItem() | `app/Domain/Entitlements/` | Layered access with reason codes | planned | T-P4-09 |
+| ReserveCohortSeat / JoinWaitlist / PromoteFromWaitlist | `app/Domain/Cohorts/Actions/` | Seat, waitlist and promotion hooks for checkout and manual grants | built | T-P5-01 |
 | RecordProgress | `app/Domain/Learning/Actions/` | Only writer of progress | planned | T-P4-04 |
 | HtmlSanitizer | `app/Domain/Shared/Security/` | Single sanitizer (rich text, messages) | planned | T-P3-15 |
 | ImageReencoder | `app/Domain/Media/` | Strip EXIF/GPS on upload | planned | T-P3-08 |
