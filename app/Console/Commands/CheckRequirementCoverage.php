@@ -88,7 +88,7 @@ final class CheckRequirementCoverage extends Command
                     preg_match('/^- refs:\h*(.*)$/m', $body, $refs);
                     preg_match_all('/\b'.self::REQUIREMENT.'\b/', $refs[1] ?? '', $requirements);
                     preg_match('/^\*\*Acceptance\*\*\h*\R(.*?)(?=^\*\*|\z)/ms', $body, $acceptance);
-                    preg_match_all('/^-\h+(A\d+)\b/m', $acceptance[1] ?? '', $items);
+                    preg_match_all('/^-\h+(?:\[[ xX]\]\h+)?(A\d+)\b/m', $acceptance[1] ?? '', $items);
                     $tasks[$id] = $items[1] === [] ? [] : array_values(array_unique([...$items[1], ...$requirements[0]]));
                 }
             }

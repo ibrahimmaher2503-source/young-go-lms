@@ -564,3 +564,18 @@
 .yg-workspace-main .fi-ta-text-item:not(.fi-ta-text-has-badges) { font-size: var(--yg-font-label); }
 
 .yg-workspace-main .fi-ta-actions .fi-icon-btn { margin: 0; }
+
+/* Native paginator state and item components, presented like the D-026 reference. */
+.yg-workspace-pagination ~ .fi-pagination { display: none; }
+.yg-workspace-pagination.fi-pagination { display: flex; justify-content: space-between; gap: 1rem; padding: var(--yg-space-card); }
+.yg-workspace-pagination.fi-pagination .fi-pagination-overview { display: block; order: 2; font-size: var(--yg-font-label); }
+.yg-workspace-pagination.fi-pagination .fi-pagination-items { display: flex; flex-wrap: wrap; gap: 0.5rem; order: 1; border-radius: 0; box-shadow: none; background: transparent; }
+.yg-workspace-pagination.fi-pagination .fi-pagination-item { border: 1px solid var(--yg-color-border); border-radius: var(--yg-radius-control); }
+.yg-workspace-pagination.fi-pagination .fi-pagination-item-btn { min-inline-size: 2.75rem; min-block-size: 2.75rem; justify-content: center; align-items: center; border-radius: inherit; }
+.yg-workspace-pagination.fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-btn { background: var(--yg-color-primary); }
+.yg-workspace-pagination.fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-label { color: var(--yg-color-on-primary); }
+.yg-workspace-pagination.fi-pagination .fi-pagination-item.fi-disabled { opacity: 0.6; }
+@media (max-width: 47.999rem) {
+    .yg-workspace-pagination.fi-pagination { gap: 0.75rem; padding: 1rem; }
+    .yg-workspace-pagination.fi-pagination .fi-pagination-overview { font-size: var(--yg-font-small); }
+}

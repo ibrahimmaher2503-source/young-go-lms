@@ -20,7 +20,7 @@ beforeEach(function () {
 
 **Acceptance**
 - A1 Explicitly verified.
-- A2 Requires evidence.
+- [ ] A2 Requires evidence.
 MD);
     $fs->put($this->coverageRoot.'/tests/FixtureTest.php', <<<'PHP'
 <?php

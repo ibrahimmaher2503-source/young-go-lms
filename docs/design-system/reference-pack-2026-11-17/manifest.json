@@ -1,0 +1,547 @@
+{
+  "project": "Young Go LMS",
+  "date": "2026-11-17",
+  "owner_reference": "00-owner-approved-users.png",
+  "generator": "Built-in image_gen.imagegen",
+  "meaning": "Visual references only; PRD governs behavior, permissions, fields, policies and actual data.",
+  "component_map": "COMMON_COMPONENTS.md",
+  "screens": [
+    {
+      "id": "00-owner-approved-users",
+      "title": "الريفيرنس الأصلي — إدارة المستخدمين",
+      "file": "00-owner-approved-users.png",
+      "family": "owner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "owner-approved-style-reference",
+      "prd": [
+        "D-026",
+        "PRD §19.1"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "ff65166b68728b3ef0873f7819107ee0bf052dc1be5ad162b9fa05b2a7c6e8ee"
+    },
+    {
+      "id": "01-admin-overview",
+      "title": "نظرة عامة للإدارة",
+      "file": "01-admin-overview-v2.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §19.1",
+        "PRD §21"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C10"
+      ],
+      "width": 1567,
+      "height": 1004,
+      "sha256": "a1fef7fe7f619737b04bdda42ac51bb3a1026c552fa1d44fead01929da2e61c9"
+    },
+    {
+      "id": "02-course-directory",
+      "title": "إدارة الدورات",
+      "file": "02-course-directory.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §9.1",
+        "PRD §9.3",
+        "PRD §19.1"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "9bb4d28a14c379f32771d6f66345f66d3efc361092ab8362604b0659793ed9be"
+    },
+    {
+      "id": "03-curriculum-builder",
+      "title": "بناء المنهج وإعداد الدرس",
+      "file": "03-curriculum-builder.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §9.5",
+        "PRD §9.6",
+        "PRD §9.7",
+        "AI spec §6"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C06",
+        "C11",
+        "C14",
+        "C15"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "7cda2de8f6810fedaf7f5378fc92f0681abdaeaea4bba40f840f7bc3708ab320"
+    },
+    {
+      "id": "04-learner-dashboard",
+      "title": "لوحة الطالب",
+      "file": "04-learner-dashboard.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.1",
+        "PRD §11–14",
+        "UX J04/J06"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C12",
+        "C13"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "1446b312a39ac64162cc81554fdf92bded52c0dcaf6804e7f901caecad39bf0b"
+    },
+    {
+      "id": "05-public-course-catalog",
+      "title": "كتالوج الدورات",
+      "file": "05-public-course-catalog-v2.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §8 YG-WEB-003",
+        "PRD §4.2"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C08",
+        "C12"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "d6d5f223d1d6a1a8ad94cc5a955383e5e6300858ebea7f59dc6c29a0985dc5e9"
+    },
+    {
+      "id": "06-public-course-detail",
+      "title": "تفاصيل الدورة",
+      "file": "06-public-course-detail-v2.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §8 YG-WEB-004",
+        "PRD §17.1–17.3"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C12",
+        "C14",
+        "C19"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "c8841df9410bed8d465001ac98de5a9aeee384096b46acce4080dada374c721b"
+    },
+    {
+      "id": "07-recorded-player-ai",
+      "title": "مشغل الدرس ومساعد الدرس",
+      "file": "07-recorded-player-ai-v2.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.2",
+        "PRD §15",
+        "AI spec §2–4/15"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C06",
+        "C13",
+        "C14",
+        "C16",
+        "C17"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "0556a98c7a4ef2a681f0ea77bcb5ac2adddee6b25c7ec7c9174d3cee57511ad4"
+    },
+    {
+      "id": "08-parent-dashboard",
+      "title": "لوحة ولي الأمر",
+      "file": "08-parent-dashboard-v2.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §5.2",
+        "PRD §29.1",
+        "PRD §16",
+        "Decision Register O-016"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C13",
+        "C18",
+        "C22"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "a398488b99c5f7940465da0577abbf39c4673efacf3b3959fa7dd431fb6e9b9a"
+    },
+    {
+      "id": "09-instructor-help-workspace",
+      "title": "طلبات المساعدة للمدرب",
+      "file": "09-instructor-help-workspace-v2.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §16",
+        "AI spec §12",
+        "UX J11"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C10",
+        "C18"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "10aa396a1fd2d2453f76adec9fe9fc51cb4746bfc3e5b4cef557d91bc82e3522"
+    },
+    {
+      "id": "10-finance-ledger",
+      "title": "دفتر المدربين والتسويات",
+      "file": "10-finance-ledger-v2.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §17.4",
+        "PRD §21",
+        "UX J10"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C19"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "b1da0347de0d2cca44dd635ff24eeb7e4de247023ca65905d962f593a8b4f07e"
+    },
+    {
+      "id": "11-egypt-checkout",
+      "title": "إتمام الطلب والدفع",
+      "file": "11-egypt-checkout.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §17.3",
+        "PRD §29.6",
+        "UX J09"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C11",
+        "C19"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "a06e8dcd24477b2c51d758c2bc5a62da4e1be0ff035e82b7219108d937a32713"
+    },
+    {
+      "id": "12-quiz-attempt",
+      "title": "محاولة اختبار",
+      "file": "12-quiz-attempt.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §12",
+        "AI spec §8.3",
+        "UX J07"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C20"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "8e4b46a42bb13286317aa690ed65f5182f8a39f7f0cf4e6256e3fc7a0b7b6baa"
+    },
+    {
+      "id": "13-course-wizard",
+      "title": "معالج إنشاء الدورة",
+      "file": "13-course-wizard-v2.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §9.2",
+        "PRD §9.4"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C06",
+        "C11",
+        "C13",
+        "C21"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "b1c9b2f1d18d70991e3e636a4a313d668fbe2be9f55d71b193633743ff7cf6b0"
+    },
+    {
+      "id": "14-manual-payment-review",
+      "title": "مراجعة إثبات دفع يدوي",
+      "file": "14-manual-payment-review.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §17.3",
+        "PRD §29.6",
+        "PRD §22"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C11",
+        "C19"
+      ],
+      "width": 1569,
+      "height": 1003,
+      "sha256": "64d76426efa130cf12a496d48d32c53e40407de6a549920e2c0920d7899bc0e3"
+    },
+    {
+      "id": "15-public-home",
+      "title": "الصفحة الرئيسية العامة",
+      "file": "15-public-home.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §8 YG-WEB-002",
+        "PRD §4.1"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C06",
+        "C12"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "2b89eeb48cd522d5a94cf46f523cea2bc353829ccbc767d84eea43f52a75e429"
+    },
+    {
+      "id": "16-mobile-learner-dashboard",
+      "title": "لوحة الطالب على الموبايل",
+      "file": "16-mobile-learner-dashboard.png",
+      "family": "mobile",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.1",
+        "PRD §24",
+        "UX J04"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C06",
+        "C12",
+        "C13",
+        "C24"
+      ],
+      "width": 852,
+      "height": 1846,
+      "sha256": "3a5a14875478a3f4d1360d3df20391cc87ffe2241d4d849d64af50ffaee159fc"
+    },
+    {
+      "id": "17-mobile-lesson-assistant",
+      "title": "مساعد الدرس على الموبايل",
+      "file": "17-mobile-lesson-assistant.png",
+      "family": "mobile",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.2",
+        "PRD §15",
+        "AI spec §15"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C06",
+        "C14",
+        "C16",
+        "C17",
+        "C24"
+      ],
+      "width": 852,
+      "height": 1846,
+      "sha256": "f780003d86a7a11184e18e49c9df96caa8cd1fe003121e0446736d5c8a6f8284"
+    },
+    {
+      "id": "18-shared-component-library",
+      "title": "مكتبة العناصر المشتركة",
+      "file": "18-shared-component-library-v2.png",
+      "family": "components",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §29.13",
+        "Design system §2/4/6",
+        "UX §3/5"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C20",
+        "C21",
+        "C22",
+        "C23",
+        "C24"
+      ],
+      "width": 1448,
+      "height": 1086,
+      "sha256": "102dec318f00f37d2aa470db7979121339449870dfb0e8fa43cb229b2279ebbf"
+    },
+    {
+      "id": "19-course-directory-en",
+      "title": "إدارة الدورات — English LTR",
+      "file": "19-course-directory-en-v2.png",
+      "family": "staff",
+      "locale": "en",
+      "direction": "ltr",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §4.3",
+        "PRD §19.1",
+        "Design system §4"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10"
+      ],
+      "width": 1568,
+      "height": 1003,
+      "sha256": "952f31bb852cf8025ef19ca70f3736e627b8da38eb6d07d9d9424e1024c7514a"
+    }
+  ]
+}
