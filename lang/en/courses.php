@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'course' => 'Course',
+    'title' => 'Courses',
+    'name' => 'Course title',
+    'category' => 'Category',
+    'instructors' => 'Instructors',
+    'unassigned' => 'Unassigned',
+    'unconfigured' => 'Unconfigured',
+    'access' => 'Access mode',
+    'status' => 'Status',
+    'active' => 'Active',
+    'paid' => 'Paid',
+    'free' => 'Free',
+    'upcoming' => 'Upcoming',
+    'suspended' => 'Suspended',
+    'draft' => 'Draft',
+    'pending_review' => 'Pending review',
+    'published' => 'Published',
+    'private' => 'Private',
+    'archived' => 'Archived',
+    'feature' => 'Feature',
+    'unfeature' => 'Remove from featured',
+    'ownership' => 'Ownership',
+    'academy' => 'Academy-owned',
+    'independent' => 'Independent instructor',
+    'format' => 'Format',
+    'recorded' => 'Recorded',
+    'live' => 'Live',
+    'hybrid' => 'Hybrid',
+    'description' => 'Description',
+];

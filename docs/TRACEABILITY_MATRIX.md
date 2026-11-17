@@ -24,10 +24,10 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | PRD §7 | Core user journeys | journeys → 15_UX + qa-verifier | |
 | PRD §8 | Public website, catalog and CMS requirements | T-P2-09 | |
 | PRD §9 | Course management and Course Builder | T-P2-05, T-P3-01, T-P3-02, T-P3-03, T-P3-04, T-P3-05, T-P3-06, T-P3-08, T-P3-12, T-P4-06 | |
-| PRD §9.1 | Course management list | T-P3-01, T-P3-12 | |
+| PRD §9.1 | Course management list | T-P3-01, T-P3-12 | `tests/Feature/Invariants/I02_CourseScopeTest.php` (scoped list and counts) |
 | PRD §9.2 | Multi-step course wizard \[LEGACY-CARRY\] | T-P2-05, T-P3-02, T-P3-03 | |
-| PRD §9.3 | Course status | T-P3-01 | |
-| PRD §9.4 | Course ownership and instructor model \[APPROVED\] | T-P3-01, T-P3-03 | |
+| PRD §9.3 | Course status | T-P3-01 | `tests/Feature/Invariants/I02_CourseScopeTest.php` (publication and counts) |
+| PRD §9.4 | Course ownership and instructor model \[APPROVED\] | T-P3-01, T-P3-03 | `tests/Feature/Invariants/I02_CourseScopeTest.php` (assignment and approval boundary) |
 | PRD §9.5 | Curriculum manager | T-P3-04, T-P3-12 | |
 | PRD §9.6 | Lesson creation flow \[APPROVED DIRECTION\] | T-P3-05, T-P3-06 | |
 | PRD §9.7 | Lesson curriculum PDF \[APPROVED\] | T-P3-08, T-P4-06 | |
@@ -171,7 +171,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | D-004 | Owner decision | T-P10-01, T-P10-04, T-P10-05 | |
 | D-005 | Owner decision | T-P1-07 | |
 | D-006 | Owner decision | T-P1-05, T-P1-06, T-P4-08 | |
-| D-007 | Owner decision | T-P3-01, T-P3-03, T-P9-01 | |
+| D-007 | Owner decision | T-P3-01, T-P3-03, T-P9-01 | `tests/Feature/Invariants/I02_CourseScopeTest.php` (course ownership) |
 | D-008 | Owner decision | T-P8-01, T-P8-07, T-P8-08 | |
 | D-009 | Owner decision | T-P0-06, T-P8-13 | |
 | D-010 | Owner decision | T-P8-13, T-P12-01 | |

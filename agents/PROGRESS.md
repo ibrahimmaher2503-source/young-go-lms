@@ -46,7 +46,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P2-08 | Contact enquiries and newsletter | todo | T-P2-03 | implementer, ui-builder, test-writer | S | normal | | |
 | T-P2-09 | Instructor profiles and category landing pages | todo | T-P2-04, T-P2-06 | implementer, ui-builder, test-writer | S | normal | | |
 | T-P2-MG | Milestone gate P2 | todo | T-P2-01..09 | orchestrator | S | normal | | |
-| T-P3-01 | Course domain, ownership and course list | todo | T-P1-07, T-P1-08, T-P2-01, T-P9-01 | implementer, test-writer, chore | L | high | | |
+| T-P3-01 | Course domain, ownership and course list | review | T-P1-07, T-P1-08, T-P2-01 | implementer, test-writer, chore | L | high | | See task log |
 | T-P3-02 | Course wizard: Basic and Information steps | todo | T-P3-01 | implementer, ui-builder, test-writer, chore | M | normal | | |
 | T-P3-03 | Course wizard: Pricing, Media, SEO, Custom fields, Finish and approval | todo | T-P3-02, T-P2-05 | implementer, ui-builder, test-writer | L | high | | |
 | T-P3-04 | Curriculum manager | todo | T-P3-01 | implementer, ui-builder, test-writer | L | normal | | |
@@ -141,6 +141,17 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P3-01 — Course domain, ownership and course list
+
+- Outcome: admin and instructors can see a permission-scoped course directory with accurate summaries (PRD §9.1, §9.3, §9.4, D-007, Roadmap M3.1).
+- Reuse `Category`, `HasSearchText`, `ArabicNormalizer`, `AgeRange`, `BasePolicy`, `WorkspaceListRecords`, `ExportCsvAction`, and existing role catalog/Pennant flag. AI: hook — course `ai_enabled` default on, effective only when global flag on.
+- UI: native admin/instructor table with summaries, search/filters, read-only details and permission-gated feature action. Preserve built-in empty/loading/error behavior. Wizard, public details, curriculum, enrollment counts and checkout depend on later tasks.
+- Data: `courses` with bilingual title/short/body and unique locale slugs, category, age and ownership fields, publication enum, access-mode placeholder, featured and AI flags. `course_instructors` with unique course/instructor key and role/scope.
+- S0 tests for A1 role-scoped list and 404, A2 independent publishing denial, A3 real counters, and course AI hook. Then migration/enums/model, policies/queries/actions, and resource/screenshots/AR/EN keys. Visual deferred per PO.
+- S0 RED: 3 failures from absent course model/status. GREEN: `I02_CourseScopeTest.php` 3/24, including out-of-scope direct 404, view-only assignment, normalized query scope, independent publish denial, academy publish, counters and global/local AI flag.
+- G1 Pint, G2 Larastan, G6 translations/RTL/audit/build/migrate+seed, G10 requirement coverage and G11 doctor passed. G3 full non-browser: 319 passed / 1792 assertions, 93.1% coverage, 1 pre-existing I02 TODO; module coverage verifier exited 0. G4 architecture 6/29. G5 invariants 6/33 with the same TODO. `agents/logs/T-P3-01/`.
+- G7 browser: 16/192, 32 screenshots for list/details in both panels and locales at 390/1440, light/dark. `tests/Browser/screenshots/T-P3-01/`. Visual deferred per PO. G8/G9 N/A. Independent PRD, QA and high-risk reviewer verdicts pending.
 
 ### T-P2-02 — CMS pages and homepage blocks
 

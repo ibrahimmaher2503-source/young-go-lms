@@ -13,6 +13,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ArabicNormalizer | `app/Domain/Shared/Search/ArabicNormalizer.php` | Single Arabic/Latin normalization | built | T-P0-06 |
 | HasSearchText | `app/Domain/Shared/Search/HasSearchText.php` | Fill `search_text` on save | built | T-P0-06 |
 | Category / SaveCategory | `app/Models/Category.php`, `app/Domain/Catalog/Actions/SaveCategory.php` | Bilingual catalog taxonomy and authorized writes that preserve a two-level hierarchy | built | T-P2-01 |
+| Course / CoursePolicy / CourseDirectory | `app/Models/Course.php`, `app/Policies/CoursePolicy.php`, `app/Domain/Catalog/Queries/CourseDirectory.php` | Course state, instructor scope and shared staff directory counters | built | T-P3-01 |
+| PublishCourse / FeatureCourse | `app/Domain/Catalog/Actions/` | Explicit course status and featured mutations with execution-time policy checks | built | T-P3-01 |
 | CmsPage / HomepageBlock / SaveCmsContent | `app/Models/CmsPage.php`, `app/Models/HomepageBlock.php`, `app/Domain/Content/Actions/SaveCmsContent.php` | Bilingual pages and ordered homepage blocks with permission-gated editor writes | built | T-P2-02 |
 | Money / PriceFormatter | `app/Domain/Shared/Money/` | Integer-minor money + locale formatting | built | T-P0-06 |
 | Market / MarketResolver | `app/Domain/Shared/Markets/` | EG active / SA disabled | built | T-P0-06 |

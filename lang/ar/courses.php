@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'course' => 'دورة',
+    'title' => 'الدورات',
+    'name' => 'عنوان الدورة',
+    'category' => 'التصنيف',
+    'instructors' => 'المدربون',
+    'unassigned' => 'غير معيّن',
+    'unconfigured' => 'غير محدد',
+    'access' => 'طريقة الوصول',
+    'status' => 'الحالة',
+    'active' => 'نشطة',
+    'paid' => 'مدفوعة',
+    'free' => 'مجانية',
+    'upcoming' => 'قادمة',
+    'suspended' => 'موقوفة',
+    'draft' => 'مسودة',
+    'pending_review' => 'قيد المراجعة',
+    'published' => 'منشورة',
+    'private' => 'خاصة',
+    'archived' => 'مؤرشفة',
+    'feature' => 'تمييز',
+    'unfeature' => 'إزالة التمييز',
+    'ownership' => 'الملكية',
+    'academy' => 'ملك الأكاديمية',
+    'independent' => 'مدرب مستقل',
+    'format' => 'نوع الدورة',
+    'recorded' => 'مسجلة',
+    'live' => 'مباشرة',
+    'hybrid' => 'مدمجة',
+    'description' => 'الوصف',
+];
