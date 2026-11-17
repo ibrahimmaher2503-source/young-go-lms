@@ -1,7 +1,7 @@
 {{-- Props: lesson (recorded lesson the learner may use the assistant on), pdfUrl (signed lesson PDF url or null).
      Render only when the server already decided the learner is eligible: nothing about the assistant exists in the page otherwise.
      Desktop (2xl): column beside the player. Smaller screens: bottom sheet opened by <x-learning.assistant-opener>. Behaviour: resources/js/assistant.js.
-     Feedback endpoints belong to T-P7-04: data-feedback-url stays empty until they exist, so understood / still-not render disabled. --}}
+     Feedback (T-P7-04): data-feedback-url is the lesson's feedback endpoint; "still not understood" creates a help request and the panel shows the request-created state. --}}
 @props(['lesson', 'pdfUrl' => null])
 @php
     $max = (int) config('ai.question_max_chars', 300);
@@ -23,10 +23,12 @@
         'outOfScopeHint' => __('ai.panel.out_of_scope_hint'),
         'emptyQuestion' => __('ai.panel.empty_question'),
         'questionInvalid' => __('ai.question_invalid', ['max' => $max]),
+        'feedbackError' => __('help.panel.feedback_error'),
+        'viewThread' => __('help.panel.view_thread'),
     ];
 @endphp
 <aside id="ai-panel" data-ai-panel data-ai-slot data-state="idle" data-open="false"
-    data-status-url="{{ route('assistant.show', $lesson) }}" data-ask-url="{{ route('assistant.ask', $lesson) }}" data-feedback-url="" data-pdf-url="{{ $pdfUrl }}"
+    data-status-url="{{ route('assistant.show', $lesson) }}" data-ask-url="{{ route('assistant.ask', $lesson) }}" data-feedback-url="{{ route('assistant.feedback', $lesson) }}" data-pdf-url="{{ $pdfUrl }}"
     data-strings="{{ json_encode($strings, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) }}"
     aria-labelledby="ai-panel-title"
     class="fixed inset-x-0 bottom-0 z-40 hidden max-h-[80dvh] flex-col gap-3 overflow-hidden rounded-t-3xl border border-border bg-surface p-4 shadow-card data-[open=true]:flex 2xl:sticky 2xl:top-4 2xl:z-auto 2xl:flex 2xl:max-h-[calc(100dvh-2rem)] 2xl:rounded-card">
@@ -52,11 +54,10 @@
 
     <div data-ai-actions hidden>
         <div role="group" aria-label="{{ __('ai.panel.actions') }}" class="flex flex-wrap gap-2">
-            <x-ui.button type="button" variant="secondary" size="sm" data-ai-action="understood" disabled aria-describedby="ai-feedback-hint"><x-ui.icon name="check" class="size-4" /> {{ __('ai.understood') }}</x-ui.button>
+            <x-ui.button type="button" variant="secondary" size="sm" data-ai-action="understood"><x-ui.icon name="check" class="size-4" /> {{ __('ai.understood') }}</x-ui.button>
             <x-ui.button type="button" variant="secondary" size="sm" data-ai-action="simpler"><x-ui.icon name="sparkle" class="size-4" /> {{ __('ai.simplify') }}</x-ui.button>
-            <x-ui.button type="button" variant="secondary" size="sm" data-ai-action="still" disabled aria-describedby="ai-feedback-hint"><x-ui.icon name="help" class="size-4" /> {{ __('ai.still_confused') }}</x-ui.button>
+            <x-ui.button type="button" variant="secondary" size="sm" data-ai-action="still"><x-ui.icon name="help" class="size-4" /> {{ __('ai.still_confused') }}</x-ui.button>
         </div>
-        <p id="ai-feedback-hint" class="mt-1 text-sm text-muted" data-ai-feedback-hint>{{ __('ai.panel.feedback_soon') }}</p>
     </div>
 
     <form data-ai-form novalidate class="space-y-1">
@@ -87,6 +88,6 @@
         <x-ui.skeleton :label="__('ai.loading')" />
     </template>
     <template data-ai-tpl="notice">
-        <x-ui.alert tone="info"><p data-ai-text></p><x-ui.button type="button" variant="secondary" size="sm" class="mt-2" data-ai-retry hidden>{{ __('ai.panel.retry') }}</x-ui.button></x-ui.alert>
+        <x-ui.alert tone="info"><p data-ai-text></p><a href="#" class="mt-2 inline-flex min-h-11 items-center font-semibold underline" data-ai-request-link hidden></a><x-ui.button type="button" variant="secondary" size="sm" class="mt-2" data-ai-retry hidden>{{ __('ai.panel.retry') }}</x-ui.button></x-ui.alert>
     </template>
 </aside>

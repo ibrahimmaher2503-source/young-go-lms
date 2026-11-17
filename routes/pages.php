@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\LiveJoinController;
@@ -41,6 +42,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::post('/learn/{course}/{item}/progress', [ProgressController::class, 'heartbeat'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.progress');
     Route::post('/learn/{course}/{item}/complete', [ProgressController::class, 'complete'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.complete');
     Route::get('/my/certificates/{certificate}', [CertificateController::class, 'download'])->whereNumber('certificate')->middleware('throttle:certificate-download')->name('certificates.download');
+    Route::get('/my/help/{helpRequest}', [HelpRequestController::class, 'show'])->whereNumber('helpRequest')->name('help.show');
+    Route::post('/my/help/{helpRequest}/replies', [HelpRequestController::class, 'reply'])->whereNumber('helpRequest')->middleware('throttle:progress')->name('help.reply');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');
     Route::get('/profile', [PageController::class, 'profile'])->name('profile.page');
     Route::get('/family', [PageController::class, 'family'])->name('family');

@@ -11,6 +11,7 @@ use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\EssayReview\EssayReviewResource;
+use App\Filament\Resources\HelpRequests\HelpRequestResource;
 use App\Filament\Resources\HomepageBlocks\HomepageBlockResource;
 use App\Filament\Resources\LearnerDevices\LearnerDeviceResource;
 use App\Filament\Resources\Library\LibraryResource;
@@ -66,9 +67,9 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->resources(match ($id) {
                     'admin' => [
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
-                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class,
+                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class,
                     ],
-                    'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class],
+                    'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class],
                     default => [ManualGrantResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])

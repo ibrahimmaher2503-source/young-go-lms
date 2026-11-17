@@ -52,6 +52,12 @@ return [
         'quiz_min_words' => 4,           // a quiz prompt shorter than this is never matched on containment
         'page_hint_min_overlap' => 0.25, // share of the question's words a lesson page must hold to be named in the quiz-guard hint
     ],
+    // Human help (AI spec 12, T-P7-04): SLA before a request counts as overdue (hours), open requests per learner and lesson, reply length.
+    'help' => [
+        'sla_hours' => 24,
+        'max_open_per_lesson' => 3,
+        'reply_max_chars' => 2000,
+    ],
     'cache' => [
         'ttl_days' => 30,                // AI spec 10.3
     ],

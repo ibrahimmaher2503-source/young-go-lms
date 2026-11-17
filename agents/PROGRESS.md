@@ -98,7 +98,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P7-01 | Assistant core pipeline and output guard | review | T-P3-09, T-P3-10, T-P4-03 | implementer, test-writer | L | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-01.md; phpstan, Arch, translations, RTL pass; fake provider only (O-014 open) |
 | T-P7-02 | Input guards, quiz guard, cache and quotas | review | T-P7-01, T-P6-01 | implementer, test-writer | M | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-02.md; phpstan, Arch, translations, RTL pass |
 | T-P7-03 | Student assistant panel UI | review | T-P7-01 | ui-builder, implementer, test-writer, chore | M | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-03.md; phpstan, Arch, translations, RTL pass |
-| T-P7-04 | Feedback, help requests and instructor/admin queue | todo | T-P7-03, T-P5-04 | implementer, ui-builder, test-writer | L | high | | |
+| T-P7-04 | Feedback, help requests and instructor/admin queue | review | T-P7-03, T-P5-04 | implementer, ui-builder, test-writer | L | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-04.md; phpstan, Arch, translations, RTL pass; G7 open |
 | T-P7-05 | Evaluation harness, CI gate and instructor test console | todo | T-P7-02 | implementer, test-writer, chore | M | high | | |
 | T-P7-06 | Admin controls, readiness, usage reports, insights and resilience | todo | T-P7-04, T-P7-05 | implementer, ui-builder, test-writer | M | high | | |
 | T-P7-07 | Provider selection, privacy gate and pilot | todo | T-P7-06 | orchestrator, implementer | M | high | | |

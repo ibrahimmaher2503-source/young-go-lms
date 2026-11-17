@@ -76,4 +76,10 @@ return [
     'certificate.issued' => 'Certificate issued',
     'certificate.revoked' => 'Certificate revoked',
     'certificate.reissued' => 'Certificate re-issued by staff',
+    'ai.feedback_recorded' => 'Lesson assistant feedback recorded',
+    'help_request.created' => 'Help request created',
+    'help_request.replied' => 'Instructor replied to a help request',
+    'help_request.student_replied' => 'Learner replied on a help request',
+    'help_request.status_changed' => 'Help request status changed',
+    'help_request.overdue' => 'Help request marked overdue',
 ];

@@ -76,4 +76,10 @@ return [
     'certificate.issued' => 'إصدار شهادة',
     'certificate.revoked' => 'إلغاء شهادة',
     'certificate.reissued' => 'إعادة إصدار شهادة من الفريق',
+    'ai.feedback_recorded' => 'تم تسجيل تقييم إجابة المساعد',
+    'help_request.created' => 'تم إنشاء طلب مساعدة',
+    'help_request.replied' => 'رد المدرب على طلب مساعدة',
+    'help_request.student_replied' => 'رد المتعلم على طلب مساعدة',
+    'help_request.status_changed' => 'تغيرت حالة طلب المساعدة',
+    'help_request.overdue' => 'تم تعليم طلب المساعدة كمتأخر',
 ];

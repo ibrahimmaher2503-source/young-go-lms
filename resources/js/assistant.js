@@ -31,6 +31,7 @@ if (root) {
     let position = null;
     let simplerUsed = false;
     let lastRequest = null;
+    let lastMessageId = null;
 
     const fill = (text, values) => Object.entries(values).reduce((out, [key, value]) => out.replace(`:${key}`, value), text);
     const number = (value) => new Intl.NumberFormat(lang).format(value);
@@ -47,12 +48,18 @@ if (root) {
         root.setAttribute('aria-busy', state === 'loading' || state === 'streaming' ? 'true' : 'false');
     };
     const clearNotice = () => { notice.replaceChildren(); };
-    const showNotice = (message, { tone = 'info', retry = null, role = 'status' } = {}) => {
+    const showNotice = (message, { tone = 'info', retry = null, role = 'status', link = null } = {}) => {
         clearNotice();
         const box = template('notice');
-        box.className = box.className.replace(/bg-\w+ text-on-\w+/, tone === 'danger' ? 'bg-danger text-on-danger' : tone === 'warning' ? 'bg-warning text-on-warning' : 'bg-info text-on-info');
+        box.className = box.className.replace(/bg-\w+ text-on-\w+/, tone === 'danger' ? 'bg-danger text-on-danger' : tone === 'success' ? 'bg-success text-on-success' : tone === 'warning' ? 'bg-warning text-on-warning' : 'bg-info text-on-info');
         box.setAttribute('role', role);
         box.querySelector('[data-ai-text]').textContent = message;
+        const anchor = box.querySelector('[data-ai-request-link]');
+        if (link) {
+            anchor.href = link;
+            anchor.textContent = strings.viewThread;
+            anchor.hidden = false;
+        }
         const button = box.querySelector('[data-ai-retry]');
         if (retry) {
             button.hidden = false;
@@ -68,6 +75,7 @@ if (root) {
         input.readOnly = on || blocked;
         send.disabled = on || blocked;
         simplerButton.disabled = on || blocked || simplerUsed;
+        feedbackButtons.forEach((button) => { button.disabled = on || blocked; });
     };
     const disablePanel = (message, state) => {
         blocked = true;
@@ -298,6 +306,7 @@ if (root) {
                         // The result carries the validated message; it replaces what was streamed.
                         text.textContent = data.message || text.textContent;
                         conversationId = data.conversation_id || conversationId;
+                        lastMessageId = data.message_id || null;
                         setPages(bubble, data.source_pages);
                         setState('answer');
                         actions.hidden = false;
@@ -389,10 +398,46 @@ if (root) {
             ask({ mode: 'simpler' });
         }
     });
-    // understood / still-not stay disabled until the feedback endpoints exist (T-P7-04); data-feedback-url is the hook.
-    feedbackButtons.forEach((button) => {
-        button.disabled = root.dataset.feedbackUrl === '';
-    });
+    // Feedback (T-P7-04): "understood" is recorded; "still not understood" creates one help request for this answer (the server
+    // returns the existing one on a repeated tap) and the panel shows the request-created state with a link to the thread.
+    const sendFeedback = async (type) => {
+        if (busy || blocked || !lastMessageId || !root.dataset.feedbackUrl) {
+            return;
+        }
+        feedbackButtons.forEach((button) => { button.disabled = true; });
+        try {
+            const response = await fetch(root.dataset.feedbackUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf(), 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ message_id: lastMessageId, type }),
+            });
+            let body = {};
+            try {
+                body = await response.json();
+            } catch {
+                body = {};
+            }
+            if (response.ok) {
+                actions.hidden = true;
+                if (body.state === 'request_created' || body.state === 'request_exists') {
+                    setState('request_created');
+                    showNotice(body.message || strings.feedbackError, { tone: 'success', link: body.thread_url || null });
+                } else {
+                    showNotice(body.message || strings.answered, { tone: 'success' });
+                }
+
+                return;
+            }
+            feedbackButtons.forEach((button) => { button.disabled = false; });
+            showNotice(body.message || strings.feedbackError, { tone: response.status === 409 ? 'warning' : 'danger', role: 'alert' });
+        } catch {
+            feedbackButtons.forEach((button) => { button.disabled = false; });
+            showNotice(strings.feedbackError, { tone: 'danger', role: 'alert' });
+        }
+    };
+    root.querySelector('[data-ai-action="understood"]').addEventListener('click', () => sendFeedback('understood'));
+    root.querySelector('[data-ai-action="still"]').addEventListener('click', () => sendFeedback('not_understood'));
 
     updateCounter();
     // On the wide layout the panel is always visible: load the starter terms without waiting for an opener click.
