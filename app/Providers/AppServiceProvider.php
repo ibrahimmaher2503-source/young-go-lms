@@ -12,6 +12,8 @@ use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
 use App\Domain\Cohorts\CohortHistory;
+use App\Domain\Completion\Events\CourseCompletionInputChanged;
+use App\Domain\Completion\Listeners\EvaluateCompletion;
 use App\Domain\Entitlements\Contracts\CompletionLookup;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\EntitlementHistory;
@@ -85,6 +87,8 @@ class AppServiceProvider extends ServiceProvider
                 app(SessionLimiter::class)->end(session()->getId());
             }
         });
+        // T-P6-05: anything that can change a learner's completion asks the evaluator (idempotent, synchronous).
+        Event::listen(CourseCompletionInputChanged::class, [EvaluateCompletion::class, 'handle']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class], 'course.history');

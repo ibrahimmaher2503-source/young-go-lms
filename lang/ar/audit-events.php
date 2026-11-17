@@ -65,4 +65,7 @@ return [
     'assignment.revision_requested' => 'طلب تعديل على واجب',
     'assignment.feedback_added' => 'إضافة ملاحظات على واجب',
     'quiz.essay_graded' => 'تصحيح إجابة مقالية في اختبار',
+    'course.completion_rules_saved' => 'حفظ قواعد إتمام الدورة',
+    'course.completed' => 'إتمام دورة (تلقائي)',
+    'course.completion_approved' => 'اعتماد إتمام دورة من الفريق',
 ];

@@ -10,6 +10,7 @@ use App\Domain\Assessment\QuizScoring;
 use App\Domain\Assignments\ReviewAccess;
 use App\Domain\Assignments\ReviewRefusedException;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Notifications\NotificationDispatcher;
 use App\Domain\Progress\Actions\CompleteAssessmentItem;
 use App\Models\Question;
@@ -94,5 +95,6 @@ final class GradeEssayAnswer
         } catch (Throwable $exception) {
             report($exception);
         }
+        CompletionTrigger::changed($learner, (int) $item->course_id);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Progress\Actions;
 
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Progress\LessonProgress;
 use App\Models\CurriculumItem;
@@ -62,6 +63,9 @@ final class RecordProgress
 
         ($this->recalculate)($learner, $item->course);
         $this->access->flush(); // a finished lesson can open the next one in a sequential course
+        if ($progress->status === LessonProgress::COMPLETED) {
+            CompletionTrigger::changed($learner, (int) $item->course_id);
+        }
 
         return $progress;
     }
@@ -91,6 +95,7 @@ final class RecordProgress
 
         ($this->recalculate)($learner, $item->course);
         $this->access->flush();
+        CompletionTrigger::changed($learner, (int) $item->course_id);
 
         return $progress;
     }

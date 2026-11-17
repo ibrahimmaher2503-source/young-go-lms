@@ -11,6 +11,7 @@ use App\Domain\Assignments\ReviewRefusedException;
 use App\Domain\Assignments\SubmissionReview;
 use App\Domain\Assignments\SubmissionRevisions;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Notifications\NotificationDispatcher;
 use App\Models\AssignmentSubmission;
 use App\Models\SubmissionDecision;
@@ -86,6 +87,10 @@ final class DecideSubmission
         });
 
         $this->notify($submission, $made);
+        $item = $assignment->item()->first();
+        if ($item !== null) {
+            CompletionTrigger::changed((int) $submission->learner_id, (int) $item->course_id);
+        }
 
         return $made;
     }

@@ -17,4 +17,11 @@ return [
         // Per-learner, per-lesson heartbeat limit per minute.
         'heartbeats_per_minute' => 30,
     ],
+    // T-P6-05 working defaults (O-020 stays open). A course without saved rules completes when every required lesson is done.
+    'completion' => [
+        'defaults' => ['lesson_percent' => 100, 'require_quizzes' => false, 'require_assignments' => false, 'attendance_percent' => null, 'manual_approval' => false],
+        // Assignments are never marked done in lesson_progress, so the submission status decides. A graded submission counts
+        // as accepted (a later rejection changes the status and removes it); set false to demand an explicit "accepted".
+        'graded_counts_as_accepted' => true,
+    ],
 ];

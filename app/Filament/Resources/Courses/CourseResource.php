@@ -16,6 +16,7 @@ use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Filament\Resources\Courses\Pages\ManageCourseCohorts;
+use App\Filament\Resources\Courses\Pages\ManageCourseCompletion;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
 use App\Filament\Resources\Courses\Pages\ManageQuiz;
 use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;
@@ -113,6 +114,9 @@ final class CourseResource extends FilamentResource
             Action::make('cohorts')->label(__('cohorts.title'))->icon('heroicon-o-user-group')
                 ->url(static fn (Course $record): string => self::getUrl('cohorts', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => in_array($record->format, ['live', 'hybrid'], true) && Auth::user()?->can('live_session.manage') === true && Gate::allows('update', $record)),
+            Action::make('completion')->label(__('completion.title'))->icon('heroicon-o-check-badge')
+                ->url(static fn (Course $record): string => self::getUrl('completion', ['record' => $record]))
+                ->visible(static fn (Course $record): bool => Gate::allows('update', $record)),
             Action::make('learners')->label(__('courses.learners_title'))->icon('heroicon-o-users')
                 ->url(static fn (Course $record): string => self::getUrl('learners', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => Auth::user()?->can('learner.progress.view') === true && Gate::allows('view', $record)),
@@ -173,6 +177,7 @@ final class CourseResource extends FilamentResource
             'curriculum' => ManageCurriculum::route('/{record}/curriculum'),
             'cohorts' => ManageCourseCohorts::route('/{record}/cohorts'),
             'learners' => CourseLearnersPage::route('/{record}/learners'),
+            'completion' => ManageCourseCompletion::route('/{record}/completion'),
             'quiz' => ManageQuiz::route('/{record}/quizzes/{quiz}'),
             'document' => ReviewCurriculumDocument::route('/{record}/curriculum/documents/{document}'),
         ];

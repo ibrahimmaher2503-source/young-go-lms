@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Live\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Live\LiveAccess;
 use App\Domain\Live\LiveSessionNotices;
 use App\Models\LiveAttendance;
@@ -34,7 +35,7 @@ final class MarkAttendance
         }
         $note = $note === null ? null : mb_substr(trim($note), 0, 500);
 
-        return DB::transaction(function () use ($actor, $session, $learner, $status, $note): LiveAttendance {
+        $row = DB::transaction(function () use ($actor, $session, $learner, $status, $note): LiveAttendance {
             $existing = LiveAttendance::query()->where('live_session_id', $session->getKey())->where('learner_id', $learner->getKey())->first();
             if ($existing !== null) {
                 throw ValidationException::withMessages(['learner' => __('live.attendance.already_marked')]);
@@ -58,5 +59,9 @@ final class MarkAttendance
 
             return $row;
         });
+
+        CompletionTrigger::changed($learner, (int) $session->course_id);
+
+        return $row;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Live\Actions;
 
+use App\Domain\Completion\CompletionTrigger;
 use App\Models\LiveAttendance;
 use App\Models\LiveSession;
 use App\Models\User;
@@ -22,10 +23,13 @@ final class RecordJoin
         $status = now()->gt($session->starts_at->copy()->addMinutes($lateAfter)) ? LiveAttendance::LATE : LiveAttendance::PRESENT;
 
         try {
-            LiveAttendance::query()->firstOrCreate(
+            $row = LiveAttendance::query()->firstOrCreate(
                 ['live_session_id' => $session->getKey(), 'learner_id' => $learner->getKey()],
                 ['status' => $status, 'source' => LiveAttendance::SOURCE_JOIN, 'marked_at' => now()],
             );
+            if ($row->wasRecentlyCreated) {
+                CompletionTrigger::changed($learner, (int) $session->course_id);
+            }
         } catch (UniqueConstraintViolationException) {
             // A concurrent join created the row first; nothing more to do.
         }

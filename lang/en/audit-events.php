@@ -65,4 +65,7 @@ return [
     'assignment.revision_requested' => 'Assignment revision requested',
     'assignment.feedback_added' => 'Assignment feedback added',
     'quiz.essay_graded' => 'Quiz essay answer graded',
+    'course.completion_rules_saved' => 'Course completion rules saved',
+    'course.completed' => 'Course completed (automatic)',
+    'course.completion_approved' => 'Course completion approved by staff',
 ];

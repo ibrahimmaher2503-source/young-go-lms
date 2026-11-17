@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Live\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Live\LiveAccess;
 use App\Models\LiveAttendance;
 use App\Models\User;
@@ -28,7 +29,7 @@ final class CorrectAttendance
             throw ValidationException::withMessages(['reason' => __('live.attendance.reason_required')]);
         }
 
-        return DB::transaction(function () use ($actor, $attendance, $status, $reason): LiveAttendance {
+        $row = DB::transaction(function () use ($actor, $attendance, $status, $reason): LiveAttendance {
             $locked = LiveAttendance::query()->whereKey($attendance->getKey())->lockForUpdate()->firstOrFail();
             if ($locked->status === $status) {
                 throw ValidationException::withMessages(['status' => __('live.attendance.no_change')]);
@@ -42,5 +43,9 @@ final class CorrectAttendance
 
             return $locked;
         });
+
+        CompletionTrigger::changed((int) $row->learner_id, (int) $attendance->session->course_id);
+
+        return $row;
     }
 }

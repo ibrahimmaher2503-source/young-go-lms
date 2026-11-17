@@ -9,6 +9,7 @@ use App\Domain\Assessment\QuizGrader;
 use App\Domain\Assessment\QuizRefusedException;
 use App\Domain\Assessment\QuizScoring;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Completion\CompletionTrigger;
 use App\Domain\Progress\Actions\CompleteAssessmentItem;
 use App\Models\Question;
 use App\Models\QuizAnswer;
@@ -104,5 +105,6 @@ final class SubmitQuizAttempt
         } elseif ($attempt->passed === true) {
             $this->complete->__invoke($learner, $item, 'quiz_passed');
         }
+        CompletionTrigger::changed($learner, (int) $item->course_id); // a quiz result can complete the course whatever the progression rule
     }
 }
