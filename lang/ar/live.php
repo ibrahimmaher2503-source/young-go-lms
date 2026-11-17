@@ -41,4 +41,22 @@ return [
     'ended_notice' => 'انتهت هذه الجلسة.',
     'join_not_open' => 'لا يمكن الانضمام لهذه الجلسة الآن.',
     'join_no_link' => 'رابط الاجتماع غير جاهز بعد. حاول بعد قليل.',
+    'notice' => [
+        'scheduled' => [
+            'title' => 'جلسة مباشرة جديدة: :title',
+            'body' => 'تم تحديد موعد :title في :time.',
+        ],
+        'rescheduled' => [
+            'title' => 'تغيّر موعد الجلسة: :title',
+            'body' => 'أصبحت :title في :time.',
+        ],
+        'cancelled' => [
+            'title' => 'أُلغيت الجلسة: :title',
+            'body' => 'أُلغيت :title التي كانت في :time.',
+        ],
+        'reminder' => [
+            'title' => 'تذكير: :title',
+            'body' => 'تبدأ :title في :time. يظهر زر الانضمام قبل البدء بقليل.',
+        ],
+    ],
 ];

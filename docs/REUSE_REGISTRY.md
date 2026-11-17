@@ -46,6 +46,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ReserveCohortSeat / JoinWaitlist / PromoteFromWaitlist | `app/Domain/Cohorts/Actions/` | Seat, waitlist and promotion hooks for checkout and manual grants | built | T-P5-01 |
 | MeetingProvider (Manual driver) + LiveSessionTime | `app/Domain/Live/` | Meeting link validation and viewer-timezone display for live sessions | built | T-P5-02 |
 | GetJoinLink / JoinWindow / UpcomingSessions | `app/Domain/Live/` | Protected meeting link, join window and learner schedule | built | T-P5-03 |
+| LocalizedNotification + NotificationDispatcher | `app/Domain/Notifications/` | Localized, deduplicated notifications for every module (live notices, later help requests) | built | T-P5-04 |
 | RecordProgress | `app/Domain/Learning/Actions/` | Only writer of progress | planned | T-P4-04 |
 | HtmlSanitizer | `app/Domain/Shared/Security/` | Single sanitizer (rich text, messages) | planned | T-P3-15 |
 | ImageReencoder | `app/Domain/Media/` | Strip EXIF/GPS on upload | planned | T-P3-08 |

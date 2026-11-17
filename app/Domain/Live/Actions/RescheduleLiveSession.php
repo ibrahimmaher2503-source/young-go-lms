@@ -6,7 +6,9 @@ namespace App\Domain\Live\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Live\LiveAccess;
+use App\Domain\Live\LiveSessionNotices;
 use App\Domain\Live\MeetingProvider;
+use App\Domain\Live\Notifications\LiveSessionNotice;
 use App\Models\LiveSession;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ use RuntimeException;
 /** Moves a session that has not started: new time (and optionally link or provider). Finished or cancelled sessions stay as they were. */
 final class RescheduleLiveSession
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly MeetingProvider $meetings) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly MeetingProvider $meetings, private readonly LiveSessionNotices $notices) {}
 
     /** @param array<string, mixed> $data starts_at, ends_at (local wall-clock), timezone, optionally provider and meeting_url */
     public function __invoke(User $actor, LiveSession $session, array $data): LiveSession
@@ -27,7 +29,7 @@ final class RescheduleLiveSession
         [$startsAt, $endsAt] = ScheduleLiveSession::utcRange($fields['starts_at'], $fields['ends_at'], $fields['timezone']);
         $url = array_key_exists('meeting_url', $data) ? $this->meetings->validateUrl($fields['provider'], $fields['meeting_url'] ?? null) : $session->meeting_url;
 
-        return DB::transaction(function () use ($actor, $session, $fields, $startsAt, $endsAt, $url): LiveSession {
+        $updated = DB::transaction(function () use ($actor, $session, $fields, $startsAt, $endsAt, $url): LiveSession {
             $locked = LiveSession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
             if ($locked->status !== LiveSession::SCHEDULED) {
                 throw ValidationException::withMessages(['status' => __('live.not_reschedulable')]);
@@ -41,5 +43,10 @@ final class RescheduleLiveSession
 
             return $locked;
         });
+
+        // After the commit, so a failed save never tells anyone about a move that did not happen.
+        $this->notices->send($updated, LiveSessionNotice::RESCHEDULED, (string) $updated->starts_at->getTimestamp());
+
+        return $updated;
     }
 }

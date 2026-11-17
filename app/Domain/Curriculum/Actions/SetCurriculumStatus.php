@@ -7,9 +7,12 @@ namespace App\Domain\Curriculum\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Live\LiveSessionNotices;
+use App\Domain\Live\Notifications\LiveSessionNotice;
 use App\Domain\Media\LessonPublishRule;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\LiveSession;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -33,7 +36,7 @@ final class SetCurriculumStatus
 
         $ids = array_values(array_unique(array_map('intval', $itemIds)));
 
-        return DB::transaction(function () use ($actor, $course, $ids, $status): int {
+        $changed = DB::transaction(function () use ($actor, $course, $ids, $status): int {
             $owned = CurriculumOutline::activeItems(CurriculumItem::query()->where('course_id', $course->getKey())->whereKey($ids))->pluck('id')->all();
             if (count($owned) !== count($ids) || $ids === []) {
                 throw ValidationException::withMessages(['items' => __('curriculum.stale')]);
@@ -51,5 +54,15 @@ final class SetCurriculumStatus
 
             return $changed;
         });
+
+        // Live sessions that just became visible are announced once (the dedupe key covers a second publish).
+        if ($status === CurriculumItem::STATUS_PUBLISHED) {
+            $notices = app(LiveSessionNotices::class);
+            foreach (LiveSession::query()->whereHas('item', fn ($item) => $item->whereKey($ids))->with(['course', 'cohort'])->get() as $session) {
+                $notices->send($session, LiveSessionNotice::SCHEDULED);
+            }
+        }
+
+        return $changed;
     }
 }

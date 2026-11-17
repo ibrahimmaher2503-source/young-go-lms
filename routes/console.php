@@ -16,4 +16,5 @@ Schedule::call(static fn (): bool => Cache::put(Doctor::HEARTBEAT_KEY, now()->ti
     ->name('app:scheduler-heartbeat')
     ->everyMinute();
 
+Schedule::command('live:send-reminders')->everyFiveMinutes()->name('live:send-reminders')->withoutOverlapping();
 Schedule::command('entitlements:expire')->hourly()->name('entitlements:expire')->withoutOverlapping();

@@ -41,4 +41,22 @@ return [
     'ended_notice' => 'This session has ended.',
     'join_not_open' => 'This session cannot be joined right now.',
     'join_no_link' => 'The meeting link is not ready yet. Please try again shortly.',
+    'notice' => [
+        'scheduled' => [
+            'title' => 'New live session: :title',
+            'body' => ':title is scheduled for :time.',
+        ],
+        'rescheduled' => [
+            'title' => 'Live session moved: :title',
+            'body' => ':title now takes place at :time.',
+        ],
+        'cancelled' => [
+            'title' => 'Live session cancelled: :title',
+            'body' => ':title, planned for :time, was cancelled.',
+        ],
+        'reminder' => [
+            'title' => 'Reminder: :title',
+            'body' => ':title starts at :time. The join button appears shortly before it begins.',
+        ],
+    ],
 ];
