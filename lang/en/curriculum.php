@@ -97,4 +97,5 @@ return [
         'rejected' => 'Rejected',
     ],
     'resources_count' => ':count materials',
+    'more' => 'More actions',
 ];

@@ -76,7 +76,7 @@ it('reorders with the keyboard buttons', function (): void {
     $this->actingAs($instructor);
 
     $page = $this->visit("/instructor/courses/{$course->id}/curriculum");
-    $page->click("[data-item=\"{$items[1]->id}\"] button[aria-label^=\"Move up\"]")->wait(1.5);
+    $page->click("[data-item=\"{$items[1]->id}\"] summary")->click("[data-item=\"{$items[1]->id}\"] .yg-cur-menuitem:nth-child(1)")->wait(1.5);
 
     $first = CurriculumOutline::forManager($course)->first()->items->pluck('id')->map(fn ($id) => (int) $id)->all();
     expect($first)->toBe([$items[1]->id, $items[0]->id, $items[2]->id]);
@@ -88,7 +88,7 @@ it('renders the lesson editor with the upload field accessibly in both direction
     $this->actingAs($instructor);
 
     $page = $this->visit("/instructor/courses/{$course->id}/curriculum")->resize($width, $height);
-    $page->click("[data-item=\"{$items[0]->id}\"] .yg-cur-actions button:nth-child(3)")->wait(1.5);
+    $page->click("[data-item=\"{$items[0]->id}\"] summary")->click("[data-item=\"{$items[0]->id}\"] .yg-cur-menuitem:nth-child(3)")->wait(1.5);
     $page->select('[id$="media_provider"]', 'signed_storage')->wait(1.5);
     $page->script('async () => { await document.fonts.ready; }');
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
@@ -119,7 +119,7 @@ it('shows the curriculum PDF and material fields and the PDF badge accessibly', 
     }
     $page->screenshot(fullPage: true, filename: "T-P3-08/lesson-pdf-badge-{$locale}-{$width}");
 
-    $page->click("[data-item=\"{$items[0]->id}\"] .yg-cur-actions button:nth-child(3)")->wait(1.5);
+    $page->click("[data-item=\"{$items[0]->id}\"] summary")->click("[data-item=\"{$items[0]->id}\"] .yg-cur-menuitem:nth-child(3)")->wait(1.5);
     $page->script("() => document.querySelector('[id\$=\"curriculum_pdf\"]')?.scrollIntoView({block: 'center'})");
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     $page->screenshot(fullPage: false, filename: "T-P3-08/lesson-editor-pdf-{$locale}-{$width}");

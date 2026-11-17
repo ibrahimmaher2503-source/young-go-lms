@@ -97,4 +97,5 @@ return [
         'rejected' => 'مرفوض',
     ],
     'resources_count' => ':count مواد',
+    'more' => 'المزيد',
 ];
