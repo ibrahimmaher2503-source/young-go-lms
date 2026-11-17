@@ -12,6 +12,7 @@ it('lets only the Entitlements module touch the entitlements table', function ()
     $allowed = [
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Domain/Entitlements/'),
         str_replace('/', DIRECTORY_SEPARATOR, 'app/Console/Commands/ExpireEntitlementsCommand.php'),
+        str_replace('/', DIRECTORY_SEPARATOR, 'app/Filament/Resources/ManualGrants/'),
     ];
     $offenders = [];
 

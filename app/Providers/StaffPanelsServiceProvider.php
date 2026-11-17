@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domain\Entitlements\Filament\ManualGrantResource;
 use App\Filament\Auth\WorkspaceLogin;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Audit\AuditLogResource;
@@ -12,6 +11,7 @@ use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\HomepageBlocks\HomepageBlockResource;
+use App\Filament\Resources\ManualGrants\ManualGrantResource;
 use App\Filament\Resources\RolePermissions\RolePermissionResource;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;

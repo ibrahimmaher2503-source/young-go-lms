@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Entitlements\Filament\Pages;
+namespace App\Filament\Resources\ManualGrants\Pages;
 
 use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\CourseAccessSummary;
 use App\Domain\Entitlements\Entitlement;
 use App\Domain\Entitlements\EntitlementSource;
-use App\Domain\Entitlements\Filament\ManualGrantResource;
+use App\Filament\Resources\ManualGrants\ManualGrantResource;
 use App\Filament\Shared\Pages\WorkspaceListRecords;
 use App\Models\Course;
 use App\Models\User;

@@ -1,3 +1,4 @@
+import './player.js';
 import './ui-primitives.js';
 import './forms.js';
 

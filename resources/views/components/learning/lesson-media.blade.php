@@ -1,0 +1,27 @@
+{{-- Props: descriptor (PlaybackDescriptor), title. One renderer for every media provider. --}}
+@props(['descriptor', 'title'])
+@switch($descriptor->type)
+    @case('video')
+        <video class="block w-full bg-black" controls preload="metadata" playsinline src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media controlslist="nodownload">
+            @foreach($descriptor->tracks as $track)
+                <track kind="captions" src="{{ $track['url'] }}" srclang="{{ $track['locale'] }}" label="{{ $track['label'] }}" @if($track['default']) default @endif>
+            @endforeach
+        </video>
+        @break
+    @case('audio')
+        <div class="p-4"><audio class="w-full" controls preload="metadata" src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media></audio></div>
+        @break
+    @case('embed')
+        <iframe class="aspect-video w-full" src="{{ $descriptor->embedUrl }}" title="{{ $title }}" loading="lazy" allowfullscreen
+            @if($descriptor->sandbox) sandbox="{{ $descriptor->sandbox }}" @endif referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        @break
+    @case('document')
+        <iframe class="h-[70vh] w-full" src="{{ $descriptor->url }}" title="{{ $title }}" loading="lazy"></iframe>
+        @break
+    @case('image')
+        <img class="mx-auto block max-h-[70vh] w-auto max-w-full" src="{{ $descriptor->url }}" alt="{{ $title }}">
+        @break
+    @case('text')
+        <div class="prose max-w-none p-4 break-words" dir="auto">{!! nl2br(e((string) $descriptor->text)) !!}</div>
+        @break
+@endswitch

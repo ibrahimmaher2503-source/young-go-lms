@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Entitlements\Filament;
+namespace App\Filament\Resources\ManualGrants;
 
 use App\Domain\Entitlements\Actions\RevokeEntitlement;
 use App\Domain\Entitlements\Entitlement;
