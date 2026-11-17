@@ -61,7 +61,7 @@ it('shows an honest notice instead of the form when legal versions are not confi
 
 it('sends signed-in users away from guest screens and routes them by role', function (): void {
     asUser($this, pageUser('parent'))->get('/login')->assertRedirect('/home');
-    asUser($this, pageUser('parent'))->get('/home')->assertRedirect('/family');
+    asUser($this, pageUser('parent'))->get('/home')->assertRedirect('/parent');
     asUser($this, pageUser('student'))->get('/home')->assertRedirect('/my');
     asUser($this, pageUser('admin'))->get('/home')->assertRedirect('/admin');
 })->group('T-P1-10', 'A1');

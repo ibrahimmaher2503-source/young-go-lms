@@ -9,10 +9,15 @@
     $name = $user ? ($user->display_name ?: $user->name) : '';
     $unread = $user ? $user->unreadNotifications()->exists() : false;
     $isParent = $user && $user->hasRole('parent');
-    $items = [
+    $items = $isParent ? [
+        ['/parent', 'users', __('parent.nav'), request()->is('parent')],
+        ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('my/courses') || request()->is('learn/*')],
+        ['/family', 'user', __('pages.nav_family'), request()->is('family')],
+        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
+    ] : [
         ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('learn/*')],
         ['/my/courses', 'layers', __('pages.nav_courses'), request()->is('my/courses')],
-        [$isParent ? '/family' : '/link', 'user', $isParent ? __('pages.nav_family') : __('pages.nav_link'), request()->is('family') || request()->is('link')],
+        ['/link', 'user', __('pages.nav_link'), request()->is('link')],
         ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
     ];
 @endphp
@@ -42,7 +47,7 @@
 <header class="border-b border-border bg-surface/95 shadow-card backdrop-blur">
     <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8">
         <div class="flex items-center gap-6">
-            <a href="{{ url('/my') }}" class="inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
+            <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
                 <x-ui.icon name="book" class="size-8 text-primary" />
                 <span dir="ltr">Young Go</span>
             </a>

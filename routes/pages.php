@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -18,6 +19,7 @@ Route::get('/reset-password/{token}', [PageController::class, 'resetPassword'])-
 Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class])->group(function (): void {
     Route::get('/home', [PageController::class, 'home'])->name('home');
     Route::get('/my', [LearnerHomeController::class, 'dashboard'])->name('learner.dashboard');
+    Route::get('/parent', ParentDashboardController::class)->name('parent.dashboard');
     Route::get('/my/courses', [LearnerHomeController::class, 'courses'])->name('learner.courses');
     Route::get('/learn/{course}', [LearnController::class, 'course'])->whereNumber('course')->name('learn.course');
     Route::get('/learn/{course}/{item}', [LearnController::class, 'show'])->whereNumber(['course', 'item'])->name('learn.show');

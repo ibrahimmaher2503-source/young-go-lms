@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Domain\Entitlements\LearnerCourses;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Progress\LessonProgress;
-use App\Domain\Progress\Queries\ContinueLearning;
+use App\Domain\Progress\Queries\LearnerCourseRows;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\User;
@@ -21,7 +20,7 @@ final class LearnerHomeController
 {
     public const array FILTERS = ['all', 'in_progress', 'completed', 'expired'];
 
-    public function __construct(private readonly ActingLearner $acting, private readonly ContinueLearning $continue) {}
+    public function __construct(private readonly ActingLearner $acting, private readonly LearnerCourseRows $rows) {}
 
     public function dashboard(Request $request): View
     {
@@ -60,24 +59,7 @@ final class LearnerHomeController
     /** @return Collection<int, array{course: Course, access: string, ends_at: Carbon|null, source: string, status: string, percent: int, done: int, total: int, continue: array{item_id: int, position_seconds: int}|null}> */
     private function rows(User $subject): Collection
     {
-        // @phpstan-ignore return.type (the merged row shape is correct; Collection templates are invariant)
-        return LearnerCourses::for($subject)->each(fn (array $row) => $row['course']->loadMissing(['instructors', 'category']))->map(function (array $row) use ($subject): array {
-            $active = $row['access'] === 'active';
-            $progress = $active ? $this->continue->progress($subject, $row['course']) : null;
-            $status = match (true) {
-                ! $active => 'expired',
-                $progress?->completed_at !== null => 'completed',
-                default => 'in_progress',
-            };
-
-            return $row + [
-                'status' => $status,
-                'percent' => $progress->percent ?? 0,
-                'done' => $progress->completed_required ?? 0,
-                'total' => $progress->total_required ?? 0,
-                'continue' => $active ? $this->continue->for($subject, $row['course']) : null,
-            ];
-        });
+        return $this->rows->for($subject);
     }
 
     private function learner(): User
