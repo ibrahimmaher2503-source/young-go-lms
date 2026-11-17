@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Pages;
 
+use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\MoveCurriculumItem;
@@ -98,6 +99,7 @@ final class ManageCurriculum extends Page
     {
         return [
             $this->addLessonAction(),
+            $this->addAssessmentAction(),
             $this->addSectionAction(),
             Action::make('studentPreview')->label(__('curriculum.student_preview'))->icon('heroicon-o-eye')->color('gray')
                 ->action(function (): void {
@@ -165,6 +167,36 @@ final class ManageCurriculum extends Page
                     return;
                 }
                 Notification::make()->title(__('curriculum.saved'))->success()->send();
+            });
+    }
+
+    public function addAssessmentAction(): Action
+    {
+        return Action::make('addAssessment')->label(__('curriculum.add_assessment'))->icon('heroicon-o-clipboard-document-check')->color('gray')
+            ->schema([
+                Select::make('kind')->label(__('curriculum.assessment_kind'))->options([
+                    'quiz' => __('curriculum.types.quiz'), 'assignment' => __('curriculum.types.assignment'),
+                ])->required()->native(false),
+                Select::make('section_id')->label(__('curriculum.section'))->required()->native(false)
+                    ->options(fn (): array => CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->orderBy('sort')->get()->mapWithKeys(fn (CourseSection $s): array => [$s->getKey() => (string) $s->title])->all()),
+                TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+            ])
+            ->action(function (array $data, Action $action): void {
+                $section = CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->findOrFail($data['section_id']);
+                if (! $this->attempt($action, fn () => app(ManageAssessmentItems::class)->add($this->actor(), $section, (string) $data['kind'], ['title' => $data['title'] ?? []]))) {
+                    return;
+                }
+                Notification::make()->title(__('curriculum.saved'))->success()->send();
+            });
+    }
+
+    public function archiveAssessmentAction(): Action
+    {
+        return Action::make('archiveAssessment')->label(__('curriculum.archive'))->color('danger')->requiresConfirmation()
+            ->action(function (array $arguments): void {
+                app(ManageAssessmentItems::class)->archive($this->actor(), $this->itemFor($arguments['item'] ?? 0));
+                $this->selected = [];
             });
     }
 

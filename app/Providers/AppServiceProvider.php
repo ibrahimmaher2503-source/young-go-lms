@@ -15,7 +15,9 @@ use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\DenyLessonAccess;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Settings\PlatformFlag;
+use App\Models\Assignment;
 use App\Models\Lesson;
+use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -59,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
             return $user->checkPermissionTo($ability, (string) config('permissions.guard', 'web')) ? true : null;
         });
 
-        Relation::morphMap(['lesson' => Lesson::class]);
+        Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class]);
         // Fails closed until the EntitlementService exists (T-P4-01), which replaces this binding.
         $this->app->bind(LessonAccessChecker::class, DenyLessonAccess::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);

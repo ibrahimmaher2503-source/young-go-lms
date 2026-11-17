@@ -107,33 +107,34 @@
                     <ul class="yg-cur-items" data-items x-on:dragover="over($event)" x-on:drop="drop($event)">
                         @forelse($section->items as $i => $item)
                             @php($lesson = $item->itemable)
+                            @php($isLesson = $item->itemable_type === 'lesson')
                             <li class="yg-cur-item" data-item="{{ $item->id }}" wire:key="item-{{ $item->id }}" draggable="true" x-on:dragstart="start($event)" x-on:dragend="end()" @if(in_array($item->id, $selected)) data-selected @endif>
                                 <input type="checkbox" class="yg-cur-check" value="{{ $item->id }}" wire:model.live="selected" aria-label="{{ __('curriculum.select') }}: {{ $lesson->title }}">
                                 <span class="yg-cur-handle" aria-hidden="true" title="{{ __('curriculum.drag') }}">⋮⋮</span>
                                 <span class="yg-cur-num">{{ $i + 1 }}</span>
                                 <span class="yg-cur-name">{{ $lesson->title }}</span>
-                                <span class="yg-cur-meta">{{ __("curriculum.types.{$lesson->type}") }}@if($lesson->duration_seconds) · {{ __('curriculum.minutes', ['count' => (int) round($lesson->duration_seconds / 60)]) }}@endif</span>
-                                @if($lesson->media)
+                                <span class="yg-cur-meta">{{ $isLesson ? __("curriculum.types.{$lesson->type}") : __("curriculum.types.{$item->itemable_type}") }}@if($isLesson && $lesson->duration_seconds) · {{ __('curriculum.minutes', ['count' => (int) round($lesson->duration_seconds / 60)]) }}@endif</span>
+                                @if($isLesson && $lesson->media)
                                     <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.$lesson->media->protection_tier) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
                                 @endif
-                                @php($document = $lesson->curriculumDocuments->first())
+                                @php($document = $isLesson ? $lesson->curriculumDocuments->first() : null)
                                 @if($document)
                                     <span class="yg-cur-badge" title="{{ __('curriculum.curriculum_pdf') }}">{{ __('curriculum.pdf_version', ['version' => $document->version]) }} · {{ __('curriculum.pdf_status.'.$document->status) }}</span>
                                 @endif
-                                @if($lesson->resources->count() > 0)
+                                @if($isLesson && $lesson->resources->count() > 0)
                                     <span class="yg-cur-meta">{{ __('curriculum.resources_count', ['count' => $lesson->resources->count()]) }}</span>
                                 @endif
-                                @if($lesson->media && $lesson->media->status !== 'ready')
+                                @if($isLesson && $lesson->media && $lesson->media->status !== 'ready')
                                     <span class="yg-cur-badge">{{ __('media.status.'.$lesson->media->status) }}</span>
                                 @endif
                                 <span class="yg-cur-badge {{ $item->status === 'published' ? 'is-published' : '' }}">{{ $item->status === 'published' ? __('curriculum.status_published') : __('curriculum.status_draft') }}</span>
                                 {{-- Slot for the assistant-readiness indicator (T-P3-09): created later, ignored until the view exists. --}}
-                                @includeIf('filament.courses.curriculum-readiness', ['item' => $item])
+                                @if($isLesson) @includeIf('filament.courses.curriculum-readiness', ['item' => $item]) @endif
                                 <span class="yg-cur-actions">
                                     <button type="button" class="yg-cur-btn" wire:click="moveItem({{ $item->id }}, 'up')" aria-label="{{ __('curriculum.move_up') }}: {{ $lesson->title }}">↑</button>
                                     <button type="button" class="yg-cur-btn" wire:click="moveItem({{ $item->id }}, 'down')" aria-label="{{ __('curriculum.move_down') }}: {{ $lesson->title }}">↓</button>
-                                    <button type="button" class="yg-cur-btn" wire:click="mountAction('editLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.edit') }}</button>
-                                    <button type="button" class="yg-cur-btn is-danger" wire:click="mountAction('archiveLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.archive') }}</button>
+                                    @if($isLesson)<button type="button" class="yg-cur-btn" wire:click="mountAction('editLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.edit') }}</button>@endif
+                                    <button type="button" class="yg-cur-btn is-danger" wire:click="{{ $isLesson ? "mountAction('archiveLesson', { lesson: {$item->itemable_id} })" : "mountAction('archiveAssessment', { item: {$item->id} })" }}">{{ __('curriculum.archive') }}</button>
                                 </span>
                             </li>
                         @empty
