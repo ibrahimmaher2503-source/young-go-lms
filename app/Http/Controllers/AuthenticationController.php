@@ -12,6 +12,7 @@ use App\Domain\Identity\AuthMail;
 use App\Http\Validation\NewPassword;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -127,13 +128,13 @@ final class AuthenticationController
         return response()->noContent();
     }
 
-    public function verifyEmail(EmailVerificationRequest $request, VerifyAccountEmail $verify): Response
+    public function verifyEmail(EmailVerificationRequest $request, VerifyAccountEmail $verify): Response|RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User && $user->email !== null, 403);
         $verify->handle($user);
 
-        return response()->noContent();
+        return str_contains((string) $request->header('Accept'), 'text/html') ? redirect('/home') : response()->noContent();
     }
 
     private function normalizeIdentifier(mixed $value): mixed

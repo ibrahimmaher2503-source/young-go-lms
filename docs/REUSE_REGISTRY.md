@@ -30,6 +30,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | SetLocale / UpdatePreferredLocale | `app/Http/Middleware/SetLocale.php`, `app/Domain/Identity/Actions/UpdatePreferredLocale.php` | Locale resolution and persisted preference | built | T-P1-01 |
 | CreateChildAccount / GuardianAccess | `app/Domain/Identity/Actions/CreateChildAccount.php`, `app/Domain/Identity/GuardianAccess.php` | Parent-created child accounts and guardian→child access check (gate `guardian.child.access`, 404 on deny) | built | T-P1-05 |
 | ActingLearner | `app/Domain/Identity/ActingLearner.php`, `app/Http/Middleware/ResolveActingLearner.php` | Single source for the learner a request acts as (parent child-context); learner-facing queries must use current() | built | T-P1-06 |
+| x-layouts.base + x-ui.ajax-form + forms.js | `resources/views/components/layouts/base.blade.php`, `resources/views/components/ui/ajax-form.blade.php`, `resources/js/forms.js` | Learner/parent/auth/public page shell and progressive JSON form submit with inline field errors | built | T-P1-10 |
+| x-family.child-switcher | `resources/views/components/family/child-switcher.blade.php` | Password-confirmed switch into a child context | built | T-P1-10 |
 | ErrorReporter | `app/Domain/Shared/Observability/` | Local exception reporting adapter | built | T-P0-07 |
 | app:doctor / app:req-coverage | `app/Console/Commands/` | Health check / requirement coverage (G10, G11) | built | T-P0-07 |
 | AccessDecision + canAccessItem() | `app/Domain/Entitlements/` | Layered access with reason codes | planned | T-P4-09 |

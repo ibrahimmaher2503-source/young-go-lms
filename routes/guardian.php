@@ -12,6 +12,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session'])->group(f
 
     Route::prefix('guardian')->name('guardian.')->group(function (): void {
         Route::post('/link-codes', [GuardianController::class, 'issueCode'])->middleware('throttle:6,1')->name('link-codes.store');
+        Route::post('/children', [GuardianController::class, 'createChild'])->middleware('throttle:6,1')->name('children.store');
         Route::post('/links', [GuardianController::class, 'redeem'])->middleware('throttle:6,1')->name('links.store');
         Route::post('/links/{link}/confirm', [GuardianController::class, 'confirm'])->whereNumber('link')->name('links.confirm');
         Route::post('/context/{child}', [GuardianController::class, 'enterContext'])->whereNumber('child')->middleware('password.confirm')->name('context.enter');

@@ -17,6 +17,7 @@ final class LocaleController
     {
         $validated = $request->validate([
             'locale' => ['required', 'string', Rule::in(Config::array('app.supported_locales'))],
+            'return_to' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:#^/(?!/)[A-Za-z0-9/_.\-]*$#'],
             'return_panel' => ['sometimes', 'required', 'string', Rule::in(['admin', 'instructor', 'finance'])],
         ]);
         $locale = $validated['locale'];
@@ -28,7 +29,8 @@ final class LocaleController
 
         $request->session()->put('locale', $locale);
 
-        $destination = isset($validated['return_panel']) ? '/'.$validated['return_panel'] : '/';
+        $destination = isset($validated['return_panel']) ? '/'.$validated['return_panel'] : ($validated['return_to'] ?? '/');
+        $destination = $destination === '' ? '/' : $destination;
 
         return redirect($destination, 303)->withCookie(cookie('locale', $locale, 60 * 24 * 365));
     }
