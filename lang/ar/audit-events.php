@@ -18,4 +18,11 @@ return [
     'guardian.child_password_reset' => 'إعادة تعيين كلمة مرور طفل بواسطة ولي الأمر',
     'course.draft_created' => 'إنشاء مسودة دورة',
     'course.ownership_changed' => 'تغيير ملكية دورة',
+    'curriculum.reordered' => 'إعادة ترتيب المنهج',
+    'curriculum.items_published' => 'نشر عناصر المنهج',
+    'curriculum.items_unpublished' => 'إلغاء نشر عناصر المنهج',
+    'curriculum.section_published' => 'نشر قسم',
+    'curriculum.section_unpublished' => 'إلغاء نشر قسم',
+    'curriculum.section_archived' => 'أرشفة قسم',
+    'curriculum.lesson_archived' => 'أرشفة درس',
 ];

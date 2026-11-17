@@ -18,4 +18,11 @@ return [
     'guardian.child_password_reset' => 'Child password reset by parent',
     'course.draft_created' => 'Course draft created',
     'course.ownership_changed' => 'Course ownership changed',
+    'curriculum.reordered' => 'Curriculum reordered',
+    'curriculum.items_published' => 'Curriculum items published',
+    'curriculum.items_unpublished' => 'Curriculum items unpublished',
+    'curriculum.section_published' => 'Section published',
+    'curriculum.section_unpublished' => 'Section unpublished',
+    'curriculum.section_archived' => 'Section archived',
+    'curriculum.lesson_archived' => 'Lesson archived',
 ];

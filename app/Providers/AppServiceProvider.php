@@ -6,8 +6,10 @@ namespace App\Providers;
 
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Settings\PlatformFlag;
+use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
@@ -47,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
 
             return $user->checkPermissionTo($ability, (string) config('permissions.guard', 'web')) ? true : null;
         });
+
+        Relation::morphMap(['lesson' => Lesson::class]);
 
         Gate::define('guardian.child.access', [GuardianAccess::class, 'parentCanAccessChild']);
 
