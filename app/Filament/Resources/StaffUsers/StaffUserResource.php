@@ -75,13 +75,14 @@ final class StaffUserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('name')->view('filament.shared.tables.person')->extraAttributes(['tabindex' => '0'])->label(__('staff.name'))->searchable(),
+            TextColumn::make('name')->view('filament.shared.tables.person')->label(__('staff.name'))->searchable(),
             TextColumn::make('email')->label(__('staff.email'))->tooltip(static fn (User $record): string => $record->email)->extraAttributes(['dir' => 'ltr', 'class' => 'yg-email'])->searchable(),
             TextColumn::make('roles.name')->label(__('staff.roles'))->badge()->color(static fn (string $state): string => match ($state) {
                 'student', 'parent' => 'info', 'super_admin', 'admin' => 'success', default => 'primary'
             })->formatStateUsing(static fn (string $state): string => __('roles.'.$state)),
             StatusBadgeColumn::make('status', ['active' => 'success', 'suspended' => 'danger', 'deactivated' => 'gray'])
                 ->label(__('staff.status'))
+                ->extraAttributes(['class' => 'yg-user-status'])
                 ->formatStateUsing(static fn (string $state): string => __('staff.'.$state)),
             LocalizedDateColumn::make('created_at', pattern: 'yyyy-MM-dd')->label(__('staff.joined'))->extraAttributes(['dir' => 'ltr'])->sortable(),
         ])->filters([

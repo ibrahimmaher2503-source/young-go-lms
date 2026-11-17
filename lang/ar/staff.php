@@ -45,6 +45,6 @@ return ['user' => 'مستخدم', 'users' => 'المستخدمون', 'roles' => 
     'permissions_help' => 'ابحث عن الصلاحيات وحدّد ما يحتاجه هذا الدور. يتم تسجيل كل تغيير.',
     'permission_count' => 'العدد',
     'permissions_scroll_help' => 'ابحث أو مرّر القائمة لرؤية كل الصلاحيات.',
-    'table_scroll_hint' => 'اسحب الجدول لعرض باقي الأعمدة',
+    'table_scroll_hint' => 'مرّر الجدول لعرض باقي الأعمدة',
     'pagination_summary' => ':first–:last من :total',
 ];

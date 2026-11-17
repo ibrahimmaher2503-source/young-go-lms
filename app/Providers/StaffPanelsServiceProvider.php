@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Entitlements\Filament\ManualGrantResource;
 use App\Filament\Auth\WorkspaceLogin;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Audit\AuditLogResource;
@@ -61,10 +62,10 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->resources(match ($id) {
                     'admin' => [
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
-                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class,
+                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class,
                     ],
                     'instructor' => [CourseResource::class],
-                    default => [],
+                    default => [ManualGrantResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));

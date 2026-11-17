@@ -5,9 +5,9 @@ LOOP_STATE: RUN
 Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped`. Only the orchestrator edits this file.
 
 ## Current
-- Milestone: P1 (prior-work closure audit; no new task starts per owner)
-- Active scope: recheck previously implemented P0/P1 work, repair regressions, and record unmet requirements. T-P1-05 and later task implementation is on hold by owner direction.
-- Branch: feat/T-P0-03-bootstrap; origin https://github.com/ibrahimmaher2503-source/young-go-lms.git. Local documentation differences preserved.
+- Milestone focus: P1 closure (owner requested T-P1-08 visual rework followed by T-P1-MG follow-up).
+- Active scope: verify existing P1 work, repair the staff workspace and record unmet requirements. Later development is tracked on its own task rows.
+- Branch: feat/lms-build; origin https://github.com/ibrahimmaher2503-source/young-go-lms.git.
 
 ## Blockers (credentials / OPEN decisions / owner gates)
 - **B-01 Legacy domain mismatch (O-001, escalated):** public site at owner-stated `youngschool.com` is operated by Learning Care Group, Inc. (US childcare). Owner must confirm Young Go's real legacy hostname. Blocks T-P0-04 brand extraction (placeholders only, O-027) and T-P10-01.
@@ -39,11 +39,11 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P1-05 | Parent-created child accounts and username login | done | T-P1-03, T-P1-04 | implementer, test-writer, chore | M | high | 308cae9 | ChildAccountsTest 10 tests; I02 guardian case; composer qa tests 218 PASS; req-coverage PASS; independent security review PASS and requirements audit PASS-WITH-NOTES (docs/evidence/p1-milestone/README.md) |
 | T-P1-06 | Link codes and parent context switching | done | T-P1-05 | implementer, test-writer | M | high | 94db9e5 | GuardianLinkingTest 11 tests; full Pest 229 PASS; Larastan, translations, RTL, req-coverage PASS; independent security review PASS and requirements audit PASS (docs/evidence/p1-milestone/README.md) |
 | T-P1-07 | Age suitability model | review | T-P1-02 | implementer, test-writer | S | normal | | |
-| T-P1-08 | Filament panels, SKIT theme and shared Filament blocks | review | T-P0-04, T-P1-03, T-P1-04 | implementer, ui-builder, test-writer, chore | L | normal | 75f492d | All steps implemented incl. ApproveRejectAction (5 tests); full Pest 235 PASS; visual review 4.0 < 4.5 threshold still open (WORKSPACE_VISUAL_REVIEW_2026-11-17.md) |
+| T-P1-08 | Filament panels, SKIT theme and shared Filament blocks | blocked | T-P0-04, T-P1-03, T-P1-04 | implementer, ui-builder, test-writer, chore | L | normal | 75f492d | Isolated browser gates pass; three D-026 review cycles reached 4.33/5 against 4.5 required. Remaining visual and navigation differences are in docs/reviews/WORKSPACE_VISUAL_REVIEW_2026-11-17.md. |
 | T-P1-09 | UI primitives library | done | T-P0-04, T-P1-01 | ui-builder, test-writer | L | normal | 564751d | CI 43963037649 and independent Luna xhigh review |
 | T-P1-10 | Layouts, auth and family UI | review | T-P1-02, T-P1-05, T-P1-06, T-P1-09 | ui-builder, implementer, test-writer, chore | L | normal | (this commit) | FamilyPagesTest 17 feature + FamilyFlowsTest 47 browser (flows, axe, AR/EN x 390/1440 screenshots); full Pest 397 PASS; Larastan, translations, RTL, req-coverage PASS; independent ux-reviewer pending |
 | T-P1-11 | Staff 2FA, child password reset and child notification routing | review | T-P1-06, T-P1-08, T-P0-07 | implementer, ui-builder, test-writer | M | high | (this commit) | TwoFactorTest 14 + ChildRecoveryTest 8 feature, TwoFactorScreensTest 19 browser (axe, AR/EN x 390/1440); full Pest 438 PASS; Larastan, translations, RTL, req-coverage PASS; independent reviewer pending |
-| T-P1-MG | Milestone gate P1 | review | T-P1-01..11 | orchestrator | S | normal | (this commit) | Gates + demo + RTL review recorded in docs/evidence/p1-milestone/README.md; not closable until open items there are resolved |
+| T-P1-MG | Milestone gate P1 | review | T-P1-01..11 | orchestrator | S | normal | (this commit) | Fresh demo, Identity, role/audit and family/2FA browser evidence; Checklist §3 updated. Open gates and dependency reviews in docs/evidence/p1-milestone/README.md |
 | T-P2-01 | Categories and disciplines | review | T-P1-08 | implementer, test-writer, chore | S | normal | | See task log |
 | T-P2-02 | CMS pages and homepage blocks | review | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | See task log |
 | T-P2-03 | Brand public shell and homepage UI | blocked | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | O-027 official branding inputs |
@@ -71,7 +71,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P3-15 | Rich-text lessons with restricted blocks | todo | T-P3-04, T-P0-07 | implementer, ui-builder, test-writer | M | high | | |
 | T-P3-MG | Milestone gate P3 | todo | T-P3-01..15 | orchestrator | S | normal | | |
 | T-P4-01 | Unified EntitlementService | review | T-P3-01, T-P1-04 | implementer, test-writer | L | high | | |
-| T-P4-02 | Free enrollment, manual grants and course access summary | todo | T-P4-01 | implementer, ui-builder, test-writer | M | high | | |
+| T-P4-02 | Free enrollment, manual grants and course access summary | review | T-P4-01 | implementer, ui-builder, test-writer | M | high | | |
 | T-P4-03 | Course player and curriculum navigation | todo | T-P4-01, T-P3-05, T-P1-09 | ui-builder, implementer, test-writer | L | normal | | |
 | T-P4-04 | Progress, resume and completion state | todo | T-P4-03 | implementer, test-writer | M | high | | |
 | T-P4-05 | Student dashboard and library | todo | T-P4-04 | ui-builder, implementer, test-writer | M | normal | | |
@@ -472,3 +472,7 @@ Generated19new raster references with built-in image_gen and saved them with the
 | T-P4-01:A2 | evidence: same file — expired, revoked, not-yet-started and wrong-state cases deny lessons, files and AI eligibility; reason codes with AR/EN copy (lang/*/access.php); request cache dropped on grant/revoke/expire; hourly `entitlements:expire` scheduled. |
 | T-P4-01:A3 | evidence: tests/Feature/Invariants/I01_EntitlementOnlyViaServiceTest.php — no code outside app/Domain/Entitlements touches the entitlements table or model. |
 - T-P4-01 implemented by root (loop): table `entitlements` (unique source_type+source_ref+learner+course), `EntitlementSource`, `Entitlement`, `EntitlementService` (implements LessonAccessChecker, replaces the DenyLessonAccess stub which is deleted; checks course open, item/section published, preview lessons, current entitlement, date/days unlock, suspended learners), `AccessDecision`, `GrantEntitlement`/`RevokeEntitlement`/`ExpireEntitlements`. DECISIONS TO CONFIRM (OPEN): only `published` and `private` courses are open to learners (suspended/archived/upcoming/draft deny, even for existing learners); unlock rules supported are none/date/days (anything else fails closed as drip_locked); `not_in_cohort`, `sequence_locked`, `live_window_closed` codes belong to later tasks. I03/I04 are todo scaffolds for P8. NOT DONE: UI for grants/revokes (T-P4-02), commerce sources (P8). Status `review`.
+| T-P4-02:A1 | evidence: tests/Feature/Entitlements/EnrollmentAndGrantsTest.php — manual grant creates one entitlement with no order/payment table involved; summary by source/state; filters; CSV export with formula-safe cells; screenshots tests/Browser/screenshots/T-P4-02 (AR/EN, 390/1440, axe) and docs/reviews/T-P4-02_VISUAL_MATCH.md. |
+| T-P4-02:A2 | evidence: same test file — revoke needs a reason, is audited once, and the learner's access ends immediately. |
+| T-P4-02:A3 | evidence: same test file — a verified parent enrolls a child in a free published course and the entitlement belongs to the child; strangers and unverified links are refused. |
+- T-P4-02 implemented by root (loop): `EnrollInFreeCourse` (self or verified parent; free + published only; idempotent), `CourseAccessSummary`, Manual Grants Filament resource inside the Entitlements module (keeps I01) for admin and finance with grant (lifetime or end date, required reason), revoke, status/source/course filters, CSV export. NOT DONE: learner-facing enroll button on the course page (T-P2-05/T-P4-03), parent-side child enroll screen, per-course summary on the course view page (summary follows the course filter here). Status `review`.
