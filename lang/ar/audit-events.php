@@ -31,6 +31,8 @@ return [
     'curriculum.assignment_archived' => 'أرشفة واجب',
     'media.attached' => 'إرفاق وسائط بدرس',
     'media.exception_granted' => 'منح استثناء لوسائط مفتوحة',
+    'media.subtitle_added' => 'إضافة ترجمة لدرس',
+    'media.subtitle_removed' => 'حذف ترجمة من درس',
     'curriculum_document.uploaded' => 'رفع ملف المنهج PDF',
     'curriculum_document.approved' => 'اعتماد ملف المنهج PDF',
     'curriculum_document.extracted' => 'استخراج نص ملف المنهج PDF',

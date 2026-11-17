@@ -6,6 +6,7 @@ namespace App\Domain\Media;
 
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
+use App\Models\SubtitleTrack;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -15,7 +16,7 @@ use InvalidArgumentException;
 /** Short-lived download links tied to one signed-in account: another account cannot reuse them. */
 final class SignedFileUrl
 {
-    public const array TYPES = ['resource' => LessonResource::class, 'document' => LessonCurriculumDocument::class];
+    public const array TYPES = ['resource' => LessonResource::class, 'document' => LessonCurriculumDocument::class, 'subtitle' => SubtitleTrack::class];
 
     public function __construct(private readonly PrivateFileAccess $access) {}
 

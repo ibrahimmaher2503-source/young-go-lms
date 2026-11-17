@@ -30,7 +30,15 @@ final readonly class PlaybackDescriptor
         public ?string $sandbox = null,
         public ?string $text = null,
         public ?CarbonInterface $expiresAt = null,
+        /** @var list<array{locale: string, label: string, default: bool, url: string}> */
+        public array $tracks = [],
     ) {}
+
+    /** @param  list<array{locale: string, label: string, default: bool, url: string}>  $tracks */
+    public function withTracks(array $tracks): self
+    {
+        return new self($this->type, $this->provider, $this->tier, $this->url, $this->embedUrl, $this->sandbox, $this->text, $this->expiresAt, $tracks);
+    }
 
     /** @return array<string, mixed> */
     public function toArray(): array
@@ -39,6 +47,7 @@ final readonly class PlaybackDescriptor
             'type' => $this->type, 'provider' => $this->provider, 'tier' => $this->tier, 'url' => $this->url,
             'embed_url' => $this->embedUrl, 'sandbox' => $this->sandbox, 'text' => $this->text,
             'expires_at' => $this->expiresAt?->toIso8601String(),
+            'tracks' => $this->tracks === [] ? null : $this->tracks,
         ], static fn (mixed $value): bool => $value !== null);
     }
 }

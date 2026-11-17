@@ -39,6 +39,12 @@ final class Lesson extends Model
         return $this->hasOne(MediaAsset::class);
     }
 
+    /** @return HasMany<SubtitleTrack, $this> */
+    public function subtitleTracks(): HasMany
+    {
+        return $this->hasMany(SubtitleTrack::class)->orderByDesc('is_default')->orderBy('locale');
+    }
+
     /** @return HasMany<LessonResource, $this> */
     public function resources(): HasMany
     {

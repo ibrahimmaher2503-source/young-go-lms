@@ -31,6 +31,8 @@ return [
     'curriculum.assignment_archived' => 'Assignment archived',
     'media.attached' => 'Lesson media attached',
     'media.exception_granted' => 'Open media exception granted',
+    'media.subtitle_added' => 'Lesson captions added',
+    'media.subtitle_removed' => 'Lesson captions removed',
     'curriculum_document.uploaded' => 'Curriculum PDF uploaded',
     'curriculum_document.approved' => 'Curriculum PDF approved',
     'curriculum_document.extracted' => 'Curriculum PDF text extracted',

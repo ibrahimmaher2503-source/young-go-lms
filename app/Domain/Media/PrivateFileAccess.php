@@ -9,6 +9,7 @@ use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
+use App\Models\SubtitleTrack;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,7 +28,7 @@ final class PrivateFileAccess
         }
 
         $lesson = match (true) {
-            $file instanceof LessonResource, $file instanceof LessonCurriculumDocument => $file->lesson,
+            $file instanceof LessonResource, $file instanceof LessonCurriculumDocument, $file instanceof SubtitleTrack => $file->lesson,
             default => null,
         };
         if (! $lesson instanceof Lesson) {
