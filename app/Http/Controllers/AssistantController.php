@@ -105,6 +105,7 @@ final class AssistantController
             'source_pages' => $reply->sourcePages,
             'language' => $reply->language,
             'quote_verified' => $reply->quoteVerified,
+            'guard' => $reply->guard,
         ];
     }
 
@@ -113,12 +114,13 @@ final class AssistantController
         $reason = $refused->reason;
         $status = match ($reason) {
             UnavailableReason::QuotaExhausted => 429,
-            UnavailableReason::NoApprovedDocument, UnavailableReason::NotRecordedLesson, null => 409,
+            UnavailableReason::NoApprovedDocument, UnavailableReason::NotRecordedLesson => 409,
+            null => $refused->kind === AssistantRefused::BUDGET_EXHAUSTED ? 503 : 409,
             default => 403,
         };
         $body = ['state' => $reason->value ?? $refused->kind, 'message' => $refused->getMessage()];
-        if ($reason === UnavailableReason::QuotaExhausted) {
-            $body['reset_at'] = now()->addDay()->startOfDay()->toIso8601String();
+        if ($refused->resetAt !== null) {
+            $body['reset_at'] = $refused->resetAt->toIso8601String();
         }
 
         return $this->json($body, $status);

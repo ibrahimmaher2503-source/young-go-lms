@@ -15,6 +15,9 @@ final readonly class AssistantReply
         public bool $quoteVerified,
         public int $messageId,
         public int $conversationId,
+        /** The input guard that stopped the question (moderation, safeguarding, injection, quiz_guard), else null. */
+        public ?string $guard = null,
+        public bool $cacheHit = false,
     ) {}
 
     public function answered(): bool

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\AI\Actions;
 
 use App\Domain\AI\AiProviderNotConfigured;
+use App\Domain\AI\Assistant\AnswerCache;
 use App\Domain\AI\Assistant\AssistantContext;
 use App\Domain\AI\Assistant\AssistantMode;
 use App\Domain\AI\Assistant\AssistantOutcome;
 use App\Domain\AI\Assistant\AssistantQuestion;
 use App\Domain\AI\Assistant\AssistantRefused;
 use App\Domain\AI\Assistant\AssistantReply;
+use App\Domain\AI\Assistant\CachedAnswer;
 use App\Domain\AI\Assistant\ContextBuilder;
 use App\Domain\AI\Assistant\GuardFailure;
 use App\Domain\AI\Assistant\GuardVerdict;
@@ -23,13 +25,20 @@ use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Dto\AiCompletionRequest;
 use App\Domain\AI\Dto\AiCompletionResult;
 use App\Domain\AI\Dto\AiUsage as UsageTokens;
+use App\Domain\AI\Guards\GuardKind;
+use App\Domain\AI\Guards\InputGuard;
+use App\Domain\AI\Guards\InputVerdict;
 use App\Domain\AI\PromptRenderer;
+use App\Domain\AI\Quota\BudgetGate;
+use App\Domain\AI\Quota\QuotaLedger;
+use App\Domain\AI\Quota\QuotaReservation;
 use App\Domain\AI\UnavailableReason;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Entitlements\EntitlementService;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\AiPromptVersion;
+use App\Models\AiSafeguardingFlag;
 use App\Models\AiUsage;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
@@ -45,7 +54,8 @@ use Throwable;
 /**
  * The assistant request pipeline (AI spec 7, T-P7-01): eligibility, thread limits, lesson-PDF-only context, a second
  * eligibility check right before the prompt is built, the provider call through the contract, the output guard with one
- * retry, and persistence with audit. Input guards, cache and quotas belong to T-P7-02.
+ * retry, and persistence with audit. T-P7-02 adds, in order: input guards (PII masking, moderation, injection heuristics, active-quiz
+ * guard) before anything is stored or sent, the per-lesson answer cache, and the daily quota reserve/commit/refund plus budget gate.
  *
  * Nothing the provider returns is shown unless the output guard accepted it, so the answer is released in one piece and the
  * HTTP layer streams the validated text. The assistant has no tools and writes nothing but its own message rows.
@@ -60,6 +70,10 @@ final class AskLessonAssistant
         private readonly PromptRenderer $prompts,
         private readonly OutputGuard $guard,
         private readonly AuditLogger $audit,
+        private readonly InputGuard $inputs,
+        private readonly AnswerCache $cache,
+        private readonly QuotaLedger $quota,
+        private readonly BudgetGate $budget,
     ) {}
 
     public function __invoke(User $learner, Lesson $lesson, AssistantQuestion $input): AssistantReply
@@ -77,14 +91,71 @@ final class AskLessonAssistant
         $document = $lesson->activeCurriculumDocument() ?? throw AssistantRefused::unavailable(UnavailableReason::NoApprovedDocument);
 
         [$conversation, $messages] = $this->thread($learner, $lesson, $document, $input);
-        $question = $this->questionText($input, $messages);
+        $original = $this->questionText($input, $messages);
+
+        // Input guards run before the question is stored or sent anywhere; from here on only the masked text is used.
+        $checked = $this->inputs->inspect($learner, $document, $original);
+        $question = $checked->text;
+        $tier = StyleTier::forLearner($learner);
+        if ($checked->isBlocked()) {
+            return $this->persistGuarded($learner, $lesson, $document, $conversation, $input, $checked, $tier);
+        }
+
+        $prompt = AiPromptVersion::current() ?? throw AssistantRefused::unavailable(UnavailableReason::GlobalOff);
+        $language = ReplyLanguage::for($question, $input->locale);
+
+        // Only a first, normal-mode question without personal data is cacheable: nothing learner-specific can be in the entry.
+        $cacheable = $input->mode === AssistantMode::Normal && $messages->isEmpty() && $checked->piiKinds === [];
+        $hit = $cacheable ? $this->cache->find((int) $lesson->getKey(), $document->version, $question, $language->code, $tier, $prompt->version) : null;
+        if ($hit !== null) {
+            $this->recheck($learner, $lesson, $document);
+
+            return $this->persistCached($learner, $lesson, $document, $conversation, $input, $question, $checked->piiKinds, $tier, $prompt, $hit);
+        }
+
+        $this->budget->assertOpen($lesson);
+        $reservation = $this->quota->reserve($learner, $lesson);
+
+        try {
+            $reply = $this->answer($learner, $lesson, $document, $conversation, $messages, $input, $question, $checked, $tier, $prompt, $language, $reservation);
+        } catch (Throwable $exception) {
+            $reservation->refund();
+
+            throw $exception;
+        }
+
+        if ($cacheable && $reply->answered()) {
+            $this->cache->store((int) $lesson->getKey(), $document->version, $question, $language->code, $tier, $prompt->version, $reply->message, $reply->sourcePages, $reply->language);
+        }
+        $this->budget->alertIfNeeded($lesson);
+
+        return $reply;
+    }
+
+    /**
+     * The provider path. The unit reserved by the caller is committed when the output guard accepted a model answer (including a
+     * model-declared not_in_source or out_of_scope) and refunded on provider error, timeout or guard rejection (ED-010).
+     *
+     * @param  Collection<int, AiMessage>  $messages
+     */
+    private function answer(
+        User $learner,
+        Lesson $lesson,
+        LessonCurriculumDocument $document,
+        ?AiConversation $conversation,
+        Collection $messages,
+        AssistantQuestion $input,
+        string $question,
+        InputVerdict $checked,
+        StyleTier $tier,
+        AiPromptVersion $prompt,
+        ReplyLanguage $language,
+        QuotaReservation $reservation,
+    ): AssistantReply {
         $context = $this->contexts->build($document, $question);
 
         $this->recheck($learner, $lesson, $document);
 
-        $prompt = AiPromptVersion::current() ?? throw AssistantRefused::unavailable(UnavailableReason::GlobalOff);
-        $tier = StyleTier::forLearner($learner);
-        $language = ReplyLanguage::for($question, $input->locale);
         $system = $this->prompts->render($prompt, $tier->value, $language->label, (string) $lesson->title, $document->version, $context->promptPages, $language->maxWords());
         $rules = Str::before($system, '<'.config('ai.source_tag', 'lesson_source'));
         $request = new AiCompletionRequest(
@@ -100,7 +171,15 @@ final class AskLessonAssistant
 
         [$verdict, $how, $attempts, $usageResult] = $this->ask($request, $context, $rules);
 
-        return $this->persist($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $verdict, $how, $attempts, $usageResult);
+        $reply = $this->persist($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $verdict, $how, $attempts, $usageResult, $checked->piiKinds);
+
+        if ($verdict !== null && $verdict->passed()) {
+            $reservation->commit();
+        } else {
+            $reservation->refund();
+        }
+
+        return $reply;
     }
 
     /**
@@ -268,6 +347,7 @@ final class AskLessonAssistant
         );
     }
 
+    /** @param  array<string, int>  $pii */
     private function persist(
         User $learner,
         Lesson $lesson,
@@ -281,6 +361,7 @@ final class AskLessonAssistant
         string $how,
         int $attempts,
         ?AiCompletionResult $usage,
+        array $pii = [],
     ): AssistantReply {
         // Quote mismatch after the retry means the source does not clearly support an answer: say so, never show the text.
         $accepted = $verdict !== null && $verdict->passed();
@@ -310,7 +391,7 @@ final class AskLessonAssistant
         $latency = $usage === null ? 0 : $usage->latencyMs;
         $result = $outcome === AssistantOutcome::Fallback ? ($reason ?? 'fallback') : $outcome->value;
 
-        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $outcome, $answered, $reason, $text, $pages, $language, $trimmed, $attempts, $tokens, $model, $cost, $latency, $result, $course): AssistantReply {
+        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $outcome, $answered, $reason, $text, $pages, $language, $trimmed, $attempts, $tokens, $model, $cost, $latency, $result, $course, $pii): AssistantReply {
             $conversation ??= AiConversation::query()->create([
                 'student_id' => $learner->getKey(), 'course_id' => $course->getKey(), 'lesson_id' => $lesson->getKey(),
                 'document_version' => $document->version, 'locale' => $input->locale, 'style_tier' => $tier->value,
@@ -319,7 +400,7 @@ final class AskLessonAssistant
 
             AiMessage::query()->create([
                 'conversation_id' => $conversation->getKey(), 'role' => AiMessage::ROLE_USER, 'content' => $question,
-                'guard_flags' => ['mode' => $input->mode->value], 'cache_hit' => false,
+                'guard_flags' => ['mode' => $input->mode->value] + ($pii === [] ? [] : ['pii' => $pii]), 'cache_hit' => false,
             ]);
 
             $message = AiMessage::query()->create([
@@ -347,6 +428,128 @@ final class AskLessonAssistant
             }
 
             return new AssistantReply($outcome, $text, $pages, $language, $answered, (int) $message->getKey(), (int) $conversation->getKey());
+        });
+    }
+
+    /**
+     * A question an input guard stopped: no provider call, no quota unit, a fixed localized message. It is stored masked as an
+     * out_of_scope turn, counted in ai_usage by guard, and audited (quiz_guard event; safeguarding raises a flag for staff).
+     */
+    private function persistGuarded(
+        User $learner,
+        Lesson $lesson,
+        LessonCurriculumDocument $document,
+        ?AiConversation $conversation,
+        AssistantQuestion $input,
+        InputVerdict $checked,
+        StyleTier $tier,
+    ): AssistantReply {
+        $kind = $checked->blocked ?? throw new RuntimeException('Guard verdict without a guard.');
+        $course = $lesson->item->course;
+        // Self-harm from anyone who is not a known adult is flagged for designated admins (O-015, O-028); adults only get the message.
+        $flag = $kind === GuardKind::Safeguarding && $tier !== StyleTier::Adults;
+        $pages = $checked->page === null ? [] : [$checked->page];
+
+        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $checked, $tier, $kind, $course, $flag, $pages): AssistantReply {
+            $conversation ??= AiConversation::query()->create([
+                'student_id' => $learner->getKey(), 'course_id' => $course->getKey(), 'lesson_id' => $lesson->getKey(),
+                'document_version' => $document->version, 'locale' => $input->locale, 'style_tier' => $tier->value,
+                'video_position' => $input->videoPosition, 'status' => 'open',
+            ]);
+
+            AiMessage::query()->create([
+                'conversation_id' => $conversation->getKey(), 'role' => AiMessage::ROLE_USER, 'content' => $checked->text,
+                'guard_flags' => ['mode' => $input->mode->value] + ($checked->piiKinds === [] ? [] : ['pii' => $checked->piiKinds]), 'cache_hit' => false,
+            ]);
+
+            $message = AiMessage::query()->create([
+                'conversation_id' => $conversation->getKey(), 'role' => AiMessage::ROLE_ASSISTANT, 'content' => '',
+                'status' => AssistantOutcome::OutOfScope->value, 'source_pages' => null, 'quote_verified' => null,
+                'guard_flags' => ['guard' => $kind->value, 'category' => $checked->category?->value, 'page' => $checked->page, 'mode' => $input->mode->value],
+                'cache_hit' => false,
+            ]);
+
+            AiUsage::query()->create([
+                'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
+                'provider' => (string) config('ai.provider', 'unconfigured'), 'model' => null,
+                'input_tokens' => 0, 'cached_tokens' => 0, 'output_tokens' => 0, 'cost_minor' => 0, 'latency_ms' => 0, 'result' => $kind->value,
+            ]);
+
+            if ($flag) {
+                AiSafeguardingFlag::query()->create([
+                    'student_id' => $learner->getKey(), 'conversation_id' => $conversation->getKey(),
+                    'category' => $checked->category->value ?? 'self_harm', 'status' => 'open',
+                ]);
+            }
+
+            $event = match (true) {
+                $kind === GuardKind::QuizGuard => 'ai.quiz_guard',
+                $flag => 'ai.safeguarding_flagged',
+                default => 'ai.input_blocked',
+            };
+            if ($this->audit->record($event, $conversation, (int) $learner->getKey(), null, [
+                'lesson_id' => $lesson->getKey(), 'document_version' => $document->version, 'guard' => $kind->value,
+                'category' => $checked->category?->value, 'page' => $checked->page,
+            ]) === null) {
+                throw new RuntimeException('Unable to record assistant audit.');
+            }
+
+            return new AssistantReply(AssistantOutcome::OutOfScope, $checked->message, $pages, $input->locale, false, (int) $message->getKey(), (int) $conversation->getKey(), $kind->value);
+        });
+    }
+
+    /**
+     * An answer served from the cache: no provider call and no quota unit. Entitlement was re-checked by the caller.
+     *
+     * @param  array<string, int>  $pii
+     */
+    private function persistCached(
+        User $learner,
+        Lesson $lesson,
+        LessonCurriculumDocument $document,
+        ?AiConversation $conversation,
+        AssistantQuestion $input,
+        string $question,
+        array $pii,
+        StyleTier $tier,
+        AiPromptVersion $prompt,
+        CachedAnswer $hit,
+    ): AssistantReply {
+        $course = $lesson->item->course;
+
+        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $question, $pii, $tier, $prompt, $hit, $course): AssistantReply {
+            $conversation ??= AiConversation::query()->create([
+                'student_id' => $learner->getKey(), 'course_id' => $course->getKey(), 'lesson_id' => $lesson->getKey(),
+                'document_version' => $document->version, 'locale' => $input->locale, 'style_tier' => $tier->value,
+                'video_position' => $input->videoPosition, 'status' => 'open',
+            ]);
+
+            AiMessage::query()->create([
+                'conversation_id' => $conversation->getKey(), 'role' => AiMessage::ROLE_USER, 'content' => $question,
+                'guard_flags' => ['mode' => $input->mode->value] + ($pii === [] ? [] : ['pii' => $pii]), 'cache_hit' => false,
+            ]);
+
+            $message = AiMessage::query()->create([
+                'conversation_id' => $conversation->getKey(), 'role' => AiMessage::ROLE_ASSISTANT, 'content' => $hit->answer,
+                'status' => AssistantOutcome::Answered->value, 'source_pages' => $hit->pages, 'quote_verified' => true,
+                'guard_flags' => ['attempts' => 0, 'reason' => 'cache_hit', 'trimmed' => false, 'mode' => $input->mode->value],
+                'prompt_version' => $prompt->version, 'model' => null, 'cache_hit' => true,
+            ]);
+
+            AiUsage::query()->create([
+                'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
+                'provider' => (string) config('ai.provider', 'unconfigured'), 'model' => null,
+                'input_tokens' => 0, 'cached_tokens' => 0, 'output_tokens' => 0, 'cost_minor' => 0, 'latency_ms' => 0, 'result' => 'cache_hit',
+            ]);
+
+            if ($this->audit->record('ai.assistant_asked', $conversation, (int) $learner->getKey(), null, [
+                'lesson_id' => $lesson->getKey(), 'document_version' => $document->version, 'status' => AssistantOutcome::Answered->value,
+                'prompt_version' => $prompt->version, 'quote_verified' => true, 'attempts' => 0, 'mode' => $input->mode->value, 'cache_hit' => true,
+            ]) === null) {
+                throw new RuntimeException('Unable to record assistant audit.');
+            }
+
+            return new AssistantReply(AssistantOutcome::Answered, $hit->answer, $hit->pages, $hit->language, true, (int) $message->getKey(), (int) $conversation->getKey(), null, true);
         });
     }
 

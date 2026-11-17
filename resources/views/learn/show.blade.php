@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div class="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]{{ $aiAvailable ? ' 2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,22rem)]' : '' }}">
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]{{ $aiAvailable ? ' 2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,24rem)]' : '' }}">
             {{-- Curriculum (first column: right in Arabic, left in English) --}}
             <aside class="hidden space-y-3 lg:block" aria-label="{{ __('learn.curriculum') }}">
                 @if($courseProgress)
@@ -110,6 +110,9 @@
                                 @if($canMarkComplete)
                                     <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
                                 @endif
+                                @if($aiAvailable)
+                                    <x-learning.assistant-opener />
+                                @endif
                             </div>
                         @elseif($canMarkComplete)
                             <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
@@ -174,13 +177,9 @@
                 </div>
             </div>
 
-            @if($aiAvailable)
-                {{-- The assistant (P7) fills this column; it exists only when the learner is eligible. --}}
-                <aside class="hidden space-y-3 2xl:block" aria-label="{{ __('learn.assistant') }}">
-                    <div class="space-y-3 rounded-card border border-border bg-surface p-4 shadow-card" data-ai-slot>
-                        <h2 class="flex items-center justify-between gap-2 text-xl font-bold"><span>{{ __('learn.assistant') }}</span> <x-ui.icon name="sparkle" class="size-6 text-primary" /></h2>
-                    </div>
-                </aside>
+            @if($aiAvailable && $lesson !== null)
+                {{-- Lesson assistant (T-P7-03): rendered only for an eligible learner, so nothing exists in the page when AI is off. --}}
+                <x-learning.assistant-panel :lesson="$lesson" :pdf-url="$curriculumPdfUrl" />
             @endif
         </div>
     </div>

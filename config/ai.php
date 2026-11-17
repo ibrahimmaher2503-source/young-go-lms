@@ -45,6 +45,21 @@ return [
         'leak_ngram_words' => 6,        // a run of this many words copied from the system rules counts as a leak
     ],
 
+    // Input guards, answer cache, quotas and rate limits (AI spec sections 8.1, 8.3, 10; T-P7-02).
+    'guards' => [
+        'quiz_similarity' => 0.7,        // Dice similarity of the normalised question and an open quiz question that triggers the quiz guard
+        'quiz_containment' => 0.8,       // share of a long-enough quiz question found inside the learner's question
+        'quiz_min_words' => 4,           // a quiz prompt shorter than this is never matched on containment
+        'page_hint_min_overlap' => 0.25, // share of the question's words a lesson page must hold to be named in the quiz-guard hint
+    ],
+    'cache' => [
+        'ttl_days' => 30,                // AI spec 10.3
+    ],
+    'rate_limit' => [
+        'ask_per_minute' => 8,           // POST assistant messages, per signed-in account
+        'status_per_minute' => 60,       // GET assistant status, per signed-in account
+    ],
+
     // PDF ingestion (AI spec section 6). Thresholds are starting values to tune against real lesson PDFs.
     'ingestion' => [
         'dispatch_on_upload' => (bool) env('AI_INGEST_ON_UPLOAD', true),

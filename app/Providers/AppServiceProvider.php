@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\AI\Contracts\AiProviderInterface;
+use App\Domain\AI\Contracts\ModerationClassifier;
 use App\Domain\AI\Ingestion\Contracts\PageRenderer;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
 use App\Domain\AI\Ingestion\PdftoppmRenderer;
 use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
+use App\Domain\AI\Providers\FakeModerationClassifier;
+use App\Domain\AI\Providers\KeywordModerationClassifier;
 use App\Domain\AI\Providers\NullAiProvider;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
@@ -35,6 +38,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
@@ -52,6 +56,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         Fortify::ignoreRoutes();
+    }
+
+    private static function assistantLimit(Request $request, int $perMinute): Limit
+    {
+        return Limit::perMinute($perMinute)->by('assistant:'.($request->user()?->getAuthIdentifier() ?? $request->ip()))
+            ->response(static fn (Request $request, array $headers): JsonResponse => response()->json([
+                'state' => 'rate_limited', 'message' => __('ai.quota.rate_limited'), 'retry_after' => (int) ($headers['Retry-After'] ?? 60),
+            ], 429, $headers + ['Cache-Control' => 'private, no-store']));
     }
 
     /**
@@ -104,8 +116,16 @@ class AppServiceProvider extends ServiceProvider
             ? new FakeAiProvider
             : new NullAiProvider);
 
+        // Moderation adapter: the keyword baseline everywhere except local/test, which get the deterministic fake. A real adapter comes with O-014.
+        $this->app->singleton(ModerationClassifier::class, static fn (): ModerationClassifier => config('ai.provider') === 'fake' || app()->environment('local', 'testing')
+            ? new FakeModerationClassifier
+            : new KeywordModerationClassifier);
+
         Gate::define('guardian.child.access', [GuardianAccess::class, 'parentCanAccessChild']);
 
+        // Assistant endpoints (T-P7-02): per signed-in account, answered as JSON so the player can show a rate-limit state.
+        RateLimiter::for('assistant-ask', static fn (Request $request): Limit => self::assistantLimit($request, max(1, (int) config('ai.rate_limit.ask_per_minute', 8))));
+        RateLimiter::for('assistant-status', static fn (Request $request): Limit => self::assistantLimit($request, max(1, (int) config('ai.rate_limit.status_per_minute', 60))));
         RateLimiter::for('login', static function (Request $request): array {
             $login = $request->input('login');
             $identity = is_string($login) ? mb_strtolower(trim($login)) : '';
