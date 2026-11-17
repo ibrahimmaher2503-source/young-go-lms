@@ -45,6 +45,21 @@ final class CoursePolicy extends BasePolicy
             && ($course->owner_type !== Course::OWNER_INDEPENDENT || $this->allows($user, 'course.approve'));
     }
 
+    public function duplicate(User $user, Course $course): bool
+    {
+        return $this->create($user) && $this->view($user, $course)->allowed();
+    }
+
+    public function archive(User $user, Course $course): bool
+    {
+        return $this->update($user, $course) && $user->can('panel.admin.access');
+    }
+
+    public function delete(User $user, Course $course): bool
+    {
+        return $this->view($user, $course)->allowed() && $user->can('panel.admin.access') && $this->allows($user, 'course.delete');
+    }
+
     public function feature(User $user, Course $course): bool
     {
         return $this->update($user, $course) && $user->can('panel.admin.access') && $this->allows($user, 'course.publish');

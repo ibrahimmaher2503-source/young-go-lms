@@ -66,4 +66,12 @@ return [
     'steps_done' => ':done of :total steps complete',
     'step_done' => '(complete)',
     'step_todo' => '(not complete)',
+    'duplicate' => 'Duplicate',
+    'duplicated' => 'Draft copy created: :title',
+    'archive' => 'Archive',
+    'delete' => 'Delete',
+    'deleted' => 'Course deleted.',
+    'delete_confirm' => 'A course is deleted only if nobody ever had access to it. Otherwise archive it instead.',
+    'delete_blocked' => 'This course cannot be deleted because it has history (:reasons). Archive it instead.',
+    'blocked' => ['entitlements' => 'access grants', 'progress' => 'learner progress', 'orders' => 'orders', 'attempts' => 'quiz attempts'],
 ];

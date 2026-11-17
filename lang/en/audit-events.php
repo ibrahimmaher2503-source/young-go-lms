@@ -44,4 +44,7 @@ return [
     'curriculum_document.key_terms_approved' => 'Key terms approved',
     'lesson_resource.added' => 'Lesson resource added',
     'lesson_resource.removed' => 'Lesson resource removed',
+    'course.duplicated' => 'Course duplicated',
+    'course.archived' => 'Course archived',
+    'course.deleted' => 'Course deleted',
 ];

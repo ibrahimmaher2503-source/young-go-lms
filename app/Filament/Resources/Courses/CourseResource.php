@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses;
 
+use App\Domain\Catalog\Actions\ArchiveCourse;
+use App\Domain\Catalog\Actions\DeleteCourse;
+use App\Domain\Catalog\Actions\DuplicateCourse;
 use App\Domain\Catalog\Actions\FeatureCourse;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Catalog\Queries\CourseDirectory;
@@ -22,6 +25,7 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource as FilamentResource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -30,6 +34,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /** @extends FilamentResource<Course> */
 final class CourseResource extends FilamentResource
@@ -102,6 +107,34 @@ final class CourseResource extends FilamentResource
             Action::make('curriculum')->label(__('curriculum.curriculum'))->icon('heroicon-o-queue-list')
                 ->url(static fn (Course $record): string => self::getUrl('curriculum', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => Gate::allows('update', $record)),
+            Action::make('duplicate')->label(__('courses.duplicate'))->icon('heroicon-o-document-duplicate')->requiresConfirmation()
+                ->visible(static fn (Course $record): bool => Gate::allows('duplicate', $record))
+                ->action(static function (Course $record): void {
+                    $actor = Auth::user();
+                    abort_unless($actor instanceof User, 401);
+                    $copy = app(DuplicateCourse::class)($actor, $record);
+                    Notification::make()->success()->title(__('courses.duplicated', ['title' => $copy->title]))->send();
+                }),
+            Action::make('archive')->label(__('courses.archive'))->icon('heroicon-o-archive-box')->color('gray')->requiresConfirmation()
+                ->visible(static fn (Course $record): bool => Gate::allows('archive', $record) && $record->status !== CourseStatus::Archived)
+                ->action(static function (Course $record): void {
+                    $actor = Auth::user();
+                    abort_unless($actor instanceof User, 401);
+                    app(ArchiveCourse::class)($actor, $record);
+                    Notification::make()->success()->title(__('courses.archived'))->send();
+                }),
+            Action::make('delete')->label(__('courses.delete'))->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()->modalDescription(__('courses.delete_confirm'))
+                ->visible(static fn (Course $record): bool => Gate::allows('delete', $record))
+                ->action(static function (Course $record): void {
+                    $actor = Auth::user();
+                    abort_unless($actor instanceof User, 401);
+                    try {
+                        app(DeleteCourse::class)($actor, $record);
+                        Notification::make()->success()->title(__('courses.deleted'))->send();
+                    } catch (ValidationException $exception) {
+                        Notification::make()->danger()->title((string) collect($exception->errors())->flatten()->first())->send();
+                    }
+                }),
             Action::make('feature')->label(static fn (Course $record): string => __('courses.'.($record->featured ? 'unfeature' : 'feature')))
                 ->icon('heroicon-o-star')->visible(static fn (Course $record): bool => Gate::allows('feature', $record))
                 ->action(static fn (Course $record) => app(FeatureCourse::class)($record, ! $record->featured)),

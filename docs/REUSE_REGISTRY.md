@@ -76,6 +76,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | RecordProgress, RecalculateCourseProgress, ContinueLearning, LessonProgress, CourseProgress | `app/Domain/Progress/` | Server-authoritative lesson/course progress and resume | built | T-P4-04 |
 | layouts.learner, learner.course-row/course-thumb, LearnerCourses, LearnerHomeController | `resources/views/components/`, `app/Domain/Entitlements/` | Learner shell, dashboard and my courses | built | T-P4-05 |
 | RichContent, x-learning.rich-content, lessons.content | `app/Domain/Content/`, `resources/views/components/learning/` | Safe rich lesson content (single sanitizer) | built | T-P3-15 |
+| DuplicateCourse, ArchiveCourse, DeleteCourse, CourseHistoryChecker (tag course.history) | `app/Domain/Catalog/` | Course lifecycle with history guard | built | T-P3-12 |
 | Workspace table scroll region | `resources/views/filament/shared/table-scroll-hint.blade.php` | Labels overflowing table wrappers and makes them reachable by keyboard, including empty tables | built | T-P2-02 |
 | WorkspaceDashboard | `app/Filament/Pages/WorkspaceDashboard.php` | Shared panel landing with permission-scoped actual resource links and summary | built | T-P1-08 |
 | WorkspaceLogin | `app/Filament/Auth/WorkspaceLogin.php` | Native Filament authentication in the shared bilingual responsive layout | built | T-P1-08 |

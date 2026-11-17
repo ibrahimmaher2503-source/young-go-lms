@@ -44,4 +44,7 @@ return [
     'curriculum_document.key_terms_approved' => 'اعتماد المصطلحات الرئيسية',
     'lesson_resource.added' => 'إضافة مورد للدرس',
     'lesson_resource.removed' => 'حذف مورد من الدرس',
+    'course.duplicated' => 'نسخ دورة',
+    'course.archived' => 'أرشفة دورة',
+    'course.deleted' => 'حذف دورة',
 ];
