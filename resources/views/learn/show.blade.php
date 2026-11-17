@@ -69,8 +69,8 @@
                                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
                             @else
                                 <x-learning.lesson-media :descriptor="$descriptor" :title="$title" />
-                                @if(in_array($descriptor->type, ['video', 'audio'], true))
-                                    <span class="pointer-events-none absolute end-3 top-3 select-none rounded bg-black/30 px-2 py-0.5 text-sm text-white/80" data-watermark aria-hidden="true">{{ $learner->display_name ?: $learner->name }}</span>
+                                @if(in_array($descriptor->type, ['video', 'audio'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
+                                    <span class="pointer-events-none absolute end-3 top-3 select-none rounded bg-black/40 px-2 py-0.5 text-sm text-white/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
                                 @endif
                             @endif
                         </div>

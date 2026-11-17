@@ -206,3 +206,17 @@ function initProgress(root) {
 }
 
 document.querySelectorAll('[data-player]').forEach(initProgress);
+
+// Watermark (YG-GAP-VID-003): it stays inside the stage, so it is also visible in full screen, and it moves every few seconds.
+document.querySelectorAll('[data-watermark]').forEach((mark) => {
+    const spots = ['top: .75rem; inset-inline-end: .75rem', 'top: .75rem; inset-inline-start: .75rem', 'bottom: 3.5rem; inset-inline-end: .75rem', 'bottom: 3.5rem; inset-inline-start: .75rem', 'top: 45%; inset-inline-start: 35%'];
+    let index = 0;
+    const place = () => {
+        mark.removeAttribute('style');
+        mark.style.cssText = spots[index % spots.length];
+        mark.dataset.spot = String(index % spots.length);
+        index += 1;
+    };
+    place();
+    window.setInterval(place, 12000);
+});

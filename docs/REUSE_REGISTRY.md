@@ -79,6 +79,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | DuplicateCourse, ArchiveCourse, DeleteCourse, CourseHistoryChecker (tag course.history) | `app/Domain/Catalog/` | Course lifecycle with history guard | built | T-P3-12 |
 | LibraryAccess, AddLibraryItem, AttachLibraryItem, DeleteLibraryItem, LibraryResource | `app/Domain/Library/`, `app/Filament/Resources/Library/` | Reusable content library attached by reference | built | T-P3-13 |
 | ParentDashboardController, LearnerCourseRows | `app/Http/Controllers/`, `app/Domain/Progress/Queries/` | Parent overview per linked child; shared course rows | built | T-P4-08 |
+| SessionLimiter, EnforceSessionLimits, ResetUserDevices, LearnerDeviceResource, Watermark | `app/Domain/Identity/`, `app/Http/Middleware/`, `app/Filament/Resources/LearnerDevices/` | Session/device limits and playback watermark | built | T-P4-07 |
 | Workspace table scroll region | `resources/views/filament/shared/table-scroll-hint.blade.php` | Labels overflowing table wrappers and makes them reachable by keyboard, including empty tables | built | T-P2-02 |
 | WorkspaceDashboard | `app/Filament/Pages/WorkspaceDashboard.php` | Shared panel landing with permission-scoped actual resource links and summary | built | T-P1-08 |
 | WorkspaceLogin | `app/Filament/Auth/WorkspaceLogin.php` | Native Filament authentication in the shared bilingual responsive layout | built | T-P1-08 |

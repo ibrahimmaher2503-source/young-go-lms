@@ -16,4 +16,6 @@ return [
     'two_factor_setup_required' => 'Set up two-factor authentication to continue.',
     'two_factor_challenge_required' => 'Complete two-step verification to continue.',
     'two_factor_cannot_disable' => 'Your role requires two-factor authentication, so it cannot be turned off.',
+    'signed_out_elsewhere' => 'You were signed out because your account was used on more devices than allowed. Sign in again to continue.',
+    'device_limit' => 'This account is already registered on the maximum number of devices. Ask support to reset your devices.',
 ];

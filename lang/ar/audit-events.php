@@ -49,4 +49,7 @@ return [
     'course.deleted' => 'حذف دورة',
     'library.item_added' => 'إضافة عنصر إلى المكتبة',
     'library.item_deleted' => 'حذف عنصر من المكتبة',
+    'security.session_limit_signout' => 'تسجيل خروج أقدم جلسة (الحد)',
+    'security.device_refused' => 'رفض جهاز جديد (الحد)',
+    'security.devices_reset' => 'إعادة ضبط أجهزة المتعلم',
 ];

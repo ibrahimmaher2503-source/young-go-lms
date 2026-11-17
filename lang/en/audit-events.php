@@ -49,4 +49,7 @@ return [
     'course.deleted' => 'Course deleted',
     'library.item_added' => 'Library item added',
     'library.item_deleted' => 'Library item deleted',
+    'security.session_limit_signout' => 'Oldest session signed out (limit)',
+    'security.device_refused' => 'New device refused (limit)',
+    'security.devices_reset' => 'Learner devices reset',
 ];

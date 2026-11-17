@@ -16,6 +16,7 @@ use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\EntitlementHistory;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\GuardianAccess;
+use App\Domain\Identity\SessionLimiter;
 use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
 use App\Domain\Settings\PlatformFlag;
@@ -23,10 +24,12 @@ use App\Models\Assignment;
 use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\User;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -72,6 +75,11 @@ class AppServiceProvider extends ServiceProvider
 
         Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class]);
         // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
+        Event::listen(Logout::class, static function (Logout $event): void {
+            if (app()->bound('session.store') && session()->isStarted()) {
+                app(SessionLimiter::class)->end(session()->getId());
+            }
+        });
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class], 'course.history');
