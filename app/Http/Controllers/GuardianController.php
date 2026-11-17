@@ -10,11 +10,13 @@ use App\Domain\Identity\Actions\EnterChildContext;
 use App\Domain\Identity\Actions\ExitChildContext;
 use App\Domain\Identity\Actions\IssueLinkCode;
 use App\Domain\Identity\Actions\RedeemLinkCode;
+use App\Domain\Identity\Actions\ResetChildPassword;
 use App\Http\Validation\NewPassword;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 final class GuardianController
 {
@@ -52,6 +54,17 @@ final class GuardianController
         ]);
 
         return response()->json(['id' => $child->getKey()], 201);
+    }
+
+    public function resetChildPassword(Request $request, int $child, ResetChildPassword $action): Response
+    {
+        $target = User::query()->find($child);
+        abort_if($target === null, 404);
+        Gate::forUser($this->user($request))->authorize('guardian.child.access', $target);
+        $data = $request->validate(['child_password' => NewPassword::rules()]);
+        $action->handle($this->user($request), $target, $data['child_password']);
+
+        return response()->noContent();
     }
 
     public function redeem(Request $request, RedeemLinkCode $action): JsonResponse

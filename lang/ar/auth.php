@@ -11,4 +11,9 @@ return [
     'throttle' => 'محاولات تسجيل دخول كثيرة. حاول مجددًا بعد :seconds ثانية.',
     'sign_in' => 'تسجيل الدخول',
     'sign_out' => 'تسجيل الخروج',
+    'two_factor_invalid' => 'الرمز غير صالح أو سبق استخدامه.',
+    'two_factor_already_enabled' => 'المصادقة الثنائية مفعّلة بالفعل.',
+    'two_factor_setup_required' => 'فعّل المصادقة الثنائية للمتابعة.',
+    'two_factor_challenge_required' => 'أكمل التحقق بخطوتين للمتابعة.',
+    'two_factor_cannot_disable' => 'دورك يتطلب المصادقة الثنائية، لذلك لا يمكن إيقافها.',
 ];

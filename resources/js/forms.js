@@ -61,9 +61,18 @@ async function succeed(form, response) {
     const target = form.dataset.resultTarget && document.getElementById(form.dataset.resultTarget);
     if (target) {
         const body = await response.json();
-        target.querySelector('[data-result-value]').textContent = body.code ?? '';
+        const value = target.querySelector('[data-result-value]');
+        const list = target.querySelector('[data-result-list]');
+        if (value) value.textContent = body.code ?? '';
+        if (list) {
+            list.replaceChildren(...(body.recovery_codes ?? []).map((code) => {
+                const item = document.createElement('li');
+                item.textContent = code;
+                return item;
+            }));
+        }
         target.hidden = false;
-        target.querySelector('[data-result-value]').focus();
+        (value ?? list)?.focus();
         show(form, 'success', '');
         return;
     }

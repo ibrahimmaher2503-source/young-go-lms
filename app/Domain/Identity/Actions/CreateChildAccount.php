@@ -27,6 +27,11 @@ final class CreateChildAccount
             throw new AuthorizationException;
         }
 
+        // YG-GAP-FAM-007: a parent must have a verified email before creating children.
+        if (! $parent->hasVerifiedEmail()) {
+            throw ValidationException::withMessages(['username' => __('guardian.verify_email_first')]);
+        }
+
         $username = mb_strtolower(trim($input['username']));
         $displayName = $input['name_ar'] ?? $input['name_en'] ?? $username;
 

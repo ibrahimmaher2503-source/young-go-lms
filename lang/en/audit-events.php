@@ -11,4 +11,9 @@ return [
     'guardian.link_confirmed' => 'Guardian link confirmed',
     'guardian.context_entered' => 'Parent entered child context',
     'guardian.context_exited' => 'Parent exited child context',
+    'auth.two_factor_enabled' => 'Two-factor authentication turned on',
+    'auth.two_factor_disabled' => 'Two-factor authentication turned off',
+    'auth.two_factor_recovery_used' => 'Recovery code used',
+    'auth.two_factor_recovery_regenerated' => 'Recovery codes regenerated',
+    'guardian.child_password_reset' => 'Child password reset by parent',
 ];

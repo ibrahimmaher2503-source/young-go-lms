@@ -19,7 +19,10 @@
                                 </div>
                                 <x-ui.badge tone="success">{{ __('pages.status_verified') }}</x-ui.badge>
                             </div>
-                            <x-family.child-switcher :child="$child" />
+                            <div class="flex flex-wrap gap-2">
+                                <x-family.child-switcher :child="$child" />
+                                <x-family.child-password-reset :child="$child" />
+                            </div>
                         </li>
                     @endforeach
                 </ul>
@@ -38,6 +41,10 @@
         </x-ui.card>
 
         <x-ui.card :title="__('pages.add_child')">
+            @unless($verified)
+                <x-ui.alert tone="warning" role="status">{{ __('pages.verify_before_child') }}</x-ui.alert>
+                <x-ui.link class="mt-3" :href="url('/email/verify')">{{ __('pages.verify_title') }}</x-ui.link>
+            @else
             <p class="mb-4 text-muted">{{ __('pages.add_child_intro') }}</p>
             <x-ui.ajax-form :action="url('/guardian/children')" :success="url('/family')">
                 <x-ui.form-field for="child_name_ar" :label="__('pages.name_ar')" data-field><x-ui.input id="child_name_ar" name="name_ar" lang="ar" dir="rtl" /></x-ui.form-field>
@@ -51,6 +58,7 @@
                 <x-ui.form-field for="child_password_confirmation" :label="__('pages.password_confirmation')" data-field><x-ui.input id="child_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required /></x-ui.form-field>
                 <x-ui.button type="submit">{{ __('pages.create_child') }}</x-ui.button>
             </x-ui.ajax-form>
+            @endunless
         </x-ui.card>
 
         <x-ui.card :title="__('pages.redeem_title')">

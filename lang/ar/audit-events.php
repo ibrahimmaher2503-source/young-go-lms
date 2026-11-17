@@ -11,4 +11,9 @@ return [
     'guardian.link_confirmed' => 'تأكيد ربط ولي أمر',
     'guardian.context_entered' => 'دخول ولي الأمر إلى حساب الطفل',
     'guardian.context_exited' => 'خروج ولي الأمر من حساب الطفل',
+    'auth.two_factor_enabled' => 'تفعيل المصادقة الثنائية',
+    'auth.two_factor_disabled' => 'إيقاف المصادقة الثنائية',
+    'auth.two_factor_recovery_used' => 'استخدام رمز استرداد',
+    'auth.two_factor_recovery_regenerated' => 'إنشاء رموز استرداد جديدة',
+    'guardian.child_password_reset' => 'إعادة تعيين كلمة مرور طفل بواسطة ولي الأمر',
 ];

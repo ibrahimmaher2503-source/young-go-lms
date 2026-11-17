@@ -59,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('address:'.$request->ip()),
             ];
         });
+        RateLimiter::for('two-factor', static fn (Request $request): array => [Limit::perMinute(5)->by('user:'.($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip())]);
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 

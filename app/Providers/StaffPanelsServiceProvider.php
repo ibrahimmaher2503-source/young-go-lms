@@ -11,7 +11,9 @@ use App\Filament\Resources\RolePermissions\RolePermissionResource;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
 use App\Filament\Shared\WorkspaceAvatarProvider;
+use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
+use Filament\Actions\Action;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
 use Filament\FontProviders\LocalFontProvider;
@@ -45,14 +47,16 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->maxContentWidth(Width::Full)
                 ->authGuard('web')
                 ->brandName(static fn (): string => (string) __('app.name'))
+                ->userMenuItems([Action::make('security')->label(static fn (): string => (string) __('pages.tf_title'))->url('/security/two-factor')->icon('heroicon-o-shield-check')])
                 ->viteTheme('resources/css/filament-theme.css')
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages([WorkspaceDashboard::class])
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
                 ->renderHook(TablesRenderHook::CONTENT_BEFORE, static fn () => view('filament.shared.table-scroll-hint'))
+                ->renderHook(TablesRenderHook::CONTENT_AFTER, static fn (array $data) => view('filament.shared.workspace-pagination', $data))
                 ->resources($id === 'admin' ? [AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class] : [])
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
-                ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class], isPersistent: true));
+                ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));
         }
     }
 }

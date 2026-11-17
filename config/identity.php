@@ -6,4 +6,8 @@ return [
     'terms_version' => env('TERMS_VERSION'),
     'privacy_version' => env('PRIVACY_VERSION'),
     'login_max_attempts' => 5,
+
+    // ED-016 / YG-GAP-SEC-003. Set TWO_FACTOR_ENFORCED=false only for local development and automated tests.
+    'two_factor_enforced' => (bool) env('TWO_FACTOR_ENFORCED', true),
+    'two_factor_required_roles' => ['super_admin', 'admin', 'finance'],
 ];

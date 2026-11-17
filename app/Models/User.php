@@ -18,12 +18,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
 use Spatie\Permission\Traits\HasRoles;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
-/** @property string|null $locale */
+/**
+ * @property string|null $locale
+ * @property string|null $two_factor_secret
+ * @property list<string>|null $two_factor_recovery_codes
+ * @property Carbon|null $two_factor_confirmed_at
+ * @property int|null $two_factor_last_step
+ */
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements FilamentUser, HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -86,6 +94,21 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             'birth_year' => 'integer',
             'birth_month' => 'integer',
             'last_login_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_last_step' => 'integer',
         ];
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->getAttribute('two_factor_confirmed_at') !== null;
+    }
+
+    /** ED-016: mandatory for the configured high-privilege roles, optional for everyone else. */
+    public function requiresTwoFactor(): bool
+    {
+        return $this->hasAnyRole(Config::array('identity.two_factor_required_roles'));
     }
 }

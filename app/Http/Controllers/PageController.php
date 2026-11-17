@@ -97,6 +97,7 @@ final class PageController
         $links = GuardianChildLink::query()->with('child')->where('guardian_id', $parent->getKey())->orderBy('id')->get();
 
         return view('pages.family', [
+            'verified' => $parent->hasVerifiedEmail(),
             'children' => $links->where('status', GuardianChildLink::STATUS_VERIFIED)->values(),
             'pending' => $links->where('status', GuardianChildLink::STATUS_PENDING)->values(),
         ]);

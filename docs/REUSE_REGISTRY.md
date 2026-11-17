@@ -32,6 +32,9 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ActingLearner | `app/Domain/Identity/ActingLearner.php`, `app/Http/Middleware/ResolveActingLearner.php` | Single source for the learner a request acts as (parent child-context); learner-facing queries must use current() | built | T-P1-06 |
 | x-layouts.base + x-ui.ajax-form + forms.js | `resources/views/components/layouts/base.blade.php`, `resources/views/components/ui/ajax-form.blade.php`, `resources/js/forms.js` | Learner/parent/auth/public page shell and progressive JSON form submit with inline field errors | built | T-P1-10 |
 | x-family.child-switcher | `resources/views/components/family/child-switcher.blade.php` | Password-confirmed switch into a child context | built | T-P1-10 |
+| EnforceTwoFactor + TwoFactor actions | `app/Http/Middleware/EnforceTwoFactor.php`, `app/Domain/Identity/TwoFactor.php`, `app/Domain/Identity/Actions/*TwoFactor*.php` | TOTP enrollment/challenge, recovery codes, panel and route enforcement | built | T-P1-11 |
+| ResetChildPassword | `app/Domain/Identity/Actions/ResetChildPassword.php` | Linked-parent child password reset with session revocation | built | T-P1-11 |
+| LearnerNotificationRouter + GuardianCopyNotification | `app/Domain/Notifications/` | Every learner notification goes through here; email-less child -> in-app plus guardian email copies | built | T-P1-11 |
 | ErrorReporter | `app/Domain/Shared/Observability/` | Local exception reporting adapter | built | T-P0-07 |
 | app:doctor / app:req-coverage | `app/Console/Commands/` | Health check / requirement coverage (G10, G11) | built | T-P0-07 |
 | AccessDecision + canAccessItem() | `app/Domain/Entitlements/` | Layered access with reason codes | planned | T-P4-09 |
@@ -73,3 +76,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | child-context-strip | `resources/views/components/ui/child-context-strip.blade.php` | planned | T-P1-10 |
 | error pages | `resources/views/errors/` | planned | T-P1-10 |
 
+
+
+## PRD visual masters — reference assets
+
+The20selectedimages and their source/PRD/shared-component mapping are indexed at docs/design-system/reference-pack-2026-11-17/manifest.json. Read COMMON_COMPONENTS.md to distinguish existing primitives/native components from planned learning/payment/AI patterns. These reference IDs are design vocabulary, not new wrapper classes or evidence of implemented features.
