@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Seo\Actions\BuildSitemap;
+use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Course;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +17,7 @@ final class SeoServiceProvider extends ServiceProvider
     {
         $forget = static fn () => app(BuildSitemap::class)->forget();
 
-        foreach ([Course::class, CmsPage::class] as $model) {
+        foreach ([Course::class, CmsPage::class, BlogPost::class] as $model) {
             $model::saved($forget);
             $model::deleted($forget);
         }

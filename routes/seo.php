@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CmsController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicCourseController;
@@ -26,4 +27,6 @@ Route::prefix('{publicLocale}')
         Route::get('/courses/{course}', PublicCourseController::class)->name('catalog.show');
         Route::get('/courses/{course}/preview/{item}', PublicCoursePreviewController::class)->whereNumber('item')->name('catalog.preview');
         Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
+        Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+        Route::get('/blog/{post}', [BlogController::class, 'show'])->name('blog.show');
     });

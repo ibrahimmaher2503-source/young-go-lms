@@ -6,6 +6,7 @@ namespace App\Domain\Seo\Queries;
 
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Seo\PublicUrl;
+use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Course;
 use Generator;
@@ -13,7 +14,7 @@ use Generator;
 /**
  * Every public, indexable page and its language versions. Only approved public content is listed: published courses and
  * published CMS pages plus the home page. Drafts, private, suspended, archived or upcoming courses, learner and staff areas never
- * appear. The catalog listing is noindex, so it is not listed. Categories and blog join when their pages exist (T-P2-07, T-P2-09).
+ * appear. The catalog listing is noindex, so it is not listed. The blog index and live blog posts (not draft, publish time reached) are listed; categories join with T-P2-09.
  */
 final class SitemapEntries
 {
@@ -39,6 +40,18 @@ final class SitemapEntries
             }
             if ($urls !== []) {
                 yield ['lastmod' => $page->updated_at?->toAtomString(), 'urls' => $urls];
+            }
+        }
+
+        yield ['lastmod' => null, 'urls' => array_combine(PublicUrl::locales(), array_map(PublicUrl::blog(...), PublicUrl::locales()))];
+
+        foreach (BlogPost::query()->live()->orderBy('blog_posts.id')->cursor() as $post) {
+            $urls = [];
+            foreach (PublicUrl::localesWithTitle($post) as $locale) {
+                $urls[$locale] = PublicUrl::blogPost($post, $locale);
+            }
+            if ($urls !== []) {
+                yield ['lastmod' => $post->updated_at?->toAtomString(), 'urls' => $urls];
             }
         }
     }

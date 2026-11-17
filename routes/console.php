@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\Doctor;
+use App\Domain\Seo\Actions\BuildSitemap;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -21,4 +22,6 @@ Schedule::command('quiz:expire-attempts')->everyMinute()->name('quiz:expire-atte
 Schedule::command('entitlements:expire')->hourly()->name('entitlements:expire')->withoutOverlapping();
 Schedule::command('help:escalate-overdue')->everyFifteenMinutes()->name('help:escalate-overdue')->withoutOverlapping();
 Schedule::command('seo:sitemap')->dailyAt('02:30')->name('seo:sitemap')->withoutOverlapping();
+// T-P2-07: a scheduled blog post goes public with no save, so drop the cached sitemap every hour.
+Schedule::call(static fn () => app(BuildSitemap::class)->forget())->hourly()->name('seo:sitemap-scheduled-posts');
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();

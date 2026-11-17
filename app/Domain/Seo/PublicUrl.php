@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Seo;
 
 use App\Domain\Catalog\Queries\PublicCourseDetail;
+use App\Domain\Content\Queries\PublicBlog;
+use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Course;
 use Illuminate\Support\Facades\Config;
@@ -43,12 +45,22 @@ final class PublicUrl
         return url('/'.$locale.'/pages/'.rawurlencode($page->slug));
     }
 
+    public static function blog(string $locale): string
+    {
+        return url('/'.$locale.'/blog');
+    }
+
+    public static function blogPost(BlogPost $post, string $locale): string
+    {
+        return url('/'.$locale.'/blog/'.rawurlencode(PublicBlog::keyFor($post, $locale)));
+    }
+
     /**
      * Locales in which the model has its own (non-fallback) title, so hreflang never points at a copy of another language.
      *
      * @return list<string>
      */
-    public static function localesWithTitle(CmsPage|Course $model): array
+    public static function localesWithTitle(BlogPost|CmsPage|Course $model): array
     {
         return array_values(array_filter(
             self::locales(),
