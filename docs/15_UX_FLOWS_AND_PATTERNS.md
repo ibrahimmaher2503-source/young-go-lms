@@ -189,3 +189,7 @@ checks separately: screenshots alone cannot prove these behaviors. Scores
 are a reviewer aid, never a substitute for passing those checks. Attach paths,
 results and unresolved failures to the task; missing evidence stays **not
 verified**. This documentation pack supplies requirements, not runtime proof.
+
+## D-026: top-level staff list navigation
+
+The newer owner-approved reference omits breadcrumbs on top-level staff lists. WorkspaceListRecords retains a descriptive title and selected navigation item, superseding the generic breadcrumb guideline on those screens. Nested/detail flows retain their applicable navigation requirements.

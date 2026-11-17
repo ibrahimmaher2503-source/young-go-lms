@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/up');
+Route::redirect('/', '/admin');
 
 Route::get('/_design/tokens', function (Request $request) {
     abort_unless(app()->environment('local', 'staging') && config('design.token_preview'), 404);

@@ -32,7 +32,7 @@ final class UpdateRolePermissions
             sort($names);
             $permissions = Permission::query()->where('guard_name', 'web')->whereIn('name', $names)->get();
             if ($permissions->count() !== count($names)) {
-                throw ValidationException::withMessages(['permissions' => __('validation.in', ['attribute' => 'permissions'])]);
+                throw ValidationException::withMessages(['permissions' => __('validation.in', ['attribute' => __('staff.permissions')])]);
             }
 
             $before = $role->permissions->pluck('name')->sort()->values()->all();

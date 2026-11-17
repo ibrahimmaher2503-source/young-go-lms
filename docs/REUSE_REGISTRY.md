@@ -59,3 +59,12 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | locked-state | `resources/views/components/learning/locked-state.blade.php` | planned | T-P4-09 |
 | child-context-strip | `resources/views/components/ui/child-context-strip.blade.php` | planned | T-P1-10 |
 | error pages | `resources/views/errors/` | planned | T-P1-10 |
+
+## D-026 shared workspace additions
+
+- WorkspaceListRecords: app/Filament/Shared/Pages/WorkspaceListRecords.php; optional actual summary/sidebar around the native table.
+- WorkspaceDashboard: app/Filament/Pages/WorkspaceDashboard.php; permission-scoped resource links and actual metrics.
+- WorkspaceLogin: app/Filament/Auth/WorkspaceLogin.php; native authentication in the shared responsive layout.
+- WorkspaceAvatarProvider: app/Filament/Shared/WorkspaceAvatarProvider.php; local escaped initial SVG.
+
+All built under T-P1-08; see docs/design-system/TABLE_WORKSPACE.md and VISUAL_ACCEPTANCE.md. Formal visual closure remains review.

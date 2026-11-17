@@ -93,7 +93,7 @@ it('exports the current user filter only with the separate export permission', f
 
     $component = Livewire::test(ListStaffUsers::class)
         ->filterTable('status', 'active')->searchTable('export@example.test')
-        ->callAction(TestAction::make('exportCsv')->table())
+        ->callAction(TestAction::make('exportCsv'))
         ->assertFileDownloaded('users.csv');
 
     $csv = base64_decode($component->effects['download']['content'], true);
@@ -106,7 +106,7 @@ it('does not download users for a viewer without export permission', function ()
     $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))->assertOk();
 
     Livewire::test(ListStaffUsers::class)
-        ->assertActionHidden(TestAction::make('exportCsv')->table())
+        ->assertActionHidden(TestAction::make('exportCsv'))
         ->assertNoFileDownloaded();
 })->group('T-P1-08', 'A3');
 
@@ -114,8 +114,10 @@ it('renders localized user headings and account statuses in both locales', funct
     $actor = User::factory()->create(['locale' => $locale])->assignRole('super_admin');
     $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))
         ->assertOk()
-        ->assertSee(__('staff.users'));
+        ->assertSee(__('staff.manage_users', [], $locale))
+        ->assertSee('lang="'.$locale.'"', false);
 
+    app()->setLocale($locale);
     Livewire::test(ListStaffUsers::class)
-        ->assertTableColumnFormattedStateSet('status', __('staff.active'), $actor);
+        ->assertTableColumnFormattedStateSet('status', __('staff.active', [], $locale), $actor);
 })->with(['ar', 'en'])->group('T-P1-08', 'A4');

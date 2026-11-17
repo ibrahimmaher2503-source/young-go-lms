@@ -1,16 +1,26 @@
+@font-face {
+    font-family: "Noto Sans Arabic";
+    src: url("../fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+.light,
 :root {
-    --yg-neutral-0: oklch(1 0.0 0);
-    --yg-brand-50: oklch(0.97 0.0059 258);
-    --yg-brand-100: oklch(0.93 0.0137 258);
-    --yg-brand-200: oklch(0.86 0.0273 258);
-    --yg-brand-300: oklch(0.79 0.041 258);
-    --yg-brand-400: oklch(0.7 0.0585 258);
-    --yg-brand-500: oklch(0.61 0.065 258);
-    --yg-brand-600: oklch(0.51 0.065 258);
-    --yg-brand-700: oklch(0.41 0.065 258);
-    --yg-brand-800: oklch(0.32 0.0624 258);
-    --yg-brand-900: oklch(0.24 0.0468 258);
-    --yg-brand-950: oklch(0.16 0.0312 258);
+    color-scheme: light;
+    --yg-neutral-0: oklch(1 0 0);
+    --yg-brand-50: oklch(0.97 0.0093 185);
+    --yg-brand-100: oklch(0.93 0.0187 185);
+    --yg-brand-200: oklch(0.86 0.0351 185);
+    --yg-brand-300: oklch(0.79 0.053 185);
+    --yg-brand-400: oklch(0.7 0.07 185);
+    --yg-brand-500: oklch(0.61 0.075 185);
+    --yg-brand-600: oklch(0.484010 0.082313 193.660745);
+    --yg-brand-700: oklch(0.41 0.06 185);
+    --yg-brand-800: oklch(0.32 0.048 185);
+    --yg-brand-900: oklch(0.24 0.036 185);
+    --yg-brand-950: oklch(0.16 0.024 185);
     --yg-accent-50: oklch(0.97 0.0059 40);
     --yg-accent-100: oklch(0.93 0.0137 40);
     --yg-accent-200: oklch(0.86 0.0273 40);
@@ -22,17 +32,17 @@
     --yg-accent-800: oklch(0.32 0.0624 40);
     --yg-accent-900: oklch(0.24 0.0468 40);
     --yg-accent-950: oklch(0.16 0.0312 40);
-    --yg-neutral-50: oklch(0.97 0.0007 78);
-    --yg-neutral-100: oklch(0.93 0.002 78);
-    --yg-neutral-200: oklch(0.86 0.0033 78);
-    --yg-neutral-300: oklch(0.79 0.0052 78);
-    --yg-neutral-400: oklch(0.7 0.0072 78);
-    --yg-neutral-500: oklch(0.61 0.0078 78);
-    --yg-neutral-600: oklch(0.51 0.0078 78);
-    --yg-neutral-700: oklch(0.41 0.0078 78);
-    --yg-neutral-800: oklch(0.32 0.0078 78);
-    --yg-neutral-900: oklch(0.24 0.0059 78);
-    --yg-neutral-950: oklch(0.16 0.0039 78);
+    --yg-neutral-50: oklch(0.975 0.003 250);
+    --yg-neutral-100: oklch(0.93 0.006 250);
+    --yg-neutral-200: oklch(0.86 0.01 250);
+    --yg-neutral-300: oklch(0.79 0.014 250);
+    --yg-neutral-400: oklch(0.66 0.02 250);
+    --yg-neutral-500: oklch(0.61 0.023 250);
+    --yg-neutral-600: oklch(0.51 0.022 250);
+    --yg-neutral-700: oklch(0.41 0.02 250);
+    --yg-neutral-800: oklch(0.32 0.017 250);
+    --yg-neutral-900: oklch(0.24 0.013 250);
+    --yg-neutral-950: oklch(0.16 0.009 250);
     --yg-success-50: oklch(0.97 0.0065 153);
     --yg-success-100: oklch(0.93 0.0149 153);
     --yg-success-500: oklch(0.61 0.0715 153);
@@ -54,12 +64,22 @@
     --yg-info-600: oklch(0.51 0.065 245);
     --yg-info-700: oklch(0.41 0.065 245);
     --yg-color-surface: var(--yg-neutral-0);
+    --yg-color-sidebar: var(--yg-neutral-0);
+    --yg-color-input: var(--yg-neutral-0);
     --yg-color-page: var(--yg-neutral-50);
     --yg-color-body: var(--yg-neutral-900);
     --yg-color-muted: var(--yg-neutral-700);
-    --yg-color-border: var(--yg-neutral-300);
-    --yg-color-primary: var(--yg-brand-700);
+    --yg-color-border: var(--yg-neutral-100);
+    --yg-color-input-border: var(--yg-neutral-400);
+    --yg-color-table-head: var(--yg-neutral-50);
+    --yg-color-surface-muted: var(--yg-neutral-50);
+    --yg-color-hover: var(--yg-neutral-100);
+    --yg-color-primary: var(--yg-brand-600);
+    --yg-color-primary-hover: var(--yg-brand-700);
     --yg-color-on-primary: var(--yg-neutral-0);
+    --yg-color-focus: var(--yg-brand-600);
+    --yg-color-nav-active-bg: var(--yg-brand-50);
+    --yg-color-nav-active-text: var(--yg-brand-800);
     --yg-color-accent: var(--yg-accent-100);
     --yg-color-on-accent: var(--yg-accent-800);
     --yg-color-assistant: var(--yg-brand-50);
@@ -81,16 +101,45 @@
     --yg-color-on-ai-failed: var(--yg-danger-700);
     --yg-color-ai-ready: var(--yg-success-100);
     --yg-color-on-ai-ready: var(--yg-success-700);
+    --yg-font-page-heading: 2.25rem;
+    --yg-font-body: 1.125rem;
+    --yg-font-small: 0.9375rem;
+    --yg-font-label: 1rem;
+    --yg-font-sidebar: 1.25rem;
+    --yg-workspace-main-track: 2.22fr;
+    --yg-space-columns: 1rem;
+    --yg-sidebar-width: 16.75rem;
+    --yg-topbar-height: 4.375rem;
+    --yg-radius-card: 1rem;
+    --yg-radius-control: 0.625rem;
+    --yg-space-layout: 1.5rem;
+    --yg-space-card: 1.5rem;
+    --yg-space-page-inline: 1.875rem;
+    --yg-shadow-card: 0 1px 2px rgb(25 42 56 / 4%), 0 1px 3px rgb(25 42 56 / 3%);
+    --yg-shadow-floating: 0 12px 28px rgb(16 24 40 / 12%);
+    --yg-shadow-focus: 0 0 0 3px color-mix(in oklch, var(--yg-color-focus) 22%, transparent);
 }
 
+.dark,
 [data-theme="dark"] {
+    color-scheme: dark;
     --yg-color-surface: var(--yg-neutral-950);
+    --yg-color-sidebar: var(--yg-neutral-950);
+    --yg-color-input: var(--yg-neutral-950);
     --yg-color-page: var(--yg-neutral-900);
     --yg-color-body: var(--yg-neutral-50);
     --yg-color-muted: var(--yg-neutral-300);
     --yg-color-border: var(--yg-neutral-700);
+    --yg-color-input-border: var(--yg-neutral-600);
+    --yg-color-table-head: var(--yg-neutral-900);
+    --yg-color-surface-muted: var(--yg-neutral-900);
+    --yg-color-hover: var(--yg-neutral-800);
     --yg-color-primary: var(--yg-brand-300);
+    --yg-color-primary-hover: var(--yg-brand-200);
     --yg-color-on-primary: var(--yg-neutral-950);
+    --yg-color-focus: var(--yg-brand-300);
+    --yg-color-nav-active-bg: var(--yg-brand-900);
+    --yg-color-nav-active-text: var(--yg-brand-100);
     --yg-color-accent: var(--yg-accent-800);
     --yg-color-on-accent: var(--yg-accent-100);
     --yg-color-assistant: var(--yg-brand-900);
@@ -112,16 +161,29 @@
     --yg-color-on-ai-failed: var(--yg-danger-50);
     --yg-color-ai-ready: var(--yg-success-700);
     --yg-color-on-ai-ready: var(--yg-success-50);
+    --yg-shadow-card: 0 2px 6px rgb(0 0 0 / 20%);
+    --yg-shadow-floating: 0 16px 32px rgb(0 0 0 / 32%);
+    --yg-shadow-focus: 0 0 0 3px color-mix(in oklch, var(--yg-color-focus) 32%, transparent);
 }
 
 @theme inline {
     --color-surface: var(--yg-color-surface);
+    --color-sidebar: var(--yg-color-sidebar);
+    --color-input: var(--yg-color-input);
     --color-page: var(--yg-color-page);
     --color-body: var(--yg-color-body);
     --color-muted: var(--yg-color-muted);
     --color-border: var(--yg-color-border);
+    --color-input-border: var(--yg-color-input-border);
+    --color-table-head: var(--yg-color-table-head);
+    --color-surface-muted: var(--yg-color-surface-muted);
+    --color-hover: var(--yg-color-hover);
     --color-primary: var(--yg-color-primary);
+    --color-primary-hover: var(--yg-color-primary-hover);
     --color-on-primary: var(--yg-color-on-primary);
+    --color-focus: var(--yg-color-focus);
+    --color-nav-active-bg: var(--yg-color-nav-active-bg);
+    --color-nav-active-text: var(--yg-color-nav-active-text);
     --color-accent: var(--yg-color-accent);
     --color-on-accent: var(--yg-color-on-accent);
     --color-assistant: var(--yg-color-assistant);
@@ -143,13 +205,15 @@
     --color-on-ai-failed: var(--yg-color-on-ai-failed);
     --color-ai-ready: var(--yg-color-ai-ready);
     --color-on-ai-ready: var(--yg-color-on-ai-ready);
-    --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+    --font-sans: system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
     --radius-lg: 1rem;
     --radius-xl: 1.5rem;
+    --radius-card: var(--yg-radius-card);
+    --shadow-card: var(--yg-shadow-card);
 }
 
 :lang(ar) {
-    --font-sans: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
+    --font-sans: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
 }

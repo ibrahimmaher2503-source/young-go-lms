@@ -249,3 +249,7 @@ Young Go brand, Arabic/RTL, accessibility and permissions take precedence.
 6. Produce a one-page **brand sheet** (`docs/brand/BRAND_SHEET.md` + image)
    for owner sign-off. Until signed off, UI tasks proceed with the inferred
    tokens (they are centralized, so changes are cheap).
+
+## D-026: binding visual reference
+
+The owner-approved calm slate/white/teal reference and rejected implementation are preserved under design-system/references. Full fidelity on all current/future screens is required, not merely a similar palette. Read design-system/VISUAL_ACCEPTANCE.md and TABLE_WORKSPACE.md before UI changes. Native components, tokens, scoped real data, AR/EN, RTL and dark mode remain mandatory. O-027 remains open; a sample raster does not approve business data or official branding.

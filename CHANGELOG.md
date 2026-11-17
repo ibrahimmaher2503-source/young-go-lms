@@ -55,3 +55,7 @@ result, migration/backup status and next step.
   coverage claims and the incomplete audit-only validator/headless launcher.
 - Verified LearnHouse documented patterns with explicit source limits; strengthened shared UX acceptance.
 - Documentation checks only; no application implementation or runtime acceptance implied.
+
+## 2026-11-17 — D-026 staff workspace (review)
+
+Unified existing panel login/dashboard and native resource lists with the approved shared visual system. Added local fonts/avatars, scoped summary/sidebar composition, readable bilingual permission/audit labels and mobile scroll guidance.204non-browser and78browser tests passed. Formal visual closure remains review; no deployment.

@@ -300,3 +300,7 @@ silently convert a recommendation into an approved decision. Technical
 low-risk defaults may be implemented when documented and reversible;
 legal, financial, privacy and irreversible choices require owner
 approval.
+
+## D-026 — owner visual direction and full reference matching (2026-11-17)
+
+Owner approved the calm slate/white/teal card workspace and explicitly requires full visual fidelity on every current/future page, including details, typography and states. Use shared native tables/forms/actions with scoped real data. Follow docs/design-system/VISUAL_ACCEPTANCE.md and TABLE_WORKSPACE.md. The sample does not approve fake records, unsupported controls or official branding; O-027 stays open.

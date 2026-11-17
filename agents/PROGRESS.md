@@ -146,3 +146,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 
 ## Notes
 - Gate-blocked by design until approvals: T-P7-07 (O-014/O-015), T-P8 live activation (Paymob credentials, O-023), T-P10-01 (O-003), T-P10-07 (O-018), T-P11-07 (owner cutover approval), T-P12-01 (Saudi readiness).
+
+## D-026 reference fidelity review — 2026-11-17
+
+Shared existing staff UI implemented and tested locally: composer qa204passed/1077assertions plus1I02TODO; complete browser78passed/748assertions; build/34contrastpairs/translations/RTL/G10PASS. Root personally refined all existing surfaces and repaired independent mobile findings. Read docs/reviews/WORKSPACE_VISUAL_REVIEW_2026-11-17.md. Source/QA review found no remaining reviewed blocker. Screenshot-only visual score4.0 does not demonstrate the formal4.5 threshold; full visual closure stays in review and no business task is promoteddone. Native single-page pagination differs from the mockup; exact raster font/equality is not established. Earlier unrelated local documentation edits remain preserved.

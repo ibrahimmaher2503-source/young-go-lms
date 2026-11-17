@@ -1,0 +1,18 @@
+{
+  "decision": "D-026",
+  "reference": "references/calm-workspace-approved-2026-11-17.png",
+  "reference_sha256": "ff65166b68728b3ef0873f7819107ee0bf052dc1be5ad162b9fa05b2a7c6e8ee",
+  "viewport": {
+    "width": 1568,
+    "height": 1003
+  },
+  "sidebar_width": 268,
+  "topbar_height": 70,
+  "heading_font_size": "36px",
+  "body_font_size": "18px",
+  "summary_height": 104,
+  "table_card_width": 844,
+  "sidebar_card_width": 380,
+  "geometry_tolerance_px": 2,
+  "reference_caption_is_not_product_ui": true
+}

@@ -77,3 +77,6 @@ review alone authorizes none of these. Preserve unrelated changes. Never reset a
 without resolving and allowlisting its isolated disposable connection (see G6).
 See `docs/16_REVIEW_FINDINGS_AND_DECISIONS.md` for unresolved findings and evidence limits.
 
+## D-026: mandatory reference fidelity
+
+Before any UI work read docs/design-system/VISUAL_ACCEPTANCE.md, TABLE_WORKSPACE.md and the approved/rejected reference images. Every current/future page must match its approved reference in detail. Use shared native components, tokens, WorkspaceListRecords and registered visual checks; compare actual AR/EN mobile/desktop light/dark screenshots. Technical PASS does not establish visual acceptance. Never replace the owner reference with the output just to pass. Record all visible discrepancies and keep closure open until resolved; do not fabricate data or unsupported actions.

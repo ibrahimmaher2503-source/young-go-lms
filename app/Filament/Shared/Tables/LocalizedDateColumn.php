@@ -14,9 +14,9 @@ use InvalidArgumentException;
 
 final class LocalizedDateColumn extends TextColumn
 {
-    public static function make(?string $name = null): static
+    public static function make(?string $name = null, string $pattern = 'd MMMM yyyy HH:mm'): static
     {
-        return parent::make($name)->formatStateUsing(static function (mixed $state): ?string {
+        return parent::make($name)->formatStateUsing(static function (mixed $state) use ($pattern): ?string {
             if ($state === null || $state === '') {
                 return null;
             }
@@ -43,7 +43,7 @@ final class LocalizedDateColumn extends TextColumn
                 $timezone = $market->timezone();
             }
 
-            return LocalizedDate::format($instant, $market, app()->getLocale(), timezone: $timezone);
+            return LocalizedDate::format($instant, $market, app()->getLocale(), pattern: $pattern, timezone: $timezone);
         });
     }
 }
