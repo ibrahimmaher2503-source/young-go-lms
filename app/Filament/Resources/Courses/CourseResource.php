@@ -17,6 +17,7 @@ use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Filament\Resources\Courses\Pages\ManageCourseCohorts;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
+use App\Filament\Resources\Courses\Pages\ManageQuiz;
 use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
@@ -172,6 +173,7 @@ final class CourseResource extends FilamentResource
             'curriculum' => ManageCurriculum::route('/{record}/curriculum'),
             'cohorts' => ManageCourseCohorts::route('/{record}/cohorts'),
             'learners' => CourseLearnersPage::route('/{record}/learners'),
+            'quiz' => ManageQuiz::route('/{record}/quizzes/{quiz}'),
             'document' => ReviewCurriculumDocument::route('/{record}/curriculum/documents/{document}'),
         ];
     }

@@ -9,6 +9,8 @@ use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\EntitlementSource;
+use App\Domain\Identity\Models\UserDevice;
+use App\Domain\Identity\Models\UserSession;
 use App\Domain\Progress\CourseProgress;
 use App\Domain\Progress\LessonProgress;
 use App\Models\Course;
@@ -38,9 +40,11 @@ final class DemoStudentSeeder extends Seeder
         ]);
         $learner->assignRole('student');
 
-        // Clear previous progress so demo is always in fresh enrolled state
+        // Clear previous progress and device sessions so test starts in fresh state
         LessonProgress::query()->where('learner_id', $learner->id)->delete();
         CourseProgress::query()->where('learner_id', $learner->id)->delete();
+        UserDevice::query()->where('user_id', $learner->id)->delete();
+        UserSession::query()->where('user_id', $learner->id)->delete();
 
         $course = Course::firstOrCreate(['slug_ar' => 'demo-course'], [
             'title' => ['ar' => 'دورة تجريبية للرسم', 'en' => 'Demo Drawing Course'],

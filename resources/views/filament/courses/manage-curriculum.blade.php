@@ -170,6 +170,7 @@
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'up')">{{ __('curriculum.move_up') }}</button>
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'down')">{{ __('curriculum.move_down') }}</button>
                                         @if($isLesson)<button type="button" class="yg-cur-menuitem" wire:click="mountAction('editLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.edit') }}</button>@endif
+                                        @if($item->itemable_type === 'quiz')<a class="yg-cur-menuitem" href="{{ \App\Filament\Resources\Courses\CourseResource::getUrl('quiz', ['record' => $item->course_id, 'quiz' => $item->itemable_id]) }}" data-edit-quiz>{{ __('quiz.edit') }}</a>@endif
                                         @if($item->itemable_type === 'live_session')
                                             @if($lesson->status === 'scheduled')
                                                 <button type="button" class="yg-cur-menuitem" wire:click="mountAction('rescheduleLiveSession', { session: {{ $lesson->id }} })">{{ __('live.reschedule') }}</button>
