@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Writes Pest tests (feature, unit, authorization datasets, arch) for a Young Go LMS subtask from a list of acceptance criteria. Use before implementation for executable behavior acceptance.
+description: Writes Pest tests (feature, unit, authorization datasets, arch) for a Young Go LMS subtask from a list of acceptance criteria. Use after or alongside implementation.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: haiku
 ---

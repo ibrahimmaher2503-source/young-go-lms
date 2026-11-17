@@ -1,6 +1,6 @@
 # YOUNG GO LMS --- ENGINEERING DECISIONS (ED log)
 
-**Version:** 1.1 · **Date:** 16 November 2026 · **Author:** technical
+**Version:** 1.0 · **Date:** 16 November 2026 · **Author:** technical
 review (pack v3.2)\
 **Status of every ED:** RECOMMENDED-DEFAULT — binding for agents, reversible,
 does not override any owner decision (D-*) or OPEN item (O-*). Changing an ED
@@ -40,7 +40,7 @@ Verification.**
 - **Verification:** invariant: progress recalculation is idempotent.
 
 ### ED-005 — Layered learning access in one place
-- **Decision:** `EntitlementService::canAccessItem()` owns the layered decision and localized reason. ED-035 supersedes the former final preview override with explicit server-authorized modes and capabilities.
+- **Decision:** `EntitlementService::canAccessItem(learner, item)` evaluates in order: course published → item published → **entitlement** → cohort membership (if item targets cohort) → **sequence lock** → **drip date** → preview override. Returns `AccessDecision { allowed, reason_code, unlock_at? }` used by UI to show the reason.
 - **Rejected:** checks scattered in controllers.
 - **Verification:** dataset tests per layer; UI shows localized reason per `reason_code`.
 
@@ -51,7 +51,7 @@ Verification.**
 - **Verification:** translation completeness check covers model fields marked required per locale.
 
 ### ED-007 — Video delivery
-- **Decision:** T1 playback through `VideoDeliveryProvider`, selected after O-005. Implement only the chosen delivery and approved tier integrations; self-hosted HLS/transcoding is an alternative if needed, not a mandatory fallback suite (ED-033).
+- **Decision:** T1 playback through `VideoDeliveryProvider`. Preferred: a private streaming provider with signed HLS (O-005). Fallback driver: S3-compatible storage + queued ffmpeg HLS transcoding + signed segment URLs. YouTube/Vimeo/Drive drivers for T2/T3 per tiers.
 - **Consequences:** app servers never stream large MP4s directly for paid content at scale.
 - **Verification:** provider contract tests with fakes; signed URL expiry test.
 
@@ -72,7 +72,7 @@ Verification.**
 - **Consequences:** DB choice (O-004) is not driven by AI.
 
 ### ED-012 — Sellables instead of a products table
-- **Decision:** Orders reference allowlisted course/bundle/plan types with immutable price snapshots. ED-033 supersedes mandatory model-owned grants/ledger methods: checkout orchestrates owning Actions; a narrow common read interface is optional.
+- **Decision:** `Course`, `Bundle`, `SubscriptionPlan` implement `Sellable` (price for market, entitlement grants, ledger rule). Orders reference sellables polymorphically with price snapshots.
 - **Verification:** one checkout flow handles all three (feature tests).
 
 ### ED-013 — Cohorts are the only learner groups
@@ -128,7 +128,7 @@ Real-time collaborative editing/boards, playgrounds, code execution, podcasts, c
 - **Decision:** Staff with permission see a learner record (profile, guardians, entitlements, progress, orders, help requests status, devices). Support "view as learner" is **read-only**, audited, shows a persistent banner, blocks all writes and AI calls.
 
 ### ED-028 — Requirement traceability
-- **Decision:** `docs/TRACEABILITY_MATRIX.md` is the reviewed planning map of PRD/owner/engineering requirements to tasks; an implementation coverage report links actual tests/evidence once tooling exists. A planned mapping is not completion evidence. Gate G10 fails if an in-scope requirement of a completed phase has no tagged test or evidence.
+- **Decision:** `docs/TRACEABILITY_MATRIX.md` (generated) maps every PRD section/ID, owner decision and ED to tasks and tests. Gate G10 fails if an in-scope requirement of a completed phase has no tagged test or evidence.
 
 ### ED-029 — Verification wave by independent subagents
 - **Decision:** After implementation, the orchestrator runs `prd-auditor` (scope + coverage), `qa-verifier` (runs journeys in a browser, tries edge cases) and, for UI tasks, `ux-reviewer` (scores screenshots against design system and UX heuristics). High-risk tasks also get `reviewer`. Any FAIL returns to rework.
@@ -141,44 +141,3 @@ Real-time collaborative editing/boards, playgrounds, code execution, podcasts, c
 
 ### ED-032 — Time and schedule rules
 - **Decision:** Store UTC; learner timezone default Africa/Cairo for EG, Asia/Riyadh for SA; live sessions keep the instructor-entered timezone for display; reminders computed in UTC.
-
-
-## Review decisions — 16 November 2026
-
-These are planned engineering defaults, not owner approvals or runtime evidence.
-Open provider, commercial and child-policy decisions remain activation gates.
-
-### ED-033 — Practical SOLID and minimal boundaries (refines ED-001/007/012/021)
-- **Context:** Mandatory adapters and model-owned sale effects conflict with thin models and can create layers without a use case.
-- **Decision:** One owning Action per operation, narrow public Queries, policy checks inside mutation boundaries, and narrow payment/AI/video contracts with fakes. Use framework storage/mail/reporting facilities directly. Implement only selected drivers; split completion/OCR/embedding capabilities when used. Sellable models expose facts, while Actions grant access and record ledger effects.
-- **Rejected:** Repository over every Eloquent model, a DTO/interface for every class, generic plugin engines and speculative fallback drivers.
-- **Consequences:** Less scaffolding; a small explicit branch for known types is acceptable. New substitution needs may justify a later contract. Cross-domain orchestration uses public boundaries, never internal Support classes.
-- **Verification:** Review actual callers and ownership; contract tests cover consistent success/error/timeout semantics. Test Actions through HTTP, panel and trusted job paths, including unauthorized input.
-
-### ED-034 — Replay-safe transitions and financial facts
-- **Context:** A unique grant row alone does not prevent duplicate audit/events, lost post-commit work, or recalculation of old money using current rules.
-- **Decision:** Source-level uniqueness plus locked/conditional state transitions in local transactions. Identical replay returns its original outcome without repeated effects; conflicting input rejects. Audit and recoverable pending work persist with the transition; deliver after commit with idempotent consumers and reconciliation. Snapshot sale/period currency, price, allocations and approved commission basis. Corrections append linked adjustments, never rewrite settled facts.
-- **Rejected:** Browser-return fulfillment, latest callback wins, audit/event emission on every `firstOrCreate`, and an assumption that after-commit dispatch alone survives a process crash.
-- **Consequences:** A small pending-work record or existing event table is sufficient; no event platform required. O-008..O-012 govern rates/bases/proration, so missing approval blocks affected calculations rather than inventing values.
-- **Verification:** Concurrent duplicate/conflicting events, rollback, crash after commit before dispatch, consumer retry, stale pending after paid/refunded, overlapping grant reversals, money rounding/allocation reconciliation and immutable settled ledger tests.
-
-### ED-035 — Explicit access modes and independent grants (supersedes ED-005 ordering)
-- **Context:** Final preview override can bypass paid/unpublished protections; a single overwritable learner-course grant loses independent purchase/subscription rights.
-- **Decision:** Grants are unique per source + learner + course. Normal access checks account/context, publication, any qualifying grant, cohort, sequence, drip and operation window. Public preview permits only explicitly previewable published resources and no AI/progress/assessment writes; it does not bypass cohort/sequence/drip. Author preview requires author/admin policy and may view drafts read-only. Support view-as evaluates the learner's rights, remains audited/read-only and prohibits AI. Instructor test console is separately authorized. Return reason and permitted capabilities, not a universal boolean.
-- **Rejected:** Unrestricted client mode selection, paid access inferred from enrollment, last-grant-wins access, and treating preview access as permission to mutate progress.
-- **Consequences:** Expiring/refunding one grant does not revoke another. UTC intervals are half-open. Grace/refund/dispute effects and the relative-drip anchor across renewals/overlap require an approved policy; absent policy blocks that affected configuration and never guesses the newest grant.
-- **Verification:** Every mode × operation; wrong actor/course, unpublished/locked content, overlaps, exact expiry boundary, reversal with another active source, and approved drip-anchor cases. Record signed-link revocation limits separately.
-
-### ED-036 — Validate before AI delivery; isolate context/cache (refines ED-010)
-- **Context:** Streaming raw provider tokens cannot guarantee post-generation guards; shared question-only cache keys ignore learner/history and policy changes.
-- **Decision:** Buffer full structured output, validate schema/citations/safety, then recheck access/consent/flags/source before delivery. Bind history to learner + lesson + approved version/hash. Cache only context-free first turns per learner with exact masked input and source/prompt/guard/model/style keys. Follow-up and simpler requests bypass answer cache. Reserve/commit/refund quota by unique request; persist the result before delivery and account for actual provider spend independently.
-- **Rejected:** Unvalidated streaming, cross-learner answer reuse by normalized question, old-version history in new prompts, and refunding budget as if a failed provider call cost nothing.
-- **Consequences:** Validated first-text latency may be higher; benchmark targets without weakening guards. SSE is optional buffered presentation. Quote matching proves quote presence, not answer correctness. Retention values and minors/history/provider policies remain O-014/O-015/O-016/O-025.
-- **Verification:** Raw-token leakage, source/consent/access withdrawal during generation, cross-user conversation/feedback, history-dependent cache collision, duplicate/disconnected request, concurrent quota and abandoned reservation cases; human grounding eval remains required.
-
-### ED-037 — Versioned PDF activation and bounded ingestion
-- **Context:** A content edit can retain binary hash; an old worker can finish after a new upload; a model may not fit the nominal context threshold.
-- **Decision:** Pin PDF version and approved-text hash throughout ingestion/request/cache. Activate only the intended READY version atomically; stale jobs cannot replace a newer source. Explicit withdrawal disables an unsafe active source immediately. Duplicate upload reuses identity but permits explicit failed-job retry. Bound parser/OCR resources and compute prompt capacity including instructions/history/output reserve. Remote OCR uses the provider/data approval gate.
-- **Rejected:** Auto-approval on import, hash-only text revision identity, silent source truncation, treating remote OCR as a non-AI privacy exception, and unconditional vector-service adoption.
-- **Consequences:** Existing safe source may remain during ordinary replacement; withdrawal differs. Full-context remains provisional and chunked mode must pass capacity/Arabic retrieval evaluation before serving oversized material.
-- **Verification:** Failed retry, concurrent replacement/out-of-order workers, edited extracted text, withdrawal mid-answer, maximum page/token budget, unreadable Arabic and unauthorized remote OCR tests.

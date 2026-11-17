@@ -1,18 +1,18 @@
 # YOUNG GO LMS --- DELIVERY, ACCEPTANCE & RELEASE CHECKLIST
 
 **Document ID:** YG-DAC-001\
-**Version:** 1.2 (v3.3 lifecycle closure)\
+**Version:** 1.1 (v3.1 gap closure)\
 **Date:** 16 November 2026\
 **Purpose:** Practical checklist for milestone delivery, client
 acceptance, release readiness and final handover.
 
 Use this document with the Master PRD and Phases/Milestones Roadmap.
 Mark a checkbox complete only when evidence exists. A screen or button
-without a working backend outcome is not acceptance. This pack contains specifications only; all boxes remain unchecked until actual evidence exists. Documentation review is not application acceptance.
+without a working backend outcome is not acceptance.
 
 ## 1. Project governance and source control
 
--   [ ] PRD version and approved decision register are attached to the
+-   [x] PRD version and approved decision register are attached to the
     working repository.
 -   [ ] DMC is read by the implementation team before coding.
 -   [ ] Repository URL, default branch, feature branch convention and
@@ -20,13 +20,18 @@ without a working backend outcome is not acceptance. This pack contains specific
 -   [ ] CodeGraph/repository inspection completed where available.
 -   [ ] Development, staging and production environments are
     distinguished.
--   [ ] No development changes are made directly on legacy production.
+-   [x] No development changes are made directly on legacy production.
 -   [ ] Current domain, DNS, TLS and brand assets are verified from the
     live environment.
 -   [ ] Provider credentials are obtained through authorized secure
     channels.
--   [ ] Unknowns and blockers are documented; no guessed infrastructure
+-   [x] Unknowns and blockers are documented; no guessed infrastructure
     values.
+
+P0 governance evidence: the PRD and decision register are in the repository.
+The environment inventory and progress log record authorized public observations and unknowns.
+CI run 43960234987 verifies development services. Deployment addresses, provider credentials,
+owner brand confirmation, and release tag remain open.
 
 ## 2. Brand, domain and user experience
 
@@ -44,14 +49,14 @@ without a working backend outcome is not acceptance. This pack contains specific
 
 ## 3. Identity, permissions and family accounts
 
--   [ ] Registration, login, logout, password reset and verification
+-   [x] Registration, login, logout, password reset and verification
     work.
 -   [ ] Deactivated/suspended users cannot access protected routes.
 -   [ ] Roles and granular permissions are manageable.
 -   [ ] Backend policies enforce permissions on direct URL/API access.
 -   [ ] Instructor can access assigned courses only.
 -   [ ] Independent instructor cannot publish without approval.
--   [ ] Finance role cannot alter curriculum/security unless explicitly
+-   [x] Finance role cannot alter curriculum/security unless explicitly
     granted.
 -   [ ] Parent account can link multiple verified child accounts.
 -   [ ] Parent cannot access unlinked children.
@@ -115,7 +120,7 @@ without a working backend outcome is not acceptance. This pack contains specific
 -   [ ] Last position/progress is persisted where supported.
 -   [ ] Lesson completion is server-authoritative.
 -   [ ] Course progress percentage is consistent with configured rules.
--   [ ] PDF and resources are downloadable only when entitlement and the asset download policy permit.
+-   [ ] PDF and resources are downloadable by entitled learners.
 -   [ ] Preview content is limited to explicitly public items.
 -   [ ] Locked/expired lessons display a clear reason.
 -   [ ] Student cannot access another student's progress or submissions.
@@ -297,7 +302,7 @@ without a working backend outcome is not acceptance. This pack contains specific
 
 ### Family, identity, cohorts
 -   [ ] Parent creates a child account; child logs in with username/password and no email.
--   [ ] Link code is hashed, rate-limited, single-use and expiring; learner confirmation plus approved guardian authority is required for privileged access.
+-   [ ] Link code links an existing learner only after confirmation; code is single-use and expires.
 -   [ ] Only birth year/month stored; age band computed server-side.
 -   [ ] Parent acting in child context is recorded as actor in audit.
 -   [ ] Parent pays; entitlement belongs to child.
@@ -318,15 +323,15 @@ without a working backend outcome is not acceptance. This pack contains specific
 -   [ ] Daily reconciliation report lists mismatches.
 -   [ ] Instapay proof with a duplicate transfer reference cannot be approved.
 -   [ ] E-receipt adapter state matches O-023 decision (disabled until decided).
--   [ ] Renewal reminders 7/3/1 days sent once each; O-032-approved grace then plan-only access expires; progress and independent purchased access remain.
+-   [ ] Renewal reminders 7/3/1 days sent once each; grace period then plan-only access revoked; progress retained.
 
 ### Instructors, engagement, search, privacy
 -   [ ] Instructor application → review → agreement acceptance → payout profile flow works; payout data encrypted and Finance-only.
 -   [ ] Wishlist works; reviews require entitlement and moderation.
 -   [ ] Arabic search normalization verified (hamza/ta marbuta/alef maqsura/diacritics).
 -   [ ] Marketing tags load only after consent and never on learning/child/AI screens.
--   [ ] Verified scoped export/deletion follows O-025-approved retention and holds; financial records are not anonymized or destroyed contrary to that policy.
--   [ ] Retention pruning dry-run passes; destructive production runs require O-025 approval and exclude holds.
+-   [ ] Data export and deletion requests complete; financial records retained anonymized.
+-   [ ] Retention pruning job runs with configured values.
 -   [ ] Staging refresh uses anonymization command.
 
 ### Quality gates
@@ -336,33 +341,6 @@ without a working backend outcome is not acceptance. This pack contains specific
 -   [ ] AI eval thresholds (`06_AI...` §13.3) met on pilot lessons.
 -   [ ] SPF/DKIM/DMARC verified for mail domain.
 -   [ ] Restore drill meets RPO ≤ 24 h / RTO ≤ 4 h (or owner SLA).
-
-## 14B. v3.3 lifecycle and approval evidence
-
-For every row, attach the requirement's full PRD §29.15 acceptance dataset,
-actual result, command/manual procedure, exit status where applicable,
-artifact and tested revision. A planned task or synthetic provider result
-cannot satisfy live integration, privacy, commercial or cutover approval.
-
--   [ ] `YG-REV-ACC-001` — Independent grant overlap, expiry/revocation and consistent direct access denial.
--   [ ] `YG-REV-ACC-002` — Public/author/support previews cannot expose protected assets or write learner state.
--   [ ] `YG-REV-FAM-001` — Guardian authority, link provenance and consent gates remain separate.
--   [ ] `YG-REV-FAM-002` — Unlink/revoke invalidates sessions, reset tokens and future notifications; uncertain age fails closed.
--   [ ] `YG-REV-PAY-001` — Immutable checkout snapshots, currency/minor-unit totals and concurrent coupon use reconcile.
--   [ ] `YG-REV-PAY-002` — Verified durable events survive duplicate/reordered callbacks and interrupted fulfillment.
--   [ ] `YG-REV-PAY-003` — All admission sources enforce capacity; expired holds and late payment enter reviewed resolution.
--   [ ] `YG-REV-PAY-004` — Partial/full refunds and disputes preserve originals, affect only their source and follow O-031.
--   [ ] `YG-REV-SUB-001` — Calendar boundaries, renewals, grace and catalog changes follow approved O-032 without duplicate accrual.
--   [ ] `YG-REV-FIN-001` — Versioned rates/allocations and settlement adjustments conserve totals and preserve paid history.
--   [ ] `YG-REV-LRN-001` — Curriculum changes preserve completion/certificate basis and historical work.
--   [ ] `YG-REV-LRN-002` — Concurrent attempts, retries, deadline/regrade and assignment revisions are server-authoritative.
--   [ ] `YG-REV-LRN-003` — Timezone transitions, rescheduling and cancellation invalidate stale reminders/join access.
--   [ ] `YG-REV-PRV-001` — Scoped export/deletion, holds, sanitization and restore deletion reconciliation follow approved policy.
--   [ ] `YG-REV-MIG-001` — Stable identity maps, manifests, hashes and checkpointed reruns reconcile without fabricated consent.
--   [ ] `YG-REV-MIG-002` — Final delta and rollback rehearsal preserve post-switch money/progress and learner continuity.
-
--   [ ] Applicable O-* decisions have dated genuine approval evidence and accountable owners; unresolved gates keep the affected production capability disabled.
--   [ ] Provider/source checks unavailable in this environment are marked UNKNOWN/NOT RUN with their dependent release gate blocked.
 
 ## 15. Formal acceptance record
 

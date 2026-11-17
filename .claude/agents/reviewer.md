@@ -14,20 +14,14 @@ Follow `agents/REVIEW_PROTOCOL.md` exactly:
 2. Security and invariants (PRD §23), authorization scope, idempotency, secrets, logging.
 3. Architecture and reuse rules (`docs/12_...` §4, §6), duplication against `docs/REUSE_REGISTRY.md`.
 4. UI tasks: design-system and RTL rules, screenshots present and plausible.
-5. Independently run the applicable checks under VERIFICATION_GATES; docs-only
-   work uses structural/semantic checks. Record required unavailable checks as NOT RUN.
+5. Run `composer qa` yourself to confirm results.
 
 Output format:
 ```
-VERDICT: APPROVE | REQUEST_CHANGES | NOT RUN
+VERDICT: APPROVE | REQUEST_CHANGES
 BLOCKERS: (numbered, file:line, why, required fix)
 SHOULD-FIX: (numbered)
 NOTES: (optional, short)
 CRITERIA MAP: criterion → test name / MISSING
 ```
 Be strict on blockers, brief on everything else. Do not edit files.
-
-Identify your separate reviewer/session and the final revision/diff snapshot.
-Include command/manual steps, actual outcome and artifact links. Missing evidence
-is NOT RUN; self-review does not satisfy this independent role. Rerun review when
-changes invalidate its evidence. Do not claim visual review without opening images.

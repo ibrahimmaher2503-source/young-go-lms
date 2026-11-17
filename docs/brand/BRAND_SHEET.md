@@ -8,10 +8,10 @@ details, minimum logo dimensions and clear space remain UNKNOWN.
 
 | Role | Proposed value |
 |---|---|
-| Primary | Blue, OKLCH hue 258 |
+| Primary | Owner-approved operational teal (D-026); primary sampled from approved reference RGB(2,109,108), OKLCH(0.484010 0.082313 193.660745). Official brand identification remains O-027 |
 | Accent | Terracotta, OKLCH hue 40 |
 | Neutral | Warm gray, OKLCH hue 78 |
-| Typography | IBM Plex Sans Arabic and IBM Plex Sans when installed, with system fallbacks. No external font downloads. |
+| Typography | Locally bundled Noto Sans Arabic variable font with retained OFL license; no runtime third-party font requests. |
 | Logo | Plain localized Young Go wordmark until official assets and usage rules are confirmed. |
 | Assistant | Tinted surface with labeled white, yellow, orange, red and green readiness states. |
 

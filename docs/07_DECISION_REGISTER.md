@@ -1,6 +1,6 @@
 # YOUNG GO LMS --- DECISION REGISTER
 
-**Version:** 3.3 · **Updated:** 16 November 2026\
+**Version:** 3.2 · **Updated:** 16 November 2026\
 **Purpose:** Separate approved owner decisions from technical
 recommendations and open dependencies.
 
@@ -110,6 +110,13 @@ recommendations and open dependencies.
   D-025             2026-11-16        Paymob is the Egypt payment   PaymentGateway adapter;
                                       gateway (confirmed by I.S.    Paymob first; closes O-006
                                       project lead)                 gateway part
+  D-026             2026-11-17        Approve the calm light        Shared Filament table shell;
+                                      slate/white/teal direction    native tables and permission
+                                      and reusable composition     boundaries stay. The mockup
+                                      for all current/future pages  does not approve logo/data;
+                                                                    O-027 remains open.
+                                      Full visual matching is
+                                      mandatory before acceptance.
   -----------------------------------------------------------------------------------------------
 
 ## B. Technical recommendations (not owner-locked)
@@ -117,15 +124,21 @@ recommendations and open dependencies.
   ---------------------------------------------------------------------------------------------
   ID                      Recommendation                  Notes
   ----------------------- ------------------------------- -------------------------------------
-  R-001                   Laravel 13 / PHP 8.3+           Verify target runtime and package
-                                                          compatibility
+  R-001                   Laravel 13 / PHP 8.4+           ACCEPTED in ADR-001 (T-P0-02):
+                                                          laravel/framework ^13.42, PHP ^8.4
+                                                          (Pest 5 + Spatie majors need 8.4);
+                                                          host runtime still UNKNOWN (B-05)
 
-  R-002                   Filament 5 customized to SKIT   UI toolkit only, not LMS core
+  R-002                   Filament 5 customized to SKIT   UI toolkit only, not LMS core.
+                                                          ACCEPTED in ADR-001: filament ^5.11
+                                                          + livewire ^4.4
 
   R-003                   Modular monolith                Avoid premature microservices
 
-  R-004                   PostgreSQL or MySQL             Choose after host and legacy DB
-                                                          inspection
+  R-004                   PostgreSQL or MySQL             PROVISIONAL in ADR-001: MySQL 8.4
+                                                          LTS primary, PostgreSQL 16+ kept
+                                                          portable; revisit when host/legacy
+                                                          DB known (B-05, B-06)
 
   R-005                   Redis for cache/queues where    Depends on environment
                           available                       
@@ -148,7 +161,7 @@ recommendations and open dependencies.
                           and auditable                   
   ---------------------------------------------------------------------------------------------
 
-### B.2 Recommended defaults added in v3.1 (engineering only; policy gates apply)
+### B.2 Recommended defaults added in v3.1 (implement now, reversible)
 
 | ID | Default | Closes gap | Owner can change |
 |---|---|---|---|
@@ -158,13 +171,13 @@ recommendations and open dependencies.
 | R-014 | Media protection tiers T1/T2/T3; paid lessons require T1/T2 unless documented exception | Video protection undefined | Yes |
 | R-015 | Session limit 2, device limit 3, dynamic watermark | Account sharing | Values configurable |
 | R-016 | Revisions for independent-instructor edits after publication | Post-publish edits | Yes |
-| R-017 | Manual renewal + reminders; 3-day grace and no proration are synthetic-test proposals only | Renewal undefined | O-024/O-032 approval before subscription sales |
+| R-017 | Manual subscription renewal + reminders + 3-day grace; no proration | Renewal undefined | Yes (O-011, O-024) |
 | R-018 | Instructor application, versioned agreement, encrypted payout profile | Onboarding missing | Yes |
 | R-019 | Wishlist + moderated reviews carried; open student discussions not built | June features silent in v3.0 | Yes |
 | R-020 | Arabic search normalization | Search quality | — |
 | R-021 | GA4/Meta Pixel only after consent, never in learning/child/AI screens | Analytics dropped | Yes |
 | R-022 | WhatsApp/SMS adapter in P9, first for live reminders | Channel gap | Provider O-021 |
-| R-023 | Scoped export/deletion workflow; retention values remain proposals | Privacy rights | O-025 before production pruning |
+| R-023 | Data export/deletion workflow and retention defaults | Privacy rights | Values O-025 |
 | R-024 | Automated invariant test suite = D-024 focused validation; Larastan + Pint + arch tests in CI | Testing risk | — |
 | R-025 | WCAG 2.1 AA target; RPO ≤ 24 h, RTO ≤ 4 h | NFR numbers | SLA owner |
 | R-026 | Student/public UI: Blade + Livewire + Alpine + Tailwind (shares Livewire with Filament) | Frontend open | Yes, before P2 |
@@ -175,28 +188,7 @@ recommendations and open dependencies.
 
 ### B.3 Engineering decisions (v3.2)
 
-Engineering decisions (ED-*) in `13_ENGINEERING_DECISIONS.md` are RECOMMENDED-DEFAULT technical decisions (reversible, binding for agents). Notable: ED-002 single `curriculum_items` ordering; ED-005 layered access with reason codes; ED-006 JSON translations (supersedes `*_translations` tables); ED-016 staff 2FA; ED-020 acceptance-tests-first; ED-028 requirement traceability (G10); ED-029 verification subagents. LearnHouse is a design reference only (no code reuse; AGPL) — see `14_LEARNHOUSE_REFERENCE_STUDY.md`.
-
-### B.4 Agent-decided lifecycle safeguards (2026-11-16)
-
-These decisions clarify the existing product scope in PRD §29.15. They are
-reversible engineering requirements, not approved D-* decisions and not
-permission to activate gated services. Authority follows `AGENTS.md` §2;
-this section cannot override approved owner decisions or the PRD.
-
-| Decision | Required engineering behavior | Policy or external dependency left open |
-|---|---|---|
-| Independent access sources | Preserve each grant; revoke only the affected source; separate learner/public/author/support modes (YG-REV-ACC-001/002). | No new commercial access rights invented |
-| Guardian authority | Link provenance, authority and consent are distinct; revoke delegated sessions/recovery/notifications together (YG-REV-FAM-001/002). | O-015/O-016; minor AI also O-014/O-028 |
-| Payment lifecycle | Immutable checkout snapshots, durable verified events, atomic idempotent fulfillment and capacity reservations (YG-REV-PAY-001/002/003). | Provider/account evidence and O-006/O-007/O-023/O-031 |
-| Refunds and accounting | Append adjustments; retain originals; isolate source-specific access effects and reconcile finance exceptions (YG-REV-PAY-004/FIN-001). | O-008..O-012/O-031; no automatic refund-policy approval |
-| Subscription periods | Snapshot inclusion/terms and prevent duplicate renewal/accrual (YG-REV-SUB-001). | O-032; grace/proration/calendar rules remain proposals |
-| Learning lifecycle | Version completion basis, preserve attempts/certificates and handle concurrency/timezones (YG-REV-LRN-001/002/003). | Course-specific published rules; no invented certificate eligibility |
-| Privacy workflow | Verified scoped requests, holds, dry-run and backup/deletion reconciliation (YG-REV-PRV-001). | O-015/O-016/O-025 before affected production processing |
-| Migration and cutover | Stable mapping, immutable manifests, delta reconciliation and post-switch write-safe rollback (YG-REV-MIG-001/002). | O-001/O-003/O-018 and explicit cutover authority |
-
-Synthetic tests may proceed while policy is open. A passing mock or a
-populated approval-reference field is not evidence of actual approval.
+ED-001..ED-032 in `13_ENGINEERING_DECISIONS.md` are RECOMMENDED-DEFAULT technical decisions (reversible, binding for agents). Notable: ED-002 single `curriculum_items` ordering; ED-005 layered access with reason codes; ED-006 JSON translations (supersedes `*_translations` tables); ED-016 staff 2FA; ED-020 acceptance-tests-first; ED-028 requirement traceability (G10); ED-029 verification subagents. LearnHouse is a design reference only (no code reuse; AGPL) — see `14_LEARNHOUSE_REFERENCE_STUDY.md`.
 
 ## C. Open decisions --- do not guess
 
@@ -278,19 +270,12 @@ populated approval-reference field is not evidence of actual approval.
 |---|---|---|---|
 | O-023 | Is Egyptian ETA e-receipt/e-invoice submission mandatory for Young Go, and does Paymob (or another provider) perform it? | Legal checkout | `EReceiptProvider` adapter disabled; ETA-ready fields stored; ask accountant + Paymob |
 | O-024 | Auto-renew with saved cards (Paymob support + owner approval) | Subscription UX | Manual renewal (R-017) |
-| O-025 | Final retention periods, legal holds, deletion/anonymization and backup expiry per data class | Privacy | PRD values are test proposals; no destructive production pruning before approval |
+| O-025 | Final retention periods per data class | Privacy | Defaults in PRD YG-GAP-PRV-002 |
 | O-026 | SKIT UI kit source files/spec location | Admin visuals | Filament theme from design tokens until SKIT supplied |
 | O-027 | Brand assets (logo files, exact colors, fonts) extracted from current site | Visual identity | Extract in P0 T-P0-04; placeholders flagged |
 | O-029 | Error-tracking provider (Sentry-compatible or other) | Operations | Reporter adapter logs locally until chosen (ED-021) |
 | O-030 | Expected launch traffic (concurrent learners, peak live sessions) | Capacity sizing | Documented assumption in T-P11-02 |
 | O-028 | Safeguarding message wording and designated recipients for minors | Child safety | AI off for minors |
-
-### C.3 Lifecycle policies still requiring owner approval
-
-| ID | Open item | Why it matters | Interim treatment |
-|---|---|---|---|
-| O-031 | Refund eligibility/windows, partial-line allocation, access withdrawal, dispute resolution, late paid/unfulfilled capacity orders and cohort cancellation remedies | Customer rights, retained access and financial reconciliation | Build/test states and adjustments with synthetic fixtures; hold affected live collection until owner/accountant-approved policy and provider capabilities are recorded. Never fabricate a refund or erase a valid independent grant. |
-| O-032 | Subscription calendar anchoring/month-end/leap-year rules, early/late renewal, grace, cancellation/proration, catalog changes and eligibility/timing of fixed instructor accrual | Published paid-period terms and instructor liability | Manual-renewal implementation may proceed synthetically; 3-day grace/no proration are proposals. Subscription sales require approved terms; auto-renew additionally requires O-024. |
 
 ## D. Decision change protocol
 
@@ -300,7 +285,3 @@ silently convert a recommendation into an approved decision. Technical
 low-risk defaults may be implemented when documented and reversible;
 legal, financial, privacy and irreversible choices require owner
 approval.
-
-## D-026 — owner visual direction and full reference matching (2026-11-17)
-
-Owner approved the calm slate/white/teal card workspace and explicitly requires full visual fidelity on every current/future page, including details, typography and states. Use shared native tables/forms/actions with scoped real data. Follow docs/design-system/VISUAL_ACCEPTANCE.md and TABLE_WORKSPACE.md. The sample does not approve fake records, unsupported controls or official branding; O-027 stays open.

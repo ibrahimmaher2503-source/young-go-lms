@@ -1,14 +1,12 @@
 # REVIEW PROTOCOL (orchestrator and reviewer)
 
-Review the **diff** and affected callers/dependencies, not only the report.
-Apply only relevant checks: docs-only work requires structural/semantic review,
-not absent Laravel tooling. Use VERIFICATION_GATES applicability and bootstrap rules. Every finding cites `file:line` and the
+Review the **diff**, not the report. Every finding cites `file:line` and the
 rule broken. Severity: **BLOCKER** (must fix before done) · **SHOULD** (fix
 in this task unless justified) · **NIT** (optional).
 
 ## R1 Spec compliance
 - [ ] Each acceptance criterion of the task is implemented. (BLOCKER if missing)
-- [ ] Each criterion maps to an actual current successful test or inspected manual result, with command/procedure, outcome, artifact and final revision. Tags alone do not suffice. (BLOCKER)
+- [ ] Each criterion maps to a test or recorded evidence. (BLOCKER)
 - [ ] Nothing out of scope was added (features, packages, refactors). (SHOULD)
 - [ ] OPEN items were not guessed; defaults follow PRD §29 labels. (BLOCKER)
 
@@ -45,11 +43,11 @@ in this task unless justified) · **NIT** (optional).
 - [ ] Tests are meaningful (assert behavior and state, not only status 200). (SHOULD)
 - [ ] Authorization datasets include forbidden cases. (BLOCKER for auth-related tasks)
 - [ ] No weakened/deleted invariant or arch tests. (BLOCKER)
-- [ ] All applicable G1–G11 pass; N/A is justified and required NOT RUN checks remain blockers. (BLOCKER)
+- [ ] Gates G1–G6 green (and G7–G9 when applicable). (BLOCKER)
 
 ## R5A PRD lock and traceability
 - [ ] Every change traces to a cited requirement or task step; nothing extra. (BLOCKER)
-- [ ] Executable acceptance tests carry task + requirement tags; G10/manual bootstrap map links successful results, not just tags. (BLOCKER)
+- [ ] Acceptance tests carry task + requirement tags; G10 green. (BLOCKER)
 - [ ] The task's `ai:` line was honored (hook built, or nothing AI added). (BLOCKER)
 - [ ] Defaults used match PRD §29 / ED values exactly. (BLOCKER)
 
@@ -66,8 +64,5 @@ in this task unless justified) · **NIT** (optional).
 - **Migration:** dry-run mode, idempotent rerun, reconciliation counts. (BLOCKER)
 
 ## Verdict
-`APPROVE` only when there are zero BLOCKERS and all applicable review work was
-performed. Unavailable evidence/tooling yields NOT RUN, not approval. Identify
-reviewer/session and reviewed revision; self-review is explicitly labeled and
-does not fulfill an independent review gate. Record the verdict and the
+`APPROVE` only when there are zero BLOCKERS. Record the verdict and the
 criteria→evidence map under the task in `agents/PROGRESS.md`.

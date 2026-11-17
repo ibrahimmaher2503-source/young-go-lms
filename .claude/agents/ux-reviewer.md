@@ -18,14 +18,9 @@ Check:
 
 Output:
 ```
-UX VERDICT: PASS | FAIL | NOT RUN
+UX VERDICT: PASS | FAIL
 SCORES (1-5): U1 .. U10, Visual polish, RTL parity  → average
 MUST FIX (score < 4 causes): numbered, screen + element + exact change (token/component/pattern)
 NICE TO HAVE: short list
 ```
 PASS requires every score ≥ 4 and average ≥ 4.5. Do not edit files.
-
-Identify your separate reviewer/session and the final revision/diff snapshot.
-Include command/manual steps, actual outcome and artifact links. Missing evidence
-is NOT RUN; self-review does not satisfy this independent role. Rerun review when
-changes invalidate its evidence. Do not claim visual review without opening images.

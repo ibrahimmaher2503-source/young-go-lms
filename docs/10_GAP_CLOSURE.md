@@ -2,10 +2,9 @@
 
 **Date:** 16 November 2026 · **Applies to:** pack v3.0 → v3.1
 
-Historical v3.0/v3.2 review inventory: proposed treatment and owning documents.
-Closure here means specification treatment, never tested application acceptance.
-Current corrections and remaining gates are in `16_REVIEW_FINDINGS_AND_DECISIONS.md`.
-Labels: APPROVED (owner/lead decision) · DEFAULT (recommended engineering treatment; policy-gated values require approval) · OPEN (tracked, interim treatment defined).
+Every gap found in the v3.0 review, how it was closed, and where.
+Labels: APPROVED (owner/lead decision) · DEFAULT (reversible recommended
+default, implement now) · OPEN (tracked, interim treatment defined).
 
 | # | Gap | Closure | Label | Where |
 |---|---|---|---|---|

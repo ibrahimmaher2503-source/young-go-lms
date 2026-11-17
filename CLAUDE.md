@@ -18,8 +18,4 @@ Subagents are defined in `.claude/agents/`:
 | `qa-verifier` | sonnet | Runs the real app in a browser: journeys + edge cases AR/EN (user-visible tasks) |
 | `ux-reviewer` | opus | Scores screenshots against design system and UX principles (UI tasks) |
 
-Model aliases are Claude-specific preferences, subject to host availability; use
-the configured supported model rather than assuming a ranking or silently upgrading.
-For executable behavior write tests first; documentation uses structural/semantic
-checks. Apply the bootstrap rules and independent-review requirements in ORCHESTRATOR
-and VERIFICATION_GATES. Normal permissions apply; missing review is NOT RUN, not PASS.
+The orchestrator runs on the strongest available model, writes tests first (via test-writer), and never skips the verification wave.

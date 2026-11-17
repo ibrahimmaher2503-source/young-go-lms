@@ -1,50 +1,48 @@
-# Agent loop — Young Go LMS methodology
+# Agent loop — how to run Young Go LMS from first task to launch
 
-This repository is a specification and instructions pack. Reviewing it does not
-implement or verify the future application.
-
-## Entry points
+## What is here
 | File | Purpose |
 |---|---|
-| `../AGENTS.md` | Shared project rules |
-| `../CLAUDE.md` | Claude-specific role/model preferences |
-| `../.claude/agents/*.md` | Builder and independent reviewer profiles |
-| `../.claude/commands/next-task.md` | Interactive task entry |
-| `ORCHESTRATOR.md` | Select, scope, implement, review, verify and record |
-| `LOOP_PROMPT.md` | One iteration prompt |
-| `SUBAGENT_BRIEF_TEMPLATE.md` | File ownership, acceptance and evidence brief |
-| `REVIEW_PROTOCOL.md` | Review criteria and verdicts |
-| `VERIFICATION_GATES.md` | Gate applicability, bootstrap, evidence and reset safety |
-| `tasks/P00.md … P12.md` | Task specifications and dependencies |
-| `../docs/TRACEABILITY_MATRIX.md` | Planned requirement-to-task coverage |
-| `PROGRESS.md` | Task status and evidence references |
+| `../AGENTS.md` | Project rules for every agent (Codex reads it automatically) |
+| `../CLAUDE.md` | Claude Code entry; lists subagents and models |
+| `../.claude/agents/*.md` | Builders: implementer, ui-builder (sonnet), test-writer, chore (haiku). Verifiers: prd-auditor, qa-verifier (sonnet), ux-reviewer, reviewer (opus) |
+| `../.claude/commands/next-task.md` | `/next-task [ID]` runs one iteration |
+| `ORCHESTRATOR.md` | Orchestrator algorithm: select → plan → delegate → review → verify → commit → record |
+| `LOOP_PROMPT.md` | The exact prompt for one iteration |
+| `SUBAGENT_BRIEF_TEMPLATE.md` | How to brief a subagent precisely |
+| `REVIEW_PROTOCOL.md` | Review checklist with BLOCKER/SHOULD/NIT |
+| `VERIFICATION_GATES.md` | G1–G11 gates, verification wave, milestone gate |
+| `tasks/P00.md … P12.md` | 123 tasks with deps, agents, size, risk, AI line, steps, acceptance |
+| `../docs/TRACEABILITY_MATRIX.md` | Requirement → task map (regenerate after spec/task edits) |
+| `PROGRESS.md` | The only status board |
+| `run_loop.sh` | Headless loop for Claude Code (N iterations) |
 
-## Setup for an authorized implementation
-1. Create/select the intended repository and copy the pack into its root.
-2. When repository setup/commits are authorized, use `develop`; preserve unrelated changes.
-3. Supply available T-P0-01 facts. Inventory acceptance may explicitly permit UNKNOWN
-   values; missing credentials block dependent slices, not independent local work.
-4. Never connect execution to legacy production credentials or bypass host permissions.
+## Setup (once)
+1. Create the project repository and copy this pack in its root (`docs/`, `agents/`, `.claude/`, `AGENTS.md`, `CLAUDE.md`, continuity files).
+2. Commit on `develop`. Never connect the loop to legacy production credentials.
+3. Supply what you can for T-P0-01 (repo, server, legacy read-only access). Missing items become `blocked` notes; the loop continues with local tasks.
 
-## Interactive use
-Give the host `agents/LOOP_PROMPT.md` and a task ID; state whether the work is a
-pack review or application implementation. Claude Code may use `/next-task [ID]`.
-Use the configured available model; Claude profile aliases do not establish model
-availability or Codex capabilities. No unattended launcher is supplied.
+## Run interactively (recommended at the start)
+```text
+claude --model opus
+> /next-task            # one task end-to-end
+> /next-task T-P1-05    # force a specific task
+```
+Watch the first 3–5 tasks closely, then switch to headless.
 
-Codex reads `AGENTS.md`. When delegation is authorized and host tools support it,
-use actual subagents with the brief template. Otherwise perform implementation
-stages sequentially. A role prompt executed by the implementer is self-review,
-not independent review. Required reviews need a separate agent/human/session;
-record unavailable review as NOT RUN and retain pending status.
+## Run headless
+```bash
+agents/run_loop.sh 5 opus      # 5 iterations, orchestrator on opus
+```
+The script stops when `PROGRESS.md` has `LOOP_STATE: STOP`, or the tree is dirty after an iteration.
 
-Docs-only review checks references, IDs, dependencies, consistency and acceptance
-evidence; absent Laravel commands are N/A. Bootstrap tasks introduce application
-checks in the order specified in VERIFICATION_GATES. Neither a task map nor test
-tags prove execution, visual acceptance, provider readiness or production safety.
+## With Codex
+Codex reads `AGENTS.md`. Give it `agents/LOOP_PROMPT.md` as the task. Codex has
+no subagent definitions here, so it executes the briefs itself, in order, and
+must still run the gates and the review protocol. You can mix: Claude Code
+orchestrator + `codex exec "<brief>"` as an implementer for specific subtasks.
 
-## Owner involvement
-- Resolve missing decisions and credentials for dependent work.
-- Review milestone evidence and screenshots.
-- Authorize gated actions under `docs/09_CODEX_START_HERE.md`, including live
-  payments, provider/minors activation, migration scope and cutover.
+## Your role (human)
+- Answer `blocked` items (credentials, OPEN decisions, owner approvals).
+- Review milestone gates (`T-Px-MG`) and screenshots.
+- Approve gated actions: live Paymob, AI provider + minors, migration scope, cutover.

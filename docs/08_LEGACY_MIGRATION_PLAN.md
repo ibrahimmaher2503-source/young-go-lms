@@ -1,6 +1,6 @@
 # YOUNG GO LMS --- LEGACY COURSE MIGRATION PLAN
 
-**Version:** 1.2 · **Date:** 16 November 2026\
+**Version:** 1.1 · **Date:** 16 November 2026\
 **Status:** Migration of all existing courses and related course content
 is approved. Field-level migration of all learner/business history
 requires source inventory and owner sign-off.
@@ -59,7 +59,7 @@ access or claim historical data migrated without reconciliation.
     records and invalid data.
 5.  Build repeatable import commands/scripts with dry-run, logs,
     checkpoints and idempotency.
-6.  Import to an access-restricted staging area; sanitize personal data before developer/QA use. Never first import directly to production.
+6.  Import to staging; never first import directly to production.
 7.  Reconcile source/target counts and sample course journeys.
 8.  Fix mapping issues and rerun safely.
 9.  Agree data freeze/cutover window; export final delta.
@@ -84,7 +84,7 @@ access or claim historical data migrated without reconciliation.
 ## 5A. v3.1 mapping rules
 
 -   Every migrated media item gets a protection tier (T1/T2/T3). Paid lessons whose legacy source is T3 (YouTube unlisted, Google Drive, public URL) are imported with a `migration_exception` and listed for owner decision: re-host to T1, keep with exception, or make free.
--   Preserve the original name; script detection may suggest `name_ar` or `name_en` but mixed/ambiguous names need review. Never transliterate, merge identities or manufacture certificate names silently.
+-   Legacy single-name users map to `name_ar` or `name_en` by script detection (Arabic letters → `name_ar`); the other field stays empty for the user to complete.
 -   Legacy birth dates, if present, are reduced to year/month on import.
 -   Legacy live groups/batches map to cohorts where identifiable.
 -   Legacy manual grants map to unified entitlements with source `legacy_migration` + original grant metadata.
@@ -108,81 +108,3 @@ media/resources are accessible under target permissions; bilingual
 metadata and course settings are correct; counts reconcile; existing
 active learner access is not silently broken; and a final
 backup/rollback reference is recorded.
-
-
-## 8. Stable identity and repeatable delta contract
-
-Implements `YG-REV-MIG-001`; source schema, volumes and provider access are
-UNKNOWN until inspected. Required evidence is an observed inventory, not a
-sample schema presented as the actual legacy model.
-
-- Use a unique `(source_system, entity_type, source_id)` map to target IDs.
-  Email, name and slug are collision-review fields, not automatic identity
-  merge keys. Record every resolution with actor and source evidence.
-- Each immutable batch manifest records source snapshot/version, extraction
-  watermark, mapping version, record counts, asset checksums, checkpoints,
-  errors and explicit exception owner/status. Keep secrets/private values
-  out of routine logs; store manifests under restricted access.
-- Define observed source change tracking, including updates and deletions.
-  If reliable deltas are unavailable, use an authorized final frozen export
-  and compare it to the rehearsal snapshot; never claim complete deltas
-  from timestamps without demonstrating their reliability.
-- Import in dependency order. Resume only committed checkpoints; reruns
-  update mapped, migration-owned fields without erasing target progress,
-  orders, assessments or independent grants. Source deletions produce
-  reviewable tombstones, not cascading target deletions.
-- Validate relationships, mixed curriculum ordering, currencies, timezones,
-  media protection and asset hashes. Quarantine broken/private/unavailable
-  assets; public fallback URLs must not bypass protection. Exceptions need
-  accountable acceptance, not an invented success status.
-- Never import a guardian link as verified legal authority or invent consent
-  versions/payment verification. Preserve provenance and require the current
-  approval/reverification route. Unsupported password hashes require a safe
-  verified reset flow; do not invent passwords or send credentials in logs.
-- O-018 must specify a continuity route for every active learner: mapped
-  grant, reviewed manual grant, or approved support/recovery path. Excluding
-  full history does not authorize silent access loss. Capacity conflicts in
-  imported cohorts require reconciliation before admissions reopen.
-- Prove same-batch rerun, interrupted resume and changed delta with counts,
-  monetary totals where included, sampled access/denial journeys and asset
-  checksums. Every excluded record has a reason and exception owner.
-
-## 9. Cutover and rollback runbook contract
-
-Implements `YG-REV-MIG-002`. This is required procedure, not evidence that
-cutover or a rollback drill has happened. Actual hostname, operators,
-window and approval references remain UNKNOWN until recorded.
-
-1. Record signed scope/continuity manifest, actual source/target identities,
-   responsible operator, owner acceptance and named rollback authority.
-   Confirm provider callbacks, DNS/TLS, backups and measured restore route.
-2. Rehearse final delta and rollback on isolated data, including a payment,
-   refund and learner-progress write after the simulated switch. Record
-   timings, counts, totals, artifacts and recovery limits.
-3. At the authorized window freeze legacy writes, enrollment/payment entry
-   and background writers. Drain/reconcile pending payments and record exact
-   snapshot/delta watermarks. Capture immutable source and target backups.
-4. Apply final delta, reconcile counts/totals, active learner continuity,
-   asset permissions and pending provider events. Do not switch on mismatch
-   without an explicit signed exception and safe continuity route.
-5. Switch only after explicit authorization and a go/no-go record. Maintain
-   one writable system. Route provider callbacks without duplicate financial
-   effects; keep legacy read-only for the agreed stabilization window.
-6. Run real authorized post-switch smoke checks and monitor queues, errors,
-   payments and learner access. Record failures against predefined rollback
-   triggers, observation window and the named decision maker.
-7. Before rollback, freeze new writes and capture all post-switch orders,
-   provider events/refunds, grants, progress, attempts and edits. Reconcile
-   or safely replay them into the chosen authoritative system using stable
-   IDs/idempotency. If legacy cannot represent a write, retain it durably
-   and use an approved recovery/support route before reopening.
-8. Restore/reconcile and verify access, finance totals and callbacks before
-   traffic resumes. A DNS reversal alone is not rollback. Never operate two
-   writable systems or discard new learner/payment history to recover faster.
-9. Close stabilization only after reconciliation and owner sign-off. Retain
-   or dispose of legacy exports/backups under approved O-025 policy; do not
-   invent a retention duration or delete the rollback source automatically.
-
-Acceptance records live in Delivery Checklist §12/§14/§14B and the actual
-release evidence. Mock results prove importer behavior only; unavailable
-source/provider/restore checks stay NOT RUN and block dependent cutover.

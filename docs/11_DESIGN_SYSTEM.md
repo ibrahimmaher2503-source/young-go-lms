@@ -4,9 +4,7 @@
 **Status:** RECOMMENDED (R-027). Brand values are filled from the current
 Young Go site in task T-P0-04 (O-027). SKIT rules (D-022) apply to
 admin/instructor/finance panels; this document provides the shared tokens
-that both SKIT/Filament and the student UI will consume. This is a design
-contract; token extraction, implementation and visual acceptance are not
-verified by this documentation pack.
+that both SKIT/Filament and the student UI consume.
 
 ------------------------------------------------------------------------
 
@@ -53,7 +51,7 @@ Fill in T-P0-04 from the live site (logo SVG, header, buttons, footer).
 
 Rules:
 - Text on any background must meet 4.5:1 (normal) or 3:1 (large/bold ≥ 18.66 px).
-  Implementation must check every semantic pair; no check is claimed here.
+  The token build script checks every semantic pair.
 - If the extracted brand color fails contrast for text/buttons, use a darker
   step of the same hue for interactive text and keep the original for large
   fills and illustrations. Never change the hue.
@@ -64,7 +62,7 @@ Rules:
 
 | Role | Arabic | Latin | Notes |
 |---|---|---|---|
-| UI + body | Brand font if it exists; otherwise **IBM Plex Sans Arabic** | **IBM Plex Sans** (matching family) | One family across scripts keeps rhythm consistent |
+| UI + body | Brand font if it exists; otherwise **IBM Plex Sans Arabic** | **IBM Plex Sans** (matching family) | One family family across scripts keeps rhythm consistent |
 | Display headings (public site) | Brand display font if any; otherwise same family, weight 700 | Same | Optional expressive font only for marketing hero |
 | Numbers | Western digits `0-9` by default in both locales (configurable) | — | Consistent prices, dates, progress |
 
@@ -179,6 +177,12 @@ price/access, rating, wishlist), `course-filter-panel`, `curriculum-list`
   rules from DMC §8 using this theme; replace visual details when SKIT
   arrives without changing resources.
 
+### Approved calm staff table workspace (D-026)
+
+For Filament staff list pages, use a pale slate canvas, white cards and sidebar, restrained teal emphasis, clear Arabic typography, thin borders, subtle shadows, and compact groups. This approved direction supersedes provisional blue backoffice styling for these workspaces.
+
+Keep the light/dark theme, RTL/LTR behavior, and semantic-token rules. The reference mockup approves layout and tone only: its drawn logo, sample names, counts, and actions are not product facts or feature approval. Official logo, extracted brand colors, and fonts remain open under O-027. See [the table workspace cookbook](design-system/TABLE_WORKSPACE.md) and [the approved reference](design-system/references/calm-workspace-approved-2026-11-17.png).
+
 ## 5. Page templates (layout blueprints)
 
 | Template | Key regions | Notes |
@@ -215,11 +219,7 @@ before implementation (task step "UI spec") and screenshots after.
    only; RTL mirroring correct; truncation/ellipsis for long Arabic and
    English titles; loading/empty/error states present; focus visible;
    touch targets ≥ 44 px.
-4. Include the touched loading, empty, validation, locked and pending states;
-   label evidence by role, selected learner, viewport, locale and theme. Reflow
-   at 320 px and 200% text zoom, keyboard/focus behavior and software-keyboard
-   overlap need separate checks (UX Patterns §7–8).
-5. Milestone visual review: orchestrator compares screenshots with the
+4. Milestone visual review: orchestrator compares screenshots with the
    page template and previous milestone; regressions block completion.
 
 ## 7A. Performance budgets (ED-030)
@@ -231,11 +231,7 @@ fonts subset (Arabic + Latin) with `font-display: swap`; images WebP/AVIF with
 ## 7B. Interaction patterns
 Behavior rules (tables, forms, confirmations, feedback, locked states, child
 context strip, AI entry point) live in `15_UX_FLOWS_AND_PATTERNS.md` and are
-part of the visual gate. Shared tokens do not imply identical layouts: public,
-learner, parent and staff shells share component behavior, terminology and
-state styling while retaining their role-specific navigation and tasks. Use
-LearnHouse only as the documented pattern reference in `14_LEARNHOUSE_REFERENCE_STUDY.md`;
-Young Go brand, Arabic/RTL, accessibility and permissions take precedence.
+part of the visual gate.
 
 ## 8. Brand extraction procedure (T-P0-04)
 
@@ -250,6 +246,7 @@ Young Go brand, Arabic/RTL, accessibility and permissions take precedence.
    for owner sign-off. Until signed off, UI tasks proceed with the inferred
    tokens (they are centralized, so changes are cheap).
 
-## D-026: binding visual reference
 
-The owner-approved calm slate/white/teal reference and rejected implementation are preserved under design-system/references. Full fidelity on all current/future screens is required, not merely a similar palette. Read design-system/VISUAL_ACCEPTANCE.md and TABLE_WORKSPACE.md before UI changes. Native components, tokens, scoped real data, AR/EN, RTL and dark mode remain mandatory. O-027 remains open; a sample raster does not approve business data or official branding.
+### PRD-based visual master references
+
+See [the reference gallery](design-system/reference-pack-2026-11-17/index.html), [canonical manifest](design-system/reference-pack-2026-11-17/manifest.json) and [shared component contract](design-system/reference-pack-2026-11-17/COMMON_COMPONENTS.md). The owner requested these derived screens to extend the approved direction across the product. They are visual references, not feature acceptance or approval of sample values/policies. Public/learner and staff families share primitives, not identical navigation.

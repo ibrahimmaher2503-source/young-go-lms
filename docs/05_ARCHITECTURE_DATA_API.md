@@ -1,9 +1,8 @@
 # YOUNG GO LMS --- ARCHITECTURE, DATA MODEL & API CONTRACT
 
-**Version:** 1.3 (consistency and failure-boundary review) · **Date:** 16 November 2026\
-**Status:** Planned architecture, not implemented or runtime-verified. Technical
-defaults remain subordinate to owner decisions and OPEN policy gates. Final
-stack/database require the environment audit (O-004).
+**Version:** 1.2 (v3.2 second review) · **Date:** 16 November 2026\
+**Status:** Architecture recommendation; final stack/database confirmed
+only after environment audit.
 
 ## 1. Logical architecture
 
@@ -36,13 +35,14 @@ until an observed scaling/team boundary justifies extraction.
 
 ## 2. Recommended stack candidates
 
--   Backend: Laravel/PHP candidate versions in R-001; verify their actual
-    compatibility together from official versioned documentation and the host
-    in T-P0-02 before pinning. This pack does not establish a supported pair.
+> Superseded for versions by `docs/adr/ADR-001-stack.md` (T-P0-02): PHP 8.4+, Laravel 13, Filament 5 + Livewire 4, Blade/Livewire student UI (R-026), MySQL 8.4 provisional (O-004).
+
+-   Backend: Laravel 13 / PHP 8.3+ (verify runtime and package
+    compatibility).
 -   Admin/instructor UI: Filament 5 customized to SKIT; Filament is not
     an LMS core.
--   Student/public UI: Blade + Livewire + Alpine + Tailwind is the reversible
-    default R-026, subject to the same compatibility audit.
+-   Student/public UI: custom responsive frontend selected for video
+    player and AI side panel needs.
 -   Database: MySQL or PostgreSQL after legacy schema and host
     inspection; PostgreSQL/pgvector is a possible AI option, not a lock.
 -   Queue/cache: Redis where available.
@@ -80,10 +80,8 @@ until an observed scaling/team boundary justifies extraction.
 
 ## 4. Core logical entities
 
-The names below are the current logical model, reconciled with ED-002,
-ED-004 and ED-006. Do not implement superseded tables and migrate between
-them merely because an earlier pack listed them. Final column types and
-foreign keys follow the selected database; legacy mapping is a separate import.
+Conceptual entities only; final columns/types/indexes/foreign keys
+follow legacy source inspection.
 
   ---------------------------------------------------------------------
   Entity                             Purpose / key relationships
@@ -110,7 +108,7 @@ foreign keys follow the selected database; legacy mapping is a separate import.
                                      level, age suitability, format,
                                      access mode
 
-  `courses` JSON fields              AR/EN metadata (no translations table)
+  `course_translations`              AR/EN metadata and future locales
 
   `course_instructors`               Assigned instructor, role and
                                      scope
@@ -120,13 +118,10 @@ foreign keys follow the selected database; legacy mapping is a separate import.
 
   `course_sections`                  Ordered curriculum sections
 
-  `curriculum_items`                 Single mixed-type ordering, section,
-                                     publication, preview and unlock rules
+  `lessons`                          Ordered lesson records, type,
+                                     duration, preview, required state
 
-  `lessons`                          Typed lesson content and duration;
-                                     no independent ordering column
-
-  `media_assets`                     Provider, asset ID, URL/reference,
+  `lesson_media_assets`              Provider, asset ID, URL/reference,
                                      status and playback metadata
 
   `lesson_resources`                 PDFs, files, images, links and
@@ -152,8 +147,8 @@ foreign keys follow the selected database; legacy mapping is a separate import.
   `enrollments`, `entitlements`      Enrollment history and
                                      authoritative access rights
 
-  `lesson_progress`,                 Learner+item facts; learner+course
-  `course_progress`                  aggregate, independent of grant renewal
+  `lesson_progress`                  Per-enrollment lesson status and
+                                     resume position
 
   `certificates`,                    Issued certificate and
   `certificate_templates`            verification
@@ -178,8 +173,8 @@ foreign keys follow the selected database; legacy mapping is a separate import.
   `ai_conversations`, `ai_messages`, Student-owned AI records and cost
   `ai_usage`                         metadata
 
-  `lesson_document_pages`,           Approved versioned source text and
-  `lesson_document_chunks`           optional retrieval (§16 of AI spec)
+  `ai_pdf_sources`, `ai_pdf_chunks`  Lesson-scoped PDF indexing and
+                                     retrieval references
 
   `help_requests`,                   Instructor escalation and
   `help_request_messages`,           in-platform thread
@@ -209,15 +204,6 @@ lesson, live session, quiz, practical assignment or resource. Each
 lesson has zero or one active curriculum PDF version; a recorded lesson
 needs an approved readable PDF to enable AI.
 
-`curriculum_items` owns order, required/published/preview state and unlock
-rules. Its allowlisted typed reference resolves to exactly one record in the
-same course. A standalone resource is a resource-type `lesson` with attached
-`lesson_resources`; it is not an unimplemented fifth polymorphic type. Enforce
-same-course section/type membership and unique typed attachment in Actions and
-database constraints where supported. Reorders use a transaction and a revision
-check; concurrent editors get a conflict rather than silently losing an order.
-Referenced items are archived, not hard-deleted through attempts or history.
-
 ### 5.2 Unified entitlement
 
 Every access grant is represented by a unified entitlement with source
@@ -226,27 +212,12 @@ Sources include one-time purchase, bundle, subscription, free
 enrollment, manual grant, approved offline payment and legacy migration.
 All protected resources call the same authorization service.
 
-One entitlement engine does **not** mean one overwritable learner-course row.
-Keep independent grants unique by `(source_type, source_ref, learner_id,
-course_id)`; access may remain valid through another active grant after one
-expires or is reversed. Never derive access from an enrollment row or a cached
-dashboard aggregate. Grant starts/ends are UTC half-open intervals
-`starts_at <= now < ends_at` (null end means no expiry). Subscription grace,
-refund/dispute effects and relative-drip anchor policy use approved settings;
-do not infer them from the most recently inserted grant (ED-034/035).
-
 ### 5.3 Parent/child
 
 A guardian-child link is a separate entity with
 verification/status/consent metadata. Parent queries scope through
 verified active links. Do not model parent as simply another student
 role.
-
-Account creation/link-code possession is a technical relationship, not proof
-of legal guardianship. Sensitive child access/recovery/notification routing
-requires the verified active relationship and approved O-015 policy. Unknown
-age is not silently classified as adult for AI. Revocation invalidates context
-on the next request; parent payer identity never substitutes for learner identity.
 
 ### 5.4 Instructor commission
 
@@ -256,24 +227,12 @@ included course then configured percentage. Subscription = fixed amount
 per eligible student-course-period. Ledger generation is idempotent. No
 watch-time or engagement calculation.
 
-Snapshot price, currency, discount/tax components, bundle allocations and
-approved commission terms on the source sale/period. Recalculating old earnings
-from today's course settings is forbidden. Exact bases/rates/proration remain
-O-008..O-012; missing approval blocks affected calculation/settlement, not a
-silent zero/default. Corrections append linked reversal/adjustment entries;
-paid settlements and original facts remain immutable (ED-034).
-
 ### 5.5 AI source restriction
 
 Retrieval scope must be
 `(authenticated_student, active_entitlement, current_recorded_lesson, approved_curriculum_pdf_version)`.
 Do not index global courses for this assistant. Recheck permission
 before prompt construction and response delivery.
-
-Pin source content hash, prompt/guard versions and model configuration for
-each request. Cached output obeys the same access, version and safety checks.
-The model receives no tool privileges; a help request is a separately authorized
-user Action. AI outage cannot prevent a learner using non-AI features.
 
 ## 6. Suggested API groups
 
@@ -355,24 +314,6 @@ Suggested error semantics: `401` unauthenticated, `403` unauthorized,
 validation, `429` rate/quota, `503` provider unavailable. Never return
 protected snippets/files inside an authorization error.
 
-### 6.1 Shared entry-point contract
-
-Web, Filament, Livewire and API call the same public Action/Query. Resolve
-actor and permitted learner context on the server, validate bounded input,
-authorize the object and operation, and serialize an allowlisted response.
-Mutation Actions also enforce policy and current state so jobs/CLI cannot bypass
-them. Document trusted system paths explicitly; request data cannot impersonate
-a system actor. Cookie-authenticated mutations require CSRF protection; webhook
-routes use provider verification instead. Apply pagination/size limits to reads.
-
-Accept client idempotency keys for checkout creation, attempts/submissions and
-AI requests where retries can duplicate effects. Scope each key to actor +
-operation, store request fingerprint and outcome, return the same outcome on an
-identical replay, and reject reuse for different input with `409`. A key is not
-authorization. Provider event identity and source-level business uniqueness
-remain required even when the client supplies no key. Do not let URLs select
-unrestricted child, file, conversation or document identifiers.
-
 ## 7. Domain events and idempotency
 
   -----------------------------------------------------------------------
@@ -428,53 +369,15 @@ Use idempotency keys or unique source references for payment
 fulfillment, notifications, subscription earnings, certificates and
 migration records.
 
-### 7.1 Transaction and delivery boundaries (ED-034)
-
-| Boundary | Atomic local facts | External/delayed work and recovery |
-|---|---|---|
-| Verified payment/manual approval | Lock source order/attempt; validate immutable amount/currency/beneficiary snapshots; persist legal state transition, fulfillment marker, scoped grants and ledger source once | Notification/receipt jobs after commit; durable pending event/inbox or reconciliation repairs a crash between commit and dispatch |
-| Refund/dispute | Persist verified provider fact plus linked adjustment/hold, source-specific access change under approved policy | Refund submission outside DB transaction, stable provider key if supported; ambiguous timeout → reconcile, never blind duplicate refund |
-| Subscription renewal | One period per verified renewal source; immutable plan/course snapshot; source grants and one earning per learner-course-period | Expiry uses authoritative timestamps even if scheduler is late; reminders dedupe by period/offset |
-| Cohort seat | Lock cohort/reservation and check capacity; unique membership; consume/release hold once | Late payment after expired/full reservation enters finance review; no overbooking or automatic unapproved refund |
-| Progress/assessment | Atomic attempt transitions and item facts; deadline evaluated server-side against snapshotted rules | `course_progress` is a rebuildable read model; completion/certificate checks use authoritative facts, not a stale percent |
-| PDF promotion | Pin immutable approved content; compare expected current version; swap active pointer only after READY and publication approval | Jobs carry document id/hash; stale extraction/index jobs cannot replace newer content; failure keeps last approved version active |
-| Help/notification | One help request per learner/message; append state event and delivery reference | Recipient scope/consent rechecked at delivery; retries dedupe, failed sends appear in operations |
-
-Do not hold a database transaction open across a provider call, OCR, file upload
-or email. Write durable local intent first when needed, perform external work,
-then finalize with a state/unique-key check. At-least-once jobs must tolerate
-duplicates, out-of-order events, stale models and worker death. Queue jobs carry
-IDs/version hashes rather than full private text or stale serialized models.
-Set bounded attempts/backoff/timeouts; expose failed/quarantined items and an
-audited replay action. Critical work requires a durable recovery path; an
-after-commit dispatch alone is not crash-proof. Use the existing source table
-as a pending-work record where sufficient, not an event platform by default.
-
-Record and test unique constraints for payment source, grant source, ledger
-source+beneficiary+period, settlement membership, active attempt, help-message
-source and migration source. Cross-table foreign keys and validation prevent
-course/learner mismatches. Polymorphic references need allowlisted types and
-explicit integrity checks because a generic foreign key cannot prove them.
-
 ## 8. Security and operational constraints
 
 -   Policies at route, service and query layers; no UI-only access
     control.
 -   Private file storage and expiring links; entitlement recheck for
     media/PDF/live/AI.
--   File authorization follows its purpose: learner content uses
-    `canAccessItem`; submissions, payment proofs, identity documents and privacy
-    exports also use their object/role policy. Course access alone never opens
-    another student's submission or a finance/private identity file.
--   Signed media URLs already issued may remain usable until provider expiry.
-    Record the real revocation bound for the selected provider and test it;
-    do not promise instantaneous revocation of an already downloaded file.
 -   Signed webhook verification and transaction idempotency.
 -   No card data storage; safe gateway metadata only.
--   Secure upload validation (actual content/MIME, byte/page/dimension limits),
-    quarantine and bounded parsing outside the web worker; no executable files
-    in public webroot. Provider URL allowlists reject private/link-local targets
-    and unsafe redirects; never fetch arbitrary pasted URLs server-side.
+-   Secure upload validation; no executable files in public webroot.
 -   Secret references outside source control.
 -   Audit sensitive changes with actor, target, timestamp and safe
     before/after values.
@@ -504,13 +407,13 @@ backup/restore and rollback before DNS change.
 | `cohorts` | course_id, name (translatable), starts_at, ends_at, capacity, enrollment_opens_at/closes_at, status |
 | `cohort_members` | cohort_id, learner_id, entitlement_id, status (active/waitlisted/removed), position |
 | `cohort_instructors` | cohort_id, instructor_id |
-| `media_assets` | `protection_tier` (T1/T2/T3), `exception_reason`, provider, external_id, status; canonical name, no duplicate `lesson_media_assets` table |
+| `media_assets` (extends `lesson_media_assets`) | `protection_tier` (T1/T2/T3), `exception_reason`, provider, external_id, status |
 | `user_sessions` / `user_devices` | user_id, device fingerprint hash, user agent, last_ip (hashed or truncated), last_seen_at, revoked_at |
 | `account_sharing_flags` | user_id, signal, window, status |
 | `course_revisions` | course_id, author_id, payload (diff/snapshot), status (draft/pending/approved/rejected), reviewer_id, reason |
 | `payment_attempts` | order_id, gateway (`paymob`), intention/reference ids, status, raw payload (sanitized), signature_valid |
-| `payment_webhook_events` | gateway/account, stable provider event identity or documented fingerprint (unique scope), payload hash, verified_at, received_at, processing state, processed_at, result; transaction status events are not collapsed into one transaction id |
-| `manual_payment_proofs` | order_id, payer name, sender ref (masked), transfer_reference, amount, transferred_at, private file_ref, review status; duplicate detection scoped to approved channel/account semantics, ambiguous matches require finance review |
+| `payment_webhook_events` | gateway, event_id (unique), received_at, processed_at, result |
+| `manual_payment_proofs` | order_id, payer name, sender ref (masked), transfer_reference (unique), amount, transferred_at, file_ref, review status |
 | `payment_reconciliations` | run date, gateway, matched, mismatched, report ref |
 | `e_receipts` | order_id, provider, document uuid, status, payload ref (adapter disabled until O-023) |
 | `subscription_reminders` | subscription_id, offset_days, sent_at (unique per period+offset) |
@@ -533,31 +436,23 @@ Checkout (server prices order) → PaymentGateway::createCheckout(order) [Paymob
   → learner pays on Paymob → browser returns to /checkout/return (status display only)
   → Paymob server callback → /webhooks/paymob
       verify signature → match merchant order ref + amount + currency
-      → durably record verified payment_webhook_events → acknowledge/retry per provider contract
-      → Commerce\\Actions\\FulfillVerifiedOrder (state + source uniqueness, local transaction)
-      → Entitlements\\Actions\\GrantEntitlement + ledger source record (once)
-      → after-commit delivery with pending-work/reconciliation recovery
+      → store payment_webhook_events (unique event id) → PaymentVerified event (once)
+      → EntitlementService::grantFromOrder() (idempotent) → ledger source event
 ```
 
 The exact Paymob API (checkout/intention endpoints, signature fields) is taken from Paymob's official documentation at implementation time and recorded in `docs/integrations/PAYMOB.md`.
-
-That integration file must also evidence event identity, merchant/account
-binding, raw-body signature handling, units/currency, replay semantics, status
-ordering, acknowledgement/retry behavior and refund/query support in sandbox.
-A browser return never marks paid. Stale pending/failed callbacks cannot undo
-settled/refunded facts; unknown provider states are quarantined for reconciliation.
 
 ### 10.3 Additional adapters
 
 | Contract | First driver | Later |
 |---|---|---|
-| `PaymentGateway` | Paymob driver + fake for required checkout/query operations | Refund capability only when supported; manual proof approval is an Action, not a fake gateway |
-| E-receipt seam | Disabled pending O-023; preserve required source data | Add a driver only for the selected obligation/provider |
-| `VideoDeliveryProvider` | Selected T1/T2 driver + fake after O-005; allowlisted external embeds for approved tiers | HLS/transcoding only if the chosen delivery needs it; no speculative driver suite |
-| Notifications | Laravel mail/database facilities | Channel implementation only when O-021 and scoped task require it |
-| `AiProviderInterface` | Completion + fake; §11 of AI spec | Separate OCR/embedding capabilities when ingestion needs them |
-| OCR | Selected local tool or approved remote capability | Private PDF processing subject to same provider/data gate as chat |
-| PDF output | Selected Arabic-capable renderer through its existing API | Add a custom contract only for a demonstrated substitution/testing need |
+| `PaymentGateway` | `PaymobGateway`, `ManualTransferGateway` | additional gateway, Saudi gateway |
+| `EReceiptProvider` | `NullEReceiptProvider` (disabled) | ETA provider per O-023 |
+| `VideoDeliveryProvider` | `SignedStorageVideoProvider` (S3-compatible/local signed URLs), `YouTubeProvider`, `VimeoProvider`, `ExternalUrlProvider` | private streaming provider (O-005) |
+| `NotificationChannel` | mail, database | WhatsApp/SMS (O-021) |
+| `AiProviderInterface` | `FakeAiProvider` (tests/dev) | selected provider(s) (O-014) |
+| `OcrProvider` | via AI adapter or local OCR | — |
+| `PdfRenderer` | headless-Chromium HTML-to-PDF (Arabic shaping) | — |
 
 ### 10.4 Additional events
 
@@ -584,49 +479,5 @@ settled/refunded facts; unknown provider states are quarantined for reconciliati
 ### 11.2 Access decision
 `EntitlementService::canAccessItem()` returns `AccessDecision{allowed, reason_code, unlock_at}`. Reason codes: `course_unpublished`, `item_unpublished`, `not_entitled`, `entitlement_expired`, `not_in_cohort`, `sequence_locked`, `drip_locked`, `preview_only`, `live_window_closed`. Each has AR/EN copy in `lang/*/access.php`. (ED-005)
 
-ED-035 replaces the ambiguous final "preview override": use explicit server
-contexts `learner`, `public_preview`, `author_preview`, `support_view_as`.
-Validate account status/context/ownership first. Normal learning checks
-publication → any qualifying grant → cohort → sequence → drip → operation
-window. Public preview is an explicit published item/resource allowance only;
-it does not unlock the rest of the course, AI, progress or assessment writes,
-or bypass cohort/sequence/drip. Author preview requires assigned-author/admin
-policy and permits draft viewing only; support view-as evaluates the target
-learner's actual rights. Both preview modes and support view-as block writes
-and AI calls. Separate instructor test-console permission is not an impersonation
-exception. Do not expose hidden resource details in public denial reasons.
-
-The decision carries mode/capabilities as needed by the caller; `allowed=true`
-for a preview never means `canWriteProgress=true`. Resolve relative-drip anchors
-from an approved source rule; overlapping grants must not arbitrarily relock a
-learner. Add `account_inactive`, `context_forbidden` and `operation_forbidden`
-reason codes where applicable. `AssistantEligibility` builds on this result and
-adds PDF/flags/consent; it does not reimplement access queries.
-
 ### 11.3 Sellables
-Keep `order_items.sellable_type/id` allowlisted and snapshot its source data.
-ED-033 refines ED-012: a `Sellable` contract is optional for a real common read
-operation; models do not grant access or calculate ledger effects. Shared
-checkout Actions dispatch the three known sellable types and call the owning
-domain Actions. A small explicit type branch is preferable to three speculative
-plugin frameworks. Cross-domain schema/API changes update tasks, fixtures,
-consumers and the reuse registry together.
-
-## 12. Dependency ownership and evidence
-
-Identity/Guardian policy resolves actor + learner context; Entitlements owns
-all grant writes/reads; Curriculum owns item identity/order/publication; Media
-owns private source assets; Learning/Assessments own progress/attempt facts;
-Commerce owns verified money facts; InstructorFinance owns ledger/settlement;
-AI consumes authorized snapshots and cannot mutate these domains. Reporting
-uses permission-scoped Queries and exports; it never becomes a second writer.
-Outer workflow Actions may call another domain's public Action in one local
-transaction; domain models and internal `Support/` are not orchestration APIs.
-Avoid bidirectional service calls: access consumes narrow completion facts,
-while completion uses the same rules without recursively calling access.
-
-Before an implementation task is accepted, show its boundary tests: duplicate
-and concurrent events, rollback/worker restart, stale versions, wrong actor and
-cross-course IDs, denied file capabilities, overlapping grants, money rounding,
-Arabic source mismatch, and approved policy branches. These are required
-evidence cases, not claims that tests or application code exist in this pack.
+`Course`, `Bundle`, `SubscriptionPlan` implement `Sellable` (`priceFor(Market)`, `entitlementGrants(learner)`, `ledgerRule()`); `order_items.sellable_type/id`. (ED-012)

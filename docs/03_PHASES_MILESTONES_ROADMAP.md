@@ -20,19 +20,9 @@ v3.1 additions placed into phases:
 | Media protection tiers, revisions after publish | P3 (M3.4, M3.7) |
 | Cohorts, capacity, waitlist | P5 (M5.0) |
 | Watermark, session/device limits | P4 (M4.5) |
-| AI v3.0 pipeline (M7.0--M7.7) | M7.0/M7.1 with P3; rest after P4 access/player and P6 quiz runtime; real-data pilot after P9 privacy |
+| AI v3.0 pipeline (M7.0--M7.7) | M7.0/M7.1 with P3; rest after P4 |
 | Paymob, manual proof, reconciliation, e-receipt adapter, renewal | P8 |
 | Instructor onboarding, wishlist, reviews, consent/analytics, WhatsApp adapter, privacy rights | P9 |
-
-## Dependency scheduling corrections
-
-Phase numbers group work; they are not sequential execution barriers. Use the task dependency graph:
-
-- Pull T-P9-01 instructor onboarding/agreements forward after P1 panels, before P3 course creation; payout profiles also gate P8 settlements. It does not depend on courses.
-- Build P4 progress APIs and P5 cohort capacity after entitlement/course foundations; then P4 layered access, then the player with captions/rich text and progress wiring. Screenshots belong to player integration, not the earlier API tasks.
-- AI core remains fake-provider only until input guards are integrated; the student panel waits for guards and protected PDF viewer. The quiz guard waits for quiz attempts, not authoring alone. Real-data pilot additionally waits for privacy workflows and explicit provider/consent approvals.
-- Full regression waits for every P1–P10 functional milestone (AI technical gate may exclude the separately blocked real-provider pilot); cutover also waits for performance verification.
-- PRD §29.15 requirements extend existing tasks; all 123 tasks remain planned until evidence establishes completion.
 
 ## Delivery principles
 

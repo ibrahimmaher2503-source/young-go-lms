@@ -9,7 +9,7 @@ the core journeys with measurable UX acceptance.
 
 | # | Principle | Test |
 |---|---|---|
-| U1 | Clear action hierarchy per task | One visually dominant action per task region; essential player controls, row actions and dialog actions remain available |
+| U1 | One primary action per screen | Exactly one primary button visible per view |
 | U2 | Always know where you are | Page title + breadcrumb (staff) or back + title (learner) |
 | U3 | Always know what's next | Learner screens show the next step (continue, next lesson, complete profile) |
 | U4 | Explain blocked states | Every disabled/locked element states why and how to unlock |
@@ -41,7 +41,7 @@ rework item; average must be ≥ 4.5.
 [Filters bar] [Table / Form]
 ```
 
-## 3. Shared interaction patterns
+## 3. Interaction patterns (use these, nothing else)
 
 | Job | Pattern |
 |---|---|
@@ -53,9 +53,9 @@ rework item; average must be ≥ 4.5.
 | Destructive | Confirm modal naming the record and consequence; type-to-confirm for irreversible finance/data deletion |
 | Status | Badge with color + text (never color only) |
 | Money | `x-ui.price` / `MoneyColumn` (currency, Western digits, end-aligned) |
-| Dates | Relative for recent ("منذ ساعتين"), absolute in accessible detail (hover may supplement); learner timezone |
+| Dates | Relative for recent ("منذ ساعتين"), absolute on hover/detail; learner timezone |
 | Feedback | Toast for success; inline error near field; banner for page-level issues |
-| Loading | Skeletons for content; spinner on buttons; disable duplicate submission while preserving navigation and entered data |
+| Loading | Skeletons for content; spinner on buttons; never block whole page |
 | Empty | Illustration + one sentence + primary action |
 | Errors | Friendly message + retry + support path; branded 403/404/419/429/500/maintenance pages in AR/EN |
 | Locked content | Lock icon + reason + unlock date/condition (ED-005 reason codes) |
@@ -64,6 +64,14 @@ rework item; average must be ≥ 4.5.
 | Navigation (learner) | Max 5 top-level items; bottom tab bar on mobile for dashboard/my courses/notifications/profile |
 | Child context | Persistent colored strip "أنت تتصفح كـ [اسم الطفل]" with exit |
 | AI | Only `ai-assistant-panel` pattern (AI spec §15); never chat bubbles elsewhere |
+
+### 3.1 Shared Filament table workspace (D-026)
+
+Extend `App\Filament\Shared\Pages\WorkspaceListRecords` for staff record lists. The resource remains the owner of its native `Table`, columns, filters, and row/header actions; the list page keeps native tabs and render hooks. Filament retains search, sorting, pagination, and authorized exports. Do not render or copy table markup into a sidebar. The base adds an optional summary strip and optional Filament schema sidebar.
+
+Override `getWorkspaceSummary(): array` with `label`, `value`, and optional `icon` entries. Override `getWorkspaceSidebar(): array` with native schema components such as `Section` and `View`. Return `[]` when no sidebar content is available; the table then uses the full workspace width. Use only real values from the resource's authorized query, and gate each summary/sidebar data source with the matching resource or ability check. Never infer a pending status or expose data hidden from the current role.
+
+At small widths the summary remains above the workspace grid, the native table comes first, and sidebar cards stack after it; keep horizontal scrolling within the table. Use semantic tokens so the approved calm light direction, dark theme, and RTL/LTR layout remain consistent. The implementation example is in [TABLE_WORKSPACE.md](design-system/TABLE_WORKSPACE.md).
 
 ## 4. Core journeys (step specs + UX acceptance)
 
@@ -74,13 +82,13 @@ Targets are maximums for a returning user on mobile unless stated.
 2. Course page: price/access card visible without scrolling (mobile sticky bar)
 3. "Enroll / Buy" → login/register inline (return to the same course)
 4. Checkout (learner selector if parent) → pay (Paymob) or upload proof
-5. Confirmed entitlement → "Start first lesson"; pending verification → status page with order reference, expected next step and return-to-course link
+5. Success page → "Start first lesson"
 **Acceptance:** ≤ 6 screens from course page to first lesson for free courses, ≤ 8 for paid; no dead ends; payment pending state explains next steps.
 
 ### J02 Parent sets up children
 1. Register (email verified) → "Add your child" CTA on empty parent dashboard
 2. Child form: name, birth year/month, username, password (strength meter) → done
-3. Child card shows username copy and enroll actions; initial password is disclosed only during setup, never retrieved later. Reset replaces it when needed.
+3. Child card shows "login details" copy action and "enroll" action
 **Acceptance:** add child ≤ 1 form, ≤ 60 seconds; child can log in immediately.
 
 ### J03 Instructor creates a course
@@ -98,10 +106,10 @@ Targets are maximums for a returning user on mobile unless stated.
 
 ### J05 Learner asks the AI and escalates
 1. Tap AI (video pauses, timestamp chip) → type or tap starter chip
-2. Pending/validating state → validated short answer with page chip (no unvalidated text streamed to the learner) → فهمت / اشرحها أبسط / لسه مش فاهم
+2. Streamed short answer with page chip → فهمت / اشرحها أبسط / لسه مش فاهم
 3. "لسه مش فاهم" → request created toast + link to thread
 4. Notification when instructor replies → thread → mark understood
-**Acceptance:** immediate pending feedback; target first validated answer ≤ 2.5 s p95, measured separately from loading feedback; escalation in 1 tap; thread reachable from notification in 1 tap. Unverified output stays hidden, with retry/help when validation fails.
+**Acceptance:** first token ≤ 2.5 s p95; escalation in 1 tap; thread reachable from notification in 1 tap.
 
 ### J06 Learner attends live
 Dashboard card with countdown → join enabled in window → after session replay item appears.
@@ -134,12 +142,9 @@ Review queue → diff summary → preview as learner → approve/reject with rea
 
 - The AI entry point exists **only** in the recorded-lesson player toolbar.
 - Wherever AI is unavailable, the button is hidden (not applicable) or muted
-  with a persistent adjacent reason (quota, processing), associated through
-  accessible description. A tooltip may supplement but never carry the only
-  explanation. Recheck eligibility on action and explain changed access inline.
-- Staff screens show readiness, usage/cost and insights according to permissions.
-  Authorized help-request reviewers see only the question/answer context needed
-  for that request (J11), not an unrestricted learner chat browser.
+  with a tooltip reason (quota, processing) — never an error after click.
+- Staff screens show AI **status**, never AI conversations: lesson readiness
+  indicator, usage/cost, insights, help requests.
 - Parent screens show help-request status only (O-016).
 - The same copy deck is used everywhere: `lang/*/ai.php`.
 
@@ -151,45 +156,6 @@ review: screenshots + `ux-reviewer` scores + journey step count where the task
 touches a journey above.
 
 
-## 7. Shared behavior acceptance (all core journeys)
+### D-026 owner clarification: top-level staff lists
 
-- **Context and roles:** title, course/lesson and selected learner stay visible.
-  Child context uses text as well as color. Switching child or role updates
-  data, permissions and navigation together; unsaved work prompts before
-  switching. Checkout repeats the learner, course, currency and total before
-  payment. Preview mode is labelled and cannot record learner progress or orders.
-- **Keyboard and focus:** all actions work without hover or drag. Curriculum
-  reorder has keyboard controls. Dialogs/sheets move focus inside, contain it,
-  close with Escape where safe, and restore focus to their trigger. Validation
-  focuses a linked error summary; async status is announced without stealing focus.
-- **Mobile:** test at 390 px and narrow 320 px reflow, with long AR/EN content,
-  200% text zoom and the software keyboard open. Sticky navigation, payment CTA,
-  save bars and AI composer must not cover focused fields or each other. Tables
-  may scroll within a labelled region; the page must not scroll horizontally.
-- **State contract:** specify loading, empty, success, validation error, service
-  failure, forbidden, locked and pending states where applicable. Retain form
-  data after failure, prevent duplicate payment/help submissions, and show a
-  safe recovery action. Returning from a gateway is not proof of payment.
-- **Copy:** reuse translation keys and terms for course, section, lesson,
-  learner and child. Keep learner messages free of implementation terminology.
-  Give a reason and next action for every block; show absolute date/time and
-  timezone where timing changes access. Do not promise an unconfigured SLA.
-- **AI context:** show current lesson and approved PDF identity/page references.
-  A lesson change resets answer context; late responses from the previous
-  lesson must not appear. Quota, processing, unavailable PDF, validation failure
-  and instructor escalation have distinct states. No extra AI entry points.
-
-## 8. Evidence required before UI acceptance
-
-For each touched journey, save screenshots using Design System §7 and label
-role, learner context, locale, viewport, theme and state. Include normal and
-material blocked/error/pending states, not just a populated happy path. Record
-keyboard/focus, mobile keyboard, permission/context-switch and payment-return
-checks separately: screenshots alone cannot prove these behaviors. Scores
-are a reviewer aid, never a substitute for passing those checks. Attach paths,
-results and unresolved failures to the task; missing evidence stays **not
-verified**. This documentation pack supplies requirements, not runtime proof.
-
-## D-026: top-level staff list navigation
-
-The newer owner-approved reference omits breadcrumbs on top-level staff lists. WorkspaceListRecords retains a descriptive title and selected navigation item, superseding the generic breadcrumb guideline on those screens. Nested/detail flows retain their applicable navigation requirements.
+The approved reference deliberately has no breadcrumb above the top-level list title. D-026 supersedes the generic breadcrumb convention for WorkspaceListRecords. Keep the descriptive title and selected navigation item; do not add a breadcrumb that diverges from the reference. Nested/detail flows retain their applicable navigation requirements.

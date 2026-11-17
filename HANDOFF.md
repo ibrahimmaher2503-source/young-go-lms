@@ -1,7 +1,7 @@
 # Young Go LMS --- Developer Handoff
 
-**Prepared:** 2026-11-16 (pack v3.3)\
-**Current stage:** Reviewed specification/methodology pack; no application is expected in this deliverable.
+**Prepared:** 2026-11-16 (pack v3.1)\
+**Current stage:** P0/P1 implementation exists; prior-work closure audit is active. Do not start new tasks until its recorded gaps are resolved.
 
 ## Read order
 
@@ -31,20 +31,27 @@
 
 ## Unknown until inspected
 
-Repository, branch, server, database, legacy source schema, media
-storage, exact live DNS, gateway account configuration, AI provider and deployment status.
+Staging and production server/database, legacy source schema, media
+storage, exact live DNS, gateway, AI provider and deployment status.
 
 ## Approved since v3.0
 
 -   Paymob is the Egypt gateway (D-025).
 
-## Future implementation entry point
+## Resume development
 
-Start the agent loop at T-P0-01 (environment inventory), then dependency-ready P0 tasks (stack ADR, skeleton + CI gates, brand tokens, module map, shared primitives).
-Keep legacy production unchanged.
+Use agents/PROGRESS.md for the active task board, docs/ENVIRONMENT_INVENTORY.md for verified environment facts, and README.md for setup. Development uses [private GitHub young-go-lms](https://github.com/ibrahimmaher2503-source/young-go-lms), branch feat/T-P0-03-bootstrap. CI run 43960234987 (023eae73d9b1d69dc49ed487c6f23780f19e21f5) passed the foundation and localization checks. Local bootstrap uses SQLite; hosted CI verifies MySQL, Redis and Horizon. The token preview is opt-in in local or staging environments.
 
-## Continuity fields to update after every milestone
+The legacy hostname and read-only access are unconfirmed. Staging and production deployment, migration, backup and rollback evidence are pending. Use the migration plan and obtain recorded approval before cutover. The current scope is review and repair of already implemented tasks. Use the Current section and closure audit in agents/PROGRESS.md; do not infer completeness from this historical summary.
 
-Phase/milestone, repo/branch/commit, environment, deployed evidence,
-implemented behavior, focused validation, migration state,
-backup/rollback, open blockers and next milestone.
+P0 milestone browser acceptance and its invariant tests passed in CI run 43961974995 at fe6d741a82fda8e3609dc26fe182746b512c0e53.
+
+
+## Current visual refinement — 2026-11-17
+
+Owner requires full reference matching across every current/future page. D-026 reference and rejected implementation are preserved in docs/design-system/references. Read VISUAL_ACCEPTANCE.md and TABLE_WORKSPACE.md before UI work. Shared native login/dashboard, table shell, tokens, fonts, avatars, filters and forms are implemented locally. Root personally owns final visual review. Existing business tasks remain at their actual states; this work does not close ApproveRejectAction, unapproved age cutoffs or downstream LMS features. Fresh verification evidence is recorded in agents/PROGRESS.md; do not infer completion from screenshot existence.
+
+
+## P1 handoff — 2026-11-17
+
+Resume at agents/PROGRESS.md. Identity, RBAC, audit, age model, staff panels, UI primitives, family accounts, 2FA and the AR/EN account screens exist locally. Read docs/evidence/p1-milestone/README.md for gate results and the open items list. Next buildable tasks without external inputs: T-P2-01 (categories) and the independent verification waves for T-P1-03..11. Do not enable live payments, Saudi checkout, AI for minors or a domain switch.

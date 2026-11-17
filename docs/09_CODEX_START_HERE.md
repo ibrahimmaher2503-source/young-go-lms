@@ -1,6 +1,6 @@
 # YOUNG GO LMS --- CODEX START HERE
 
-> **v3.3:** the full execution loop is now defined in `AGENTS.md` (Codex) / `CLAUDE.md` (Claude Code) and the `agents/` folder. Start with `agents/README.md`. The instructions below remain valid and are implemented as tasks T-P0-01 ... in `agents/tasks/P00.md`. Paymob is the approved Egypt gateway (D-025).
+> **v3.1:** the full execution loop is now defined in `AGENTS.md` (Codex) / `CLAUDE.md` (Claude Code) and the `agents/` folder. Start with `agents/README.md`. The instructions below remain valid and are implemented as tasks T-P0-01 ... in `agents/tasks/P00.md`. Paymob is the approved Egypt gateway (D-025).
 
 **Use this as the first implementation instruction after the owner
 supplies/authorizes the repository and environment.**
@@ -38,23 +38,17 @@ supplies/authorizes the repository and environment.**
 > repository, host, credentials, gateway, provider or deployment
 > evidence.
 
-## First milestone instruction (future implementation only)
+## First milestone instruction
 
 > Inspect the authorized repository, runtime, current branch and
 > CodeGraph (if available). Establish actual environment and
-> source-of-truth docs. Then select dependency-ready tasks from the task graph; the first working custom
-> application slice spans P0–P4, not a single P0/P1 task: bootable app, secure
+> source-of-truth docs. Then implement the first working custom
+> application slice according to P0/P1: bootable app, secure
 > authentication, initial RBAC, bilingual locale foundation, SKIT admin
 > shell, brand-preserving public shell and a real database-backed course
 > catalog route. Do not touch legacy production. Use safe migrations and
 > document verified environment facts. Complete one focused validation,
 > update continuity files and report the exact next milestone.
-
-## Documentation-only review
-
-When asked to review this pack, validate requirement ownership, decision precedence, task dependencies,
-acceptance evidence contracts and cross-document consistency. Do not create an application or treat missing
-Laravel/hosting/credentials as a documentation defect. See docs 16 and the staged verification gates.
 
 ## Implementation gates
 

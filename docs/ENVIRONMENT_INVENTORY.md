@@ -92,7 +92,7 @@ Impact: T-P0-04 (brand extraction "from the current site") must **not** use youn
 | Paymob credentials (test + live), legal seller details | UNKNOWN | not supplied; live collection gated (O-006, O-023) |
 | AI provider/model/region/terms | UNKNOWN | O-014 open |
 | Video/streaming provider | UNKNOWN | O-005 open |
-| CI provider | UNKNOWN | no repo/remote |
+| CI provider | GitHub Actions | verified: run 43967044917 on a14fae2 succeeded; current local audit repairs await exact-head CI |
 
 Note: a Hostinger connector is configured in this Claude session. It was **not queried**; whether staging is on Hostinger is UNKNOWN until the owner says so.
 

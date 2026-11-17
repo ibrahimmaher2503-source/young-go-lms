@@ -1,14 +1,13 @@
 # YOUNG GO LMS --- MASTER PRODUCT REQUIREMENTS DOCUMENT
 
 **Document ID:** YG-PRD-003\
-**Version:** 3.3 --- Product, lifecycle and release-gate review\
+**Version:** 3.2 --- Second gap review (LearnHouse reference study, engineering decisions, UX flows)\
 **Date:** 16 November 2026 (v3.0: 15 November 2026)\
 **Development partner:** I.S. Intelligent Solutions\
 **Audience:** Product owner, PM, UX/UI, backend/frontend developers, QA,
 migration and operations teams\
-**Status:** Preserves recorded product decisions; provider, legal,
-commercial-policy and infrastructure dependencies remain open. This pack
-specifies required behavior; it is not implementation or acceptance evidence.
+**Status:** Product direction approved; provider, legal and
+infrastructure dependencies are explicitly open.
 
 ------------------------------------------------------------------------
 
@@ -25,10 +24,6 @@ existing LMS screens and retained unless superseded. -
 commercial/legal decision. - **\[OPEN\]** must not be guessed by
 developers; resolve when the dependency is reached.
 
-**v3.3 note:** §29.15 closes lifecycle and safety gaps with `YG-REV-*`
-requirements. Agent decisions are recorded separately in Decision Register
-§B.4; they do not imply owner approval or close external launch gates.
-
 **v3.2 note:** §29.14 adds second-review requirements; engineering decisions are in `13_ENGINEERING_DECISIONS.md` (ED-*), UX journeys in `15_UX_FLOWS_AND_PATTERNS.md`, LearnHouse comparison in `14_LEARNHOUSE_REFERENCE_STUDY.md`.
 
 **v3.1 note:** Section 29 adds gap-closure requirements (IDs `YG-GAP-*`). They extend, and do not remove, any v3.0 requirement. Section 15 is now detailed by `06_AI_LESSON_ASSISTANT_SPEC.md` v3.0.
@@ -39,13 +34,11 @@ Priority: **P0** = required for initial production/core learning; **P1**
 = required for the complete commercial/operational release or next
 planned delivery; **P2** = later expansion requiring separate approval.
 
-Conflict order is defined once in `AGENTS.md` §2. Latest explicit owner
-instructions and approved D-* decisions outrank this PRD; engineering
-defaults, task specs and execution rules cannot override product decisions.
-An agent default or open item in the register is not an owner decision.
-Conflicts block the affected slice and are logged with exact citations;
-unaffected work continues. Historical unprovided sources are provenance,
-not runtime authority to silently reintroduce scope or remove capabilities.
+Conflict order: latest explicit owner decision → this PRD → approved
+decision register → DMC technical constraints → earlier PRDs as
+historical source. Do not silently reintroduce superseded scope or
+remove a legacy capability merely because it was not visible in one
+screenshot.
 
 ## 1. Executive summary
 
@@ -753,12 +746,10 @@ Plan inclusion/access duration is commercially configurable.
 
 ### 17.2 Unified entitlement engine
 
-One authoritative service evaluates independently traceable access grants:
+All valid sources create/update one authoritative entitlement:
 individual purchase, bundle, active subscription, free enrollment,
 approved manual grant, approved offline/Instapay payment or migrated
-legacy access. Keep a grant per source and learner/course; do not overwrite
-an existing purchase when a subscription or manual grant overlaps it.
-Record source, student, course, start/end, status,
+legacy access. Record source, student, course, start/end, status,
 issuer/order/plan/grant and audit provenance. Player, video, PDFs,
 attachments, live links and AI all use this service.
 
@@ -824,8 +815,7 @@ instructor/course/sale type/period/status.
 discount/tax/gateway fees/refunds; bundle allocation defaults;
 subscription proration/cancellation; settlement frequency;
 withholding/tax documents. Owner/accountant approval required before
-live selling of affected offers and live settlements; paid entitlements
-must not silently accrue zero or guessed instructor amounts.
+live settlements.
 
 ### 17.5 Country activation
 
@@ -1061,18 +1051,18 @@ dates/estimates/staffing.
 
 ## 29. Gap-closure requirements \[v3.1\]
 
-These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]** owner decision; **[RECOMMENDED-DEFAULT]** reversible engineering default that developers implement now (per Decision Register §D) and the owner may change later without redesign; **[OPEN]** must not be guessed. Privacy and commercial policy proposals are gated even when their technical implementation is reversible; synthetic validation does not authorize production activation.
+These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]** owner decision; **[RECOMMENDED-DEFAULT]** reversible engineering default that developers implement now (per Decision Register §D) and the owner may change later without redesign; **[OPEN]** must not be guessed.
 
 ### 29.1 Family accounts and child login
 
 | ID | Requirement | Acceptance | Label | Pri |
 |---|---|---|---|---|
-| YG-GAP-FAM-001 | Parent can create a child learner account from the parent dashboard. Child email is optional; child gets a unique username and password. Production activation follows O-015. | Child login without email works in synthetic tests; account creation establishes technical provenance, not proof of legal guardianship. Privileged guardian access follows YG-REV-FAM-001. | RECOMMENDED-DEFAULT | P0 |
-| YG-GAP-FAM-002 | Existing learner accounts can be linked through a single-use code (48 h default), confirmed from the learner account and the approved guardian verification process. | Hashed, rate-limited codes cannot be reused, guessed or used for a different learner; learner confirmation alone does not prove guardianship. | RECOMMENDED-DEFAULT | P0 |
+| YG-GAP-FAM-001 | Parent can create a child learner account from the parent dashboard. Child email is optional; child gets a unique username and password. | Child logs in with username/password without an email; parent-child link is created as `verified` because the parent created it. | RECOMMENDED-DEFAULT | P0 |
+| YG-GAP-FAM-002 | Existing learner accounts can be linked to a parent through a one-time link code (valid 48 h) confirmed from the learner account. | Link only becomes active after confirmation; codes are single-use and audited. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-FAM-003 | Store birth **year and month** only (data minimization), used to compute age band and course suitability warnings. | No full birth date stored; age band computed server-side. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-FAM-004 | Parent can switch into a child's context after re-entering the parent password (or valid recent auth); every action in child context records the acting parent. | Audit shows `actor=parent, subject=child`. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-FAM-005 | Purchases for a child are paid by the parent account; the entitlement is issued to the child. | Order `payer_id=parent`, entitlement `learner_id=child`. | RECOMMENDED-DEFAULT | P0 |
-| YG-GAP-FAM-006 | Guardian verification method, age policy and consent wording. | Remains O-015. Real minor accounts remain disabled until minor-account approval; minor AI requires its additional provider/consent approvals. | OPEN | P0 gate |
+| YG-GAP-FAM-006 | Guardian verification method beyond the above, and consent wording. | Remains O-015. Minors' AI stays disabled until approved. | OPEN | P0 gate |
 
 ### 29.2 Names and identity
 
@@ -1111,8 +1101,8 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 
 | ID | Requirement | Acceptance | Label | Pri |
 |---|---|---|---|---|
-| YG-GAP-PAY-001 | Paymob is the recorded Egypt gateway decision. Verify the chosen account/API against official Paymob docs at implementation; enable cards, wallets or other methods only when actually supported/configured. | D-025 selects the gateway, not unverified method availability. Method list comes from approved account configuration. | RECORDED DECISION (D-025) | P0 |
-| YG-GAP-PAY-002 | Payment is fulfilled only from a server-verified Paymob callback/webhook (documented signature mechanism), with environment, merchant, amount, currency and order reference matched to the server order. Browser redirect only shows status. | Invalid/mismatched callbacks fail safely; a valid duplicate is acknowledged without repeating effects. YG-REV-PAY-002 governs event ordering. | REQUIRED SECURITY INVARIANT | P0 |
+| YG-GAP-PAY-001 | Paymob is the Egypt gateway. Integrate Paymob's current recommended checkout API (verify against official Paymob docs at implementation), starting with cards and mobile wallets; other methods (e.g. kiosk/cash reference, installments) are enabled per Paymob account configuration. | Method list comes from configuration, not code. | APPROVED (D-025) | P0 |
+| YG-GAP-PAY-002 | Payment is fulfilled only from a server-verified Paymob callback/webhook (HMAC or the signature mechanism Paymob documents), with amount, currency and merchant order reference matched to the server order. Browser redirect only shows status. | Tampered or replayed callbacks are rejected and logged; duplicate callbacks are idempotent. | APPROVED invariant | P0 |
 | YG-GAP-PAY-003 | Reconciliation job compares local payments with Paymob transaction records daily and lists mismatches for finance. | Mismatch report available to Finance role. | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-PAY-004 | Instapay/manual proof captures: payer name, sender account/phone (masked in lists), transfer reference, amount, date, screenshot upload. Duplicate reference numbers are blocked; amount mismatch is highlighted. Review SLA indicator for finance. | Duplicate reference cannot be approved twice. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-PAY-005 | Receipt/invoice data model holds the fields required for Egyptian e-receipt/e-invoice submission (seller tax data, buyer data, items, taxes, totals, document UUID/status) behind an `EReceiptProvider` adapter. Whether submission is mandatory and whether Paymob or another provider performs it is O-023. | Adapter defaults to `disabled`; no fake submission. | OPEN (O-023) | P1 |
@@ -1121,16 +1111,16 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 
 | ID | Requirement | Acceptance | Label | Pri |
 |---|---|---|---|---|
-| YG-GAP-SUB-001 | Renewal mechanism is **manual**; reminders 7, 3 and 1 day before expiry. A configurable 3-day grace is a synthetic-test proposal, pending commercial policy O-032 before subscription sales. | Expiry affects plan-sourced grants only; purchased grants remain. Approved grace is displayed consistently and does not silently create a paid period or earnings. | RECOMMENDED-DEFAULT / POLICY GATE | P1 |
-| YG-GAP-SUB-002 | Learner progress, submissions and existing certificates are retained after expiry; renewal restores entitled learning access to retained progress. | Expiry/renewal neither revokes nor reissues a certificate; explicit audited revocation remains separate. | RECOMMENDED-DEFAULT | P1 |
+| YG-GAP-SUB-001 | Default renewal is **manual**: reminders 7, 3 and 1 day before expiry with a renewal checkout link; 3-day grace period; access to plan-only courses ends after grace. | Expired plan revokes plan-sourced entitlements only; individually purchased courses unaffected. | RECOMMENDED-DEFAULT | P1 |
+| YG-GAP-SUB-002 | Learner progress, submissions and certificates are retained after expiry and restored on renewal. | Renewal shows previous progress. | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-SUB-003 | Automatic renewal with saved cards is enabled only if supported by the Paymob account and approved by the owner. | Feature flag `subscriptions.auto_renew=false` by default. | OPEN | P2 |
-| YG-GAP-SUB-004 | Test proposal: mid-period cancellation stops renewal intent while access continues to paid period end, with no automatic proration. O-032 approves commercial behavior; refunds follow O-031. | Cancellation, expiry, refund and dispute are distinct operations; no automatic ledger rewrite. | RECOMMENDED-DEFAULT / POLICY GATE | P1 |
+| YG-GAP-SUB-004 | Mid-period cancellation keeps access until period end; no proration by default (O-011 may change). | Cancellation recorded; ledger unaffected for paid period. | RECOMMENDED-DEFAULT | P1 |
 
 ### 29.8 Independent instructor onboarding
 
 | ID | Requirement | Acceptance | Label | Pri |
 |---|---|---|---|---|
-| YG-GAP-INS-001 | Public "Teach with Young Go" application: profile, discipline, samples/portfolio links. Collect private ID documents only if the approved verification/retention policy requires them. | Applications listed for admin review; unused sensitive fields are not collected. | RECOMMENDED-DEFAULT | P1 |
+| YG-GAP-INS-001 | Public "Teach with Young Go" application: profile, discipline, samples/portfolio links, ID document upload (private). | Applications listed for admin review with status. | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-INS-002 | Instructor accepts a versioned instructor agreement (text, version, timestamp, IP). New versions require re-acceptance before creating new courses. | Acceptance stored and auditable. | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-INS-003 | Encrypted payout profile (bank/wallet details) required before the first settlement; visible only to Finance. | Encrypted at rest; masked in UI. | RECOMMENDED-DEFAULT | P1 |
 
@@ -1139,7 +1129,7 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 | ID | Requirement | Decision | Label | Pri |
 |---|---|---|---|---|
 | YG-GAP-ENG-001 | Wishlist/favorites on courses. | Carried forward. | LEGACY-CARRY | P1 |
-| YG-GAP-ENG-002 | Ratings and reviews by entitled learners with admin moderation (pending → published/hidden). Minor publication/identity fields follow approved privacy policy; first name + initial is a proposal, not anonymity. | Minor reviews remain private until approved; moderation never exposes protected learner records. | LEGACY-CARRY / PRIVACY GATE | P1 |
+| YG-GAP-ENG-002 | Ratings and reviews by entitled learners with admin moderation (pending → published/hidden). Child reviews show first name + initial only. | Carried forward with moderation. | LEGACY-CARRY | P1 |
 | YG-GAP-ENG-003 | Open course discussions/Q&A between students. | **Not built.** Superseded by lesson help requests for child safety. Owner may reopen. | RECOMMENDED-DEFAULT | — |
 
 ### 29.10 Search, analytics, notifications
@@ -1155,8 +1145,8 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 
 | ID | Requirement | Acceptance | Label | Pri |
 |---|---|---|---|---|
-| YG-GAP-PRV-001 | Learner/authorized guardian can request scoped export or deletion; verify requester and apply approved retention/hold policy before removing identifiers. Retained records and public verification fields follow O-025. | Audited workflow previews affected data; it never deletes another learner's data or promises legally unapproved erasure. | RECOMMENDED-DEFAULT / POLICY GATE | P1 |
-| YG-GAP-PRV-002 | Retention settings per data class (AI messages, help requests, logs, submissions, identity/payout documents, backups). AI messages 180 days and logs 90 days are test proposals pending O-025. | Pruning supports dry-run and excludes legal holds; no production destructive retention job before policy approval. | RECOMMENDED-DEFAULT / POLICY GATE | P1 |
+| YG-GAP-PRV-001 | Learner/parent can request data export and account deletion. Deletion anonymizes personal data while retaining legally required financial records and certificate verification (marked anonymized). | Request workflow with admin completion and audit. | RECOMMENDED-DEFAULT | P1 |
+| YG-GAP-PRV-002 | Retention settings per data class (AI messages, help requests, logs, submissions). Defaults: AI messages 180 days, logs 90 days, others per policy. | Scheduled pruning job; values configurable. | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-PRV-003 | Staging uses anonymized copies of any real learner data, especially minors. | Anonymization command exists and is required for staging refresh. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-PRV-004 | Legal review of Egyptian personal data protection law (and Saudi PDPL before Saudi activation) for minors, consent and AI processing. | Counsel sign-off recorded before minor launch. | OPEN | P0 gate |
 
@@ -1183,8 +1173,8 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 |---|---|---|---|---|
 | YG-GAP-ID-002 | Registration records acceptance of current Terms and Privacy versions (and guardian consent version for child creation). | `consents` row with version and timestamp per acceptance. | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-SEC-003 | TOTP two-factor authentication mandatory for super admin, admin and finance; optional for others; recovery codes. | Panels refuse access without 2FA for those roles. (ED-016) | RECOMMENDED-DEFAULT | P0 |
-| YG-GAP-FAM-007 | Guardian with current verified authority can reset a linked child's password after recent authentication; action audited. Parent email verification precedes child creation but does not prove guardianship. | Reset works only for linked children; audit entry. (ED-017) | RECOMMENDED-DEFAULT | P0 |
-| YG-GAP-FAM-008 | Notifications for a child without email: in-app for the child; policy-permitted email copies to guardians with current verified authority in their locale; recheck authority at dispatch. | Routing tests. (ED-017) | RECOMMENDED-DEFAULT | P0 |
+| YG-GAP-FAM-007 | Parent can reset a linked child's password; action audited. Parent email must be verified before creating children. | Reset works only for linked children; audit entry. (ED-017) | RECOMMENDED-DEFAULT | P0 |
+| YG-GAP-FAM-008 | Notifications for a child without email: in-app for the child; email copies to verified guardians in their locale. | Routing tests. (ED-017) | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-CNT-001 | Curriculum ordering uses one `curriculum_items` list for all item types; new items default to draft; bulk publish/unpublish. | Player order equals manager order for mixed types. (ED-002, ED-024) | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-CNT-002 | Rich-text lesson content with a restricted, sanitized block set. | XSS fixtures blocked; AR/EN rendering correct. (ED-003) | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-CNT-003 | Reusable content library for media/resources; referenced items cannot be deleted. | Same asset attached to two lessons; delete blocked. (ED-026) | RECOMMENDED-DEFAULT | P1 |
@@ -1205,35 +1195,3 @@ These requirements close the gaps found in the v3.0 review. Labels: **[APPROVED]
 | YG-GAP-PERF-001 | Performance budgets: LCP ≤ 2.5 s, CLS ≤ 0.1, INP ≤ 200 ms on mid-range mobile 4G for public/student pages. | Measured at milestone gates and P11. (ED-030) | RECOMMENDED-DEFAULT | P1 |
 | YG-GAP-SEC-004 | Uploaded images re-encoded (EXIF/GPS stripped); private random file names. | Uploaded photo has no GPS metadata. (ED-031) | RECOMMENDED-DEFAULT | P0 |
 | YG-GAP-UX-001 | All screens follow `15_UX_FLOWS_AND_PATTERNS.md` principles, patterns and journey acceptance. | `ux-reviewer` scores ≥ 4 each, average ≥ 4.5. (ED-023) | RECOMMENDED-DEFAULT | P0 |
-
-### 29.15 Lifecycle and release-gate closure \[v3.3\]
-
-These are **AGENT-DECIDED engineering requirements** that make existing
-scope precise; none is new owner/commercial/legal approval. See Decision
-Register §B.4 and O-031/O-032. Implement and test with synthetic data while
-external policies are open. Do not expose real minor data, sell an offer,
-prune production records or switch production merely because the technical
-path passes. P0/P1 describe delivery priority, not permission to activate.
-
-| ID | Required behavior and decision boundary | Acceptance evidence | Pri |
-|---|---|---|---|
-| YG-REV-ACC-001 | Preserve independent grants for individual, bundle, subscription, manual and migrated access. Expiring/revoking one source cannot revoke another valid source. Suspended accounts and withdrawn content still fail closed. Cache invalidation follows grant and content changes. | Dataset: purchase + expired plan; manual + refunded purchase; two overlapping grants; exact expiry; future start; revoked link; suspended user. Check player, file, live, AI and direct API consistently. | P0 |
-| YG-REV-ACC-002 | Explicit access modes distinguish learner access, public preview, author preview and support view-as. Public preview exposes only published, explicitly public assets; no hidden course/item, another cohort, private PDF, assessment attempt or adjacent item. Staff preview stays within assigned scope and cannot write learner progress, grades or call AI. | Anonymous and authenticated preview tests include changed item IDs, attachment URLs, future drip, protected live links, suspended course and direct write attempts; every denial has a stable localized reason. Architecture ED-035 defines mode ordering. | P0 |
-| YG-REV-FAM-001 | Separate account/link provenance, verified guardian authority and versioned consent. Email verification, child creation and possession of a link code are not legal guardian proof. Production minor-account activation requires O-015 and privacy approval; minor AI additionally requires O-014/O-028 and consent. | Synthetic child creation/link confirmation succeeds; unverified/revoked guardian cannot switch context, recover credentials, export child data or receive child notifications. Flag/API tests reject real minor activation without gate evidence. | P0 |
-| YG-REV-FAM-002 | Guardian actions require current authority, recent authentication and actor/subject audit. Unlink/revoke withdraws delegated sessions, future notifications and recovery rights without deleting child-owned records/access. Unknown or boundary-month age is not assumed adult; age-up and consent withdrawal follow approved policy. | Replay old session/link/reset token after unlink; cross-child recovery; concurrent link confirmation; missing/future birth month; age-boundary and consent-withdrawal tests. Logs never contain link codes/passwords or private chat. | P0 |
-| YG-REV-PAY-001 | Snapshot payer, learner, market, currency, sellables/course allocations, period/access terms, price, discount, tax and applicable rule versions before redirect/manual review. Use integer minor units and deterministic rounding; server revalidates offer eligibility and coupon constraints atomically. Edits affect new checkouts only. | Tampered learner/price/currency, zero/negative totals, expired coupon, last coupon use concurrently, changed price/bundle/commission during payment; line/discount/tax/allocated totals reconcile exactly. Zero-value orders require no fabricated gateway payment. | P0 |
-| YG-REV-PAY-002 | Persist verified provider events durably before acknowledgement; one provider transaction cannot satisfy two orders. Idempotent local fulfillment covers payment, grants, enrollment and ledger; notifications use retry-safe post-commit delivery. Stale failure/paid events cannot downgrade or resurrect refunded/disputed records; uncertain states reconcile with the provider. | Invalid signature/environment/merchant/amount/currency/reference; duplicate/reordered success/failure/refund; database/job interruption; duplicate manual approval; payment retry with a second provider transaction. No double charge claim or fulfillment; excess payment is visible for finance resolution. | P0 |
-| YG-REV-PAY-003 | Capacity applies to every cohort admission source. Reserve/release seats atomically with bounded checkout holds; waitlist promotion consumes capacity. Do not auto-grant a late successful payment after the hold expired and seat was taken; record paid-but-unfulfilled review and notify finance/learner under O-031. | Two buyers compete for final seat; duplicate waitlist promotion; expired/cancelled/failed hold release; manual grant/import at capacity; late callback; cohort cancellation. No oversell, silent lost payment or fictitious automatic refund. | P0 before selling capacity-limited offers |
-| YG-REV-PAY-004 | Model refund requests, provider-pending/succeeded/failed refunds and disputes separately from order fulfillment. Verified refunds/chargebacks create linked adjustments, never delete original payment/ledger. Access changes target the affected source/line only under O-031; disputes hold unsettled related earnings pending resolution. | Full/partial/duplicate refund, cumulative refund above captured amount, refund provider timeout, disputed already-paid settlement, late success after refund and appeal resolution. Other valid grants survive; manual finance exception retains amount/currency/reference and audit. | P0 before live collection |
-| YG-REV-SUB-001 | Version/snapshot plan inclusion, eligible learner/course, price and period terms. Use explicit start-inclusive/end-exclusive UTC periods and idempotent renewals; month-end/leap-year rules, early/late renewal, grace, cancellation and instructor accrual eligibility follow O-032. Catalog edits cannot silently remove paid-period access. | Renew twice/retry; Jan 31 and leap-year annual periods; early/late renewal; grace boundary; cancellation vs refund; course added/removed mid-period; overlapping purchase. Grace does not create a paid period or duplicate fixed earnings. | P1 |
-| YG-REV-FIN-001 | Store source and effective version of each commission/rate/allocation and instructor assignment. Allocate whole minor units deterministically with totals conserved. Fixed subscription earning is unique per eligible learner/course/period. Settled entries are immutable; subsequent reversals create adjustments/debt for finance review, never silently rewrite paid history. | Rate/instructor changes after sale; bundle remainder; mixed discounts/tax; retry/double settlement; subscription duplicate; refund before/after payout. Approved statement + adjustments reconcile to collections and settlement references. O-008..O-012/O-031/O-032 must be resolved for affected live offers. | P0 before live instructor-course sales/payouts |
-| YG-REV-LRN-001 | Record the curriculum/completion-rule version used for completion and certificates. Adding/reordering/archiving content never erases attempts, progress or issued certificates; explicitly revoke/void when authorized. Required-item changes show impact before publication; courses with zero required items do not auto-certify. | Completed learner + new required item; archived quiz with attempts; changed pass threshold; duplicate completion jobs; renewal after expiry; certificate reprint after name correction. Original completion basis stays traceable. | P0 |
-| YG-REV-LRN-002 | Quiz attempt creation/submission, timing and attempt limits are server-authoritative and concurrency-safe; submission retries produce the same result. Snapshot questions/scoring; deadline, late submission, manual grading/regrading and assignment revision rules remain explicit. A client timeout is not a second submission. | Two tabs consume final attempt once; reconnect at deadline; repeated submit; grade correction recalculates eligibility without erasing history; forbidden file/path; late assignment and revision limit. Access loss during an attempt produces a defined denial/recovery state without deleting saved work. | P0 |
-| YG-REV-LRN-003 | Store UTC instants and IANA scheduling timezone; validate ambiguous/nonexistent local times. Rescheduling/cancellation invalidates old reminder jobs and join windows; no stale notification leaks protected meeting links. Attendance corrections are scoped and audited. | Cairo daylight-saving transition, different learner timezone, reschedule after reminder queued, cancellation during open window, duplicate reminder job, wrong-cohort join and replay before publication. | P0 |
-| YG-REV-PRV-001 | Export/deletion is requester-verified and subject-scoped. Approved per-class retention and legal holds govern primary data, derived AI data, storage and backup expiry. Private staging imports remain access-restricted until sanitized; notifications and public certificate/review fields follow minor privacy policy, without full AI history. | Cross-child export, revoked guardian, expired download link, held finance record, repeated deletion, pending jobs, sanitized staging and restore reapplication of deletion ledger. Production destructive pruning and minor public fields remain gated by O-015/O-016/O-025. | P0 before real personal-data use; workflow P1 |
-| YG-REV-MIG-001 | Migration uses stable source-system/entity/ID maps, immutable batch manifests, checksums, checkpoints and explicit exceptions. Do not merge identities by name or invent guardian consent/payment verification; unavailable/protected assets quarantine safely. Reruns update only owned mapped records without deleting target history. | Same import twice, partial failure/resume, changed source delta, duplicate email/slug, broken foreign key, mixed item order, asset hash mismatch, invalid timezone and obsolete password hash. Counts plus sampled entitled/denied journeys reconcile. | P0 cutover |
-| YG-REV-MIG-002 | Approved migration scope includes a specific continuity route for every active learner, even if full history is excluded. Cutover has authorized freeze/delta watermarks, backup/restore, named rollback authority, acceptance evidence and post-switch write reconciliation; a DNS rollback alone cannot recover new orders/progress. | Rehearsed final delta and rollback with post-cutover payment/progress fixtures; source/target access manifest and signed exception owners; no dual writable system or lost money/history. Full procedure in `08_LEGACY_MIGRATION_PLAN.md`. | P0 cutover |
-
-Release evidence for these requirements is recorded in Delivery Checklist
-§14B and the traceability matrix. Missing real provider/source access is
-`UNKNOWN`/blocked for the dependent check, never a passing mock result.

@@ -2,8 +2,8 @@
 
 **Document ID:** YG-CODE-001 · **Version:** 1.0 · **Date:** 16 November 2026\
 **Status:** RECOMMENDED (R-026, R-027, R-024). Binding for all agents once
-adopted in T-P0-03. Versions of Laravel/Filament/packages are confirmed in
-T-P0-02 (O-004).
+adopted in T-P0-03. Versions locked in `docs/adr/ADR-001-stack.md` (T-P0-02);
+DB choice provisional (O-004).
 
 ------------------------------------------------------------------------
 
@@ -17,14 +17,14 @@ T-P0-02 (O-004).
   rebuilt (`docs/REUSE_REGISTRY.md`).
 - Small, consistent files that a lighter-model subagent can extend safely.
 
-## 2. Stack (to confirm in T-P0-02)
+## 2. Stack (locked in `docs/adr/ADR-001-stack.md`, T-P0-02)
 
 | Concern | Choice |
 |---|---|
-| Framework | Laravel/PHP candidates per R-001; pin a supported pair after T-P0-02 |
-| Admin/instructor/finance panels | Filament 5 (SKIT themed) |
-| Student/public UI | Blade + Livewire + Alpine.js + Tailwind CSS v4 |
-| DB | MySQL 8.4 or PostgreSQL 16+ (O-004) |
+| Framework | Laravel 13 (`^13.42`), **PHP 8.4+** (ADR-001) |
+| Admin/instructor/finance panels | Filament 5 (`^5.11`, SKIT themed) on Livewire 4 |
+| Student/public UI | Blade + Livewire 4 + Alpine.js + Tailwind CSS v4 (Vite 8, Node ≥ 22.12) |
+| DB | MySQL 8.4 LTS primary, PostgreSQL 16+ kept portable (ADR-001 §5, provisional; O-004) |
 | Queue/cache | Redis + Horizon |
 | Auth | Laravel session auth (web) + Sanctum (API/mobile-ready) |
 | Permissions | spatie/laravel-permission (+ Filament Shield or custom) |
@@ -40,8 +40,9 @@ T-P0-02 (O-004).
 | 2FA | Fortify TOTP or Filament multi-factor (ED-016) |
 | Rich text | Filament rich editor (Tiptap JSON) + server-side renderer/sanitizer (ED-003, ED-031) |
 | Monitoring | Horizon, Pulse, error reporter adapter (ED-021) |
-| Tests | Pest (unit, feature, arch) + Pest browser testing (or Laravel Dusk) |
-| Quality | Pint, Larastan (level ≥ 6, raise to 8 by P4), composer audit |
+| Tests | Pest 5 (unit, feature, arch) + Pest browser plugin (Playwright) |
+| Quality | Pint, Larastan 3 (level ≥ 6, raise to 8 by P4), composer audit |
+| PDF text / OCR / SSE (AI) | spatie/pdf-to-text (poppler); OCR via `AiProviderInterface::ocrPage()` with Tesseract 5 CLI driver; Laravel `eventStream()` (ADR-001 §6) |
 
 Every package is checked for compatibility with the chosen Laravel/Filament
 versions in T-P0-02; incompatible choices are replaced and recorded in the
@@ -134,7 +135,7 @@ Create a folder only when the module needs it.
 | Modules talk through public Actions, Queries, Events and Contracts; never through another module's `Support/` | arch test per module |
 | Models: relations, casts, scopes, accessors only; no side effects in model events except audit/search indexing traits | review + arch (no `Http`/`Mail` usage in models) |
 | Every access check for learner content goes through `Entitlements\\EntitlementService` | arch: only `Entitlements` may query `entitlements` table directly |
-| Use narrow contracts for payment/AI/video boundaries; use framework APIs/fakes directly for ordinary infrastructure (ED-033) | arch: no `Http::` calls outside `Gateways/`, `Providers/`, `Clients/` |
+| Every external service behind a Contract in `Contracts/` with a fake for tests | arch: no `Http::` calls outside `Gateways/`, `Providers/`, `Clients/` |
 | `declare(strict_types=1);` in all PHP files | Pint/arch |
 | No `env()` outside `config/` | arch |
 | Final classes for Actions, DTOs, Gateways | arch |
@@ -143,52 +144,44 @@ Create a folder only when the module needs it.
 
 ## 5. Actions pattern (core reuse mechanism)
 
-The public mutation Action validates input, resolves a trusted actor/context,
-authorizes the operation and checks current state. Entry-point policies provide
-early rejection but are not the only protection: jobs, CLI and imports call the
-same boundary. System-only paths are documented and cannot be selected by input.
+```php
+<?php
+declare(strict_types=1);
 
-`GrantEntitlement` contract (ED-034/035):
+namespace App\Domain\Entitlements\Actions;
 
-1. Validate source ownership, learner/course membership and approved grant terms.
-2. Within the caller's local transaction, create the grant under unique
-   `(source_type, source_ref, learner_id, course_id)`.
-3. An identical replay returns the existing grant without another activation
-   audit/event; conflicting terms reject with a conflict, never overwrite.
-4. Only an actual transition records its audit and durable pending delivery in
-   the same transaction. Dispatch after commit; recover pending delivery after
-   worker/process crashes. Consumers dedupe by business source.
-5. Treat revoke/expire/reactivate as explicit state transitions; replaying a
-   purchase cannot resurrect a refunded or revoked grant.
+final class GrantEntitlement
+{
+    public function __construct(private AuditLogger $audit) {}
 
-This is a specification, not executable sample code. `firstOrCreate()` alone
-neither makes side effects idempotent nor guarantees post-commit delivery. Prove
-concurrent duplicate, conflicting replay, rollback and worker-restart cases.
+    public function handle(GrantEntitlementData $data): Entitlement
+    {
+        return DB::transaction(function () use ($data) {
+            $entitlement = Entitlement::firstOrCreate(
+                ['source_type' => $data->sourceType, 'source_ref' => $data->sourceRef, 'learner_id' => $data->learnerId, 'course_id' => $data->courseId],
+                [...$data->attributes()],
+            );                       // idempotent by unique source reference
+            $this->audit->record('entitlement.granted', $entitlement, $data->actorId);
+            event(new EntitlementActivated($entitlement->id));
+            return $entitlement;
+        });
+    }
+}
+```
 
-### 5.1 Practical SOLID (ED-033)
-- **Single responsibility:** one Action owns a business operation; policies own
-  access, Queries own reads, adapters own provider transport. Do not split a
-  short cohesive operation merely to increase class count.
-- **Open/closed:** extend a demonstrated provider/type boundary; a small explicit
-  branch for three known sellables is acceptable. No speculative plugin system.
-- **Substitution:** all implementations honor the same outcomes, errors,
-  idempotency and timeout contract; a fake does not establish provider support.
-- **Interface segregation:** completion, OCR and embedding are separate needed
-  capabilities; do not force unrelated methods onto every driver.
-- **Dependency inversion:** inject narrow payment/AI/video seams into workflows.
-  Use Laravel storage/mail APIs and built-in fakes without custom wrappers unless
-  an actual requirement justifies one.
+- The same Action is called from: Paymob webhook listener, manual grant
+  Filament action, subscription activation, migration import.
+- Authorization happens **before** the Action (Policy in controller,
+  Livewire, Filament) unless the Action is system-only (webhook/job), in
+  which case it documents that in a docblock.
+- Idempotency: unique DB constraint on source reference + `firstOrCreate`
+  / upsert; never "check then insert" without a constraint.
 
-Do not require repositories over Eloquent, a DTO for every call, generic base
-Actions, event sourcing, or empty module folders. Introduce typed input/results
-only where they make a real boundary clearer. Registration means reuse intent,
-not permission to build every planned helper in advance.
-
-## 6. Shared building blocks (create when needed, reuse thereafter)
+## 6. Shared building blocks (create early, reuse always)
 
 | Block | Location | Used by |
 |---|---|---|
-| `ArabicNormalizer` + `HasSearchText` trait | `Domain/Shared/Search` | courses, categories, instructors, blog, quiz candidate matching; never exact AI cache identity |
+| `ArabicNormalizer` + `HasSearchText` trait | `Domain/Shared/Search` | courses, categories, instructors, blog, AI cache, quiz guard |
 | `Money` value + `PriceFormatter` | `Domain/Shared/Money` | catalog, checkout, finance, reports |
 | `Market` / `MarketResolver` (EG active, SA disabled) | `Domain/Shared/Markets` | pricing, checkout, invoices |
 | `LocalizedDate` helper | `Domain/Shared/Time` | all views, exports |
@@ -201,7 +194,7 @@ not permission to build every planned helper in advance.
 | UI primitives `x-ui.*` | `resources/views/components/ui` | all student/public screens |
 
 Before creating any new class/component, the agent searches
-`docs/REUSE_REGISTRY.md` and the codebase (`rg`) for an existing one.
+`docs/REUSE_REGISTRY.md` and the codebase (`grep -R`) for an existing one.
 
 ## 7. Naming
 
@@ -268,8 +261,8 @@ Before creating any new class/component, the agent searches
 
 - Policies for every model; `authorize()` in every controller/Livewire
   action; Filament resources use `can*` methods.
-- Private files only through `PrivateFileController` with object/purpose policy and short-lived signed URLs; entitlement alone does
-  not authorize another learner's submission, payment proof or privacy export.
+- Private files only through `PrivateFileController` with entitlement check
+  and short-lived signed URLs.
 - Webhooks: signature verification middleware per gateway; raw payload
   stored sanitized; processing idempotent by event id.
 - Rate limiters named per use (`login`, `register`, `ai-assistant`,

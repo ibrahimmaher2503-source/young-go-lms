@@ -83,12 +83,3 @@
   Engineering recommendations              R-011..R-030, design system, code conventions, agent loop
 
 Missing source files noted in v3.0: `README_AR.md` (now created in v3.1) and `Yango_Go_PRD.pdf` (June 2026, 21 pages) — not supplied in this pack; its content is carried through the v3.0 PRD consolidation.
-
-
-## v3.3 review provenance (16 November 2026)
-
-The current owner clarified this deliverable is instructions and methodologies, not application code.
-The earlier PDF/screenshot provenance above is inherited from the pack; those originals were not
-re-inspected during this review. LearnHouse public source verification and its limits are recorded in
-`docs/14_LEARNHOUSE_REFERENCE_STUDY.md`. New agent engineering decisions are labeled in docs 07/13;
-they are not invented owner approvals. Runtime evidence is a future implementation obligation.

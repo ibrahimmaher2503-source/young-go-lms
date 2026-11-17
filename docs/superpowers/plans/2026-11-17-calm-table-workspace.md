@@ -21,3 +21,8 @@ Empty and long table data; sidebar hidden from unauthorized roles; theme selecto
 - [ ] Root verification: focused tests, Pint/Larastan, translations/RTL/build; seeded AR/EN mobile/desktop both themes screenshots; independent Luna PRD/UX/source review. Repair failures and report limits honestly.
 
 Root owns all refinements after the owner rejected the first visual implementation. Native controls remain, with personally reviewed shared typography, component spacing, table inset, headers, meters, modal contrast and keyboard behavior. Independent agents review read-only; their source PASS cannot replace visual evidence.
+
+
+## Reference pagination refinement
+
+Owner approval already covers exact matching. Replace only the staff pagination presentation through the native CONTENT_AFTER hook, native paginator data and native pagination.item components; retain Livewire navigation/search reset and authorized record queries. Show actual current page even for one page, disable actual boundary arrows, use short bilingual count, separate rounded buttons and teal selected page. The reference omits the per-page dropdown; backend default/configuration stays unchanged. Keep native fallback for non-length-aware pagination. Test one-page, empty, multiple-page navigation and search reset before screenshot comparison. No AI/data changes.

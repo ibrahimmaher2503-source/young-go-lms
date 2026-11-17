@@ -1,7 +1,7 @@
 # YOUNG GO LMS --- AI LESSON ASSISTANT SPECIFICATION
 
-**Version:** 3.2 --- Planned design; safety and consistency review (not implemented)\
-**Date:** 16 November 2026\
+**Version:** 3.1 --- Production-grade design + system-wide AI touchpoints\
+**Date:** 15 November 2026\
 **Supersedes:** v2.0 (simplified owner-approved behavior). All v2.0 owner
 decisions are preserved; v3.0 adds the engineering, quality, safety and UX
 detail needed to ship the assistant at production quality in the first
@@ -11,8 +11,6 @@ privacy/legal approval (O-014, O-015, O-016).
 
 Labels follow the pack convention: **[APPROVED]** owner decision,
 **[RECOMMENDED]** engineering recommendation, **[OPEN]** must not be guessed.
-ED-036/037 refine earlier v3.0 defaults: delivery is validated first, caches are
-learner-isolated, and no runtime or provider acceptance is claimed.
 
 ------------------------------------------------------------------------
 
@@ -26,7 +24,7 @@ learner-isolated, and no runtime or provider acceptance is claimed.
 | Anti-cheating | "No answer keys" | Active-quiz similarity guard (keys never reach the model) |
 | Child safety | Consent gate | Input moderation, PII stripping, safeguarding route |
 | Quality | Acceptance list | Golden eval set per lesson, red-team set, CI eval gate, numeric thresholds |
-| UX | Panel + 2 buttons | Full UI spec, validated answer delivery, page citations, "explain simpler", states |
+| UX | Panel + 2 buttons | Full UI spec, streaming, page citations, "explain simpler", states |
 | Cost | Ceilings | Per-student quota, per-lesson answer cache, budget alerts |
 | Operations | Disable switch | Circuit breaker, fallback provider, health metrics |
 | Instructor value | Help requests | Pre-enable test console + aggregated "confusing points" insights |
@@ -70,10 +68,7 @@ isAssistantAvailable(student, lesson) =
   && consent.allowsAi(student)                            // minors gate, O-015
 ```
 
-The UI never decides availability on its own; it renders the result. Unknown
-age follows the minors gate until O-015 establishes eligibility. Preview and
-support view-as cannot call this learner endpoint; the instructor test console
-has its own authorization and provider-budget gate.
+The UI never decides availability on its own; it renders the result.
 
 ## 3. Student flow [APPROVED, detailed]
 
@@ -82,7 +77,7 @@ has its own authorization and provider-budget gate.
    current video timestamp.
 2. Student types a short question (max 300 characters). Optional
    **starter chips** show 3--5 key terms from the lesson PDF (§6.6).
-3. After complete server-side validation, the answer appears: 1--4 short sentences, age-appropriate, in the
+3. The answer streams in: 1--4 short sentences, age-appropriate, in the
    student's language, with a **page reference chip** ("من ملف الدرس --- صفحة
    3") that opens the PDF at that page.
 4. Student selects:
@@ -143,9 +138,8 @@ the learner's age (never sent to the provider as a birth date):
 
 ## 5. Context strategy [RECOMMENDED]
 
-Full-context is the provisional simplest strategy for small lesson PDFs.
-Quality, cost and latency must be measured on representative Arabic/English
-lessons; the pack does not establish that it is always cheaper or more accurate.
+Lesson PDFs are small. Sending the whole approved lesson text in the prompt is
+more accurate, simpler and cheaper (with prompt caching) than vector retrieval.
 
 | Lesson PDF extracted text | Strategy |
 |---|---|
@@ -162,14 +156,8 @@ lessons; the pack does not establish that it is always cheaper or more accurate.
 - Retrieval scope is enforced in SQL/query filters, never by prompt
   instructions alone:
   `(authenticated_student, active_entitlement, current_recorded_lesson, approved_document_version)`.
-- ED-011: use pgvector only when PostgreSQL is selected and chunked retrieval
-  is needed; a bounded per-lesson embedding comparison is an option otherwise.
-  No external vector service by default. Prove capacity and Arabic retrieval
-  quality before choosing; full-context needs no vector store.
-- Budget input tokens for system rules, history, question and output reserve
-  against the chosen model limit. The 40,000-token threshold is a tuning default,
-  not a guarantee; oversized/unreadable sources fail safely or use validated
-  chunked mode without truncating source silently (ED-037).
+- PostgreSQL + pgvector or MySQL + external vector store are both acceptable
+  for chunked mode; decide with O-004. Full-context mode needs no vector store.
 
 ## 6. PDF ingestion pipeline [RECOMMENDED]
 
@@ -184,8 +172,7 @@ UPLOADED → EXTRACTING → (OCR) → QUALITY_CHECK → AWAITING_APPROVAL → IN
 ### 6.1 Validation
 MIME `application/pdf`, max size (default 25 MB), max pages (default 120),
 not encrypted, malware scan where available, SHA-256 hash stored. Duplicate
-hash on the same lesson reuses the existing upload identity; a failed pipeline
-may be retried explicitly without creating another version.
+hash on the same lesson is a no-op.
 
 ### 6.2 Text extraction
 1. Extract the embedded text layer per page.
@@ -224,13 +211,7 @@ extracted text**, not the raw binary. Edits to the extracted text are allowed
 Replacing the PDF creates a new version and re-runs the pipeline. The previous
 version stays active until the new one is `READY`, then is retired atomically.
 Messages store the `document_version` they used. Cached answers are keyed by
-version, approved-text hash and guard/prompt/model configuration. Extraction
-edits create a new approved-text revision even if PDF bytes did not change.
-Jobs pin the intended version/hash and cannot activate an obsolete upload.
-Replacement and withdrawal are separate: a known unsafe source is withdrawn
-immediately, disabling new answers rather than retaining it until replacement.
-Remote OCR requires O-014/O-015 approval before any document leaves the host.
-Parsing/OCR uses bounded workers, limits and retry state (ED-037).
+version and therefore invalidate automatically.
 
 ## 7. Request pipeline [APPROVED order, expanded]
 
@@ -243,23 +224,19 @@ Parsing/OCR uses bounded workers, limits and retry state (ED-037).
 5. **Input guard (§8.1):** length, PII stripping, moderation, safeguarding
    detection, prompt-injection heuristics.
 6. **Active-quiz guard (§8.3).**
-7. Check the safe cache key (§10.3), after all current input/access/quiz guards.
+7. Normalize question; check per-lesson answer cache (§10.3).
 8. Load approved source for `document_version` (full text or retrieved
    chunks). Recheck entitlement and document status immediately before prompt
    construction.
 9. Build prompt (§9): system rules + style tier + page-tagged source + last
    turns of this thread + question.
-10. Reserve quota atomically; call `AiProviderInterface` with bounded timeout
-    (15 s). Buffer the complete structured result on the server; never forward
-    raw provider tokens to the client.
+10. Call provider through `AiProviderInterface` with timeout (15 s) and
+    streaming.
 11. **Output guard (§8.2):** schema validation, length, citation and quote
     verification, leakage checks. One automatic retry on failure, then the
     safe fallback.
-12. Recheck actor/entitlement, consent, feature flags and pinned source version
-    immediately before delivery (including cache hits). If changed, discard the
-    answer and show the current safe state. Persist the validated result and
-    quota outcome idempotently, then deliver it; SSE may reveal only this already
-    validated result. Save usage/latency/guards with no secrets or unnecessary PII.
+12. Stream the validated answer to the client (SSE). Save message, citations,
+    usage, latency, guard results; no secrets, minimal PII.
 13. Present feedback buttons.
 14. Provider error, timeout, or no relevant source → transparent message +
     help-request button. Video, PDF and progress are never blocked.
@@ -292,8 +269,8 @@ Parsing/OCR uses bounded workers, limits and retry state (ED-037).
 - **Quote verification:** the model returns a short supporting quote (≤ 25
   words) from the source. The server fuzzy-matches it against the cited page
   text (normalized Arabic). No match → answer downgraded to `not_in_source`
-  after one retry. This verifies quote presence, not whether the answer logically follows
-  from it; human grounding evaluation remains required. The quote is used for verification and an optional "show
+  after one retry. This makes grounding a deterministic server check, not only
+  a model promise. The quote is used for verification and an optional "show
   source" UI, not shown as the main answer.
 - **Leakage checks:** answer must not contain system prompt fragments, other
   lesson IDs, URLs not present in the PDF, or quiz answer keys.
@@ -380,12 +357,8 @@ Server maps statuses to UI states. `not_in_source` and `out_of_scope` always
 show the help-request button prominently.
 
 ### 9.3 Follow-up turns
-Include at most the last 2 masked Q/A pairs from the authenticated learner
-and the same lesson, approved-text hash and document version (answers only,
-not quotes). Validate conversation ownership on every read/write/feedback.
-A source change starts a new thread; old history stays read-only under retention
-and access policy and is never supplied as current-source context. No parent,
-support view-as or other learner context enters the prompt (ED-036).
+Include at most the last 2 Q/A pairs of the same thread (answers only, not
+quotes). Threads never include other lessons.
 
 ## 10. Cost, quotas and performance [RECOMMENDED; budget values OPEN]
 
@@ -402,12 +375,7 @@ Quota exhaustion shows a friendly state with the help-request option.
 ### 10.1a Reserve → commit → refund (ED-010)
 Reserve one quota unit atomically before the provider call; commit on a
 delivered answer; refund on provider error, timeout or guard rejection. Cache
-hits and blocked inputs consume nothing. Bind reservation/commit/refund to a
-unique learner + request key; retries and concurrent requests cannot double
-charge/refund or exceed caps. Persist outcome before delivery so disconnect and
-retry return the same result; recover abandoned reservations. Count actual
-provider spend even on rejected/failed answers and cap internal retry cost.
-Budget reservation is atomic; quota refunds never erase real provider cost.
+hits and blocked inputs consume nothing.
 
 ### 10.2 Model routing
 One small, fast model tier handles all requests by default. Model choice is a
@@ -415,21 +383,17 @@ configuration value per environment, selected by the eval gate (§13), never
 hard-coded.
 
 ### 10.3 Per-lesson answer cache
-Safe default: cache only context-free first-turn answers, scoped to the learner.
-Key includes learner + lesson + document ID/version + approved-text hash + exact
-masked question hash + language/style + prompt/guard/model configuration.
-TTL 30 days is a proposed maximum subject to O-025. Follow-ups and "simpler"
-responses bypass answer caching because they depend on history. No cross-learner
-or semantic cache by default. Arabic search normalization may find candidates,
-but never proves two questions equivalent. Cache hits rerun current access,
-consent, quiz and output checks before delivery; deletion/withdrawal invalidates
-related entries. Shared provider prompt prefixes contain approved source only,
-never learner turns, and remain subject to provider retention approval.
+Key: `document_version + normalized_question + reply_language + style_tier`.
+Normalization: Arabic letter normalization (أ/إ/آ→ا, ة→ه, ى→ي, remove
+diacritics/tatweel), lowercase Latin, collapse spaces. TTL 30 days. Cached
+answers are reused across students (source is identical and contains no
+personal data). Optional semantic matching (embedding similarity ≥ 0.95) is a
+later enhancement.
 
 ### 10.4 Performance targets
 | Metric | Target |
 |---|---|
-| Time to first validated answer text (p95) | ≤ 2.5 s |
+| Time to first streamed token (p95) | ≤ 2.5 s |
 | Full answer (p95) | ≤ 6 s |
 | Provider timeout | 15 s → fallback |
 | Availability of lesson player when AI is down | 100% |
@@ -440,11 +404,13 @@ never learner turns, and remain subject to provider retention approval.
 interface AiProviderInterface
 {
     public function complete(AiCompletionRequest $request): AiCompletionResult;   // non-stream
+    public function stream(AiCompletionRequest $request): iterable;               // token chunks
+    public function embed(array $texts): array;                                   // chunked mode only
+    public function ocrPage(string $imagePath, array $languages): OcrResult;      // ingestion fallback
+    public function health(): ProviderHealth;
 }
 ```
 
-- OCR and embeddings get separate narrow capabilities only when needed; health
-  checks use the chosen provider facilities. No speculative multi-provider suite.
 - `AiCompletionRequest` carries: prompt version, cacheable prefix, turns,
   max tokens, response schema, timeout, opaque user hash, idempotency key.
 - `AiCompletionResult` returns: content, usage (input/cached/output tokens),
@@ -512,7 +478,7 @@ lessons; PII in question; abusive input; very long input; empty/garbage input.
 | Length compliance | 100% |
 | Red-team pass | 100% (no leakage, no scope break) |
 | Arabic answer quality (human 1--5 review sample) | average ≥ 4 |
-| p95 first validated answer text | ≤ 2.5 s |
+| p95 first token | ≤ 2.5 s |
 
 ### 13.4 Eval gate in CI
 The eval suite runs on every change to prompt version, model, extraction
@@ -564,7 +530,7 @@ in the PDF), "still not understood" count. No student names or full threads.
 - Timestamp chip showing where the video was paused.
 - Input with 300-character counter, send on Enter, RTL/LTR auto direction per
   text.
-- Loading indicator, then validated answer (optional buffered reveal); page chip opens the PDF viewer at
+- Streaming answer with typing indicator; page chip opens the PDF viewer at
   that page.
 - Buttons: فهمت · اشرحها أبسط · لسه مش فاهم.
 - States: loading, answered, not in source, out of scope, quota reached,
@@ -586,9 +552,8 @@ in the PDF), "still not understood" count. No student names or full threads.
 | `ai_messages` | conversation_id, role, content, status, source_pages, quote_verified, guard_flags, prompt_version, model, cache_hit, created_at |
 | `ai_feedback` | message_id, type (understood / simpler / not_understood) |
 | `ai_usage` | student_hash, lesson_id, provider, model, input/cached/output tokens, cost, latency_ms, result |
-| `ai_answer_cache` | student_id, lesson_id, document_id/version, approved_text_hash, exact_masked_question_hash, locale, style_tier, prompt/guard/model config, answer_json, expires_at |
-| `ai_quota_counters` | student_id, scope, period, count; unique scope key |
-| `ai_request_reservations` | student_id + request_key (unique), fingerprint, reserved/committed/refunded state, result reference, expiry; recoverable and idempotent |
+| `ai_answer_cache` | document_version, question_hash, locale, style_tier, answer_json, hits, expires_at |
+| `ai_quota_counters` | student_id, scope, period, count |
 | `ai_eval_cases` / `ai_eval_runs` | lesson_id, question, expected_status, expected_pages / run results and metrics |
 | `ai_safeguarding_flags` | student_id, conversation_id, category, status, handled_by |
 | `help_requests` | student_id, course_id, lesson_id, instructor_id, ai_message_id (unique), question, video_position, status, overdue_at |
@@ -602,7 +567,7 @@ Do not store more child data than required. `ai_usage` uses the opaque hash.
 | Method | Endpoint | Notes |
 |---|---|---|
 | GET | `/api/v1/lessons/{lesson}/assistant` | availability, reason, key terms, remaining quota |
-| POST | `/api/v1/lessons/{lesson}/assistant/messages` | body: `question`, `video_position`, `conversation_id?`, `mode=normal|simpler`; response: loading status then validated `result` (JSON + message_id); optional SSE chunks only after full validation |
+| POST | `/api/v1/lessons/{lesson}/assistant/messages` | body: `question`, `video_position`, `conversation_id?`, `mode=normal|simpler`; response: SSE stream of `token` events then a final `result` event (validated JSON + message_id) |
 | POST | `/api/v1/assistant/messages/{message}/feedback` | `understood` or `not_understood` (creates help request, idempotent) |
 | GET | `/api/v1/help-requests` | student's own requests |
 | GET/POST | `/api/v1/help-requests/{id}/messages` | thread |
@@ -616,13 +581,9 @@ lesson, `422` validation, `429` quota (with reset time), `503` provider down
 
 - Provider must offer no-training on submitted data and minimal or zero
   retention; data region documented (O-014).
-- Only approved lesson text, masked current/same-version prior turns and
-  minimal language/style configuration leave through approved provider paths.
-  Remote OCR documents are a separate explicitly approved data transfer.
-- Proposed test retention values: AI messages 180 days, aggregated usage
-  metrics 24 months; these are not approved production periods. O-025 must
-  approve retention, legal holds and deletion behavior before production
-  destructive pruning. Safeguarding records follow approved O-015/O-025 policy.
+- Only approved lesson text and the masked question leave the platform.
+- Default retention: AI messages 180 days, usage metrics 24 months
+  (aggregated), safeguarding flags per policy. Configurable.
 - Student data export/deletion requests include AI conversations.
 - Parent access to full AI history: off by default (O-016).
 - Minors: AI stays disabled until guardian consent and privacy policy are
@@ -666,7 +627,7 @@ ships in the first production release once P4 and the privacy gate are done.
 
 All v2.0 criteria remain. Added:
 
-1. A student in an eligible recorded lesson receives a fully validated answer of 1--4
+1. A student in an eligible recorded lesson receives a streamed answer of 1--4
    sentences with at least one verified page citation.
 2. A student without entitlement cannot query the assistant even with a valid
    lesson ID; a student cannot target another lesson's document by changing
@@ -689,13 +650,6 @@ All v2.0 criteria remain. Added:
     and progress keep working.
 13. Eval thresholds in §13.3 pass on all pilot lessons before rollout.
 14. No full private conversation content appears in aggregate reports.
-15. No provider token is visible before complete guard validation; mid-request
-    revocation/source withdrawal/consent withdrawal discards the answer.
-16. Cross-learner conversation/feedback/cache IDs fail; follow-up or simpler
-    responses never use a context-free cached answer.
-17. Concurrent quota requests/retries/disconnects preserve one outcome and cost
-    accounting; stale ingestion jobs cannot activate obsolete source revisions.
-18. Unknown age follows the minors gate until O-015 determines eligibility.
 
 ## 22. Open decisions specific to the assistant
 

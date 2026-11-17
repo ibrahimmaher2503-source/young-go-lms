@@ -31,10 +31,20 @@ substitute for Young Go business logic.
 
 ## 2. Authoritative source hierarchy
 
-The canonical precedence is `AGENTS.md` §2. Latest explicit owner instructions and approved
-D-* decisions outrank the PRD; technical recommendations never become owner approval by repetition.
-Original source files not included in the pack are historical provenance, not inspected evidence.
-Log conflicts with exact citations, block only the affected decision, and continue independent work.
+1.  Latest explicit owner decision.
+2.  `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`.
+3.  `docs/07_DECISION_REGISTER.md` entries marked APPROVED.
+4.  `docs/06_AI_LESSON_ASSISTANT_SPEC.md` and
+    `docs/05_ARCHITECTURE_DATA_API.md`.
+5.  Original June 2026 PRDs as legacy functional baseline.
+6.  Earlier November 2026 v2 docs as supporting source material; this
+    DMC supersedes conflicting workflow notes only where latest owner
+    decisions require it.
+
+Preserve status labels APPROVED, LEGACY-CARRY, RECOMMENDED and OPEN. A
+recommendation is not an owner decision. When conflict appears, log it
+and follow newest approved direction. Ask only for a genuinely blocking
+legal, payment, access, privacy or irreversible business decision.
 
 ## 3. Locked product decisions
 
@@ -109,7 +119,7 @@ Log conflicts with exact citations, block only the affected decision, and contin
   Runtime/database                   UNKNOWN; verify environment before
                                      lock
 
-  Payment gateway                    Paymob recorded in D-025; account/API not verified
+  Payment gateway                    NOT SELECTED
 
   Instapay process                   Existing admin navigation includes
                                      Instapay Payments; exact
@@ -150,22 +160,25 @@ operational need justifies it.
 
 ### 5.2 Technology candidates
 
+> Superseded for versions by `docs/adr/ADR-001-stack.md` (T-P0-02): PHP 8.4+, Laravel 13, Filament 5 + Livewire 4, Blade/Livewire student UI (R-026), MySQL 8.4 provisional (O-004).
+
   -------------------------------------------------------------------------
   Layer                Candidate                       Decision status
   -------------------- ------------------------------- --------------------
-  Backend              Laravel / compatible PHP           Recommended; verify
+  Backend              Laravel 13 / PHP 8.3+           Recommended; verify
                                                        target runtime and
                                                        package
                                                        compatibility
 
-  Admin/instructor UI  Filament customized to SKIT   Recommended;
+  Admin/instructor UI  Filament 5 customized to SKIT   Recommended;
                                                        Filament is a UI
                                                        toolkit, not LMS
                                                        core
 
-  Student/public UI    Custom responsive               R-026 default
-                       Blade/Livewire + Alpine         R-026 default; pin versions
-                       and Tailwind                   after compatibility review
+  Student/public UI    Custom responsive               Choose after
+                       Blade/Livewire or               player/UX needs and
+                       Inertia/Vue/React               team skills are
+                                                       checked
 
   Database             PostgreSQL or MySQL             OPEN; inspect server
                                                        and legacy data
@@ -210,10 +223,11 @@ implementation.
 -   `MeetingProvider`: manual URL adapter first; automated creation/sync
     later if selected.
 -   `NotificationChannel`: in-app/email first; SMS/WhatsApp later.
--   `AiProviderInterface`: concise completion and usage metadata. Keep optional retrieval/indexing
-    separate; introduce it only when PDF limits justify it (ED-033..037).
+-   `AiProviderInterface`: concise completion, optional
+    embeddings/indexing, usage metadata, timeout and provider health.
     Never couple one vendor to lesson controllers.
--   Framework storage facilities: private files and authorized delivery; no duplicate storage wrapper without a real need.
+-   `StorageProvider`: private file storage, signed/authorized download
+    and metadata.
 
 ## 6. Core architecture rules
 
@@ -278,8 +292,7 @@ young-go-lms/
 │   └── Providers/
 ├── config/{learning.php,media.php,ai.php,commerce.php,markets.php}
 ├── database/{migrations,seeders,factories}
-├── resources/{views,js,css}/
-├── lang/{ar,en}/
+├── resources/{views,js,css,lang}/
 ├── routes/{web.php,api.php}
 ├── storage/app/private/
 ├── docs/                         # delivery pack and continuity files
@@ -324,8 +337,9 @@ the student player; student UI is a custom learning experience.
 
 ## 10. Development and Codex execution rules
 
-1.  **Scope-first delivery:** a documentation review delivers reviewed instructions.
-    Only an authorized implementation task creates application code; then deliver real vertical slices, not speculative scaffolding.
+1.  **Production-first delivery:** implement visible working
+    functionality; avoid analysis-only loops and speculative
+    scaffolding.
 2.  Use one concise English Codex instruction per coherent
     implementation batch; combine related work into one clear task.
 3.  Before editing, inspect actual repository and CodeGraph if
@@ -359,8 +373,8 @@ the student player; student UI is a custom learning experience.
 
 Implementation runs through the orchestrator loop defined in `agents/ORCHESTRATOR.md`:
 
-- One orchestrator agent (host-supported model appropriate to the risk) owns planning, task selection, review and commits.
-- Implementation work is delegated to actual host subagents with scoped briefs (`.claude/agents/` supplies Claude role templates). The orchestrator reviews every subagent diff against `agents/REVIEW_PROTOCOL.md` and runs `agents/VERIFICATION_GATES.md` before marking a task done.
+- One orchestrator agent (strongest model) owns planning, task selection, review and commits.
+- Implementation work is delegated to subagents on lighter models (`.claude/agents/`). The orchestrator reviews every subagent diff against `agents/REVIEW_PROTOCOL.md` and runs `agents/VERIFICATION_GATES.md` before marking a task done.
 - Tasks come only from `agents/tasks/*.md`; status only in `agents/PROGRESS.md`.
 - Shared code must be checked in `docs/REUSE_REGISTRY.md` before writing new components; new shared pieces are registered in the same task.
 - **Testing clarification (R-024):** the automated invariant/feature test suite running in CI is the "one focused validation" of D-024. It does not repeat manual regression and does not replace the final deep QA phase. Critical security, payment and authorization tests are never skipped.

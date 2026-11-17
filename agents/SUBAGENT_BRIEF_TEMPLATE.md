@@ -36,21 +36,15 @@ Screens, primary action, states (loading/empty/error/success/locked), copy keys,
 ### Out of scope
 - <explicitly excluded work>
 
-### Checks before returning (select by scope and bootstrap status)
+### Checks before returning
 - vendor/bin/pest --group=<TASK-ID>
 - vendor/bin/phpstan analyse <paths>
 - php artisan app:check-translations && php artisan app:check-rtl   (if UI/strings)
 - screenshots → tests/Browser/screenshots/<TASK-ID>/   (UI)
 
 ### Return (short)
-Files changed · registry additions · criterion → actual test/manual result (command, exit code/outcome, artifact, revision) · NOT RUN/N/A with reasons · blocked slices
+Files changed · new shared pieces (registry rows) · check results · not done + why
 ```
-
-## Execution boundaries
-Use available host tools and normal permissions; no assumed model or permission bypass.
-Do not reset databases without the G6 isolated disposable connection allowlist.
-Docs-only briefs replace application commands with structural/semantic checks.
-Report self-review honestly; only separate reviewers supply independent verdicts.
 
 ## test-writer brief extras (S0)
 - One test per acceptance item minimum, tagged `->group('<TASK-ID>', '<REQ-ID>')`.
