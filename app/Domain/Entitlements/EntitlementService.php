@@ -64,6 +64,25 @@ final class EntitlementService implements LessonAccessChecker
         return $drip->allowed ? $this->sequenceDecision($learner, $item) : $drip;
     }
 
+    /**
+     * Public lesson preview for anyone, signed in or not: only a published course, a published item in a published
+     * section, and a lesson the author flagged as preview. Never covers protected attachments or any other item type.
+     */
+    public function canPreviewPublicly(CurriculumItem $item): AccessDecision
+    {
+        if ($item->course->status !== CourseStatus::Published) {
+            return AccessDecision::deny('course_unpublished');
+        }
+
+        if (! $this->itemPublished($item)) {
+            return AccessDecision::deny('item_unpublished');
+        }
+
+        return $item->itemable instanceof Lesson && $item->itemable->is_preview
+            ? AccessDecision::allow()
+            : AccessDecision::deny('not_entitled');
+    }
+
     public function canAccessLessonFiles(User $user, Lesson $lesson): bool
     {
         $item = $lesson->item()->with(['course', 'section'])->first();

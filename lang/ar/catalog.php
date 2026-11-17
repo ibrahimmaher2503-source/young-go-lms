@@ -23,6 +23,7 @@ return [
     'clear' => 'مسح',
     'results' => ':count دورة',
     'newest' => 'الأحدث أولًا',
+    'view_course' => 'عرض الدورة',
     'empty' => 'لا توجد دورات تطابق بحثك.',
     'beginner' => 'مبتدئ',
     'intermediate' => 'متوسط',

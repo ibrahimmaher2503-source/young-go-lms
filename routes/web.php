@@ -6,6 +6,8 @@ use App\Http\Controllers\CmsController;
 use App\Http\Controllers\MediaPlaybackController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\PublicCatalogController;
+use App\Http\Controllers\PublicCourseController;
+use App\Http\Controllers\PublicCoursePreviewController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Http\Request;
@@ -13,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CmsController::class, 'home'])->name('cms.home');
 Route::get('/courses', PublicCatalogController::class)->name('catalog.index');
+Route::get('/courses/{course}', PublicCourseController::class)->name('catalog.show');
+Route::get('/courses/{course}/preview/{item}', PublicCoursePreviewController::class)->whereNumber('item')->name('catalog.preview');
 Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
 Route::get('/admin/cms-preview/{page}', [CmsController::class, 'preview'])
     ->middleware(['auth', 'signed', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class, 'can:content.page.manage'])

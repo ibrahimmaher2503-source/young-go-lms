@@ -49,7 +49,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P2-02 | CMS pages and homepage blocks | review | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | See task log; [2026-11-17 audit](../docs/reviews/REVIEW_QUEUE_P2_P3A_2026-11-17.md); G10 PASS; approval withheld. |
 | T-P2-03 | Brand public shell and homepage UI | blocked | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | O-027 official branding inputs |
 | T-P2-04 | Catalog, search and filters | blocked | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | Search/filter slice verified; price, popularity and availability data pending |
-| T-P2-05 | Course detail page and SEO fields group | todo | T-P2-04 | ui-builder, implementer, test-writer | M | normal | | |
+| T-P2-05 | Course detail page and SEO fields group | review | T-P2-04 | ui-builder, implementer, test-writer | M | normal | | tests: pending (other model); prompt `docs/test-prompts/T-P2-05.md`; price, reviews, self-enrol CTA and wizard SEO wiring open, see task log |
 | T-P2-06 | SEO infrastructure | todo | T-P2-02, T-P2-05 | implementer, test-writer | S | normal | | |
 | T-P2-07 | Blog | todo | T-P2-06 | implementer, ui-builder, test-writer, chore | M | normal | | |
 | T-P2-08 | Contact enquiries and newsletter | todo | T-P2-03 | implementer, ui-builder, test-writer | S | normal | | |
@@ -101,9 +101,9 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P7-04 | Feedback, help requests and instructor/admin queue | review | T-P7-03, T-P5-04 | implementer, ui-builder, test-writer | L | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-04.md; phpstan, Arch, translations, RTL pass; G7 open |
 | T-P7-05 | Evaluation harness, CI gate and instructor test console | review | T-P7-02 | implementer, test-writer, chore | M | high | | |
 | T-P7-06 | Admin controls, readiness, usage reports, insights and resilience | review | T-P7-04, T-P7-05 | implementer, ui-builder, test-writer | M | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-06.md; phpstan, Arch, translations, RTL pass; G7 open (no AR/EN screenshots yet); fake provider only (O-014 open) |
-| T-P7-07 | Provider selection, privacy gate and pilot | todo | T-P7-06 | orchestrator, implementer | M | high | | |
+| T-P7-07 | Provider selection, privacy gate and pilot | blocked | T-P7-06 | orchestrator, implementer | M | high | Blocked: O-014 (AI provider/model unknown, B-08); fake provider only |
 | T-P7-MG | Milestone gate P7 | todo | T-P7-01..06 (T-P7-07 may be blocked) | orchestrator | S | high | | |
-| T-P8-01 | Pricing and order engine | todo | T-P4-01, T-P3-03, T-P0-06 | implementer, test-writer | M | high | | |
+| T-P8-01 | Pricing and order engine | review | T-P4-01, T-P3-03, T-P0-06 | implementer, test-writer | M | high | | Domain engine only (T-P3-03 not done: no price UI, `course_prices` has no writer); tests: pending (other model), docs/test-prompts/T-P8-01.md |
 | T-P8-02 | PaymentGateway contract and Paymob checkout | todo | T-P8-01 | implementer, test-writer, chore | M | high | | |
 | T-P8-03 | Paymob webhook verification and idempotent fulfillment | todo | T-P8-02 | implementer, test-writer | M | high | | |
 | T-P8-04 | Instapay/manual payment proofs | todo | T-P8-01, T-P4-01 | implementer, ui-builder, test-writer | M | high | | |
@@ -269,6 +269,13 @@ Then re-run prd-auditor (cycle 2 of 3).
 - S0 RED: `PublicCatalogTest.php` exited 1 (3 failures on missing /courses). GREEN: 3/27 for Arabic substitutions, published-only combined filters, manual/configured age, timestamp order and pagination.
 - G1 Pint, G2 Larastan, G6 AR/EN/RTL/audit/build/isolated SQLite migration and seed, G10 requirement coverage and G11 doctor passed for this slice. G3 full non-browser: 322/1819, 93.3% coverage, 1 existing I02 TODO; module coverage verifier exited 0. G4 architecture 6/29. G5 invariants 6/33 with the same TODO. `agents/logs/T-P2-04/`.
 - G7 browser: 4/36, 10 captures for results, mobile filters and empty state in AR/EN at 390/1440. `tests/Browser/screenshots/T-P2-04/`. Visual deferred per PO. G8/G9 N/A. Full task stays blocked; G10 tags do not close the missing A2 behavior.
+
+### T-P2-05 — Course detail page and SEO fields group
+
+- Built (code only, tests: pending (other model)): public `/courses/{slug|id}` (`PublicCourseController`, `PublicCourseDetail`, `CourseSeo`), guest-open free preview `/courses/{course}/preview/{item}` (`PublicCoursePreviewController`, new `EntitlementService::canPreviewPublicly`), views `catalog/show|preview|_cta`, catalog cards link to the page, `SeoFieldsGroup` Filament component, migration `2026_11_17_410000_add_seo_fields_to_courses` (seo_title/description/keywords JSON, canonical_url), lang `course_page.php` AR/EN, base layout gained `wide` and `indexable` + head slot.
+- Decisions applied (safe defaults): unpublished (draft/private/archived/suspended/upcoming) = 404; no price shown (no pricing data until T-P8-01, only Free/Paid label); CTA = "Sign in to enroll" for guests, "Continue learning" when entitled, disabled "Enrollment opens soon" for signed-in non-entitled (no enrol route yet; checkout is P8, free self-enrol screen T-P4-03); instructor shown by name only (profiles T-P2-09); reviews slot is an empty hidden section (T-P9-02); locked lessons listed with titles/durations only; guest preview carries no captions/attachments/progress/AI.
+- NOT DONE: `SeoFieldsGroup` is not wired into the course wizard (SaveCourseWizard is being edited by another agent; T-P3-03 adds the SEO step and validation/saving); hreflang, locale-prefixed URLs and sitemap are T-P2-06; G7 screenshots and visual comparison against `06-public-course-detail-v2.png` not taken (no demo data/browser run; layout approximates the reference, hero uses category image or brand tile because course media does not exist yet).
+- Checks: Pint (changed files), Larastan 0 errors, arch 6 passed, `app:check-translations` and `app:check-rtl` passed, `npm run build` ok, manual render smoke of AR/EN page, draft 404, preview 200.
 
 ## Notes
 - **Source conflict (2026-11-16, T-P0-02):** DMC §5.2 and Arch §2 say "PHP 8.3+"; Pest 5 and current Spatie majors need PHP 8.4. Followed ADR-001 (task + Conventions §2 mandate); pointers added in both docs.

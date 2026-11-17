@@ -23,6 +23,7 @@ return [
     'clear' => 'Clear',
     'results' => ':count courses',
     'newest' => 'Newest first',
+    'view_course' => 'View course',
     'empty' => 'No courses match your search.',
     'beginner' => 'Beginner',
     'intermediate' => 'Intermediate',

@@ -41,13 +41,14 @@ final class Course extends Model
     public const SEQUENCE_SEQUENTIAL = 'sequential';
 
     /** @var list<string> */
-    public array $translatable = ['title', 'short_description', 'description'];
+    public array $translatable = ['title', 'short_description', 'description', 'seo_title', 'seo_description', 'seo_keywords'];
 
     protected $fillable = [
         'category_id', 'owner_instructor_id', 'title', 'short_description', 'description',
         'slug_ar', 'slug_en', 'level', 'content_language', 'min_age', 'max_age',
         'format', 'owner_type', 'status', 'access_mode', 'sequence_mode', 'featured', 'ai_enabled',
         'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
+        'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
     ];
 
     protected $attributes = [

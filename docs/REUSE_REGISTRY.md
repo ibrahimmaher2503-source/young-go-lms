@@ -19,6 +19,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | CmsPage / HomepageBlock / SaveCmsContent | `app/Models/CmsPage.php`, `app/Models/HomepageBlock.php`, `app/Domain/Content/Actions/SaveCmsContent.php` | Bilingual pages and ordered homepage blocks with permission-gated editor writes | built | T-P2-02 |
 | Money / PriceFormatter | `app/Domain/Shared/Money/` | Integer-minor money + locale formatting | built | T-P0-06 |
 | Market / MarketResolver | `app/Domain/Shared/Markets/` | EG active / SA disabled | built | T-P0-06 |
+| CreateOrder / TransitionOrder / AdjustOrderTotal / Order / OrderItem / CoursePrice | `app/Domain/Commerce/` | Server-priced orders, state machine, audited post-paid adjustment, per-market course prices | built | T-P8-01 |
 | LocalizedDate | `app/Domain/Shared/Time/` | UTC storage, local display | built | T-P0-06 |
 | AgeBandResolver | `app/Domain/Catalog/AgeBandResolver.php` | Resolve a learner's configured age band from birth year and month | built | T-P1-07 |
 | AgeRange / AgeRangeRule | `app/Domain/Catalog/AgeRange.php`, `app/Domain/Catalog/Rules/AgeRangeRule.php` | Inclusive, nullable age bounds and validation for course and band ranges | built | T-P1-07 |
@@ -68,6 +69,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | StatusBadgeColumn | `app/Filament/Shared/Tables/` | Enum → colored badge | built | T-P1-08 |
 | MoneyColumn | `app/Filament/Shared/Tables/` | Money display | built | T-P1-08 |
 | ApproveRejectAction + RecordReviewDecision | `app/Filament/Shared/Actions/ApproveRejectAction.php`, `app/Domain/Shared/Actions/RecordReviewDecision.php` | Review-queue approve/reject: reason rules, auth recheck, domain mutation + audit in one transaction | built | T-P1-08 |
+| PublicCourseDetail + CourseSeo + EntitlementService::canPreviewPublicly | `app/Domain/Catalog/Queries/PublicCourseDetail.php`, `app/Domain/Catalog/CourseSeo.php`, `app/Domain/Entitlements/EntitlementService.php` | Published-only course lookup by slug/id, public curriculum preview, meta/OG/Course JSON-LD, guest free-preview decision | built | T-P2-05 |
+| SeoFieldsGroup | `app/Filament/Shared/Forms/SeoFieldsGroup.php` | Bilingual SEO title/description/keywords + canonical Filament section (wizard SEO step T-P3-03) | built | T-P2-05 |
 | SaveCourseWizard + CourseWizardSteps | `app/Domain/Catalog/Actions/SaveCourseWizard.php`, `app/Filament/Resources/Courses/Schemas/CourseWizardSteps.php`, `app/Filament/Resources/Courses/Pages/{CreateCourse,EditCourse}.php` | Course wizard steps 1-2, save/resume, field-level permissions (steps 3-7 extend it in T-P3-03) | built | T-P3-02 |
 | CurriculumOutline + curriculum Actions | `app/Domain/Curriculum/` | Section/lesson management, atomic reorder, bulk status, one ordered query for authors and students | built | T-P3-04 |
 | MediaProviders + VideoDeliveryProvider drivers, AttachLessonMedia, GrantMediaException, LessonPublishRule | `app/Domain/Media/` | Provider-neutral lesson media, protection tiers, paid-lesson T3 rule | built | T-P3-05 |

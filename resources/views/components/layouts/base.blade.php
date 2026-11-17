@@ -1,5 +1,5 @@
-{{-- Props: variant public/auth/student/parent, title, minimal (error pages: no session-dependent chrome). --}}
-@props(['variant' => 'public', 'title' => null, 'minimal' => false])
+{{-- Props: variant public/auth/student/parent, title, minimal (error pages: no session-dependent chrome), wide (public pages that need more width), indexable (public pages that fill the head slot with their own meta). --}}
+@props(['variant' => 'public', 'title' => null, 'minimal' => false, 'wide' => false, 'indexable' => false])
 @php
     $locale = app()->getLocale();
     $user = $minimal ? null : auth()->user();
@@ -17,7 +17,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="robots" content="noindex, nofollow">
+    @if($indexable){{ $head ?? '' }}@else<meta name="robots" content="noindex, nofollow">@endif
     <title>{{ $title ? $title.' · ' : '' }}{{ __('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -62,7 +62,7 @@
         @endunless
     </div>
 </header>
-<main id="main" tabindex="-1" class="mx-auto px-4 py-8 sm:px-8 {{ $variant === 'auth' || $minimal ? 'max-w-md' : 'max-w-5xl' }}">
+<main id="main" tabindex="-1" class="mx-auto px-4 py-8 sm:px-8 {{ $variant === 'auth' || $minimal ? 'max-w-md' : ($wide ? 'max-w-6xl' : 'max-w-5xl') }}">
     {{ $slot }}
 </main>
 </body>

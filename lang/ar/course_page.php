@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'facts' => 'معلومات الدورة',
+    'sections' => 'أقسام الدورة',
+    'overview' => 'نظرة عامة',
+    'about' => 'عن هذه الدورة',
+    'outcomes' => 'ماذا ستتعلم؟',
+    'curriculum' => 'محتوى الدورة',
+    'curriculum_empty' => 'سيظهر محتوى الدورة هنا قريبًا.',
+    'instructor' => 'المدرب',
+    'instructor_name' => 'المدرب: :name',
+    'requirements' => 'متطلبات الدورة',
+    'faq' => 'الأسئلة الشائعة',
+    'reviews' => 'التقييمات',
+    'access' => 'الاشتراك في الدورة',
+    'paid' => 'دورة مدفوعة',
+    'free_preview' => 'معاينة مجانية',
+    'watch_preview' => 'شاهد المقدمة',
+    'sign_in_to_enroll' => 'سجّل الدخول للاشتراك',
+    'enrollment_soon' => 'الاشتراك يفتح قريبًا',
+    'continue' => 'تابع التعلم',
+    'ages_range' => 'من :min إلى :max سنة',
+    'ages_from' => ':min سنوات فأكثر',
+    'ages_to' => 'حتى :max سنة',
+    'back_to_course' => 'العودة إلى :title',
+    'preview_note_title' => 'أعجبك ما رأيت؟',
+    'preview_note' => 'هذا الدرس معاينة مجانية. سجّل الدخول واشترك لفتح الدورة كاملة.',
+    'seo' => [
+        'group' => 'البحث والمشاركة',
+        'title' => 'عنوان تحسين البحث',
+        'description' => 'وصف تحسين البحث',
+        'keywords' => 'الكلمات المفتاحية',
+        'keywords_help' => 'افصل الكلمات المفتاحية بفواصل.',
+        'canonical' => 'الرابط الأساسي',
+        'canonical_help' => 'اتركه فارغًا لاستخدام عنوان صفحة الدورة.',
+    ],
+];

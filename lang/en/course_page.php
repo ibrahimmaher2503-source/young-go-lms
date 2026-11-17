@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'facts' => 'Course facts',
+    'sections' => 'Course sections',
+    'overview' => 'Overview',
+    'about' => 'About this course',
+    'outcomes' => 'What you will learn',
+    'curriculum' => 'Course content',
+    'curriculum_empty' => 'The course content will appear here soon.',
+    'instructor' => 'Instructor',
+    'instructor_name' => 'Instructor: :name',
+    'requirements' => 'Requirements',
+    'faq' => 'Frequently asked questions',
+    'reviews' => 'Reviews',
+    'access' => 'Course access',
+    'paid' => 'Paid course',
+    'free_preview' => 'Free preview',
+    'watch_preview' => 'Watch the preview',
+    'sign_in_to_enroll' => 'Sign in to enroll',
+    'enrollment_soon' => 'Enrollment opens soon',
+    'continue' => 'Continue learning',
+    'ages_range' => 'Ages :min to :max',
+    'ages_from' => 'Ages :min and up',
+    'ages_to' => 'Up to age :max',
+    'back_to_course' => 'Back to :title',
+    'preview_note_title' => 'Like what you see?',
+    'preview_note' => 'This lesson is a free preview. Sign in and enroll to open the full course.',
+    'seo' => [
+        'group' => 'Search and sharing',
+        'title' => 'SEO title',
+        'description' => 'SEO description',
+        'keywords' => 'Keywords',
+        'keywords_help' => 'Separate keywords with commas.',
+        'canonical' => 'Canonical URL',
+        'canonical_help' => 'Leave empty to use the course page address.',
+    ],
+];
