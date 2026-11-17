@@ -20,6 +20,7 @@
     @if($indexable){{ $head ?? '' }}@else<meta name="robots" content="noindex, nofollow">@endif
     <title>{{ $title ? $title.' · ' : '' }}{{ __('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-consent.tags :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </head>
 <body class="min-h-screen bg-page font-sans text-body"
     data-msg-error="{{ __('pages.error_generic') }}" data-msg-throttle="{{ __('pages.error_throttle') }}" data-msg-expired="{{ __('pages.error_expired') }}" data-msg-sending="{{ __('pages.sending') }}">
@@ -65,5 +66,6 @@
 <main id="main" tabindex="-1" class="mx-auto px-4 py-8 sm:px-8 {{ $variant === 'auth' || $minimal ? 'max-w-md' : ($wide ? 'max-w-6xl' : 'max-w-5xl') }}">
     {{ $slot }}
 </main>
+<x-consent.banner :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </body>
 </html>

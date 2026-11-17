@@ -16,5 +16,6 @@ return [
         NotificationsSettings::class,
         AiSettings::class,
         CertificateSettings::class,
+        \App\Domain\Settings\MarketingSettings::class,
     ],
 ];
