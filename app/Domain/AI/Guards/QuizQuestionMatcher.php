@@ -25,13 +25,24 @@ final class QuizQuestionMatcher
             return false;
         }
 
+        $quiz = $attempt->quiz;
+
+        return $this->matchesPrompts($question, $quiz === null ? [] : QuizGuardQuestions::promptsFor($quiz));
+    }
+
+    /**
+     * Whether the question is close to one of the given quiz prompts (the same similarity rule, without reading an attempt).
+     *
+     * @param  list<string>  $prompts
+     */
+    public function matchesPrompts(string $question, array $prompts): bool
+    {
         $asked = TextNormalizer::words($question);
         if ($asked === []) {
             return false;
         }
 
-        $quiz = $attempt->quiz;
-        foreach ($quiz === null ? [] : QuizGuardQuestions::promptsFor($quiz) as $prompt) {
+        foreach ($prompts as $prompt) {
             if ($this->similar($asked, TextNormalizer::words($prompt))) {
                 return true;
             }
@@ -43,6 +54,19 @@ final class QuizQuestionMatcher
     /** The lesson page that best covers the question, so the hint can say where to look. Null when no page is close enough. */
     public function pageHint(LessonCurriculumDocument $document, string $question): ?int
     {
+        $pages = [];
+        foreach (LessonDocumentPage::query()->where('document_id', $document->getKey())->orderBy('page_no')->get(['page_no', 'approved_text']) as $page) {
+            $pages[$page->page_no] = (string) $page->approved_text;
+        }
+
+        return $this->pageHintFor($pages, $question);
+    }
+
+    /**
+     * @param  array<int, string>  $pages  page number => approved text
+     */
+    public function pageHintFor(array $pages, string $question): ?int
+    {
         $asked = array_values(array_unique(array_filter(TextNormalizer::words($question), static fn (string $word): bool => mb_strlen($word) > 2)));
         if ($asked === []) {
             return null;
@@ -50,10 +74,10 @@ final class QuizQuestionMatcher
 
         $best = null;
         $bestScore = 0.0;
-        foreach (LessonDocumentPage::query()->where('document_id', $document->getKey())->orderBy('page_no')->get(['page_no', 'approved_text']) as $page) {
-            $score = count(array_intersect($asked, TextNormalizer::words((string) $page->approved_text))) / count($asked);
+        foreach ($pages as $number => $text) {
+            $score = count(array_intersect($asked, TextNormalizer::words($text))) / count($asked);
             if ($score > $bestScore) {
-                $best = $page->page_no;
+                $best = $number;
                 $bestScore = $score;
             }
         }

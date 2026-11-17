@@ -44,6 +44,7 @@ return [
     'curriculum_document.key_terms_approved' => 'اعتماد المصطلحات الرئيسية',
     'ai.assistant_asked' => 'الرد على سؤال لمساعد الدرس',
     'ai.quiz_guard' => 'رفض مساعد الدرس سؤالًا من اختبار مفتوح',
+    'ai.console_asked' => 'سؤال في وحدة اختبار مساعد الدرس (غير محتسب)',
     'ai.input_blocked' => 'حجب مساعد الدرس سؤالًا',
     'ai.safeguarding_flagged' => 'تنبيه حماية من مساعد الدرس',
     'ai.budget_alert' => 'تنبيه ميزانية مساعد الدرس',

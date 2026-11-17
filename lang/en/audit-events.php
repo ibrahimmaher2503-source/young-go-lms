@@ -44,6 +44,7 @@ return [
     'curriculum_document.key_terms_approved' => 'Key terms approved',
     'ai.assistant_asked' => 'Lesson assistant question answered',
     'ai.quiz_guard' => 'Lesson assistant refused a question from an open quiz',
+    'ai.console_asked' => 'Lesson assistant test console question (not counted)',
     'ai.input_blocked' => 'Lesson assistant blocked a question',
     'ai.safeguarding_flagged' => 'Safeguarding flag raised by the lesson assistant',
     'ai.budget_alert' => 'Lesson assistant budget alert',

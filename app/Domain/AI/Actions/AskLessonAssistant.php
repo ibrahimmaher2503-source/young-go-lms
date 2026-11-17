@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\AI\Actions;
 
-use App\Domain\AI\AiProviderNotConfigured;
 use App\Domain\AI\Assistant\AnswerCache;
-use App\Domain\AI\Assistant\AssistantContext;
+use App\Domain\AI\Assistant\AssistantEngine;
 use App\Domain\AI\Assistant\AssistantMode;
 use App\Domain\AI\Assistant\AssistantOutcome;
 use App\Domain\AI\Assistant\AssistantQuestion;
@@ -16,19 +15,14 @@ use App\Domain\AI\Assistant\CachedAnswer;
 use App\Domain\AI\Assistant\ContextBuilder;
 use App\Domain\AI\Assistant\GuardFailure;
 use App\Domain\AI\Assistant\GuardVerdict;
-use App\Domain\AI\Assistant\OutputGuard;
 use App\Domain\AI\Assistant\ReplyLanguage;
 use App\Domain\AI\Assistant\StudentHash;
 use App\Domain\AI\Assistant\StyleTier;
 use App\Domain\AI\AssistantEligibility;
-use App\Domain\AI\Contracts\AiProviderInterface;
-use App\Domain\AI\Dto\AiCompletionRequest;
 use App\Domain\AI\Dto\AiCompletionResult;
-use App\Domain\AI\Dto\AiUsage as UsageTokens;
 use App\Domain\AI\Guards\GuardKind;
 use App\Domain\AI\Guards\InputGuard;
 use App\Domain\AI\Guards\InputVerdict;
-use App\Domain\AI\PromptRenderer;
 use App\Domain\AI\Quota\BudgetGate;
 use App\Domain\AI\Quota\QuotaLedger;
 use App\Domain\AI\Quota\QuotaReservation;
@@ -46,7 +40,6 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
@@ -65,10 +58,8 @@ final class AskLessonAssistant
     public function __construct(
         private readonly AssistantEligibility $eligibility,
         private readonly EntitlementService $entitlements,
-        private readonly AiProviderInterface $provider,
+        private readonly AssistantEngine $engine,
         private readonly ContextBuilder $contexts,
-        private readonly PromptRenderer $prompts,
-        private readonly OutputGuard $guard,
         private readonly AuditLogger $audit,
         private readonly InputGuard $inputs,
         private readonly AnswerCache $cache,
@@ -156,20 +147,9 @@ final class AskLessonAssistant
 
         $this->recheck($learner, $lesson, $document);
 
-        $system = $this->prompts->render($prompt, $tier->value, $language->label, (string) $lesson->title, $document->version, $context->promptPages, $language->maxWords());
-        $rules = Str::before($system, '<'.config('ai.source_tag', 'lesson_source'));
-        $request = new AiCompletionRequest(
-            promptVersion: $prompt->version,
-            cacheablePrefix: $system,
-            turns: $this->turns($messages, $question, $input->mode),
-            maxTokens: (int) config('ai.max_output_tokens', 220),
-            responseSchema: $this->schema(),
-            timeoutSeconds: (int) config('ai.assistant.timeout_seconds', 15),
-            userHash: StudentHash::of((int) $learner->getKey()),
-            idempotencyKey: (string) Str::uuid(),
-        );
+        [$request, $rules] = $this->engine->request($prompt, $tier, $language, (string) $lesson->title, $document->version, $context, $this->turns($messages, $question, $input->mode), StudentHash::of((int) $learner->getKey()));
 
-        [$verdict, $how, $attempts, $usageResult] = $this->ask($request, $context, $rules);
+        [$verdict, $how, $attempts, $usageResult] = $this->engine->exchange($request, $context, $rules);
 
         $reply = $this->persist($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $verdict, $how, $attempts, $usageResult, $checked->piiKinds);
 
@@ -289,62 +269,6 @@ final class AskLessonAssistant
             : $question];
 
         return $turns;
-    }
-
-    /**
-     * Calls the provider and applies the output guard, with one retry when the guard rejects. A provider error or timeout
-     * is not retried: it ends in the safe fallback so the learner is never kept waiting.
-     *
-     * @return array{0: GuardVerdict|null, 1: string, 2: int, 3: AiCompletionResult|null}
-     */
-    private function ask(AiCompletionRequest $request, AssistantContext $context, string $rules): array
-    {
-        $attempts = 0;
-        $verdict = null;
-        $result = null;
-        $tokens = [0, 0, 0];
-        $latency = 0;
-        $maxAttempts = 1 + max(0, (int) config('ai.assistant.retries', 1));
-
-        while ($attempts < $maxAttempts) {
-            $attempts++;
-            try {
-                $result = $this->provider->complete($attempts === 1 ? $request : new AiCompletionRequest(
-                    $request->promptVersion, $request->cacheablePrefix, $request->turns, $request->maxTokens, $request->responseSchema,
-                    $request->timeoutSeconds, $request->userHash, $request->idempotencyKey.':retry',
-                ));
-            } catch (Throwable $exception) {
-                if (! $exception instanceof AiProviderNotConfigured) {
-                    report($exception);
-                }
-
-                return [null, 'provider_error', $attempts, $this->usage($result, $tokens, $latency)];
-            }
-
-            $tokens = [$tokens[0] + $result->usage->inputTokens, $tokens[1] + $result->usage->cachedTokens, $tokens[2] + $result->usage->outputTokens];
-            $latency += $result->latencyMs;
-            if ($result->latencyMs > $request->timeoutSeconds * 1000) {
-                return [null, 'timeout', $attempts, $this->usage($result, $tokens, $latency)];
-            }
-
-            $verdict = $this->guard->inspect($result->content, $context, $rules);
-            if ($verdict->passed()) {
-                break;
-            }
-        }
-
-        return [$verdict, 'guard', $attempts, $this->usage($result, $tokens, $latency)];
-    }
-
-    /**
-     * @param  array{0: int, 1: int, 2: int}  $tokens
-     */
-    private function usage(?AiCompletionResult $last, array $tokens, int $latency): ?AiCompletionResult
-    {
-        return $last === null ? null : new AiCompletionResult(
-            $last->content, new UsageTokens($tokens[0], $tokens[1], $tokens[2]), $last->costMinor, $latency,
-            $last->providerRequestId, $last->finishReason, $last->model,
-        );
     }
 
     /** @param  array<string, int>  $pii */
@@ -551,22 +475,5 @@ final class AskLessonAssistant
 
             return new AssistantReply(AssistantOutcome::Answered, $hit->answer, $hit->pages, $hit->language, true, (int) $message->getKey(), (int) $conversation->getKey(), null, true);
         });
-    }
-
-    /** @return array<string, mixed> */
-    private function schema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['status', 'answer', 'source_pages', 'support_quote', 'language'],
-            'additionalProperties' => false,
-            'properties' => [
-                'status' => ['type' => 'string', 'enum' => ['answered', 'not_in_source', 'out_of_scope']],
-                'answer' => ['type' => 'string'],
-                'source_pages' => ['type' => 'array', 'items' => ['type' => 'integer']],
-                'support_quote' => ['type' => 'string'],
-                'language' => ['type' => 'string', 'enum' => ['ar', 'en']],
-            ],
-        ];
     }
 }

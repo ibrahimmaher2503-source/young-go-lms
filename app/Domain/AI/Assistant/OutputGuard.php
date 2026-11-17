@@ -66,7 +66,7 @@ final class OutputGuard
             return GuardVerdict::rejected(GuardFailure::Quote);
         }
 
-        return GuardVerdict::accepted(AssistantOutcome::Answered, $fitted[0], $cited, $language, true, $fitted[1]);
+        return GuardVerdict::accepted(AssistantOutcome::Answered, $fitted[0], $cited, $language, true, $fitted[1], trim($quote));
     }
 
     /**

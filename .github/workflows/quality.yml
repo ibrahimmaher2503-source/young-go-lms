@@ -72,6 +72,15 @@ jobs:
           done
           cat "$RUNNER_TEMP/horizon.log"
           exit 1
+      - name: AI evaluation gate (fake provider; fails below the AI spec 13.3 thresholds)
+        run: php artisan ai:evaluate --provider=fake --report="$RUNNER_TEMP/ai-eval-report.json"
+      - name: Upload AI evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-eval-report
+          path: ${{ runner.temp }}/ai-eval-report.json
+          if-no-files-found: ignore
       - run: php artisan schedule:run
       - run: php artisan app:doctor
       - run: vendor/bin/pint --test

@@ -15,12 +15,14 @@ final readonly class GuardVerdict
         public string $language,
         public bool $quoteVerified,
         public bool $trimmed,
+        /** The verified supporting quote. Only the console and the evaluation read it; it is never stored or shown to learners. */
+        public string $quote = '',
     ) {}
 
     /** @param  list<int>  $pages */
-    public static function accepted(AssistantOutcome $outcome, string $answer = '', array $pages = [], string $language = 'en', bool $quoteVerified = false, bool $trimmed = false): self
+    public static function accepted(AssistantOutcome $outcome, string $answer = '', array $pages = [], string $language = 'en', bool $quoteVerified = false, bool $trimmed = false, string $quote = ''): self
     {
-        return new self(null, $outcome, $answer, $pages, $language, $quoteVerified, $trimmed);
+        return new self(null, $outcome, $answer, $pages, $language, $quoteVerified, $trimmed, $quote);
     }
 
     public static function rejected(GuardFailure $failure): self
