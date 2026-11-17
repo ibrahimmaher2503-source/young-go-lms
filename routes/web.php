@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\MediaPlaybackController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -26,3 +27,6 @@ Route::get('/_design/tokens', function (Request $request) {
     return response()->view('design.tokens', compact('locale', 'theme'))
         ->header('Cache-Control', 'private, no-store');
 })->name('design.tokens');
+
+// Protected media: only reachable through a signed, short-lived link produced by a media provider.
+Route::get('/media/{asset}', MediaPlaybackController::class)->whereNumber('asset')->middleware('signed')->name('media.play');

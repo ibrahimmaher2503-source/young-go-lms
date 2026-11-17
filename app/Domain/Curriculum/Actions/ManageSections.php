@@ -7,6 +7,7 @@ namespace App\Domain\Curriculum\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Media\LessonPublishRule;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
@@ -48,9 +49,12 @@ final class ManageSections
         CurriculumAccess::authorize($actor, $section->course);
 
         DB::transaction(function () use ($actor, $section, $published): void {
-            $section->update(['published' => $published]);
             $status = $published ? CurriculumItem::STATUS_PUBLISHED : CurriculumItem::STATUS_DRAFT;
             $ids = CurriculumOutline::activeItems(CurriculumItem::query()->where('section_id', $section->getKey()))->pluck('id')->all();
+            if ($published) {
+                LessonPublishRule::assertPublishable(CurriculumItem::query()->whereKey($ids)->with(['itemable', 'course'])->get());
+            }
+            $section->update(['published' => $published]);
             CurriculumItem::query()->whereKey($ids)->update(['status' => $status]);
 
             $recorded = $this->audit->record($published ? 'curriculum.section_published' : 'curriculum.section_unpublished', $section, (int) $actor->getKey(), null, ['items' => count($ids)]);

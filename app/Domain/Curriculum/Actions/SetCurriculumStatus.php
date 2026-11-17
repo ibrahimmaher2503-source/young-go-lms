@@ -7,6 +7,7 @@ namespace App\Domain\Curriculum\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Media\LessonPublishRule;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\User;
@@ -36,6 +37,10 @@ final class SetCurriculumStatus
             $owned = CurriculumOutline::activeItems(CurriculumItem::query()->where('course_id', $course->getKey())->whereKey($ids))->pluck('id')->all();
             if (count($owned) !== count($ids) || $ids === []) {
                 throw ValidationException::withMessages(['items' => __('curriculum.stale')]);
+            }
+
+            if ($status === CurriculumItem::STATUS_PUBLISHED) {
+                LessonPublishRule::assertPublishable(CurriculumItem::query()->whereKey($ids)->with(['itemable', 'course'])->get());
             }
 
             $changed = CurriculumItem::query()->whereKey($ids)->where('status', '!=', $status)->update(['status' => $status]);

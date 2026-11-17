@@ -113,6 +113,9 @@
                                 <span class="yg-cur-num">{{ $i + 1 }}</span>
                                 <span class="yg-cur-name">{{ $lesson->title }}</span>
                                 <span class="yg-cur-meta">{{ __("curriculum.types.{$lesson->type}") }}@if($lesson->duration_seconds) · {{ __('curriculum.minutes', ['count' => (int) round($lesson->duration_seconds / 60)]) }}@endif</span>
+                                @if($lesson->media)
+                                    <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.$lesson->media->protection_tier) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
+                                @endif
                                 <span class="yg-cur-badge {{ $item->status === 'published' ? 'is-published' : '' }}">{{ $item->status === 'published' ? __('curriculum.status_published') : __('curriculum.status_draft') }}</span>
                                 {{-- Slot for the assistant-readiness indicator (T-P3-09): created later, ignored until the view exists. --}}
                                 @includeIf('filament.courses.curriculum-readiness', ['item' => $item])

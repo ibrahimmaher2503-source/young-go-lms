@@ -25,4 +25,6 @@ return [
     'curriculum.section_unpublished' => 'Section unpublished',
     'curriculum.section_archived' => 'Section archived',
     'curriculum.lesson_archived' => 'Lesson archived',
+    'media.attached' => 'Lesson media attached',
+    'media.exception_granted' => 'Open media exception granted',
 ];

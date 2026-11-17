@@ -25,4 +25,6 @@ return [
     'curriculum.section_unpublished' => 'إلغاء نشر قسم',
     'curriculum.section_archived' => 'أرشفة قسم',
     'curriculum.lesson_archived' => 'أرشفة درس',
+    'media.attached' => 'إرفاق وسائط بدرس',
+    'media.exception_granted' => 'منح استثناء لوسائط مفتوحة',
 ];

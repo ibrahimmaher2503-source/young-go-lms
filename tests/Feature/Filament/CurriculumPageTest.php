@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
 use App\Models\Course;
 use App\Models\CurriculumItem;
@@ -137,3 +138,13 @@ it('refuses page actions for a different course', function (): void {
 
     expect(CurriculumItem::query()->orderBy('id')->pluck('sort', 'id')->all())->toBe($before);
 })->group('T-P3-04', 'A3', 'I02');
+
+it('shows each lesson’s protection tier in the manager', function (): void {
+    [$course, $instructor, , $items] = cpBuilt();
+    app(AttachLessonMedia::class)($instructor, $items[0]->itemable, ['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ']);
+    app(AttachLessonMedia::class)($instructor, $items[1]->itemable, ['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789']);
+    $this->actingAs($instructor);
+
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->assertSee(__('media.tiers.T3'))->assertSee(__('media.tiers.T2'));
+})->group('T-P3-05', 'A1', 'YG-GAP-VID-001');

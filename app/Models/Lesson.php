@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Spatie\Translatable\HasTranslations;
@@ -29,6 +30,12 @@ final class Lesson extends Model
     protected function casts(): array
     {
         return ['is_preview' => 'boolean', 'duration_seconds' => 'integer', 'archived_at' => 'datetime'];
+    }
+
+    /** @return HasOne<MediaAsset, $this> */
+    public function media(): HasOne
+    {
+        return $this->hasOne(MediaAsset::class);
     }
 
     /** @return MorphOne<CurriculumItem, $this> */

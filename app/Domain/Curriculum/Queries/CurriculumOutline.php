@@ -10,6 +10,7 @@ use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /** Ordered curriculum for authors (everything not archived) and for students (published only), from one source. */
@@ -30,7 +31,7 @@ final class CurriculumOutline
     public static function forManager(Course $course): Collection
     {
         return CourseSection::query()->where('course_id', $course->getKey())->whereNull('archived_at')->orderBy('sort')->orderBy('id')
-            ->with(['items' => static fn ($items) => self::activeItems($items)->with('itemable')->orderBy('sort')->orderBy('id')])->get();
+            ->with(['items' => static fn ($items) => self::activeItems($items)->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media']])])->orderBy('sort')->orderBy('id')])->get();
     }
 
     /** @return Collection<int, CourseSection> */
