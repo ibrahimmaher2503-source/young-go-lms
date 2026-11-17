@@ -23,14 +23,15 @@ it('renders each native sign-in screen in the shared visual system', function (s
     $page->script('async () => { await document.fonts.ready; }');
     $page->assertVisible('.yg-auth-layout')->assertVisible('.yg-auth-card')
         ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => getComputedStyle(document.querySelector(".yg-auth-layout")).display'))->toBe('grid');
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
     expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
-    $directory = base_path('tests/Browser/screenshots/T-P1-08/surfaces');
+    $directory = base_path('tests/Browser/Screenshots/T-P1-08/reference-pass/surfaces');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-08/surfaces/{$panel}-login-{$locale}-{$theme}-{$width}");
+    $page->screenshot(fullPage: true, filename: "T-P1-08/reference-pass/surfaces/{$panel}-login-{$locale}-{$theme}-{$width}");
     $page->keys('.yg-locale-button', 'Tab');
     expect($page->script('() => document.activeElement !== document.body'))->toBeTrue();
 })->with(['admin', 'instructor', 'finance'])->with($workspaceViewports)->group('browser', 'T-P1-08', 'A4', 'D-026');
@@ -43,15 +44,16 @@ it('renders every panel welcome screen without fabricated module data', function
     $page->refresh();
     $page->script('async () => { await document.fonts.ready; }');
     $page->assertVisible('.yg-dashboard-intro')->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => getComputedStyle(document.querySelector(".yg-dashboard-intro")).display'))->toBe('flex');
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
     expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
     if ($panel !== 'admin') {
         $page->assertNotPresent('.yg-summary-strip');
     }
-    $directory = base_path('tests/Browser/screenshots/T-P1-08/surfaces');
+    $directory = base_path('tests/Browser/Screenshots/T-P1-08/reference-pass/surfaces');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-08/surfaces/{$panel}-dashboard-{$locale}-{$theme}-{$width}");
+    $page->screenshot(fullPage: true, filename: "T-P1-08/reference-pass/surfaces/{$panel}-dashboard-{$locale}-{$theme}-{$width}");
 })->with(['admin', 'instructor', 'finance'])->with($workspaceViewports)->group('browser', 'T-P1-08', 'A4', 'D-026');
