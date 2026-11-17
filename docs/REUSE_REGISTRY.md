@@ -13,6 +13,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ArabicNormalizer | `app/Domain/Shared/Search/ArabicNormalizer.php` | Single Arabic/Latin normalization | built | T-P0-06 |
 | HasSearchText | `app/Domain/Shared/Search/HasSearchText.php` | Fill `search_text` on save | built | T-P0-06 |
 | Category / SaveCategory | `app/Models/Category.php`, `app/Domain/Catalog/Actions/SaveCategory.php` | Bilingual catalog taxonomy and authorized writes that preserve a two-level hierarchy | built | T-P2-01 |
+| CmsPage / HomepageBlock / SaveCmsContent | `app/Models/CmsPage.php`, `app/Models/HomepageBlock.php`, `app/Domain/Content/Actions/SaveCmsContent.php` | Bilingual pages and ordered homepage blocks with permission-gated editor writes | built | T-P2-02 |
 | Money / PriceFormatter | `app/Domain/Shared/Money/` | Integer-minor money + locale formatting | built | T-P0-06 |
 | Market / MarketResolver | `app/Domain/Shared/Markets/` | EG active / SA disabled | built | T-P0-06 |
 | LocalizedDate | `app/Domain/Shared/Time/` | UTC storage, local display | built | T-P0-06 |
@@ -56,6 +57,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |
 | SeoFieldsGroup | `app/Filament/Shared/Forms/` | Bilingual SEO fields | planned | T-P2-05 |
 | WorkspaceListRecords | `app/Filament/Shared/Pages/WorkspaceListRecords.php` | Native ListRecords shell with optional summary strip and Section/View schema sidebar; resource keeps ownership of the table | built | T-P1-08 |
+| Workspace table scroll region | `resources/views/filament/shared/table-scroll-hint.blade.php` | Labels overflowing table wrappers and makes them reachable by keyboard, including empty tables | built | T-P2-02 |
 | WorkspaceDashboard | `app/Filament/Pages/WorkspaceDashboard.php` | Shared panel landing with permission-scoped actual resource links and summary | built | T-P1-08 |
 | WorkspaceLogin | `app/Filament/Auth/WorkspaceLogin.php` | Native Filament authentication in the shared bilingual responsive layout | built | T-P1-08 |
 | WorkspaceAvatarProvider | `app/Filament/Shared/WorkspaceAvatarProvider.php` | Local escaped initial SVG; no external avatar request | built | T-P1-08 |

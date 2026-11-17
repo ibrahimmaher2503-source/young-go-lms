@@ -37,7 +37,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P1-11 | Staff 2FA, child password reset and child notification routing | todo | T-P1-06, T-P1-08, T-P0-07 | implementer, ui-builder, test-writer | M | high | | |
 | T-P1-MG | Milestone gate P1 | todo | T-P1-01..11 | orchestrator | S | normal | | |
 | T-P2-01 | Categories and disciplines | review | T-P1-08 | implementer, test-writer, chore | S | normal | | See task log |
-| T-P2-02 | CMS pages and homepage blocks | todo | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | |
+| T-P2-02 | CMS pages and homepage blocks | review | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | See task log |
 | T-P2-03 | Brand public shell and homepage UI | todo | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | |
 | T-P2-04 | Catalog, search and filters | todo | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | |
 | T-P2-05 | Course detail page and SEO fields group | todo | T-P2-04 | ui-builder, implementer, test-writer | M | normal | | |
@@ -141,6 +141,17 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P2-02 — CMS pages and homepage blocks
+
+- Outcome: content editors manage bilingual custom pages and ordered homepage blocks (YG-WEB-002, YG-WEB-005, PRD §19.2). T-P1-08 and T-P1-10 meet the PO review exception.
+- Reuse `content.page.manage`, `TranslatableTabs`, `WorkspaceListRecords`, Laravel signed URLs and `x-layouts.base`. AI: none — add nothing AI-related.
+- UI: admin list plus create/edit dialogs, edit then preview for drafts. Public pages render escaped CMS content; existing layout/typography and AR/EN keys; a missing/unpublished page uses the branded 404. Full home design belongs to T-P2-03.
+- Data: `pages` with unique slug and publication state, translatable title/body/SEO, and template. `homepage_blocks` with typed bilingual content, visibility and stable order. Seed six draft placeholders and leave legal copy pending owner input.
+- S0 feature tests → S1/S2 migration, models, actions and seeder → S3/S4 signed public/preview routes and native admin resources → S5 AR/EN copy. A1 test valid/invalid/expired preview and editor access plus public publication state; A2 verify root homepage visibility and order. Capture AR/EN desktop/mobile screenshots; visual deferred per PO.
+- S0 RED: `CmsPagesTest.php` exited 1 (3 failed, 3 assertions): missing admin route/seeder and placeholder redirect at `/`. GREEN: 3 passed / 57 assertions, including publish, scoped preview, escaping, protected seed copy, and reorder/hide through the admin form.
+- G1 Pint and G2 Larastan passed. G3 full non-browser: 316 passed / 1767 assertions, 1 existing I02 TODO, 92.9% coverage; threshold-module verifier exited 0. G4 architecture: 6/28. G5 invariants: 3/9 with the same TODO. G6 AR/EN/RTL, audit, build, isolated SQLite migrate+seed, G10 coverage and G11 doctor passed. Logs: `agents/logs/T-P2-02/`.
+- G7: 14 browser tests / 142 assertions, including keyboard access for empty CMS and category tables. 24 captures in `tests/Browser/screenshots/T-P2-02/`; visual deferred per PO. G8/G9 N/A. Independent review pending. Legal placeholders remain drafts pending owner copy.
 
 ### T-P2-01 — Categories and disciplines
 

@@ -57,7 +57,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | PRD §18 | Manual grants, enrollment and registrations | T-P4-02 | |
 | PRD §19 | Admin and instructor operations | T-P1-08, T-P2-02, T-P9-09 | |
 | PRD §19.1 | SKIT \[APPROVED\] | T-P1-08 | |
-| PRD §19.2 | Legacy sidebar/module inventory \[LEGACY-CARRY\] | T-P1-08, T-P2-02, T-P9-09 | |
+| PRD §19.2 | Legacy sidebar/module inventory \[LEGACY-CARRY\] | T-P1-08, T-P2-02, T-P9-09 | `tests/Browser/CmsPagesBrowserTest.php` (CMS admin modules) |
 | PRD §20 | Notifications and communications | T-P5-04, T-P9-05 | |
 | PRD §21 | Reporting and exports | T-P9-06 | |
 | PRD §22 | Audit, settings and integrations | T-P1-04, T-P9-09 | |
@@ -156,10 +156,10 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-VID-003 |  | T-P4-07 | |
 | YG-GAP-VID-004 |  | T-P3-05 | |
 | YG-WEB-001 |  | T-P2-03 | |
-| YG-WEB-002 |  | T-P2-02 | |
+| YG-WEB-002 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (block order and visibility) |
 | YG-WEB-003 |  | T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category hierarchy) |
 | YG-WEB-004 |  | T-P2-05 | |
-| YG-WEB-005 |  | T-P2-02 | |
+| YG-WEB-005 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (publication, editor preview and draft seeds) |
 | YG-WEB-006 |  | T-P2-07 | |
 | YG-WEB-007 |  | T-P2-08 | |
 | YG-WEB-008 |  | T-P2-08 | |

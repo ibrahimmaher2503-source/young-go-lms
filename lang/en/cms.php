@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'page' => 'Page',
+    'pages' => 'Custom pages',
+    'block' => 'Homepage block',
+    'blocks' => 'Homepage blocks',
+    'title' => 'Title',
+    'body' => 'Body',
+    'slug' => 'URL slug',
+    'status' => 'Status',
+    'draft' => 'Draft',
+    'published' => 'Published',
+    'template' => 'Template',
+    'standard' => 'Standard',
+    'policy' => 'Policy page',
+    'seo_title' => 'SEO title',
+    'seo_description' => 'SEO description',
+    'preview' => 'Preview',
+    'preview_notice' => 'Editor preview',
+    'placeholder' => 'Placeholder draft. Replace with owner-approved copy before publishing.',
+    'replace_placeholder' => 'Replace the placeholder text in both languages before publishing.',
+    'type' => 'Block type',
+    'sort' => 'Display order',
+    'visible' => 'Visible on homepage',
+    'hero' => 'Hero',
+    'categories' => 'Categories',
+    'featured_courses' => 'Featured courses',
+    'how_it_works' => 'How it works',
+    'instructors' => 'Instructors',
+    'testimonials' => 'Testimonials',
+    'parents' => 'For parents',
+    'faq' => 'Frequently asked questions',
+    'cta' => 'Call to action',
+];

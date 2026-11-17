@@ -3,6 +3,7 @@
 ## 2026-11-17
 
 - T-P2-01 adds an Arabic/English admin category directory with a two-level hierarchy, display ordering, locale-specific slugs, normalized search, and image uploads. The seeder provides seven editable creative disciplines.
+- T-P2-02 adds bilingual CMS pages and ordered homepage blocks. Editors can preview drafts using expiring signed links, while public routes render published pages and visible blocks. Six editable placeholder pages start as drafts.
 
 ## 2026-11-16 --- Pack v3.2: LearnHouse reference study + second gap review
 
