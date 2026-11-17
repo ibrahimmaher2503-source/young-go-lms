@@ -42,6 +42,7 @@ return [
     'curriculum_document.extraction_failed' => 'Curriculum PDF extraction failed',
     'curriculum_document.text_edited' => 'Extracted page text edited',
     'curriculum_document.key_terms_approved' => 'Key terms approved',
+    'ai.assistant_asked' => 'Lesson assistant question answered',
     'lesson_resource.added' => 'Lesson resource added',
     'lesson_resource.removed' => 'Lesson resource removed',
     'course.duplicated' => 'Course duplicated',

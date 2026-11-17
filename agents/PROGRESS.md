@@ -95,7 +95,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P6-05 | Completion engine | review | T-P6-02, T-P6-04, T-P5-05 | implementer, test-writer | M | high | | Code done; tests: pending (other model), docs/test-prompts/T-P6-05.md; phpstan, Arch, translations, RTL pass; G7 open |
 | T-P6-06 | Certificates and verification | review | T-P6-05, T-P1-02 | implementer, ui-builder, test-writer | M | high | | Code done; tests: pending (other model), docs/test-prompts/T-P6-06.md; phpstan, Arch, translations, RTL pass; real PDF render, A2 Arabic snapshot and G7 open (needs Chromium) |
 | T-P6-MG | Milestone gate P6 | todo | T-P6-01..06 | orchestrator | S | normal | | |
-| T-P7-01 | Assistant core pipeline and output guard | todo | T-P3-09, T-P3-10, T-P4-03 | implementer, test-writer | L | high | | |
+| T-P7-01 | Assistant core pipeline and output guard | review | T-P3-09, T-P3-10, T-P4-03 | implementer, test-writer | L | high | | Code done; tests: pending (other model), docs/test-prompts/T-P7-01.md; phpstan, Arch, translations, RTL pass; fake provider only (O-014 open) |
 | T-P7-02 | Input guards, quiz guard, cache and quotas | todo | T-P7-01, T-P6-01 | implementer, test-writer | M | high | | |
 | T-P7-03 | Student assistant panel UI | todo | T-P7-01 | ui-builder, implementer, test-writer, chore | M | high | | |
 | T-P7-04 | Feedback, help requests and instructor/admin queue | todo | T-P7-03, T-P5-04 | implementer, ui-builder, test-writer | L | high | | |

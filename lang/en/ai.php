@@ -23,6 +23,10 @@ return [
     'temporarily_unavailable' => 'The lesson assistant is temporarily unavailable.',
     'request_created' => 'Your instructor request was created.',
     'view_request' => 'View request',
+    'thread_limit' => 'You have reached the question limit for this conversation. You can send a request to your instructor.',
+    'simpler_limit' => 'You can ask for a simpler explanation only once per question.',
+    'invalid_conversation' => 'This conversation is not available.',
+    'question_invalid' => 'Write a question of 1 to :max characters.',
     'unavailable' => [
         'global_off' => 'The lesson assistant is not available right now.',
         'course_off' => 'The lesson assistant is turned off for this course.',

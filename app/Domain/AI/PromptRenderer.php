@@ -10,7 +10,7 @@ use App\Models\AiPromptVersion;
 final class PromptRenderer
 {
     /** @param  array<int, string>  $pages  page number => text */
-    public function render(AiPromptVersion $prompt, string $tier, string $replyLanguage, string $lessonTitle, int $documentVersion, array $pages): string
+    public function render(AiPromptVersion $prompt, string $tier, string $replyLanguage, string $lessonTitle, int $documentVersion, array $pages, ?int $maxWords = null): string
     {
         $tag = (string) config('ai.source_tag', 'lesson_source');
         $tagged = '';
@@ -19,7 +19,7 @@ final class PromptRenderer
         }
 
         return strtr($prompt->template, [
-            '{max_words}' => (string) config('ai.max_words', 80),
+            '{max_words}' => (string) ($maxWords ?? config('ai.max_words', 80)),
             '{style_tier_instructions}' => $prompt->style_tiers[$tier] ?? '',
             '{reply_language}' => $replyLanguage,
             '{lesson_title}' => $lessonTitle,

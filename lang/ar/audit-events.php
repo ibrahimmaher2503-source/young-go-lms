@@ -42,6 +42,7 @@ return [
     'curriculum_document.extraction_failed' => 'فشل استخراج نص ملف المنهج PDF',
     'curriculum_document.text_edited' => 'تعديل نص صفحة مستخرج',
     'curriculum_document.key_terms_approved' => 'اعتماد المصطلحات الرئيسية',
+    'ai.assistant_asked' => 'الرد على سؤال لمساعد الدرس',
     'lesson_resource.added' => 'إضافة مورد للدرس',
     'lesson_resource.removed' => 'حذف مورد من الدرس',
     'course.duplicated' => 'نسخ دورة',
