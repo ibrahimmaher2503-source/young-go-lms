@@ -22,4 +22,11 @@ return [
         'T3' => 'Open',
     ],
     'exception' => 'Exception granted',
+    'too_large' => 'The file is empty or larger than the allowed size.',
+    'store_failed' => 'The file could not be saved. Try again.',
+    'status' => [
+        'processing' => 'Processing',
+        'ready' => 'Ready',
+        'failed' => 'Failed',
+    ],
 ];

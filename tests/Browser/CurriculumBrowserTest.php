@@ -74,3 +74,22 @@ it('reorders with the keyboard buttons', function (): void {
     $first = CurriculumOutline::forManager($course)->first()->items->pluck('id')->map(fn ($id) => (int) $id)->all();
     expect($first)->toBe([$items[1]->id, $items[0]->id, $items[2]->id]);
 })->group('browser', 'T-P3-04', 'A1');
+
+it('renders the lesson editor with the upload field accessibly in both directions and sizes', function (string $locale, int $width, int $height): void {
+    [$course, $instructor, , $items] = browserCurriculum($locale);
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($instructor);
+
+    $page = $this->visit("/instructor/courses/{$course->id}/curriculum")->resize($width, $height);
+    $page->click("[data-item=\"{$items[0]->id}\"] .yg-cur-actions button:nth-child(3)")->wait(1.5);
+    $page->select('[id$="media_provider"]', 'signed_storage')->wait(1.5);
+    $page->script('async () => { await document.fonts.ready; }');
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
+
+    $directory = base_path('tests/Browser/screenshots/T-P3-06');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: false, filename: "T-P3-06/lesson-editor-{$locale}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-06', 'A3', 'PRD-09.6');

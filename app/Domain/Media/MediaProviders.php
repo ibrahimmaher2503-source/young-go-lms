@@ -20,10 +20,10 @@ final class MediaProviders
     public static function all(): array
     {
         $providers = [
-            new PrivateFileProvider('signed_storage', 'video', PlaybackDescriptor::VIDEO, ['mp4', 'webm', 'm4v', 'mov']),
-            new PrivateFileProvider('audio', 'audio', PlaybackDescriptor::AUDIO, ['mp3', 'm4a', 'ogg', 'wav']),
-            new PrivateFileProvider('document', 'document', PlaybackDescriptor::DOCUMENT, ['pdf']),
-            new PrivateFileProvider('image', 'image', PlaybackDescriptor::IMAGE, ['png', 'jpg', 'jpeg', 'webp']),
+            new PrivateFileProvider('signed_storage', 'video', PlaybackDescriptor::VIDEO, ['mp4', 'webm', 'm4v', 'mov'], ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v']),
+            new PrivateFileProvider('audio', 'audio', PlaybackDescriptor::AUDIO, ['mp3', 'm4a', 'ogg', 'wav'], ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/ogg', 'audio/wav', 'audio/x-wav', 'video/mp4']),
+            new PrivateFileProvider('document', 'document', PlaybackDescriptor::DOCUMENT, ['pdf'], ['application/pdf']),
+            new PrivateFileProvider('image', 'image', PlaybackDescriptor::IMAGE, ['png', 'jpg', 'jpeg', 'webp'], ['image/png', 'image/jpeg', 'image/webp']),
             new VimeoProvider,
             new YouTubeProvider,
             new ExternalUrlProvider,

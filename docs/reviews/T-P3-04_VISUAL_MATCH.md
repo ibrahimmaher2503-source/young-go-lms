@@ -9,3 +9,7 @@ Differences that remain, with the reason:
 - The reference's per-row clipboard and video icons and the "…" overflow menu are replaced by text actions (move up/down, edit, archive) so every action is keyboard- and screen-reader-reachable.
 - Section drag handles are not offered: sections move with their up/down buttons, lessons move by drag or by buttons.
 - Pixel-level typography and spacing are not claimed equal. No independent visual score has been run.
+
+## T-P3-06 addendum (lesson editor)
+
+Captures: `tests/Browser/screenshots/T-P3-06/lesson-editor-*` (AR/EN, 390 and 1440, axe clean). The lesson editor is the same modal as in T-P3-04, now with description, media source (type-appropriate choices), file upload with Filament's progress bar, link and text fields, and the protection tier and media status badges on each lesson row. Differences from the reference stay as listed above: the reference shows a permanent side panel instead of a modal, and the curriculum PDF and assistant-readiness rows belong to T-P3-08 and T-P3-09. Automatic duration detection is not offered (no media service is connected); the author enters minutes.

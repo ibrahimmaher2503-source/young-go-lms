@@ -10,7 +10,9 @@ use App\Domain\Media\MediaProviders;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
 use App\Models\User;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /** Sets a lesson's media from a validated source. A lesson has one media source; attaching again replaces it. */
@@ -30,7 +32,9 @@ final class AttachLessonMedia
             $attributes['duration_seconds'] = max(0, min(86400, (int) $source['duration_seconds']));
         }
 
-        return DB::transaction(function () use ($actor, $lesson, $attributes): MediaAsset {
+        $oldPath = MediaAsset::query()->where('lesson_id', $lesson->getKey())->value('path');
+
+        $asset = DB::transaction(function () use ($actor, $lesson, $attributes): MediaAsset {
             // Replacing the source also drops any exception granted for the previous one.
             MediaAsset::query()->where('lesson_id', $lesson->getKey())->delete();
             $asset = MediaAsset::query()->create([...$attributes, 'lesson_id' => $lesson->getKey()]);
@@ -41,5 +45,12 @@ final class AttachLessonMedia
 
             return $asset;
         });
+
+        // The replaced private file is no longer referenced by anything.
+        if (is_string($oldPath) && $oldPath !== $asset->path && str_starts_with($oldPath, 'media/')) {
+            Storage::disk(Config::string('media.disk'))->delete($oldPath);
+        }
+
+        return $asset;
     }
 }

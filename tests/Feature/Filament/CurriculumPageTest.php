@@ -9,10 +9,14 @@ use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\Lesson;
+use App\Models\MediaAsset;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 
@@ -148,3 +152,50 @@ it('shows each lesson’s protection tier in the manager', function (): void {
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
         ->assertSee(__('media.tiers.T3'))->assertSee(__('media.tiers.T2'));
 })->group('T-P3-05', 'A1', 'YG-GAP-VID-001');
+
+it('saves a lesson with a private upload from the lesson editor and shows it in the manager', function (): void {
+    Storage::fake('local');
+    [$course, $instructor, $sections] = cpBuilt();
+    $this->actingAs($instructor);
+    $mp4 = "\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom".str_repeat("\0", 64);
+
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->callAction('addLesson', [
+            'section_id' => $sections[0]->id, 'title' => ['en' => 'Uploaded lesson', 'ar' => 'درس مرفوع'], 'type' => 'video', 'duration_minutes' => 7,
+            'description' => ['en' => 'About the lesson'], 'media_provider' => 'signed_storage',
+            'media_file' => UploadedFile::fake()->createWithContent('clip.mp4', $mp4),
+        ])->assertHasNoActionErrors()->assertSee('Uploaded lesson')->assertSee(__('media.tiers.T1'));
+
+    $lesson = Lesson::query()->latest('id')->first();
+    expect($lesson->media->provider)->toBe('signed_storage')->and($lesson->media->protection_tier)->toBe('T1')
+        ->and($lesson->getTranslation('description', 'en'))->toBe('About the lesson')->and($lesson->duration_seconds)->toBe(420);
+    Storage::disk('local')->assertExists($lesson->media->path);
+    expect(Storage::disk('local')->allFiles('media/uploads'))->toBe([]);
+})->group('T-P3-06', 'A2');
+
+it('rejects a wrong file type from the lesson editor and saves links and text sources', function (): void {
+    Storage::fake('local');
+    [$course, $instructor, $sections, $items] = cpBuilt();
+    $this->actingAs($instructor);
+    $test = Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()]);
+
+    $test->callAction('addLesson', [
+        'section_id' => $sections[0]->id, 'title' => ['en' => 'Bad file'], 'type' => 'video', 'media_provider' => 'signed_storage',
+        'media_file' => UploadedFile::fake()->createWithContent('clip.mp4', "MZ\x90\x00 not a video"),
+    ]);
+    $test->assertNotified()->unmountAction();
+    expect(MediaAsset::query()->count())->toBe(0)->and(Lesson::query()->where('title->en', 'Bad file')->exists())->toBeFalse();
+
+    $test->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
+        'title' => ['en' => 'Tools'], 'type' => 'video', 'media_provider' => 'youtube', 'media_url' => 'https://youtu.be/dQw4w9WgXcQ',
+    ])->assertHasNoActionErrors();
+    expect($items[0]->itemable->refresh()->media->protection_tier)->toBe('T3');
+
+    $test->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[1]->itemable_id]), [
+        'title' => ['en' => 'Lines'], 'type' => 'text', 'media_provider' => 'rich_text', 'media_text' => 'Draw straight lines.',
+    ])->assertHasNoActionErrors();
+    expect($items[1]->itemable->refresh()->media->metadata['text'])->toBe('Draw straight lines.');
+
+    $test->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), ['title' => ['en' => 'Tools renamed'], 'type' => 'video']);
+    expect($items[0]->itemable->refresh()->media->provider)->toBe('youtube');
+})->group('T-P3-06', 'A1', 'A2');

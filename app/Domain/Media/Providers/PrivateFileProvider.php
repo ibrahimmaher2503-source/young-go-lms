@@ -18,13 +18,29 @@ use Illuminate\Validation\ValidationException;
  */
 final class PrivateFileProvider implements VideoDeliveryProvider
 {
-    /** @param list<string> $extensions */
+    /**
+     * @param  list<string>  $extensions
+     * @param  list<string>  $mimes
+     */
     public function __construct(
         private readonly string $key,
         private readonly string $kind,
         private readonly string $type,
         private readonly array $extensions,
+        private readonly array $mimes = [],
     ) {}
+
+    /** @return list<string> */
+    public function extensions(): array
+    {
+        return $this->extensions;
+    }
+
+    /** @return list<string> content types accepted when a file is uploaded */
+    public function mimes(): array
+    {
+        return $this->mimes;
+    }
 
     public function key(): string
     {

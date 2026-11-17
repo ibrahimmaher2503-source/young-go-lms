@@ -116,6 +116,9 @@
                                 @if($lesson->media)
                                     <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.$lesson->media->protection_tier) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
                                 @endif
+                                @if($lesson->media && $lesson->media->status !== 'ready')
+                                    <span class="yg-cur-badge">{{ __('media.status.'.$lesson->media->status) }}</span>
+                                @endif
                                 <span class="yg-cur-badge {{ $item->status === 'published' ? 'is-published' : '' }}">{{ $item->status === 'published' ? __('curriculum.status_published') : __('curriculum.status_draft') }}</span>
                                 {{-- Slot for the assistant-readiness indicator (T-P3-09): created later, ignored until the view exists. --}}
                                 @includeIf('filament.courses.curriculum-readiness', ['item' => $item])
