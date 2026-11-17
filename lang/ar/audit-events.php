@@ -52,4 +52,11 @@ return [
     'security.session_limit_signout' => 'تسجيل خروج أقدم جلسة (الحد)',
     'security.device_refused' => 'رفض جهاز جديد (الحد)',
     'security.devices_reset' => 'إعادة ضبط أجهزة المتعلم',
+    'assignment.configured' => 'حفظ إعدادات الواجب',
+    'assignment.attachment_added' => 'إرفاق ملف بالواجب',
+    'assignment.attachment_removed' => 'إزالة ملف من الواجب',
+    'assignment.submission_started' => 'بدء العمل على واجب',
+    'assignment.draft_saved' => 'حفظ مسودة واجب',
+    'assignment.submitted' => 'تسليم واجب',
+    'assignment.resubmitted' => 'إعادة تسليم واجب',
 ];

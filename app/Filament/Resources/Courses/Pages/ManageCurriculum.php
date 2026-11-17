@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Pages;
 
+use App\Domain\Assignments\Actions\ConfigureAssignment;
+use App\Domain\Assignments\Actions\ManageAssignmentAttachments;
 use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
@@ -21,6 +23,9 @@ use App\Domain\Media\MediaProviders;
 use App\Domain\Media\Providers\PrivateFileProvider;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Courses\Pages\Concerns\ManagesLiveSessions;
+use App\Filament\Shared\Forms\TranslatableTabs;
+use App\Models\Assignment;
+use App\Models\AssignmentAttachment;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
@@ -29,6 +34,8 @@ use App\Models\LibraryItem;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -207,6 +214,131 @@ final class ManageCurriculum extends Page
                 }
                 Notification::make()->title(__('curriculum.saved'))->success()->send();
             });
+    }
+
+    public function configureAssignmentAction(): Action
+    {
+        return Action::make('configureAssignment')->label(__('curriculum.assignment.configure'))->modalHeading(__('curriculum.assignment.settings'))->modalWidth('3xl')
+            ->schema([
+                TranslatableTabs::make(static fn (string $locale): array => [
+                    Textarea::make("instructions.{$locale}")->label(__('curriculum.assignment.instructions').' ('.strtoupper($locale).')')->rows(5)->maxLength(10000)
+                        ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]),
+                ]),
+                DateTimePicker::make('due_at')->label(__('curriculum.assignment.due_at'))->helperText(__('curriculum.assignment.due_help', ['zone' => $this->assignmentZone()]))->seconds(false),
+                CheckboxList::make('allowed_types')->label(__('curriculum.assignment.allowed_types'))->required()->minItems(1)->columns(3)
+                    ->options(array_combine(Assignment::TYPES, array_map(static fn (string $type): string => __("curriculum.assignment.types.{$type}"), Assignment::TYPES))),
+                TextInput::make('max_size_mb')->label(__('curriculum.assignment.max_size'))->helperText(__('curriculum.assignment.max_size_help'))->numeric()->minValue(1)
+                    ->maxValue(intdiv(Config::integer('assignments.ceiling_kilobytes'), 1024)),
+                Select::make('late_policy')->label(__('curriculum.assignment.late_policy'))->required()->native(false)->live()->default(Assignment::LATE_NOT_ALLOWED)
+                    ->options(array_combine(Assignment::LATE_POLICIES, array_map(static fn (string $policy): string => __("curriculum.assignment.late.{$policy}"), Assignment::LATE_POLICIES))),
+                TextInput::make('late_penalty_percent')->label(__('curriculum.assignment.late_penalty'))->numeric()->minValue(1)->maxValue(100)->suffix('%')
+                    ->visible(static fn (Get $get): bool => $get('late_policy') === Assignment::LATE_PENALTY)->required(static fn (Get $get): bool => $get('late_policy') === Assignment::LATE_PENALTY),
+                TextInput::make('max_revisions')->label(__('curriculum.assignment.max_revisions'))->helperText(__('curriculum.assignment.max_revisions_help'))->numeric()->minValue(0)->maxValue(10)->default(0),
+                Select::make('status')->label(__('curriculum.assignment.status'))->required()->native(false)
+                    ->options([CurriculumItem::STATUS_DRAFT => __('curriculum.status_draft'), CurriculumItem::STATUS_PUBLISHED => __('curriculum.status_published')]),
+                CheckboxList::make('remove_attachments')->label(__('curriculum.assignment.remove_attachments'))->columns(1)
+                    ->options(fn (): array => $this->mountedAssignment()->attachments->mapWithKeys(static fn (AssignmentAttachment $a): array => [$a->getKey() => (string) $a->title])->all())
+                    ->visible(fn (): bool => $this->mountedAssignment()->attachments->isNotEmpty()),
+                FileUpload::make('attachment_file')->label(__('curriculum.assignment.attachment_file'))->helperText(__('curriculum.assignment.attachment_help', ['max' => ManageAssignmentAttachments::MAX]))
+                    ->disk(Config::string('media.disk'))->directory('assignments/staging')->visibility('private')->maxSize(Config::integer('assignments.ceiling_kilobytes'))->preserveFilenames(false),
+                TextInput::make('attachment_title.ar')->label(__('curriculum.assignment.attachment_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                TextInput::make('attachment_title.en')->label(__('curriculum.assignment.attachment_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+            ])
+            ->fillForm(function (array $arguments): array {
+                $assignment = $this->assignmentFor($arguments['assignment'] ?? 0);
+
+                return [
+                    'instructions' => $assignment->getTranslations('instructions'),
+                    'due_at' => $assignment->due_at?->copy()->setTimezone($this->assignmentZone())->format('Y-m-d H:i:s'),
+                    'allowed_types' => $assignment->allowed_types ?? [], 'max_size_mb' => $assignment->max_size_kb === null ? null : (int) ceil($assignment->max_size_kb / 1024),
+                    'late_policy' => $assignment->late_policy, 'late_penalty_percent' => $assignment->late_penalty_percent, 'max_revisions' => $assignment->max_revisions,
+                    'status' => $this->assignmentItem($assignment)->status, 'remove_attachments' => [],
+                ];
+            })
+            ->action(function (array $data, array $arguments, Action $action): void {
+                $assignment = $this->assignmentFor($arguments['assignment'] ?? 0);
+                if (! $this->attempt($action, function () use ($assignment, $data): void {
+                    DB::transaction(function () use ($assignment, $data): void {
+                        $actor = $this->actor();
+                        app(ConfigureAssignment::class)($actor, $assignment, [
+                            'instructions' => (array) ($data['instructions'] ?? []), 'due_at' => $data['due_at'] ?? null, 'timezone' => $this->assignmentZone(),
+                            'allowed_types' => (array) ($data['allowed_types'] ?? []), 'late_policy' => $data['late_policy'] ?? Assignment::LATE_NOT_ALLOWED,
+                            'max_size_kb' => filled($data['max_size_mb'] ?? null) ? (int) $data['max_size_mb'] * 1024 : null,
+                            'late_penalty_percent' => filled($data['late_penalty_percent'] ?? null) ? (int) $data['late_penalty_percent'] : null,
+                            'max_revisions' => filled($data['max_revisions'] ?? null) ? (int) $data['max_revisions'] : 0,
+                        ]);
+                        $item = $this->assignmentItem($assignment);
+                        if ($item->status !== ($data['status'] ?? $item->status)) {
+                            app(SetCurriculumStatus::class)($actor, $this->course(), [$item->getKey()], (string) $data['status']);
+                        }
+                        $this->saveAssignmentAttachments($assignment, $data);
+                    });
+                })) {
+                    return;
+                }
+                Notification::make()->title(__('curriculum.saved'))->success()->send();
+            });
+    }
+
+    /**
+     * Removes the ticked attachments and adds the uploaded one. The staging copy Filament made is always deleted.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function saveAssignmentAttachments(Assignment $assignment, array $data): void
+    {
+        $manager = app(ManageAssignmentAttachments::class);
+        foreach ((array) ($data['remove_attachments'] ?? []) as $id) {
+            $attachment = $assignment->attachments()->find($id);
+            if ($attachment instanceof AssignmentAttachment) {
+                $manager->remove($this->actor(), $attachment);
+            }
+        }
+
+        $stored = $data['attachment_file'] ?? null;
+        $stored = is_array($stored) ? (reset($stored) ?: null) : $stored;
+        if (! is_string($stored) || $stored === '') {
+            return;
+        }
+        $disk = Storage::disk(Config::string('media.disk'));
+        try {
+            $title = array_filter((array) ($data['attachment_title'] ?? []), static fn ($v): bool => is_string($v) && trim($v) !== '');
+            $manager->add($this->actor(), $assignment, new File($disk->path($stored)), $title);
+        } finally {
+            $disk->delete($stored);
+        }
+    }
+
+    /** The assignment the open settings dialog belongs to (field closures do not receive the action arguments). */
+    private function mountedAssignment(): Assignment
+    {
+        $arguments = $this->getMountedAction()?->getArguments() ?? [];
+
+        return $this->assignmentFor($arguments['assignment'] ?? 0);
+    }
+
+    private function assignmentZone(): string
+    {
+        $zone = $this->actor()->getAttribute('timezone');
+
+        return is_string($zone) && in_array($zone, \DateTimeZone::listIdentifiers(), true) ? $zone : 'UTC';
+    }
+
+    private function assignmentFor(int|string $id): Assignment
+    {
+        $item = CurriculumItem::query()->where('course_id', $this->course()->getKey())->where('itemable_type', 'assignment')->where('itemable_id', $id)->firstOrFail();
+        $assignment = $item->itemable;
+        abort_unless($assignment instanceof Assignment, 404);
+
+        return $assignment;
+    }
+
+    private function assignmentItem(Assignment $assignment): CurriculumItem
+    {
+        $item = $assignment->item()->first();
+        abort_unless($item instanceof CurriculumItem, 404);
+
+        return $item;
     }
 
     public function archiveAssessmentAction(): Action

@@ -48,6 +48,9 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | GetJoinLink / JoinWindow / UpcomingSessions | `app/Domain/Live/` | Protected meeting link, join window and learner schedule | built | T-P5-03 |
 | LocalizedNotification + NotificationDispatcher | `app/Domain/Notifications/` | Localized, deduplicated notifications for every module (live notices, later help requests) | built | T-P5-04 |
 | StartQuizAttempt / SubmitQuizAttempt / QuizAttemptView / QuizGuard | `app/Domain/Assessment/` | Quiz attempts, grading, result visibility and the assistant quiz-guard hook | built | T-P6-02 |
+| SaveSubmissionDraft / SubmitAssignment / SubmissionView / SubmissionRevisions / SubmissionFileAccess | `app/Domain/Assignments/` | Learner assignment work: drafts, submit, late policy, revisions; the one rule for who may open a submission file (reviewer side reuses `SubmissionFileAccess` and `SubmissionRevisions`) | built | T-P6-03 |
+| AssignmentSubmissionController (save, submit, file download, brief attachment) | `app/Http/Controllers/AssignmentSubmissionController.php` | Learner assignment HTTP; owner/parent/staff-only streaming of private submission files, never the storage path | built | T-P6-03 |
+| learning.assignment-card, ui.submission-uploader | `resources/views/components/learning/`, `resources/views/components/ui/` | Assignment page card and private-upload field with existing-file list | built | T-P6-03 |
 | RecordProgress | `app/Domain/Learning/Actions/` | Only writer of progress | planned | T-P4-04 |
 | HtmlSanitizer | `app/Domain/Shared/Security/` | Single sanitizer (rich text, messages) | planned | T-P3-15 |
 | ImageReencoder | `app/Domain/Media/` | Strip EXIF/GPS on upload | planned | T-P3-08 |

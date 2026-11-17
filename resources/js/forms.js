@@ -167,3 +167,13 @@ document.addEventListener('input', (event) => {
     meter.querySelector('progress').value = value === '' ? 0 : Math.max(1, score);
     meter.querySelector('[data-strength-text]').textContent = value === '' ? '' : JSON.parse(meter.dataset.labels)[Math.max(1, score) - 1];
 });
+
+// Assignment submission: uploads can take a while, so lock the buttons and show the loading line once the form is sent.
+document.addEventListener('submit', (event) => {
+    const form = event.target.closest?.('form[data-assignment-form]');
+    if (!form || form.dataset.busy) return;
+    form.dataset.busy = '1';
+    form.querySelector('[data-assignment-loading]')?.classList.remove('hidden');
+    // Disable on the next tick so the clicked button's formaction and value are still submitted.
+    setTimeout(() => form.querySelectorAll('button[type="submit"]').forEach((button) => { button.disabled = true; button.setAttribute('aria-busy', 'true'); }), 0);
+});

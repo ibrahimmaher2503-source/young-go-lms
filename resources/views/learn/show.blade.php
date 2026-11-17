@@ -67,6 +67,8 @@
                     <x-learning.live-session-card :session="$liveSession" :state="$liveState" :replay-url="$replayUrl ?? null" :join-url="route('learn.join', ['course' => $course->id, 'item' => $item->id])" :viewer="$learner" />
                 @elseif($quizOverview ?? null)
                     <x-learning.quiz-card :course="$course" :item="$item" :overview="$quizOverview" />
+                @elseif($assignmentView ?? null)
+                    <x-learning.assignment-card :course="$course" :item="$item" :view="$assignmentView" :viewer="$learner" />
                 @elseif($lesson === null)
                     <x-ui.card><p>{{ __('learn.assessment_soon') }}</p></x-ui.card>
                 @else

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\LiveJoinController;
@@ -32,6 +33,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/learn/{course}/{item}/quiz/{attempt}', [QuizAttemptController::class, 'show'])->whereNumber(['course', 'item', 'attempt'])->name('quiz.attempt');
     Route::post('/learn/{course}/{item}/quiz/{attempt}/save', [QuizAttemptController::class, 'save'])->whereNumber(['course', 'item', 'attempt'])->middleware('throttle:progress')->name('quiz.save');
     Route::post('/learn/{course}/{item}/quiz/{attempt}/submit', [QuizAttemptController::class, 'submit'])->whereNumber(['course', 'item', 'attempt'])->middleware('throttle:progress')->name('quiz.submit');
+    Route::post('/learn/{course}/{item}/assignment/save', [AssignmentSubmissionController::class, 'save'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('assignment.save');
+    Route::post('/learn/{course}/{item}/assignment/submit', [AssignmentSubmissionController::class, 'submit'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('assignment.submit');
+    Route::get('/assignment/submission-files/{file}', [AssignmentSubmissionController::class, 'download'])->whereNumber('file')->name('assignment.file');
+    Route::get('/assignment/attachments/{attachment}', [AssignmentSubmissionController::class, 'attachment'])->whereNumber('attachment')->name('assignment.attachment');
     Route::post('/learn/{course}/{item}/progress', [ProgressController::class, 'heartbeat'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.progress');
     Route::post('/learn/{course}/{item}/complete', [ProgressController::class, 'complete'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.complete');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');

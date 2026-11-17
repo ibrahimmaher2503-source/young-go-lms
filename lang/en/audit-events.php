@@ -52,4 +52,11 @@ return [
     'security.session_limit_signout' => 'Oldest session signed out (limit)',
     'security.device_refused' => 'New device refused (limit)',
     'security.devices_reset' => 'Learner devices reset',
+    'assignment.configured' => 'Assignment settings saved',
+    'assignment.attachment_added' => 'Assignment file attached',
+    'assignment.attachment_removed' => 'Assignment file removed',
+    'assignment.submission_started' => 'Assignment work started',
+    'assignment.draft_saved' => 'Assignment draft saved',
+    'assignment.submitted' => 'Assignment submitted',
+    'assignment.resubmitted' => 'Assignment resubmitted',
 ];
