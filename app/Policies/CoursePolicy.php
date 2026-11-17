@@ -17,6 +17,11 @@ final class CoursePolicy extends BasePolicy
             && ($user->can('panel.admin.access') || $user->can('panel.instructor.access'));
     }
 
+    public function create(User $user): bool
+    {
+        return $this->allows($user, 'course.create') && $user->can('panel.admin.access');
+    }
+
     public function view(User $user, Course $course): Response
     {
         return CourseDirectory::for($user)->whereKey($course->getKey())->exists()

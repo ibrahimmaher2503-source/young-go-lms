@@ -16,4 +16,6 @@ return [
     'auth.two_factor_recovery_used' => 'Recovery code used',
     'auth.two_factor_recovery_regenerated' => 'Recovery codes regenerated',
     'guardian.child_password_reset' => 'Child password reset by parent',
+    'course.draft_created' => 'Course draft created',
+    'course.ownership_changed' => 'Course ownership changed',
 ];

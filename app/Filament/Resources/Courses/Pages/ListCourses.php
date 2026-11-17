@@ -8,6 +8,7 @@ use App\Domain\Catalog\Queries\CourseDirectory;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Shared\Actions\ExportCsvAction;
 use App\Filament\Shared\Pages\WorkspaceListRecords;
+use Filament\Actions\CreateAction;
 use Illuminate\Support\Facades\Auth;
 
 final class ListCourses extends WorkspaceListRecords
@@ -16,7 +17,7 @@ final class ListCourses extends WorkspaceListRecords
 
     protected function getHeaderActions(): array
     {
-        return [ExportCsvAction::make('course.view', [
+        return [CreateAction::make()->label(__('courses.new_course')), ExportCsvAction::make('course.view', [
             __('courses.name') => 'title',
             __('courses.status') => 'status',
             __('courses.access') => 'access_mode',

@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Pennant\Feature;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property CourseStatus $status
+ * @property int $wizard_step
+ * @property array<string, bool>|null $wizard_completed
+ * @property list<array<string, mixed>>|null $faqs
+ * @property list<array<string, mixed>>|null $requirements
+ * @property list<array<string, mixed>>|null $outcomes
+ */
 final class Course extends Model
 {
     use HasSearchText;
@@ -35,6 +43,7 @@ final class Course extends Model
         'category_id', 'owner_instructor_id', 'title', 'short_description', 'description',
         'slug_ar', 'slug_en', 'level', 'content_language', 'min_age', 'max_age',
         'format', 'owner_type', 'status', 'access_mode', 'featured', 'ai_enabled',
+        'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
     ];
 
     protected $attributes = [
@@ -43,6 +52,7 @@ final class Course extends Model
         'owner_type' => 'academy',
         'featured' => false,
         'ai_enabled' => true,
+        'wizard_step' => 1,
     ];
 
     protected function casts(): array
@@ -53,6 +63,11 @@ final class Course extends Model
             'ai_enabled' => 'boolean',
             'min_age' => 'integer',
             'max_age' => 'integer',
+            'wizard_step' => 'integer',
+            'wizard_completed' => 'array',
+            'faqs' => 'array',
+            'requirements' => 'array',
+            'outcomes' => 'array',
         ];
     }
 

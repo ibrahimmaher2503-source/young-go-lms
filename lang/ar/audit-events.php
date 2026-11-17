@@ -16,4 +16,6 @@ return [
     'auth.two_factor_recovery_used' => 'استخدام رمز استرداد',
     'auth.two_factor_recovery_regenerated' => 'إنشاء رموز استرداد جديدة',
     'guardian.child_password_reset' => 'إعادة تعيين كلمة مرور طفل بواسطة ولي الأمر',
+    'course.draft_created' => 'إنشاء مسودة دورة',
+    'course.ownership_changed' => 'تغيير ملكية دورة',
 ];

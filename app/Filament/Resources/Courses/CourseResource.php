@@ -8,6 +8,8 @@ use App\Domain\Catalog\Actions\FeatureCourse;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Catalog\Queries\CourseDirectory;
 use App\Domain\Shared\Search\ArabicNormalizer;
+use App\Filament\Resources\Courses\Pages\CreateCourse;
+use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
@@ -15,6 +17,7 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource as FilamentResource;
@@ -93,6 +96,7 @@ final class CourseResource extends FilamentResource
             )),
         ])->recordActions([
             ViewAction::make(),
+            EditAction::make(),
             Action::make('feature')->label(static fn (Course $record): string => __('courses.'.($record->featured ? 'unfeature' : 'feature')))
                 ->icon('heroicon-o-star')->visible(static fn (Course $record): bool => Gate::allows('feature', $record))
                 ->action(static fn (Course $record) => app(FeatureCourse::class)($record, ! $record->featured)),
@@ -116,7 +120,9 @@ final class CourseResource extends FilamentResource
     {
         return [
             'index' => ListCourses::route('/'),
+            'create' => CreateCourse::route('/create'),
             'view' => ViewCourse::route('/{record}'),
+            'edit' => EditCourse::route('/{record}/edit'),
         ];
     }
 }
