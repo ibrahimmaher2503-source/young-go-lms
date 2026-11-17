@@ -14,12 +14,15 @@ use Illuminate\Validation\ValidationException;
 final class RegisterAccount
 {
     /**
-     * @param  array{email:string, username?:?string, password:string, name_ar?:?string, name_en?:?string, birth_year?:?int, birth_month?:?int}  $input
+     * @param  array{email:string, username?:?string, password:string, name_ar?:?string, name_en?:?string, birth_year?:?int, birth_month?:?int, account_type?:string}  $input
      */
     public function handle(array $input, string $termsVersion, string $privacyVersion): User
     {
         try {
             $user = DB::transaction(function () use ($input, $termsVersion, $privacyVersion): User {
+                // Public sign-up can only create a learner or a parent; staff roles are never self-assigned.
+                $role = ($input['account_type'] ?? 'learner') === 'parent' ? 'parent' : 'student';
+                unset($input['account_type']);
                 $displayName = $input['name_ar'] ?? $input['name_en'] ?? $input['email'];
                 $user = new User;
                 $user->forceFill([
@@ -29,7 +32,7 @@ final class RegisterAccount
                     'locale' => App::currentLocale(),
                 ])->save();
 
-                $user->assignRole('student');
+                $user->assignRole($role);
 
                 $grantedAt = now();
                 DB::table('consents')->insert([

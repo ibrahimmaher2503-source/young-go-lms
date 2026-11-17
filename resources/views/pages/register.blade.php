@@ -8,6 +8,13 @@
             <x-ui.ajax-form :action="url('/register')" :success="url('/email/verify')">
                 <input type="hidden" name="terms_version" value="{{ $termsVersion }}">
                 <input type="hidden" name="privacy_version" value="{{ $privacyVersion }}">
+                <fieldset class="space-y-1" data-field>
+                    <legend class="font-semibold">{{ __('pages.account_type') }}</legend>
+                    <div class="flex flex-wrap gap-x-4">
+                        <x-ui.radio id="account_learner" name="account_type" value="learner" :label="__('pages.account_learner')" checked />
+                        <x-ui.radio id="account_parent" name="account_type" value="parent" :label="__('pages.account_parent')" />
+                    </div>
+                </fieldset>
                 <x-ui.form-field for="name_ar" :label="__('pages.name_ar')" data-field><x-ui.input id="name_ar" name="name_ar" lang="ar" dir="rtl" autocomplete="name" /></x-ui.form-field>
                 <x-ui.form-field for="name_en" :label="__('pages.name_en')" data-field><x-ui.input id="name_en" name="name_en" lang="en" dir="ltr" autocomplete="name" /></x-ui.form-field>
                 <x-ui.form-field for="email" :label="__('pages.email')" data-field><x-ui.input id="email" name="email" type="email" autocomplete="email" required /></x-ui.form-field>

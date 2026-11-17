@@ -105,7 +105,7 @@ return [
     'tf_intro' => 'أضف رمزاً لمرة واحدة من تطبيق مصادقة لحماية حسابك.',
     'tf_required' => 'دورك يتطلب المصادقة الثنائية. فعّلها للمتابعة.',
     'tf_scan_title' => 'إعداد تطبيق المصادقة',
-    'tf_step_app' => 'ثبّت تطبيق مصادقة مثل Google Authenticator أو Microsoft Authenticator.',
+    'tf_step_app' => 'ثبّت تطبيق مصادقة مثل Google Authenticator أو Microsoft Authenticator على هاتفك.',
     'tf_step_scan' => 'امسح رمز QR هذا أو أدخل المفتاح أدناه.',
     'tf_step_code' => 'اكتب الرمز المكوّن من 6 أرقام الذي يعرضه التطبيق.',
     'tf_qr_label' => 'رمز QR لتطبيق المصادقة',
@@ -135,4 +135,7 @@ return [
     'child_new_password' => 'كلمة مرور الطفل الجديدة',
     'reset_child_submit' => 'إعادة التعيين',
     'reset_child_done' => 'تم تغيير كلمة المرور وتسجيل خروج طفلك.',
+    'account_type' => 'أسجّل بصفتي',
+    'account_learner' => 'متعلم',
+    'account_parent' => 'ولي أمر',
 ];

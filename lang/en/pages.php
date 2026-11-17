@@ -135,4 +135,7 @@ return [
     'child_new_password' => 'New child password',
     'reset_child_submit' => 'Reset password',
     'reset_child_done' => 'The password was changed and your child was signed out.',
+    'account_type' => 'I am signing up as',
+    'account_learner' => 'A learner',
+    'account_parent' => 'A parent or guardian',
 ];

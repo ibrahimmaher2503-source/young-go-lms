@@ -45,6 +45,7 @@ final class AuthenticationController
             'birth_month' => ['nullable', 'required_with:birth_year', 'integer', 'between:1,12'],
             'terms_version' => ['required', 'string', Rule::in([$terms])],
             'privacy_version' => ['required', 'string', Rule::in([$privacy])],
+            'account_type' => ['sometimes', 'string', Rule::in(['learner', 'parent'])],
             'accept_terms' => ['accepted'],
             'accept_privacy' => ['accepted'],
         ]);
@@ -57,6 +58,7 @@ final class AuthenticationController
             'name_en' => $validated['name_en'] ?? null,
             'birth_year' => isset($validated['birth_year']) ? (int) $validated['birth_year'] : null,
             'birth_month' => isset($validated['birth_month']) ? (int) $validated['birth_month'] : null,
+            'account_type' => $validated['account_type'] ?? 'learner',
         ], $terms, $privacy);
 
         Auth::guard('web')->login($user);
