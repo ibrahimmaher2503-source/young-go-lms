@@ -4,6 +4,11 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+body {
+    font-size: var(--yg-font-body);
+    line-height: var(--yg-line-height-body);
+}
+
 .lesson-materials [role="tablist"] {
     border-block-end: 1px solid var(--yg-color-border);
 }

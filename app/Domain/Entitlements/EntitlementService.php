@@ -11,6 +11,7 @@ use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\Quiz;
 use App\Models\User;
 
 /**
@@ -177,7 +178,9 @@ final class EntitlementService implements LessonAccessChecker
         }
 
         foreach ($ordered->take($position) as $previous) {
-            if ($previous->required && $previous->itemable instanceof Lesson && ! in_array((int) $previous->getKey(), $done, true)) {
+            // Lessons always gate what follows; a quiz gates it only when it requires a pass (T-P6-02 progression).
+            $gates = $previous->itemable instanceof Lesson || ($previous->itemable instanceof Quiz && $previous->itemable->progression === 'require_pass');
+            if ($previous->required && $gates && ! in_array((int) $previous->getKey(), $done, true)) {
                 return AccessDecision::deny('sequence_locked', null, (string) $previous->itemable->title);
             }
         }

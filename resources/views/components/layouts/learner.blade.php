@@ -46,9 +46,9 @@
 @endif
 <header class="border-b border-border bg-surface/95 shadow-card backdrop-blur">
     <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8">
-        <div class="flex items-center gap-6">
-            <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
-                <x-ui.icon name="book" class="size-8 text-primary" />
+        <div class="flex shrink-0 items-center gap-6">
+            <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
+                <x-ui.icon name="book" class="size-8 shrink-0 text-primary" />
                 <span dir="ltr">Young Go</span>
             </a>
             <nav aria-label="{{ __('pages.main_nav') }}" class="hidden items-center gap-1 lg:flex">
@@ -60,9 +60,9 @@
                 @endforeach
             </nav>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex min-w-0 items-center gap-2">
             <x-ui.locale-switcher :locale="$locale" class="hidden sm:block" />
-            <span class="relative inline-grid size-11 place-items-center text-body" title="{{ __('learner.notifications') }}">
+            <span class="relative inline-grid size-11 shrink-0 place-items-center text-body" title="{{ __('learner.notifications') }}">
                 <x-ui.icon name="bell" class="size-6" />
                 @if($unread)<span class="absolute end-2 top-2 size-2.5 rounded-full bg-primary" data-unread-dot></span>@endif
                 <span class="sr-only">{{ __('learner.notifications') }}@if($unread): {{ __('learner.has_unread') }}@endif</span>

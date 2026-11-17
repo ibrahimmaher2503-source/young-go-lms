@@ -26,16 +26,16 @@
             <button type="submit" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary"><x-ui.icon name="video" class="size-5" /> {{ __('live.join') }}</button>
         </form>
     @elseif($state === 'joinable')
-        <p class="font-semibold text-success" role="status">{{ __('live.join_now_hint') }}</p>
+        <p class="font-semibold text-on-success" role="status">{{ __('live.join_now_hint') }}</p>
         <form method="POST" action="{{ $joinUrl }}" data-join-form>
             @csrf
             <button type="submit" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary"><x-ui.icon name="video" class="size-5" /> {{ __('live.join') }}</button>
         </form>
     @elseif($state === 'cancelled')
-        <p class="font-semibold text-danger" role="status" data-live-cancelled>{{ __('live.cancelled_notice') }}</p>
+        <p class="font-semibold text-on-danger" role="status" data-live-cancelled>{{ __('live.cancelled_notice') }}</p>
     @else
         <p class="text-muted" role="status" data-live-ended>{{ __('live.ended_notice') }}</p>
         @if($replayUrl)<a href="{{ $replayUrl }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary" data-replay-link><x-ui.icon name="play" class="size-5" /> {{ __('live.replay.watch') }}</a>@endif
     @endif
-    @if(session('join_error'))<p class="font-semibold text-danger" role="alert" data-join-error>{{ session('join_error') }}</p>@endif
+    @if(session('join_error'))<p class="font-semibold text-on-danger" role="alert" data-join-error>{{ session('join_error') }}</p>@endif
 </section>

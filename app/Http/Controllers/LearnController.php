@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\AI\AssistantEligibility;
+use App\Domain\Assessment\Queries\QuizOverview;
 use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
@@ -18,6 +19,7 @@ use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\LessonResource;
 use App\Models\LiveSession;
+use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -101,6 +103,7 @@ final class LearnController
             'learner' => $learner,
             'liveSession' => $decision->allowed && $entity instanceof LiveSession ? $entity : null,
             'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,
+            'quizOverview' => $decision->allowed && $entity instanceof Quiz ? QuizOverview::for($learner, $entity) : null,
             'replayUrl' => $entity instanceof LiveSession ? $this->replayUrl($learner, $course, $entity) : null,
         ]);
     }

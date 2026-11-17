@@ -9,6 +9,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\QuizAttemptController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/learn/{course}', [LearnController::class, 'course'])->whereNumber('course')->name('learn.course');
     Route::get('/learn/{course}/{item}', [LearnController::class, 'show'])->whereNumber(['course', 'item'])->name('learn.show');
     Route::post('/learn/{course}/{item}/join', LiveJoinController::class)->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.join');
+    Route::post('/learn/{course}/{item}/quiz/start', [QuizAttemptController::class, 'start'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('quiz.start');
+    Route::get('/learn/{course}/{item}/quiz/{attempt}', [QuizAttemptController::class, 'show'])->whereNumber(['course', 'item', 'attempt'])->name('quiz.attempt');
+    Route::post('/learn/{course}/{item}/quiz/{attempt}/save', [QuizAttemptController::class, 'save'])->whereNumber(['course', 'item', 'attempt'])->middleware('throttle:progress')->name('quiz.save');
+    Route::post('/learn/{course}/{item}/quiz/{attempt}/submit', [QuizAttemptController::class, 'submit'])->whereNumber(['course', 'item', 'attempt'])->middleware('throttle:progress')->name('quiz.submit');
     Route::post('/learn/{course}/{item}/progress', [ProgressController::class, 'heartbeat'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.progress');
     Route::post('/learn/{course}/{item}/complete', [ProgressController::class, 'complete'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.complete');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');

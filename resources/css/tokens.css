@@ -103,6 +103,7 @@
     --yg-color-on-ai-ready: var(--yg-success-700);
     --yg-font-page-heading: 2.25rem;
     --yg-font-body: 1.125rem;
+    --yg-line-height-body: 1.6;
     --yg-font-small: 0.9375rem;
     --yg-font-label: 1rem;
     --yg-font-sidebar: 1.25rem;
@@ -216,4 +217,5 @@
 
 :lang(ar) {
     --font-sans: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+    --yg-line-height-body: 1.8;
 }

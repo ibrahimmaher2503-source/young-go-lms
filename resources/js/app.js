@@ -1,5 +1,6 @@
 import './player.js';
 import './live.js';
+import './quiz.js';
 import './ui-primitives.js';
 import './forms.js';
 

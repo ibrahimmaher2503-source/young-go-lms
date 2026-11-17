@@ -70,6 +70,7 @@ final class PreviewController
             'descriptor' => $lesson !== null ? LessonPlayback::for($lesson, $user) : null,
             'aiAvailable' => false,
             'learner' => $user,
+            'quizOverview' => null,
             'liveSession' => $entity instanceof LiveSession ? $entity : null,
             'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,
         ]);
