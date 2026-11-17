@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Shared\Actions;
 
 use BackedEnum;
+use Closure;
 use DateTimeInterface;
 use Filament\Actions\Action;
 use Filament\Tables\Contracts\HasTable;
@@ -19,7 +20,7 @@ final class ExportCsvAction
     /**
      * @param  array<string, string>  $columns  CSV heading => model attribute path
      */
-    public static function make(string $ability, array $columns, string $filename = 'export.csv'): Action
+    public static function make(string $ability, array $columns, string $filename = 'export.csv', ?Closure $onExport = null): Action
     {
         if (blank($ability)) {
             throw new InvalidArgumentException('A named export ability is required.');
@@ -40,8 +41,11 @@ final class ExportCsvAction
         return Action::make('exportCsv')
             ->label(__('common.export_csv'))
             ->authorize($ability)
-            ->action(static function (HasTable $livewire) use ($ability, $columns, $filename): StreamedResponse {
+            ->action(static function (HasTable $livewire) use ($ability, $columns, $filename, $onExport): StreamedResponse {
                 Gate::authorize($ability);
+                if ($onExport !== null) {
+                    $onExport(); // e.g. audit entry for exports of personal data
+                }
 
                 $query = $livewire->getTableQueryForExport();
 

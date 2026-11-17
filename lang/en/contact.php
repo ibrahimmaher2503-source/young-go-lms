@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'honeypot_label' => 'Leave this field empty',
+    'title' => 'Contact us',
+    'intro' => 'Send us a question or message and our team will reply by email.',
+    'fields' => [
+        'name' => 'Your name',
+        'email' => 'Email',
+        'phone' => 'Phone',
+        'phone_optional' => 'Phone (optional)',
+        'message' => 'Message',
+    ],
+    'phone_help' => 'An Egyptian mobile number, for example 01012345678.',
+    'privacy_note' => 'We use your details only to answer your message.',
+    'privacy_link' => 'Privacy policy',
+    'send' => 'Send message',
+    'sent' => 'Thank you. Your message was sent and we will reply soon.',
+    'errors' => [
+        'phone' => 'Enter a valid Egyptian phone number.',
+        'assignee' => 'Choose an active team member who can handle enquiries.',
+        'consent' => 'Please tick the box to agree to receive the newsletter.',
+    ],
+    'newsletter' => [
+        'title' => 'Newsletter',
+        'intro' => 'News about new courses and offers, sent by email.',
+        'consent' => 'I agree to receive the Young Go newsletter by email. I can unsubscribe at any time.',
+        'consent_note' => 'Draft wording, pending owner approval.',
+        'submit' => 'Subscribe',
+        'done' => 'Thank you. You are subscribed to the newsletter.',
+    ],
+    'unsubscribed' => [
+        'title' => 'Unsubscribed',
+        'done' => 'You will no longer receive our newsletter.',
+        'resubscribe' => 'Changed your mind? Subscribe again',
+    ],
+    'statuses' => [
+        'new' => 'New',
+        'in_progress' => 'In progress',
+        'resolved' => 'Resolved',
+        'spam' => 'Spam',
+    ],
+    'subscriber_statuses' => [
+        'subscribed' => 'Subscribed',
+        'unsubscribed' => 'Unsubscribed',
+    ],
+    'sources' => [
+        'page' => 'Newsletter page',
+        'contact' => 'Contact page',
+        'footer' => 'Footer',
+        'home' => 'Homepage',
+    ],
+    'admin' => [
+        'enquiry' => 'Enquiry',
+        'enquiries' => 'Contact enquiries',
+        'subscriber' => 'Subscriber',
+        'subscribers' => 'Newsletter subscribers',
+        'status' => 'Status',
+        'assignee' => 'Assigned to',
+        'unassigned' => 'Unassigned',
+        'received' => 'Received',
+        'assign' => 'Assign',
+        'assigned' => 'Assignee saved.',
+        'change_status' => 'Change status',
+        'status_changed' => 'Status updated.',
+        'source' => 'Source',
+        'language' => 'Language',
+        'consent_version' => 'Consent wording version',
+        'consented' => 'Consented on',
+        'unsubscribed' => 'Unsubscribed on',
+        'unsubscribe' => 'Unsubscribe',
+        'unsubscribed_done' => 'Subscriber unsubscribed.',
+        'summary' => [
+            'new' => 'New enquiries',
+            'in_progress' => 'In progress',
+            'unassigned' => 'Waiting for an owner',
+            'subscribed' => 'Subscribed',
+            'unsubscribed' => 'Unsubscribed',
+        ],
+    ],
+];

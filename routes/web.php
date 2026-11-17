@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\MediaPlaybackController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicCourseController;
@@ -18,6 +20,13 @@ Route::get('/courses', PublicCatalogController::class)->name('catalog.index');
 Route::get('/courses/{course}', PublicCourseController::class)->name('catalog.show');
 Route::get('/courses/{course}/preview/{item}', PublicCoursePreviewController::class)->whereNumber('item')->name('catalog.preview');
 Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
+// T-P2-08: public lead capture. Spam: honeypot field + per-address throttles; unsubscribe is a signed link, no login.
+Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
+Route::get('/newsletter', [NewsletterController::class, 'show'])->name('newsletter.show');
+Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware('throttle:newsletter')->name('newsletter.store');
+Route::get('/newsletter/unsubscribe/{subscriber}', [NewsletterController::class, 'unsubscribe'])
+    ->whereNumber('subscriber')->middleware(['signed', 'throttle:newsletter-unsubscribe'])->name('newsletter.unsubscribe');
 Route::get('/admin/cms-preview/{page}', [CmsController::class, 'preview'])
     ->middleware(['auth', 'signed', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class, 'can:content.page.manage'])
     ->name('cms.preview');
