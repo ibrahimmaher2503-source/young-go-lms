@@ -54,6 +54,38 @@ final class EntitledCurriculumQuery
     }
 
     /**
+     * The curriculum as staff preview it ("view as learner"): every non-archived item is shown, drafts included, each
+     * marked open, with the reason a real learner would find it locked (drip or sequence) and whether it is still a draft.
+     *
+     * @return list<array{id: int, title: string, type: string, state: string, reason: string|null, unlock_at: string|null, minutes: int, draft: bool, section_id: int, section_title: string}>
+     */
+    public function forPreview(Course $course): array
+    {
+        $items = [];
+        foreach (CurriculumOutline::forManager($course) as $section) {
+            foreach ($section->items as $item) {
+                /** @var CurriculumItem $item */
+                $entity = $item->itemable;
+                $decision = $this->access->previewDecision($item);
+                $items[] = [
+                    'id' => (int) $item->getKey(),
+                    'title' => (string) ($entity?->getAttribute('title') ?? ''),
+                    'type' => $entity instanceof Lesson ? $entity->type : (string) $item->itemable_type,
+                    'state' => 'open',
+                    'reason' => $decision->message(),
+                    'unlock_at' => $decision->unlockAt?->toIso8601String(),
+                    'minutes' => $entity instanceof Lesson ? (int) round((int) ($entity->media->duration_seconds ?? $entity->duration_seconds ?? 0) / 60) : 0,
+                    'draft' => $item->status !== CurriculumItem::STATUS_PUBLISHED || ! $item->section->published,
+                    'section_id' => (int) $section->getKey(),
+                    'section_title' => (string) $section->title,
+                ];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
      * Previous and next openable items around one item, in curriculum order.
      *
      * @param  list<array{id: int, items: list<array{id: int, state: string}>}>  $sections

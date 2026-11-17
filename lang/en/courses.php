@@ -77,4 +77,18 @@ return [
     'sequence_mode' => 'Lesson order',
     'sequence_mode_help' => 'Free: learners may open any open lesson. Sequential: a lesson opens after the required lessons before it are completed.',
     'sequence' => ['free' => 'Free order', 'sequential' => 'Sequential'],
+    'learners_title' => 'Learners',
+    'learners_note' => 'Learners with access to this course and where they are. Read only.',
+    'learners_empty' => 'No learners have access to this course yet.',
+    'learner' => 'Learner',
+    'enrolled_at' => 'Enrolled',
+    'progress' => 'Progress',
+    'details' => 'Details',
+    'access_active' => 'Active',
+    'access_ended' => 'Ended',
+    'lesson_status' => [
+        'not_started' => 'Not started',
+        'in_progress' => 'In progress',
+        'completed' => 'Completed',
+    ],
 ];

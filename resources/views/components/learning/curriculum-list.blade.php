@@ -1,6 +1,6 @@
 {{-- Props: course, sections (EntitledCurriculumQuery output), current item id, completed ids, prefix (unique ids).
      Section cards with check / play / empty circles and minutes per lesson (C14); locked items show their reason. --}}
-@props(['course', 'sections', 'current', 'completed' => [], 'prefix' => 'list'])
+@props(['course', 'sections', 'current', 'completed' => [], 'prefix' => 'list', 'route' => 'learn.show'])
 @php($number = 0)
 <div class="space-y-3" data-curriculum-list>
     @foreach($sections as $sectionIndex => $section)
@@ -24,7 +24,7 @@
                                 </div>
                             </div>
                         @else
-                            <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $entry['id']]) }}"
+                            <a href="{{ route($route, ['course' => $course->id, 'item' => $entry['id']]) }}"
                                 class="flex items-center gap-3 rounded-xl px-2 py-3 {{ $isCurrent ? 'bg-nav-active-bg text-nav-active-text' : 'hover:bg-hover' }}"
                                 data-item-state="{{ $entry['state'] }}" @if($isCurrent) aria-current="page" @endif>
                                 <span class="grid size-8 shrink-0 place-items-center rounded-full {{ $isCurrent ? 'bg-primary text-on-primary' : ($done ? 'bg-success text-on-success' : 'border-2 border-border text-muted') }}" aria-hidden="true">
@@ -35,6 +35,7 @@
                                     <span class="flex flex-wrap items-center gap-2 text-sm text-muted">
                                         @if($entry['minutes'] > 0)<span>{{ __('curriculum.minutes', ['count' => $entry['minutes']]) }}</span>@endif
                                         @if($entry['state'] === 'preview')<x-ui.badge tone="info">{{ __('learn.preview') }}</x-ui.badge>@endif
+                                        @if($entry['draft'] ?? false)<x-ui.badge tone="warning" data-item-draft>{{ __('curriculum.status_draft') }}</x-ui.badge>@endif
                                         @if($done)<x-ui.badge tone="success" data-item-completed>{{ __('learn.completed') }}</x-ui.badge>@endif
                                     </span>
                                 </span>

@@ -37,4 +37,8 @@ return [
     'lessons_count' => ':count lessons',
     'lesson_of' => 'Lesson :number of :total',
     'next_titled' => 'Next lesson: :title',
+    'back_to_curriculum' => 'Back to the curriculum',
+    'preview_banner' => 'Previewing as a learner. Nothing you do here is saved.',
+    'preview_draft' => 'This item is still a draft, so learners cannot see it yet.',
+    'preview_would_lock' => 'A learner would find it locked: :reason',
 ];

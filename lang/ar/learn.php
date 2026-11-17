@@ -37,4 +37,8 @@ return [
     'lessons_count' => ':count درسًا',
     'lesson_of' => 'الدرس :number من :total',
     'next_titled' => 'الدرس التالي: :title',
+    'back_to_curriculum' => 'العودة إلى المنهج',
+    'preview_banner' => 'تعرض الدرس كما يراه المتعلم. لا يُحفظ أي شيء تفعله هنا.',
+    'preview_draft' => 'هذا العنصر ما زال مسودة، لذلك لا يراه المتعلمون بعد.',
+    'preview_would_lock' => 'سيجده المتعلم مقفلًا: :reason',
 ];

@@ -100,4 +100,5 @@ return [
     'more' => 'More actions',
     'rich_content' => 'Lesson text',
     'rich_content_help' => 'Headings, lists, quotes, tables and links. Images come from the lesson materials; raw HTML is not accepted.',
+    'view_as_learner' => 'View as learner',
 ];

@@ -11,6 +11,7 @@ use App\Domain\Catalog\Actions\FeatureCourse;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Catalog\Queries\CourseDirectory;
 use App\Domain\Shared\Search\ArabicNormalizer;
+use App\Filament\Resources\Courses\Pages\CourseLearnersPage;
 use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
@@ -107,6 +108,9 @@ final class CourseResource extends FilamentResource
             Action::make('curriculum')->label(__('curriculum.curriculum'))->icon('heroicon-o-queue-list')
                 ->url(static fn (Course $record): string => self::getUrl('curriculum', ['record' => $record]))
                 ->visible(static fn (Course $record): bool => Gate::allows('update', $record)),
+            Action::make('learners')->label(__('courses.learners_title'))->icon('heroicon-o-users')
+                ->url(static fn (Course $record): string => self::getUrl('learners', ['record' => $record]))
+                ->visible(static fn (Course $record): bool => Auth::user()?->can('learner.progress.view') === true && Gate::allows('view', $record)),
             Action::make('duplicate')->label(__('courses.duplicate'))->icon('heroicon-o-document-duplicate')->requiresConfirmation()
                 ->visible(static fn (Course $record): bool => Gate::allows('duplicate', $record))
                 ->action(static function (Course $record): void {
@@ -162,6 +166,7 @@ final class CourseResource extends FilamentResource
             'view' => ViewCourse::route('/{record}'),
             'edit' => EditCourse::route('/{record}/edit'),
             'curriculum' => ManageCurriculum::route('/{record}/curriculum'),
+            'learners' => CourseLearnersPage::route('/{record}/learners'),
             'document' => ReviewCurriculumDocument::route('/{record}/curriculum/documents/{document}'),
         ];
     }

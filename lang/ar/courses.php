@@ -77,4 +77,18 @@ return [
     'sequence_mode' => 'ترتيب الدروس',
     'sequence_mode_help' => 'حر: يفتح المتعلم أي درس مفتوح. تسلسلي: لا يُفتح الدرس إلا بعد إكمال الدروس المطلوبة قبله.',
     'sequence' => ['free' => 'ترتيب حر', 'sequential' => 'تسلسلي'],
+    'learners_title' => 'المتعلمون',
+    'learners_note' => 'المتعلمون الذين لديهم وصول لهذه الدورة وأين وصلوا. للعرض فقط.',
+    'learners_empty' => 'لا يوجد متعلمون لديهم وصول لهذه الدورة بعد.',
+    'learner' => 'المتعلم',
+    'enrolled_at' => 'تاريخ الالتحاق',
+    'progress' => 'التقدم',
+    'details' => 'التفاصيل',
+    'access_active' => 'نشط',
+    'access_ended' => 'منتهي',
+    'lesson_status' => [
+        'not_started' => 'لم يبدأ',
+        'in_progress' => 'قيد التقدم',
+        'completed' => 'مكتمل',
+    ],
 ];

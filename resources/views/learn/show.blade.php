@@ -1,4 +1,6 @@
 @php
+    $preview = $preview ?? false;
+    $showRoute = $preview ? 'learn.preview' : 'learn.show';
     $title = (string) ($entity?->title ?? $course->title);
     $flat = collect($sections)->flatMap(fn ($s) => $s['items'])->values();
     $position = $flat->search(fn ($i) => $i['id'] === $item->id);
@@ -8,9 +10,16 @@
 @endphp
 <x-layouts.learner :title="$title" wide>
     <div class="space-y-5">
+        @if($preview)
+            <div class="rounded-card border-2 border-primary bg-assistant px-4 py-3 text-primary" role="status" data-preview-banner>
+                <p class="font-bold">{{ __('learn.preview_banner') }}</p>
+                @if($previewDraft)<p class="text-sm" data-preview-draft>{{ __('learn.preview_draft') }}</p>@endif
+                @if($previewReason)<p class="text-sm" data-preview-reason>{{ __('learn.preview_would_lock', ['reason' => $previewReason]) }}</p>@endif
+            </div>
+        @endif
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0 space-y-1">
-                <a href="{{ route('learner.courses') }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back" /> {{ __('learn.back_to_courses') }}</a>
+                <a href="{{ $backUrl ?? route('learner.courses') }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back" /> {{ $preview ? __('learn.back_to_curriculum') : __('learn.back_to_courses') }}</a>
                 <h1 class="break-words text-3xl font-extrabold" data-course-title>{{ $course->title }}</h1>
                 <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted">
                     @if($instructors !== '')<span class="inline-flex items-center gap-1"><x-ui.icon name="user" class="size-4" /> {{ __('learn.by_instructor', ['name' => $instructors]) }}</span>@endif
@@ -32,7 +41,7 @@
                         <p class="text-sm text-muted">{{ __('learn.course_progress', ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</p>
                     </div>
                 @endif
-                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="side" />
+                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" :route="$showRoute" prefix="side" />
             </aside>
 
             {{-- Lesson --}}
@@ -143,10 +152,10 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     @if($previousEntry)
-                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $previousEntry['id']]) }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold" rel="prev"><x-ui.icon name="back" /> {{ __('learn.previous') }}</a>
+                        <a href="{{ route($showRoute, ['course' => $course->id, 'item' => $previousEntry['id']]) }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold" rel="prev"><x-ui.icon name="back" /> {{ __('learn.previous') }}</a>
                     @else <span></span> @endif
                     @if($nextEntry)
-                        <a href="{{ route('learn.show', ['course' => $course->id, 'item' => $nextEntry['id']]) }}" class="inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-on-primary shadow-card" rel="next" data-next-lesson>
+                        <a href="{{ route($showRoute, ['course' => $course->id, 'item' => $nextEntry['id']]) }}" class="inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-on-primary shadow-card" rel="next" data-next-lesson>
                             <span class="break-words">{{ __('learn.next_titled', ['title' => $nextEntry['title']]) }}</span> <x-ui.icon name="arrow" />
                         </a>
                     @endif
@@ -154,7 +163,7 @@
 
                 <div class="lg:hidden">
                     <x-ui.drawer id="curriculum-drawer" :title="__('learn.curriculum')" :trigger="__('learn.open_curriculum')">
-                        <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="drawer" />
+                        <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" :route="$showRoute" prefix="drawer" />
                     </x-ui.drawer>
                 </div>
             </div>

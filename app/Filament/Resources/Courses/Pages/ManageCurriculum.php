@@ -105,11 +105,21 @@ final class ManageCurriculum extends Page
             $this->addLessonAction(),
             $this->addAssessmentAction(),
             $this->addSectionAction(),
+            Action::make('viewAsLearner')->label(__('curriculum.view_as_learner'))->icon('heroicon-o-play-circle')->color('gray')
+                ->visible(fn (): bool => $this->firstPreviewItemId() !== null)
+                ->url(fn (): string => route('learn.preview', ['course' => $this->course()->getKey(), 'item' => $this->firstPreviewItemId()]), shouldOpenInNewTab: true),
             Action::make('studentPreview')->label(__('curriculum.student_preview'))->icon('heroicon-o-eye')->color('gray')
                 ->action(function (): void {
                     $this->previewing = ! $this->previewing;
                 }),
         ];
+    }
+
+    private function firstPreviewItemId(): ?int
+    {
+        $item = CurriculumOutline::forManager($this->course())->flatMap(static fn (CourseSection $section) => $section->items)->first();
+
+        return $item instanceof CurriculumItem ? (int) $item->getKey() : null;
     }
 
     public function addSectionAction(): Action

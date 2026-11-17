@@ -83,6 +83,18 @@ final class EntitlementService implements LessonAccessChecker
             && $this->itemPublished($item);
     }
 
+    /**
+     * What a brand-new learner with a current entitlement would meet on this item: drip and sequence only, because staff
+     * preview content that is still a draft or not yet open. Used by "view as learner"; it reads and writes nothing about real learners.
+     */
+    public function previewDecision(CurriculumItem $item): AccessDecision
+    {
+        $synthetic = new Entitlement(['starts_at' => now(), 'status' => Entitlement::ACTIVE]);
+        $drip = $this->dripDecision($item, $synthetic);
+
+        return $drip->allowed && $item->status === CurriculumItem::STATUS_PUBLISHED ? $this->sequenceAgainst($item, []) : $drip;
+    }
+
     /** The learner's current entitlement for a course, or null. */
     public function currentFor(User $learner, Course $course): ?Entitlement
     {
@@ -145,14 +157,25 @@ final class EntitlementService implements LessonAccessChecker
             return AccessDecision::allow();
         }
 
+        $key = $learner->getKey().'.'.$course->getKey();
+
+        return $this->sequenceAgainst($item, $this->completed[$key] ??= $this->completion->completedItemIds($learner, $course));
+    }
+
+    /** @param  list<int>  $done */
+    private function sequenceAgainst(CurriculumItem $item, array $done): AccessDecision
+    {
+        $course = $item->course;
+        if ($course->sequence_mode !== Course::SEQUENCE_SEQUENTIAL) {
+            return AccessDecision::allow();
+        }
+
         $ordered = CurriculumOutline::forStudents($course)->flatMap(static fn ($section) => $section->items)->values();
         $position = $ordered->search(static fn (CurriculumItem $candidate): bool => $candidate->getKey() === $item->getKey());
         if ($position === false) {
             return AccessDecision::deny('item_unpublished');
         }
 
-        $key = $learner->getKey().'.'.$course->getKey();
-        $done = $this->completed[$key] ??= $this->completion->completedItemIds($learner, $course);
         foreach ($ordered->take($position) as $previous) {
             if ($previous->required && $previous->itemable instanceof Lesson && ! in_array((int) $previous->getKey(), $done, true)) {
                 return AccessDecision::deny('sequence_locked', null, (string) $previous->itemable->title);
