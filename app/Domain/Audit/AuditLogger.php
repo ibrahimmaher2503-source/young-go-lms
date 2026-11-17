@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Audit;
 
+use App\Domain\Identity\ActingLearner;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
 
@@ -12,6 +14,8 @@ final class AuditLogger
     public const string LOG_NAME = 'audit';
 
     private const string REDACTED = '[REDACTED]';
+
+    public function __construct(private readonly ActingLearner $acting) {}
 
     /**
      * @param  array<array-key, mixed>|null  $before
@@ -26,6 +30,12 @@ final class AuditLogger
         ?array $after = null,
         array $context = [],
     ): ?ActivityContract {
+        // YG-GAP-FAM-004: every action taken in a child context records the acting parent.
+        if (! isset($context['acting_for']) && $this->acting->isParentContext()) {
+            $child = $this->acting->current();
+            $context['acting_for'] = ['type' => User::class, 'id' => $child?->getKey()];
+        }
+
         $activity = activity(self::LOG_NAME)
             ->event($event)
             ->performedOn($subject)

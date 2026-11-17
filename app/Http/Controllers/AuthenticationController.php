@@ -16,8 +16,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 final class AuthenticationController
 {
@@ -98,6 +100,19 @@ final class AuthenticationController
             'password' => NewPassword::rules(),
         ]);
         $reset->handle(mb_strtolower(trim($validated['email'])), $validated['token'], $validated['password']);
+
+        return response()->noContent();
+    }
+
+    public function confirmPassword(Request $request): Response
+    {
+        $validated = $request->validate(['password' => ['required', 'string', NewPassword::byteLimit(...)]]);
+        $user = $request->user();
+        if (! $user instanceof User || ! Hash::check($validated['password'], (string) $user->getAuthPassword())) {
+            throw ValidationException::withMessages(['password' => __('auth.password')]);
+        }
+
+        $request->session()->passwordConfirmed();
 
         return response()->noContent();
     }

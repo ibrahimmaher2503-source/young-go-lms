@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class GuardianChildLink extends Model
 {
+    public const string STATUS_PENDING = 'pending';
+
     public const string STATUS_VERIFIED = 'verified';
 
     public const string METHOD_CREATED_BY_PARENT = 'created_by_parent';

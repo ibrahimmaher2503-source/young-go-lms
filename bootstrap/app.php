@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\ResolveActingLearner;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -10,12 +11,12 @@ use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: [__DIR__.'/../routes/web.php', __DIR__.'/../routes/localization.php', __DIR__.'/../routes/design-components.php', __DIR__.'/../routes/auth.php', __DIR__.'/../routes/profile.php'],
+        web: [__DIR__.'/../routes/web.php', __DIR__.'/../routes/localization.php', __DIR__.'/../routes/design-components.php', __DIR__.'/../routes/auth.php', __DIR__.'/../routes/profile.php', __DIR__.'/../routes/guardian.php'],
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [SetLocale::class]);
+        $middleware->web(append: [SetLocale::class, ResolveActingLearner::class]);
         $middleware->api(append: [SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
