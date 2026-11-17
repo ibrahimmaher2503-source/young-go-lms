@@ -12,6 +12,15 @@
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div class="min-w-0 space-y-4">
                 <h1 class="text-2xl font-bold break-words">{{ $title }}</h1>
+                @if($courseProgress)
+                    <div class="space-y-1" data-course-progress>
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                            <span>{{ __('learn.course_progress', ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</span>
+                            <span data-course-percent>{{ $courseProgress->percent }}%</span>
+                        </div>
+                        <x-ui.progress-bar :label="__('learn.course_progress_label')" :value="$courseProgress->percent" />
+                    </div>
+                @endif
 
                 @if(! $decision->allowed)
                     <x-ui.card :title="__('learn.locked_title')">
@@ -20,7 +29,8 @@
                 @elseif($lesson === null)
                     <x-ui.card><p>{{ __('learn.assessment_soon') }}</p></x-ui.card>
                 @else
-                    <section aria-label="{{ __('learn.now_playing') }}" data-player data-ai-available="{{ $aiAvailable ? 'true' : 'false' }}" class="space-y-3">
+                    <section aria-label="{{ __('learn.now_playing') }}" data-player data-ai-available="{{ $aiAvailable ? 'true' : 'false' }}" class="space-y-3"
+                        @if($entitled) data-progress-url="{{ route('learn.progress', ['course' => $course->id, 'item' => $item->id]) }}" data-complete-url="{{ route('learn.complete', ['course' => $course->id, 'item' => $item->id]) }}" data-resume="{{ $lessonProgress?->position_seconds ?? 0 }}" @endif>
                         <div class="relative overflow-hidden rounded-xl border border-border bg-surface" data-player-stage>
                             @if($descriptor === null)
                                 <p class="p-6">{{ __('learn.no_media') }}</p>
@@ -52,6 +62,12 @@
                             <p class="text-sm">{{ __('learn.shortcuts') }}</p>
                         @endif
 
+                        @if($lessonProgress?->status === 'completed')
+                            <x-ui.badge tone="success" data-lesson-completed>{{ __('learn.completed') }}</x-ui.badge>
+                        @elseif($canMarkComplete)
+                            <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
+                        @endif
+
                         @if($aiAvailable)
                             <div data-ai-slot aria-label="{{ __('learn.assistant') }}"></div>
                         @endif
@@ -81,11 +97,11 @@
 
             <div class="lg:hidden">
                 <x-ui.drawer id="curriculum-drawer" :title="__('learn.curriculum')" :trigger="__('learn.open_curriculum')">
-                    <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" prefix="drawer" />
+                    <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="drawer" />
                 </x-ui.drawer>
             </div>
             <aside class="hidden lg:block" aria-label="{{ __('learn.curriculum') }}">
-                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" prefix="side" />
+                <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" prefix="side" />
             </aside>
         </div>
     </div>

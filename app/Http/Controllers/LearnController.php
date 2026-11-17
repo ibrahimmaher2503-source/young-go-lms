@@ -9,6 +9,8 @@ use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Media\Queries\LessonPlayback;
+use App\Domain\Progress\LessonProgress;
+use App\Domain\Progress\Queries\ContinueLearning;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
@@ -27,6 +29,7 @@ final class LearnController
         private readonly ActingLearner $acting,
         private readonly EntitlementService $access,
         private readonly EntitledCurriculumQuery $curriculum,
+        private readonly ContinueLearning $continue,
     ) {}
 
     public function course(Request $request, Course $course): RedirectResponse
@@ -34,6 +37,10 @@ final class LearnController
         $learner = $this->learner($request);
         $first = collect($this->curriculum->for($learner, $course))->flatMap(fn (array $s): array => $s['items'])->first(fn (array $i): bool => $i['state'] !== 'locked');
         abort_if($first === null || ! $this->access->canAccessCourse($learner, $course)->allowed && $first['state'] !== 'preview', 404);
+
+        // An enrolled learner goes back to where they stopped; anyone else (preview only) to the first open lesson.
+        $resume = $this->access->currentFor($learner, $course) !== null ? $this->continue->for($learner, $course) : null;
+        $first = $resume !== null ? ['id' => $resume['item_id']] : $first;
 
         return redirect()->route('learn.show', ['course' => $course->getKey(), 'item' => $first['id']]);
     }
@@ -50,8 +57,17 @@ final class LearnController
         $sections = $this->curriculum->for($learner, $course);
         $entity = $item->itemable;
         $lesson = $entity instanceof Lesson ? $entity : null;
+        $entitled = $this->access->currentFor($learner, $course) !== null;
+        $lessonProgress = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('curriculum_item_id', $item->getKey())->first() : null;
+        $courseProgress = $entitled ? $this->continue->progress($learner, $course) : null;
+        $completed = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('status', LessonProgress::COMPLETED)->pluck('curriculum_item_id')->map(fn ($id): int => (int) $id)->all() : [];
 
         return view('learn.show', [
+            'entitled' => $entitled,
+            'lessonProgress' => $lessonProgress,
+            'courseProgress' => $courseProgress,
+            'completed' => $completed,
+            'canMarkComplete' => $entitled && $decision->allowed && $lesson !== null && ($lessonProgress?->status !== LessonProgress::COMPLETED) && $this->manualAllowed($lesson),
             'course' => $course,
             'item' => $item,
             'entity' => $entity,
@@ -63,6 +79,14 @@ final class LearnController
             'aiAvailable' => $decision->allowed && $lesson !== null && app(AssistantEligibility::class)->check($learner, $lesson)->isAvailable(),
             'learner' => $learner,
         ]);
+    }
+
+    private function manualAllowed(Lesson $lesson): bool
+    {
+        $seconds = $lesson->media->duration_seconds ?? $lesson->duration_seconds;
+
+        return in_array($lesson->type, (array) config('learning.progress.manual_complete_types'), true)
+            || (in_array($lesson->type, ['video', 'audio'], true) && ($seconds === null || $seconds === 0) && (bool) config('learning.progress.manual_when_duration_unknown'));
     }
 
     private function learner(Request $request): User

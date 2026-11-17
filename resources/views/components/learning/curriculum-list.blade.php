@@ -1,5 +1,5 @@
 {{-- Props: course, sections (EntitledCurriculumQuery output), current item id, prefix (unique ids). Locked items show their reason. --}}
-@props(['course', 'sections', 'current', 'prefix' => 'list'])
+@props(['course', 'sections', 'current', 'completed' => [], 'prefix' => 'list'])
 <div class="space-y-4" data-curriculum-list>
     @foreach($sections as $section)
         <section aria-labelledby="{{ $prefix }}-section-{{ $section['id'] }}">
@@ -19,6 +19,7 @@
                                 data-item-state="{{ $entry['state'] }}" @if($entry['id'] === $current) aria-current="page" @endif>
                                 <span class="break-words">{{ $entry['title'] }}</span>
                                 @if($entry['state'] === 'preview')<x-ui.badge tone="info">{{ __('learn.preview') }}</x-ui.badge>@endif
+                                @if(in_array($entry['id'], $completed, true))<x-ui.badge tone="success" data-item-completed>{{ __('learn.completed') }}</x-ui.badge>@endif
                             </a>
                         @endif
                     </li>

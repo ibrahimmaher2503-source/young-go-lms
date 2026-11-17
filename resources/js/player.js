@@ -132,3 +132,77 @@ function initPlayer(root) {
 }
 
 document.querySelectorAll('[data-player]').forEach(initPlayer);
+
+// Progress (T-P4-04): the server decides what counts; the page only reports where the learner is.
+const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+function send(url, body, keepalive = false) {
+    return fetch(url, {
+        method: 'POST',
+        keepalive,
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf(), 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify(body),
+    });
+}
+
+function applyResult(root, result) {
+    const percent = document.querySelector('[data-course-percent]');
+    if (percent && typeof result.course_percent === 'number') {
+        percent.textContent = `${result.course_percent}%`;
+        const bar = document.querySelector('[data-course-progress] progress');
+        if (bar) {
+            bar.value = result.course_percent;
+        }
+    }
+    root.dataset.lessonStatus = result.status;
+}
+
+function initProgress(root) {
+    const url = root.dataset.progressUrl;
+    if (!url) {
+        return;
+    }
+
+    const media = root.querySelector('[data-player-media]');
+    if (media) {
+        const resume = Number(root.dataset.resume || 0);
+        media.addEventListener('loadedmetadata', () => {
+            if (resume > 0 && (!Number.isFinite(media.duration) || resume < media.duration - 5)) {
+                media.currentTime = resume;
+            }
+        }, { once: true });
+
+        const report = (keepalive = false) => {
+            const position = Math.floor(media.currentTime || 0);
+            send(url, { position }, keepalive).then((response) => (response.ok ? response.json() : null)).then((result) => result && applyResult(root, result)).catch(() => {});
+        };
+        let timer = null;
+        media.addEventListener('play', () => {
+            timer = timer || window.setInterval(() => report(), 15000);
+        });
+        const stop = () => {
+            window.clearInterval(timer);
+            timer = null;
+            report();
+        };
+        media.addEventListener('pause', stop);
+        media.addEventListener('ended', stop);
+        window.addEventListener('pagehide', () => report(true));
+    }
+
+    const complete = root.querySelector('[data-player-complete]');
+    complete?.addEventListener('click', () => {
+        send(root.dataset.completeUrl, {})
+            .then((response) => (response.ok ? response.json() : null))
+            .then((result) => {
+                if (result) {
+                    applyResult(root, result);
+                    complete.remove();
+                    window.location.reload();
+                }
+            })
+            .catch(() => {});
+    });
+}
+
+document.querySelectorAll('[data-player]').forEach(initProgress);
