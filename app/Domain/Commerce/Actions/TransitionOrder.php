@@ -19,7 +19,7 @@ use RuntimeException;
  */
 final class TransitionOrder
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly RedeemCoupon $redeem, private readonly ReleaseCoupon $release) {}
 
     public function __invoke(Order $order, OrderStatus $to, ?User $actor = null): Order
     {
@@ -38,6 +38,13 @@ final class TransitionOrder
                 $locked->paid_at = now();
             }
             $locked->save();
+
+            // A coupon use is confirmed with the payment and given back if the order fails or is cancelled.
+            if ($to === OrderStatus::Paid) {
+                ($this->redeem)($locked);
+            } elseif ($to === OrderStatus::Failed || $to === OrderStatus::Cancelled) {
+                ($this->release)($locked);
+            }
 
             $recorded = $this->audit->record('order.status_changed', $locked, $actor === null ? null : (int) $actor->getKey(), ['status' => $from->value], ['status' => $to->value]);
             if ($recorded === null) {

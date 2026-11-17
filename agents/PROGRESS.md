@@ -50,9 +50,9 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P2-03 | Brand public shell and homepage UI | blocked | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | O-027 official branding inputs |
 | T-P2-04 | Catalog, search and filters | blocked | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | Search/filter slice verified; price, popularity and availability data pending |
 | T-P2-05 | Course detail page and SEO fields group | review | T-P2-04 | ui-builder, implementer, test-writer | M | normal | | tests: pending (other model); prompt `docs/test-prompts/T-P2-05.md`; price, reviews, self-enrol CTA and wizard SEO wiring open, see task log |
-| T-P2-06 | SEO infrastructure | todo | T-P2-02, T-P2-05 | implementer, test-writer | S | normal | | |
+| T-P2-06 | SEO infrastructure | review | T-P2-02, T-P2-05 | implementer, test-writer | S | normal | | tests: pending (other model); prompt `docs/test-prompts/T-P2-06.md`; categories/blog sitemap entries wait for T-P2-09/T-P2-07 pages |
 | T-P2-07 | Blog | todo | T-P2-06 | implementer, ui-builder, test-writer, chore | M | normal | | |
-| T-P2-08 | Contact enquiries and newsletter | todo | T-P2-03 | implementer, ui-builder, test-writer | S | normal | | |
+| T-P2-08 | Contact enquiries and newsletter | review | T-P2-03 | implementer, ui-builder, test-writer | S | normal | | tests: pending (other model); prompt `docs/test-prompts/T-P2-08.md`; built before T-P2-03 (blocked O-027) on the base public layout; G7 screenshots not taken; consent wording is a draft |
 | T-P2-09 | Instructor profiles and category landing pages | todo | T-P2-04, T-P2-06 | implementer, ui-builder, test-writer | S | normal | | |
 | T-P2-MG | Milestone gate P2 | todo | T-P2-01..09 | orchestrator | S | normal | | |
 | T-P3-01 | Course domain, ownership and course list | review | T-P1-07, T-P1-08, T-P2-01 | implementer, test-writer, chore | L | high | | See task log; [2026-11-17 audit](../docs/reviews/REVIEW_QUEUE_P2_P3A_2026-11-17.md); G10 PASS; approval withheld. |
@@ -107,7 +107,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P8-02 | PaymentGateway contract and Paymob checkout | todo | T-P8-01 | implementer, test-writer, chore | M | high | | |
 | T-P8-03 | Paymob webhook verification and idempotent fulfillment | todo | T-P8-02 | implementer, test-writer | M | high | | |
 | T-P8-04 | Instapay/manual payment proofs | todo | T-P8-01, T-P4-01 | implementer, ui-builder, test-writer | M | high | | |
-| T-P8-05 | Coupons | todo | T-P8-01 | implementer, test-writer | S | high | | |
+| T-P8-05 | Coupons | review | T-P8-01 | implementer, test-writer | S | high | | Domain + admin list/create/edit modal (Filament); no checkout UI (T-P8-12); tests: pending (other model), docs/test-prompts/T-P8-05.md; G7 screenshots not captured |
 | T-P8-06 | Refunds, payment history, receipts and e-receipt adapter | todo | T-P8-03, T-P8-04 | implementer, ui-builder, test-writer | M | high | | |
 | T-P8-07 | Bundles and allocation | todo | T-P8-03 | implementer, ui-builder, test-writer | M | high | | |
 | T-P8-08 | Subscription plans, periods and manual renewal | todo | T-P8-03, T-P5-04 | implementer, ui-builder, test-writer | L | high | | |
