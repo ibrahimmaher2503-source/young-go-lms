@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Curriculum\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Content\RichContent;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
@@ -94,6 +95,10 @@ final class ManageLessons
             if (array_key_exists($key, $validated)) {
                 $attributes[$key] = $validated[$key];
             }
+        }
+        if (array_key_exists('content', $data)) {
+            $content = $data['content'];
+            $attributes['content'] = $content === null || $content === [] ? null : RichContent::clean($content);
         }
         if (array_key_exists('description', $validated)) {
             $attributes['description'] = array_filter(array_map(static fn ($v) => is_string($v) ? trim($v) : '', (array) $validated['description']), static fn (string $v): bool => $v !== '');

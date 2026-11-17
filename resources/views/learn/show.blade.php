@@ -59,6 +59,11 @@
                 @else
                     <section aria-label="{{ __('learn.now_playing') }}" data-player data-ai-available="{{ $aiAvailable ? 'true' : 'false' }}" class="space-y-4"
                         @if($entitled) data-progress-url="{{ route('learn.progress', ['course' => $course->id, 'item' => $item->id]) }}" data-complete-url="{{ route('learn.complete', ['course' => $course->id, 'item' => $item->id]) }}" data-resume="{{ $lessonProgress?->position_seconds ?? 0 }}" @endif>
+                        @if($lesson->type === 'text' && ! empty($lesson->content))
+                            <article class="rounded-card border border-border bg-surface p-5 shadow-card sm:p-8" data-lesson-text>
+                                <x-learning.rich-content :content="$lesson->content" :lesson="$lesson" :viewer="$learner" />
+                            </article>
+                        @else
                         <div class="relative overflow-hidden rounded-card border border-border bg-black shadow-card" data-player-stage>
                             @if($descriptor === null)
                                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
@@ -69,6 +74,7 @@
                                 @endif
                             @endif
                         </div>
+                        @endif
 
                         @if($descriptor !== null && in_array($descriptor->type, ['video', 'audio'], true))
                             <div role="toolbar" aria-label="{{ __('learn.toolbar') }}" class="flex flex-wrap items-center gap-2">

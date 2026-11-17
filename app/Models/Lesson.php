@@ -26,11 +26,11 @@ final class Lesson extends Model
     /** @var list<string> */
     public array $translatable = ['title', 'description'];
 
-    protected $fillable = ['type', 'title', 'description', 'duration_seconds', 'is_preview', 'archived_at'];
+    protected $fillable = ['type', 'title', 'description', 'content', 'duration_seconds', 'is_preview', 'archived_at'];
 
     protected function casts(): array
     {
-        return ['is_preview' => 'boolean', 'duration_seconds' => 'integer', 'archived_at' => 'datetime'];
+        return ['is_preview' => 'boolean', 'duration_seconds' => 'integer', 'archived_at' => 'datetime', 'content' => 'array'];
     }
 
     /** @return HasOne<MediaAsset, $this> */

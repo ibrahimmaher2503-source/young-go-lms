@@ -26,6 +26,7 @@ use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -154,6 +155,7 @@ final class ManageCurriculum extends Page
                 return [
                     'title' => $lesson->getTranslations('title'), 'description' => $lesson->getTranslations('description'), 'type' => $lesson->type, 'is_preview' => $lesson->is_preview,
                     'duration_minutes' => $lesson->duration_seconds === null ? null : (int) round($lesson->duration_seconds / 60),
+                    'content' => $lesson->content,
                 ];
             })
             ->action(function (array $data, array $arguments, Action $action): void {
@@ -274,6 +276,9 @@ final class ManageCurriculum extends Page
             TextInput::make('duration_minutes')->label(__('curriculum.duration_minutes'))->numeric()->minValue(0)->maxValue(1440)->helperText(__('curriculum.duration_help')),
             Textarea::make('description.ar')->label(__('curriculum.description').' (AR)')->rows(2)->maxLength(5000)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
             Textarea::make('description.en')->label(__('curriculum.description').' (EN)')->rows(2)->maxLength(5000)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+            RichEditor::make('content')->label(__('curriculum.rich_content'))->helperText(__('curriculum.rich_content_help'))->json()
+                ->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3', 'h4'], ['bulletList', 'orderedList', 'blockquote', 'horizontalRule', 'table'], ['undo', 'redo']])
+                ->visible(static fn (Get $get): bool => $get('type') === 'text'),
             Toggle::make('is_preview')->label(__('curriculum.is_preview')),
             Select::make('media_provider')->label(__('curriculum.media_source'))->live()->placeholder(__('curriculum.media_keep'))
                 ->options(static fn (Get $get): array => self::providerOptions((string) ($get('type') ?? 'video'))),
@@ -431,6 +436,7 @@ final class ManageCurriculum extends Page
         return [
             'title' => $data['title'] ?? [], 'description' => $data['description'] ?? [], 'type' => $data['type'] ?? 'video', 'is_preview' => (bool) ($data['is_preview'] ?? false),
             'duration_seconds' => $minutes === null || $minutes === '' ? null : (int) round(((float) $minutes) * 60),
+            'content' => ($data['type'] ?? null) === 'text' ? ($data['content'] ?? null) : null,
         ];
     }
 
