@@ -12,6 +12,7 @@ use Illuminate\Support\Carbon;
  * A lesson's media source. Provider-neutral: every provider driver turns this row into a playback descriptor.
  *
  * @property int $lesson_id
+ * @property int|null $library_item_id
  * @property string $provider
  * @property string $kind
  * @property string|null $external_id
@@ -34,7 +35,7 @@ final class MediaAsset extends Model
 
     protected $fillable = [
         'lesson_id', 'provider', 'kind', 'external_id', 'url', 'path', 'protection_tier', 'exception_reason', 'exception_by',
-        'exception_at', 'duration_seconds', 'status', 'metadata',
+        'exception_at', 'duration_seconds', 'status', 'metadata', 'library_item_id',
     ];
 
     protected function casts(): array

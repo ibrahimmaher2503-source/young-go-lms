@@ -47,4 +47,6 @@ return [
     'course.duplicated' => 'Course duplicated',
     'course.archived' => 'Course archived',
     'course.deleted' => 'Course deleted',
+    'library.item_added' => 'Library item added',
+    'library.item_deleted' => 'Library item deleted',
 ];

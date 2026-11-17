@@ -90,6 +90,6 @@ final class DeleteCourse
         });
 
         // Files go only after the rows are gone for good, so a failed delete never leaves rows pointing at missing files.
-        Storage::disk(Config::string('media.disk'))->delete($files);
+        Storage::disk(Config::string('media.disk'))->delete(array_values(array_filter($files, static fn (string $path): bool => ! str_starts_with($path, 'library/'))));
     }
 }

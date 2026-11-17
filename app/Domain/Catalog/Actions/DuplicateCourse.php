@@ -147,13 +147,15 @@ final class DuplicateCourse
         $media = MediaAsset::query()->where('lesson_id', $lesson->getKey())->first();
         if ($media !== null) {
             $attributes = $media->only(['provider', 'kind', 'external_id', 'url', 'protection_tier', 'exception_reason', 'exception_by', 'exception_at', 'duration_seconds', 'status', 'metadata']);
-            $attributes['path'] = $this->copyFile($media->path, 'media', $copied);
+            $attributes['library_item_id'] = $media->library_item_id;
+            $attributes['path'] = $media->library_item_id === null ? $this->copyFile($media->path, 'media', $copied) : $media->path;
             MediaAsset::query()->create(['lesson_id' => $new->getKey()] + $attributes);
         }
 
         foreach (LessonResource::query()->where('lesson_id', $lesson->getKey())->get() as $resource) {
-            $attributes = $resource->only(['type', 'url', 'mime', 'size', 'sha256', 'downloadable', 'visibility', 'is_preview', 'sort', 'uploaded_by']);
-            LessonResource::query()->create(['lesson_id' => $new->getKey(), 'title' => $resource->getTranslations('title'), 'path' => $this->copyFile($resource->path, 'resources', $copied)] + $attributes);
+            $attributes = $resource->only(['type', 'url', 'mime', 'size', 'sha256', 'downloadable', 'visibility', 'is_preview', 'sort', 'uploaded_by', 'library_item_id']);
+            $path = $resource->library_item_id === null ? $this->copyFile($resource->path, 'resources', $copied) : $resource->path; // library files are shared by reference
+            LessonResource::query()->create(['lesson_id' => $new->getKey(), 'title' => $resource->getTranslations('title'), 'path' => $path] + $attributes);
         }
 
         foreach (SubtitleTrack::query()->where('lesson_id', $lesson->getKey())->get() as $track) {

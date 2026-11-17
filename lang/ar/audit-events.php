@@ -47,4 +47,6 @@ return [
     'course.duplicated' => 'نسخ دورة',
     'course.archived' => 'أرشفة دورة',
     'course.deleted' => 'حذف دورة',
+    'library.item_added' => 'إضافة عنصر إلى المكتبة',
+    'library.item_deleted' => 'حذف عنصر من المكتبة',
 ];

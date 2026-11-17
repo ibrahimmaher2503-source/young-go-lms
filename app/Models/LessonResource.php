@@ -10,6 +10,7 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * @property int $lesson_id
+ * @property int|null $library_item_id
  * @property string $type
  * @property string|null $path
  * @property string|null $url
@@ -33,7 +34,7 @@ final class LessonResource extends Model
     public array $translatable = ['title'];
 
     protected $fillable = [
-        'lesson_id', 'type', 'title', 'path', 'url', 'mime', 'size', 'sha256', 'downloadable', 'visibility', 'is_preview', 'sort', 'uploaded_by',
+        'lesson_id', 'type', 'title', 'path', 'url', 'mime', 'size', 'sha256', 'downloadable', 'visibility', 'is_preview', 'sort', 'uploaded_by', 'library_item_id',
     ];
 
     protected function casts(): array

@@ -101,7 +101,8 @@ final class ManageLessonResources
             }
         });
 
-        if ($resource->path !== null) {
+        // A file that belongs to the library is never deleted with the lesson's reference to it.
+        if ($resource->path !== null && $resource->library_item_id === null) {
             Storage::disk(Config::string('media.disk'))->delete($resource->path);
         }
     }

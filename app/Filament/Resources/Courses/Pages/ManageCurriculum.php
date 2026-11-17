@@ -11,6 +11,8 @@ use App\Domain\Curriculum\Actions\MoveCurriculumItem;
 use App\Domain\Curriculum\Actions\ReorderCurriculum;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Library\Actions\AttachLibraryItem;
+use App\Domain\Library\LibraryAccess;
 use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Domain\Media\Actions\ManageLessonResources;
 use App\Domain\Media\Actions\UploadCurriculumDocument;
@@ -22,6 +24,7 @@ use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LibraryItem;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -290,6 +293,13 @@ final class ManageCurriculum extends Page
                 ->visible(static fn (Get $get): bool => in_array($get('media_provider'), self::LINK_PROVIDERS, true)),
             Textarea::make('media_text')->label(__('curriculum.media_text'))->rows(5)->maxLength(20000)
                 ->visible(static fn (Get $get): bool => $get('media_provider') === 'rich_text'),
+            Select::make('library_media')->label(__('library.pick_media'))->native(false)->searchable()->placeholder(__('library.none'))
+                ->options(fn (Get $get): array => $this->libraryOptions(['video' => ['video'], 'audio' => ['audio'], 'document' => ['document'], 'text' => ['image']][$get('type') ?? 'video'] ?? []))
+                ->visible(static fn (Get $get): bool => in_array($get('type') ?? 'video', ['video', 'audio', 'document'], true)),
+            Select::make('library_resource')->label(__('library.pick_material'))->native(false)->searchable()->placeholder(__('library.none'))
+                ->options(fn (): array => $this->libraryOptions(['document', 'file', 'image'])),
+            Select::make('library_pdf')->label(__('library.pick_pdf'))->native(false)->searchable()->placeholder(__('library.none'))
+                ->options(fn (): array => $this->libraryOptions(['document'])),
             FileUpload::make('curriculum_pdf')->label(__('curriculum.curriculum_pdf'))->helperText(__('curriculum.curriculum_pdf_help'))
                 ->disk(Config::string('media.disk'))->directory('documents/uploads')->visibility('private')->maxSize(Config::integer('media.pdf_max_kilobytes'))
                 ->extraInputAttributes(['accept' => 'application/pdf'])->preserveFilenames(false),
@@ -392,6 +402,7 @@ final class ManageCurriculum extends Page
     private function saveMedia(Lesson $lesson, array $data): void
     {
         $this->saveDocuments($lesson, $data);
+        $this->saveLibrary($lesson, $data);
 
         $provider = $data['media_provider'] ?? null;
         if (! is_string($provider) || $provider === '') {
@@ -438,6 +449,33 @@ final class ManageCurriculum extends Page
             'duration_seconds' => $minutes === null || $minutes === '' ? null : (int) round(((float) $minutes) * 60),
             'content' => ($data['type'] ?? null) === 'text' ? ($data['content'] ?? null) : null,
         ];
+    }
+
+    /**
+     * @param  list<string>  $kinds
+     * @return array<int, string> visible library items of the given kinds, by id
+     */
+    private function libraryOptions(array $kinds): array
+    {
+        return LibraryAccess::visibleTo($this->actor())->whereIn('kind', $kinds)->orderByDesc('id')->limit(200)->get()
+            ->mapWithKeys(static fn (LibraryItem $item): array => [$item->getKey() => (string) $item->title])->all();
+    }
+
+    /** @param  array<string, mixed>  $data */
+    private function saveLibrary(Lesson $lesson, array $data): void
+    {
+        $attach = app(AttachLibraryItem::class);
+        $find = fn (mixed $id): ?\App\Models\LibraryItem => filled($id) ? LibraryAccess::visibleTo($this->actor())->find($id) : null;
+
+        if ($item = $find($data['library_media'] ?? null)) {
+            $attach->asMedia($this->actor(), $item, $lesson, $lesson->duration_seconds);
+        }
+        if ($item = $find($data['library_resource'] ?? null)) {
+            $attach->asResource($this->actor(), $item, $lesson);
+        }
+        if ($item = $find($data['library_pdf'] ?? null)) {
+            $attach->asCurriculumPdf($this->actor(), $item, $lesson);
+        }
     }
 
     private function actor(): User
