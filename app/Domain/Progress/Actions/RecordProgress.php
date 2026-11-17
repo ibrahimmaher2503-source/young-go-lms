@@ -61,6 +61,7 @@ final class RecordProgress
         });
 
         ($this->recalculate)($learner, $item->course);
+        $this->access->flush(); // a finished lesson can open the next one in a sequential course
 
         return $progress;
     }
@@ -89,6 +90,7 @@ final class RecordProgress
         });
 
         ($this->recalculate)($learner, $item->course);
+        $this->access->flush();
 
         return $progress;
     }

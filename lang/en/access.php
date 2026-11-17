@@ -11,4 +11,5 @@ return [
     'preview_only' => 'Only the free preview lessons are open without enrolling.',
     'ends_before_start' => 'The end date must be after the start date.',
     'reason_invalid' => 'Enter a reason of 3 to 500 characters.',
+    'sequence_locked' => 'Finish ":title" first to open this lesson.',
 ];

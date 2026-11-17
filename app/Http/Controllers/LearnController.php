@@ -54,7 +54,7 @@ final class LearnController
         $decision = $this->access->canAccessItem($learner, $item);
 
         // Only a learner who is entitled and merely early may see the lock reason; everyone else sees nothing.
-        abort_unless($decision->allowed || $decision->reason === 'drip_locked', 404);
+        abort_unless($decision->allowed || in_array($decision->reason, ['drip_locked', 'sequence_locked'], true), 404);
 
         $sections = $this->curriculum->for($learner, $course);
         $entity = $item->itemable;

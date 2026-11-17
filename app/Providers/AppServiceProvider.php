@@ -11,10 +11,12 @@ use App\Domain\AI\Ingestion\PdftoppmRenderer;
 use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
+use App\Domain\Entitlements\Contracts\CompletionLookup;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\EntitlementHistory;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\GuardianAccess;
+use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\Assignment;
@@ -70,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
 
         Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class]);
         // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
+        $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);

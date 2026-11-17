@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Entitlements;
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Entitlements\Contracts\CompletionLookup;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Models\Course;
 use App\Models\CurriculumItem;
@@ -20,6 +22,11 @@ final class EntitlementService implements LessonAccessChecker
 {
     /** @var array<string, array{current: Entitlement|null, any: Entitlement|null}> */
     private array $cache = [];
+
+    /** @var array<string, list<int>> */
+    private array $completed = [];
+
+    public function __construct(private readonly CompletionLookup $completion) {}
 
     public function canAccessCourse(User $learner, Course $course): AccessDecision
     {
@@ -51,7 +58,9 @@ final class EntitlementService implements LessonAccessChecker
             return $decision;
         }
 
-        return $this->dripDecision($item, $entitlement);
+        $drip = $this->dripDecision($item, $entitlement);
+
+        return $drip->allowed ? $this->sequenceDecision($learner, $item) : $drip;
     }
 
     public function canAccessLessonFiles(User $user, Lesson $lesson): bool
@@ -84,6 +93,7 @@ final class EntitlementService implements LessonAccessChecker
     public function flush(): void
     {
         $this->cache = [];
+        $this->completed = [];
     }
 
     private function courseOpen(Course $course): bool
@@ -122,6 +132,34 @@ final class EntitlementService implements LessonAccessChecker
             'days' => ($at = $entitlement->starts_at->copy()->addDays((int) $item->unlock_days))->isFuture() ? AccessDecision::deny('drip_locked', $at) : AccessDecision::allow(),
             default => AccessDecision::deny('drip_locked'),
         };
+    }
+
+    /**
+     * Sequential courses (ED-025): an item opens only once every required lesson before it in the curriculum is completed.
+     * The first unfinished one is named so the learner knows what to do next.
+     */
+    private function sequenceDecision(User $learner, CurriculumItem $item): AccessDecision
+    {
+        $course = $item->course;
+        if ($course->sequence_mode !== Course::SEQUENCE_SEQUENTIAL) {
+            return AccessDecision::allow();
+        }
+
+        $ordered = CurriculumOutline::forStudents($course)->flatMap(static fn ($section) => $section->items)->values();
+        $position = $ordered->search(static fn (CurriculumItem $candidate): bool => $candidate->getKey() === $item->getKey());
+        if ($position === false) {
+            return AccessDecision::deny('item_unpublished');
+        }
+
+        $key = $learner->getKey().'.'.$course->getKey();
+        $done = $this->completed[$key] ??= $this->completion->completedItemIds($learner, $course);
+        foreach ($ordered->take($position) as $previous) {
+            if ($previous->required && $previous->itemable instanceof Lesson && ! in_array((int) $previous->getKey(), $done, true)) {
+                return AccessDecision::deny('sequence_locked', null, (string) $previous->itemable->title);
+            }
+        }
+
+        return AccessDecision::allow();
     }
 
     /** @return array{current: Entitlement|null, any: Entitlement|null} */

@@ -62,6 +62,8 @@ final class CourseWizardSteps
                     Select::make('level')->label(__('courses.level'))->markAsRequired()->options(self::labelled('levels', SaveCourseWizard::LEVELS)),
                     Select::make('content_language')->label(__('courses.content_language'))->markAsRequired()->options(self::labelled('languages', SaveCourseWizard::CONTENT_LANGUAGES)),
                     Select::make('format')->label(__('courses.format'))->markAsRequired()->options(self::labelled('formats', SaveCourseWizard::FORMATS)),
+                    Select::make('sequence_mode')->label(__('courses.sequence_mode'))->helperText(__('courses.sequence_mode_help'))->default('free')->native(false)
+                        ->options(['free' => __('courses.sequence.free'), 'sequential' => __('courses.sequence.sequential')]),
                     TextInput::make('min_age')->label(__('courses.min_age'))->numeric()->minValue(0)->maxValue(120),
                     TextInput::make('max_age')->label(__('courses.max_age'))->numeric()->minValue(0)->maxValue(120),
                     Select::make('owner_type')->label(__('courses.ownership'))->visible($canOwnership)->live()

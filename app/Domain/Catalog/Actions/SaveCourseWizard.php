@@ -135,6 +135,7 @@ final class SaveCourseWizard
             'level' => [...$required($strict1), Rule::in(self::LEVELS)],
             'content_language' => [...$required($strict1), Rule::in(self::CONTENT_LANGUAGES)],
             'format' => [...$required($strict1), Rule::in(self::FORMATS)],
+            'sequence_mode' => ['sometimes', Rule::in([Course::SEQUENCE_FREE, Course::SEQUENCE_SEQUENTIAL])],
             'min_age' => ['nullable', 'integer', 'between:0,120'],
             'max_age' => ['nullable', 'integer', 'between:0,120', 'gte:min_age'],
             'owner_type' => ['sometimes', Rule::in([Course::OWNER_ACADEMY, Course::OWNER_INDEPENDENT])],
@@ -172,7 +173,7 @@ final class SaveCourseWizard
 
         $attributes = Arr::only($validated, [
             'title', 'short_description', 'description', 'category_id', 'level', 'content_language', 'format',
-            'min_age', 'max_age', 'owner_type', 'owner_instructor_id', 'status', 'featured',
+            'min_age', 'max_age', 'owner_type', 'owner_instructor_id', 'status', 'featured', 'sequence_mode',
         ]);
         foreach (['title', 'short_description', 'description'] as $field) {
             if (array_key_exists($field, $attributes)) {
