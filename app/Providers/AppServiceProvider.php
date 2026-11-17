@@ -12,7 +12,7 @@ use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
-use App\Domain\Entitlements\DenyLessonAccess;
+use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\Assignment;
@@ -62,8 +62,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class]);
-        // Fails closed until the EntitlementService exists (T-P4-01), which replaces this binding.
-        $this->app->bind(LessonAccessChecker::class, DenyLessonAccess::class);
+        // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
+        $this->app->scoped(EntitlementService::class);
+        $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);
         // O-014: no real provider is approved. Local and test runs get the deterministic fake, everything else the refusing null.

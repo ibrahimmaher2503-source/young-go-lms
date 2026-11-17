@@ -15,3 +15,5 @@ Artisan::command('inspire', function () {
 Schedule::call(static fn (): bool => Cache::put(Doctor::HEARTBEAT_KEY, now()->timestamp, 300))
     ->name('app:scheduler-heartbeat')
     ->everyMinute();
+
+Schedule::command('entitlements:expire')->hourly()->name('entitlements:expire')->withoutOverlapping();

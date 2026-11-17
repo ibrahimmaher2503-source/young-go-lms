@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
 /**
  * The only ordering source for everything a learner works through (ED-002).
@@ -17,6 +18,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $status
  * @property bool $required
  * @property bool $ai_enabled
+ * @property string $unlock_rule
+ * @property Carbon|null $unlock_at
+ * @property int|null $unlock_days
  */
 final class CurriculumItem extends Model
 {

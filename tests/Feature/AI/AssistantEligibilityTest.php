@@ -13,7 +13,7 @@ use App\Domain\AI\UnavailableReason;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
-use App\Domain\Entitlements\DenyLessonAccess;
+use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\AiPromptVersion;
@@ -90,7 +90,13 @@ it('is unavailable with the right reason when one condition fails', function (st
         'item_off' => $item->forceFill(['ai_enabled' => false])->save(),
         'live_lesson' => $item->forceFill(['itemable_type' => 'live_session'])->save(),
         'text_lesson' => $lesson->forceFill(['type' => 'text'])->save(),
-        'no_entitlement' => app()->bind(LessonAccessChecker::class, fn () => new DenyLessonAccess),
+        'no_entitlement' => app()->bind(LessonAccessChecker::class, fn () => new class implements LessonAccessChecker
+        {
+            public function canAccessLessonFiles(User $user, Lesson $lesson): bool
+            {
+                return false;
+            }
+        }),
         'no_document' => LessonCurriculumDocument::query()->delete(),
         'unapproved_document' => LessonCurriculumDocument::query()->update(['status' => LessonCurriculumDocument::STATUS_UPLOADED]),
         'inactive_document' => LessonCurriculumDocument::query()->update(['active' => false]),
@@ -121,9 +127,9 @@ it('is unavailable with the right reason when one condition fails', function (st
     'minors flag off' => ['minors_flag', UnavailableReason::MinorsOff],
 ])->group('T-P3-10', 'A1', 'AI-SPEC-2');
 
-it('fails closed for the real default entitlement stub', function (): void {
+it('fails closed with the real entitlement service when the learner has no entitlement', function (): void {
     [$student, $lesson] = aiReady();
-    app()->bind(LessonAccessChecker::class, DenyLessonAccess::class);
+    app()->bind(LessonAccessChecker::class, EntitlementService::class);
 
     expect(aiCheck($student, $lesson)->reason)->toBe(UnavailableReason::NoEntitlement);
 })->group('T-P3-10', 'A1', 'AI-SPEC-2');
