@@ -92,4 +92,7 @@ return [
     'ai.retention_saved' => 'تم حفظ مدة الاحتفاظ ببيانات مساعد الدرس',
     'ai.circuit_reset' => 'تم إغلاق دائرة مزوّد مساعد الدرس يدويًا',
     'ai.retention_pruned' => 'تم حذف بيانات مساعد الدرس التي تجاوزت مدة الاحتفاظ',
+    'order.created' => 'تم إنشاء طلب',
+    'order.status_changed' => 'تغيرت حالة الطلب',
+    'order.adjusted' => 'تم تعديل إجمالي الطلب',
 ];

@@ -92,4 +92,7 @@ return [
     'ai.retention_saved' => 'Lesson assistant retention saved',
     'ai.circuit_reset' => 'Lesson assistant provider circuit closed by hand',
     'ai.retention_pruned' => 'Lesson assistant data past retention deleted',
+    'order.created' => 'Order created',
+    'order.status_changed' => 'Order status changed',
+    'order.adjusted' => 'Order total adjusted',
 ];
