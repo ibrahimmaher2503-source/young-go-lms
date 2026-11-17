@@ -10,6 +10,7 @@ use App\Domain\AI\Dto\AiCompletionRequest;
 use App\Domain\AI\Dto\AiCompletionResult;
 use App\Domain\AI\Dto\AiUsage as UsageTokens;
 use App\Domain\AI\PromptRenderer;
+use App\Domain\AI\Resilience\AiProviderCircuitOpen;
 use App\Models\AiPromptVersion;
 use Illuminate\Support\Str;
 use Throwable;
@@ -80,7 +81,7 @@ final class AssistantEngine
                     $request->timeoutSeconds, $request->userHash, $request->idempotencyKey.':retry',
                 ));
             } catch (Throwable $exception) {
-                if (! $exception instanceof AiProviderNotConfigured) {
+                if (! $exception instanceof AiProviderNotConfigured && ! $exception instanceof AiProviderCircuitOpen) {
                     report($exception);
                 }
 

@@ -83,4 +83,13 @@ return [
     'help_request.student_replied' => 'Learner replied on a help request',
     'help_request.status_changed' => 'Help request status changed',
     'help_request.overdue' => 'Help request marked overdue',
+    'ai.global_enabled' => 'Lesson assistant turned on for all learners',
+    'ai.global_disabled' => 'Lesson assistant turned off for all learners',
+    'ai.course_switched' => 'Lesson assistant switched for a course',
+    'ai.lesson_switched' => 'Lesson assistant switched for a lesson',
+    'ai.quotas_saved' => 'Lesson assistant quotas and budgets saved',
+    'ai.provider_saved' => 'Lesson assistant provider, model or prompt saved',
+    'ai.retention_saved' => 'Lesson assistant retention saved',
+    'ai.circuit_reset' => 'Lesson assistant provider circuit closed by hand',
+    'ai.retention_pruned' => 'Lesson assistant data past retention deleted',
 ];

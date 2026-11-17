@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\AI\Assistant\AssistantEngine;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Contracts\ModerationClassifier;
 use App\Domain\AI\Ingestion\Contracts\PageRenderer;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
 use App\Domain\AI\Ingestion\PdftoppmRenderer;
 use App\Domain\AI\Ingestion\PdftotextExtractor;
-use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\FakeModerationClassifier;
 use App\Domain\AI\Providers\KeywordModerationClassifier;
-use App\Domain\AI\Providers\NullAiProvider;
+use App\Domain\AI\Resilience\CircuitBreaker;
+use App\Domain\AI\Resilience\ProviderRegistry;
+use App\Domain\AI\Resilience\ResilientProvider;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
 use App\Domain\Completion\Events\CourseCompleted;
@@ -112,9 +114,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);
         // O-014: no real provider is approved. Local and test runs get the deterministic fake, everything else the refusing null.
-        $this->app->singleton(AiProviderInterface::class, static fn (): AiProviderInterface => config('ai.provider') === 'fake' || app()->environment('local', 'testing')
-            ? new FakeAiProvider
-            : new NullAiProvider);
+        // T-P7-06: a super admin may pick another registered key (AiSettings); with no choice the environment decides, as before.
+        $this->app->singleton(AiProviderInterface::class, static fn (): AiProviderInterface => app(ProviderRegistry::class)->make(app(ProviderRegistry::class)->activeKey()));
+        // The request pipeline talks to the provider through the circuit breaker and the optional fallback route (AI spec 11).
+        $this->app->when(AssistantEngine::class)->needs(AiProviderInterface::class)->give(static fn (): AiProviderInterface => new ResilientProvider(
+            app(AiProviderInterface::class), app(ProviderRegistry::class), app(CircuitBreaker::class),
+        ));
 
         // Moderation adapter: the keyword baseline everywhere except local/test, which get the deterministic fake. A real adapter comes with O-014.
         $this->app->singleton(ModerationClassifier::class, static fn (): ModerationClassifier => config('ai.provider') === 'fake' || app()->environment('local', 'testing')

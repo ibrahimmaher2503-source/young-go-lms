@@ -32,6 +32,23 @@ final class AiSettings extends Settings
 
     public int $first_token_p95_max_ms;
 
+    /** Provider key chosen by a super admin; null follows the environment (AI_PROVIDER). Provider choice stays OPEN (O-014). */
+    public ?string $provider;
+
+    public ?string $model;
+
+    public ?string $fallback_provider;
+
+    public int $breaker_failures;
+
+    public int $breaker_window_seconds;
+
+    public int $breaker_cool_off_seconds;
+
+    public int $message_retention_days;
+
+    public int $usage_retention_months;
+
     public static function group(): string
     {
         return 'ai';

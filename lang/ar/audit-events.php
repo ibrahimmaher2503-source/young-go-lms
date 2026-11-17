@@ -83,4 +83,13 @@ return [
     'help_request.student_replied' => 'رد المتعلم على طلب مساعدة',
     'help_request.status_changed' => 'تغيرت حالة طلب المساعدة',
     'help_request.overdue' => 'تم تعليم طلب المساعدة كمتأخر',
+    'ai.global_enabled' => 'تم تشغيل مساعد الدرس لجميع المتعلمين',
+    'ai.global_disabled' => 'تم إيقاف مساعد الدرس لجميع المتعلمين',
+    'ai.course_switched' => 'تم تبديل حالة مساعد الدرس لدورة',
+    'ai.lesson_switched' => 'تم تبديل حالة مساعد الدرس لدرس',
+    'ai.quotas_saved' => 'تم حفظ حصص مساعد الدرس وميزانياته',
+    'ai.provider_saved' => 'تم حفظ مزوّد مساعد الدرس أو نموذجه أو تعليماته',
+    'ai.retention_saved' => 'تم حفظ مدة الاحتفاظ ببيانات مساعد الدرس',
+    'ai.circuit_reset' => 'تم إغلاق دائرة مزوّد مساعد الدرس يدويًا',
+    'ai.retention_pruned' => 'تم حذف بيانات مساعد الدرس التي تجاوزت مدة الاحتفاظ',
 ];

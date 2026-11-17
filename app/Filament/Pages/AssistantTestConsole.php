@@ -46,6 +46,11 @@ final class AssistantTestConsole extends Page
         return __('ai.console.nav');
     }
 
+    public static function getNavigationGroup(): string
+    {
+        return __('ai_admin.group');
+    }
+
     public static function getNavigationIcon(): string
     {
         return 'heroicon-o-beaker';

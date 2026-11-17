@@ -26,6 +26,7 @@ use App\Domain\AI\Guards\InputVerdict;
 use App\Domain\AI\Quota\BudgetGate;
 use App\Domain\AI\Quota\QuotaLedger;
 use App\Domain\AI\Quota\QuotaReservation;
+use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\UnavailableReason;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Entitlements\EntitlementService;
@@ -339,7 +340,7 @@ final class AskLessonAssistant
 
             AiUsage::query()->create([
                 'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
-                'provider' => (string) config('ai.provider', 'unconfigured'), 'model' => $model,
+                'provider' => ProviderRegistry::currentKey(), 'model' => $model,
                 'input_tokens' => $tokens[0], 'cached_tokens' => $tokens[1], 'output_tokens' => $tokens[2],
                 'cost_minor' => $cost, 'latency_ms' => $latency, 'result' => $result,
             ]);
@@ -395,7 +396,7 @@ final class AskLessonAssistant
 
             AiUsage::query()->create([
                 'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
-                'provider' => (string) config('ai.provider', 'unconfigured'), 'model' => null,
+                'provider' => ProviderRegistry::currentKey(), 'model' => null,
                 'input_tokens' => 0, 'cached_tokens' => 0, 'output_tokens' => 0, 'cost_minor' => 0, 'latency_ms' => 0, 'result' => $kind->value,
             ]);
 
@@ -462,7 +463,7 @@ final class AskLessonAssistant
 
             AiUsage::query()->create([
                 'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
-                'provider' => (string) config('ai.provider', 'unconfigured'), 'model' => null,
+                'provider' => ProviderRegistry::currentKey(), 'model' => null,
                 'input_tokens' => 0, 'cached_tokens' => 0, 'output_tokens' => 0, 'cost_minor' => 0, 'latency_ms' => 0, 'result' => 'cache_hit',
             ]);
 

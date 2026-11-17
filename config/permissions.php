@@ -83,7 +83,7 @@ return [
             'help_request.manage', 'help_request.reply', 'instructor.manage', 'instructor.view', 'learner.profile.view',
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
-            'payment.refund', 'payment.view', 'report.view', 'user.manage', 'user.view',
+            'payment.refund', 'payment.view', 'report.view', 'user.manage', 'user.view', 'ai.view_usage',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',

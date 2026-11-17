@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Filament\Auth\WorkspaceLogin;
+use App\Filament\Pages\AssistantAvailability;
+use App\Filament\Pages\AssistantControls;
+use App\Filament\Pages\AssistantInsights;
 use App\Filament\Pages\AssistantTestConsole;
+use App\Filament\Pages\AssistantUsageReport;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Audit\AuditLogResource;
 use App\Filament\Resources\Categories\CategoryResource;
@@ -61,7 +65,11 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->userMenuItems([Action::make('security')->label(static fn (): string => (string) __('pages.tf_title'))->url('/security/two-factor')->icon('heroicon-o-shield-check')])
                 ->viteTheme('resources/css/filament-theme.css')
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
-                ->pages($id === 'finance' ? [WorkspaceDashboard::class] : [WorkspaceDashboard::class, AssistantTestConsole::class])
+                ->pages(match ($id) {
+                    'finance' => [WorkspaceDashboard::class],
+                    'admin' => [WorkspaceDashboard::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
+                    default => [WorkspaceDashboard::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class],
+                })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
                 ->renderHook(TablesRenderHook::CONTENT_BEFORE, static fn () => view('filament.shared.table-scroll-hint'))
                 ->renderHook(TablesRenderHook::CONTENT_AFTER, static fn (array $data) => view('filament.shared.workspace-pagination', $data))
