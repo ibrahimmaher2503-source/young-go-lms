@@ -36,7 +36,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P1-10 | Layouts, auth and family UI | todo | T-P1-02, T-P1-05, T-P1-06, T-P1-09 | ui-builder, implementer, test-writer, chore | L | normal | | |
 | T-P1-11 | Staff 2FA, child password reset and child notification routing | todo | T-P1-06, T-P1-08, T-P0-07 | implementer, ui-builder, test-writer | M | high | | |
 | T-P1-MG | Milestone gate P1 | todo | T-P1-01..11 | orchestrator | S | normal | | |
-| T-P2-01 | Categories and disciplines | todo | T-P1-08 | implementer, test-writer, chore | S | normal | | |
+| T-P2-01 | Categories and disciplines | review | T-P1-08 | implementer, test-writer, chore | S | normal | | See task log |
 | T-P2-02 | CMS pages and homepage blocks | todo | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | |
 | T-P2-03 | Brand public shell and homepage UI | todo | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | |
 | T-P2-04 | Catalog, search and filters | todo | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | |
@@ -141,6 +141,22 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P2-01 — Categories and disciplines
+
+- PO override 2026-11-17: T-P2-01 may proceed with T-P1-08 in review; visual score gap deferred, T-P1-08 not closed.
+- PO loop override 2026-11-17: `review` dependencies count for starting (T-P1-07, T-P1-08, T-P1-10 and P2 tasks moved to review). Capture required AR/EN 390/1440 screenshots; visual deferred per PO. Set completed tasks to `review`; run T-P2-MG only after T-P2-01..09 reach `review`.
+- Outcome: bilingual, ordered admin taxonomy for PRD §5.1, YG-WEB-003 and YG-GAP-SRCH-001.
+- Reuse verified in source: `HasSearchText`, `TranslatableTabs`, and `WorkspaceListRecords`.
+- UI: native workspace list and create/edit dialogs with AR/EN fields, file upload, empty/loading states and inline validation. Public pages belong to T-P2-04. AI: none — add nothing AI-related.
+- Data: self-referencing categories with indexed parent/order, unique AR and EN slug columns, display fields and derived search text.
+- Stages: focused acceptance tests, then migration/model/action and seeder, then panel resource and translations. A1 hierarchy/order, A2 locale slug uniqueness, and A3 normalized search text are exercised by tagged tests. Visual deferred per PO.
+- S0 RED: `php -d memory_limit=-1 vendor/bin/pest tests/Feature/Filament/CategoriesTest.php --compact` exited 1 (6 failed, 2 assertions). Category routes returned 404 and the category model/seeder are absent.
+- PO shared-file ruling applied: backed up and restored only `CHANGELOG.md`, `docs/TRACEABILITY_MATRIX.md` and `agents/ORCHESTRATOR.md` to HEAD (`agents/logs/stale-shared-files-backup-2026-11-17.patch`). Implementation resumed.
+- A1–A3: `CategoriesTest.php` 6 passed / 65 assertions, covering hierarchy and ordering, localized slug constraints, normalized bilingual search, editable seeds and access control. G1 Pint, G2 Larastan, G4 architecture (6/26), G6 translation/RTL/audit/build/isolated SQLite migration and seed, G10 requirement coverage and G11 local doctor all passed. G3 non-browser suite: 313 passed / 1708 assertions with 1 pre-existing I02 TODO (G5: 3 passed / 9 assertions, same TODO). Local gate output: `agents/logs/T-P2-01/local-gates.txt`.
+- G7: `CategoriesBrowserTest.php` 8 passed / 48 assertions with axe, direction and overflow checks. AR/EN × 390/1440 × light/dark captures in `tests/Browser/screenshots/T-P2-01/`; visual deferred per PO. G8/G9 N/A. Independent review remains pending.
+- G3 coverage rerun: 313 passed / 1708 assertions, 1 existing TODO, 92.6% total. Module coverage verifier exited 0 (threshold modules pending implementation). `agents/logs/T-P2-01/coverage.txt`.
+- Additional full-browser run in an isolated snapshot exited 1 (13 failed, 161 warnings, 1178 assertions) in the P1 family, staff and 2FA suites. The task-scoped browser gate passed. `agents/logs/T-P2-01/full-browser-suite.txt`.
 
 <!-- Orchestrator appends per task: plan, subtasks (agent/model), review verdicts, criteria→evidence map, gate results. -->
 

@@ -1,5 +1,9 @@
 # Young Go LMS --- Documentation Changelog
 
+## 2026-11-17
+
+- T-P2-01 adds an Arabic/English admin category directory with a two-level hierarchy, display ordering, locale-specific slugs, normalized search, and image uploads. The seeder provides seven editable creative disciplines.
+
 ## 2026-11-16 --- Pack v3.2: LearnHouse reference study + second gap review
 
 -   LearnHouse studied as design reference only (no code reuse, AGPL): `14_LEARNHOUSE_REFERENCE_STUDY.md` (25 pattern decisions).

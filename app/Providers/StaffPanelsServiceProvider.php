@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Filament\Auth\WorkspaceLogin;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Audit\AuditLogResource;
+use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\RolePermissions\RolePermissionResource;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
@@ -54,7 +55,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
                 ->renderHook(TablesRenderHook::CONTENT_BEFORE, static fn () => view('filament.shared.table-scroll-hint'))
                 ->renderHook(TablesRenderHook::CONTENT_AFTER, static fn (array $data) => view('filament.shared.workspace-pagination', $data))
-                ->resources($id === 'admin' ? [AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class] : [])
+                ->resources($id === 'admin' ? [AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class, CategoryResource::class] : [])
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));
         }

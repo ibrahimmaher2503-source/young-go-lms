@@ -17,7 +17,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | PRD §4.2 | Country rollout \[APPROVED\] | T-P0-06 | |
 | PRD §4.3 | Languages \[APPROVED\] | T-P1-01 | |
 | PRD §5 | Audience, age model and family accounts | T-P1-05, T-P1-07, T-P1-10, T-P2-01, T-P4-08, T-P7-02, T-P7-07 | |
-| PRD §5.1 | Learner audience \[APPROVED\] | T-P1-07, T-P2-01 | |
+| PRD §5.1 | Learner audience \[APPROVED\] | T-P1-07, T-P2-01 | `tests/Feature/Filament/CategoriesTest.php` (taxonomy) |
 | PRD §5.2 | Parent/guardian account \[APPROVED\] | T-P1-05, T-P1-10, T-P4-08 | |
 | PRD §5.3 | Child safety and consent \[RECOMMENDED / launch gate\] | T-P1-05, T-P7-02, T-P7-07 | |
 | PRD §6 | Roles and permission model | T-P1-02, T-P1-03 | |
@@ -144,7 +144,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-SEC-002 | Sharing flags | T-P9-10; consumes T-P4-07 session/device facts | |
 | YG-GAP-SEC-003 |  | T-P1-11 | |
 | YG-GAP-SEC-004 |  | T-P3-08 | |
-| YG-GAP-SRCH-001 |  | T-P0-06, T-P2-01, T-P2-04 | |
+| YG-GAP-SRCH-001 |  | T-P0-06, T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category indexing and search) |
 | YG-GAP-SUB-001 |  | T-P8-08 | |
 | YG-GAP-SUB-002 |  | T-P8-08 | |
 | YG-GAP-SUB-003 |  | T-P8-08 | |
@@ -157,7 +157,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-VID-004 |  | T-P3-05 | |
 | YG-WEB-001 |  | T-P2-03 | |
 | YG-WEB-002 |  | T-P2-02 | |
-| YG-WEB-003 |  | T-P2-01, T-P2-04 | |
+| YG-WEB-003 |  | T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category hierarchy) |
 | YG-WEB-004 |  | T-P2-05 | |
 | YG-WEB-005 |  | T-P2-02 | |
 | YG-WEB-006 |  | T-P2-07 | |
