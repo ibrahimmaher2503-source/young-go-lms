@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Identity\GuardianAccess;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -46,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
 
             return $user->checkPermissionTo($ability, (string) config('permissions.guard', 'web')) ? true : null;
         });
+
+        Gate::define('guardian.child.access', [GuardianAccess::class, 'parentCanAccessChild']);
 
         RateLimiter::for('login', static function (Request $request): array {
             $login = $request->input('login');
