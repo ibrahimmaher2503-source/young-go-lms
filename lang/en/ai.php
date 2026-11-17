@@ -23,4 +23,15 @@ return [
     'temporarily_unavailable' => 'The lesson assistant is temporarily unavailable.',
     'request_created' => 'Your instructor request was created.',
     'view_request' => 'View request',
+    'unavailable' => [
+        'global_off' => 'The lesson assistant is not available right now.',
+        'course_off' => 'The lesson assistant is turned off for this course.',
+        'item_off' => 'The lesson assistant is turned off for this lesson.',
+        'not_recorded_lesson' => 'The lesson assistant is only available in recorded lessons.',
+        'no_entitlement' => 'Enroll in this course to use the lesson assistant.',
+        'no_approved_document' => 'The lesson notes are not ready yet, so the assistant cannot answer here.',
+        'quota_exhausted' => 'You have used all your questions for today. Come back tomorrow.',
+        'consent_required' => 'A parent or guardian needs to allow the lesson assistant first.',
+        'minors_off' => 'The lesson assistant is not available for young learners right now.',
+    ],
 ];

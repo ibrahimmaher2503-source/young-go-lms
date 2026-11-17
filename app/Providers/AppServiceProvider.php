@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\AI\Contracts\AiProviderInterface;
+use App\Domain\AI\Providers\FakeAiProvider;
+use App\Domain\AI\Providers\NullAiProvider;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\DenyLessonAccess;
 use App\Domain\Identity\GuardianAccess;
@@ -55,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap(['lesson' => Lesson::class]);
         // Fails closed until the EntitlementService exists (T-P4-01), which replaces this binding.
         $this->app->bind(LessonAccessChecker::class, DenyLessonAccess::class);
+        // O-014: no real provider is approved. Local and test runs get the deterministic fake, everything else the refusing null.
+        $this->app->singleton(AiProviderInterface::class, static fn (): AiProviderInterface => config('ai.provider') === 'fake' || app()->environment('local', 'testing')
+            ? new FakeAiProvider
+            : new NullAiProvider);
 
         Gate::define('guardian.child.access', [GuardianAccess::class, 'parentCanAccessChild']);
 
