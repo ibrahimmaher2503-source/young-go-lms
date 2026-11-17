@@ -9,6 +9,7 @@ use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\LegacyRedirectController;
 use App\Http\Controllers\LiveJoinController;
+use App\Http\Controllers\ManualPaymentProofController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\PreviewController;
@@ -45,6 +46,9 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my/certificates/{certificate}', [CertificateController::class, 'download'])->whereNumber('certificate')->middleware('throttle:certificate-download')->name('certificates.download');
     Route::get('/my/help/{helpRequest}', [HelpRequestController::class, 'show'])->whereNumber('helpRequest')->name('help.show');
     Route::post('/my/help/{helpRequest}/replies', [HelpRequestController::class, 'reply'])->whereNumber('helpRequest')->middleware('throttle:progress')->name('help.reply');
+    Route::get('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'create'])->whereNumber('order')->name('manual-payments.create');
+    Route::post('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'store'])->whereNumber('order')->middleware('throttle:progress')->name('manual-payments.store');
+    Route::get('/payments/proofs/{proof}/file', [ManualPaymentProofController::class, 'file'])->whereNumber('proof')->middleware('throttle:certificate-download')->name('manual-payments.file');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');
     Route::get('/profile', [PageController::class, 'profile'])->name('profile.page');
     Route::get('/family', [PageController::class, 'family'])->name('family');
