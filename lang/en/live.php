@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Live session',
+    'schedule' => 'Schedule a live session',
+    'reschedule' => 'Reschedule',
+    'open' => 'Open for joining',
+    'complete' => 'Mark as finished',
+    'cancel' => 'Cancel session',
+    'cancel_confirm' => 'Cancel this live session? Learners will see that it was cancelled.',
+    'starts_at' => 'Starts',
+    'ends_at' => 'Ends',
+    'timezone' => 'Timezone',
+    'timezone_help' => 'The times you enter are in this timezone. Learners see them in their own.',
+    'provider' => 'Meeting service',
+    'providers' => ['manual_zoom' => 'Zoom (link)', 'meet' => 'Google Meet (link)', 'bbb' => 'BigBlueButton (link)', 'custom' => 'Other (link)'],
+    'meeting_url' => 'Meeting link',
+    'meeting_url_help' => 'Only people with access to the session see it, and only when it is time to join.',
+    'join_window' => 'Join window (minutes before start)',
+    'cohort' => 'Cohort',
+    'whole_course' => 'Everyone in the course',
+    'instructor' => 'Instructor',
+    'saved' => 'Live session saved.',
+    'status' => ['scheduled' => 'Scheduled', 'open' => 'Open', 'completed' => 'Finished', 'cancelled' => 'Cancelled'],
+    'provider_invalid' => 'Choose one of the listed meeting services.',
+    'url_invalid' => 'The meeting link must be a plain https address.',
+    'time_invalid' => 'Enter a valid date and time.',
+    'ends_before_start' => 'The session must end after it starts.',
+    'cohort_not_on_course' => 'That cohort belongs to another course.',
+    'instructor_not_on_course' => 'That person is not an instructor of this course.',
+    'not_reschedulable' => 'Only a session that has not started can be rescheduled.',
+    'link_needed_to_open' => 'Add the meeting link before opening the session.',
+    'transition_refused' => 'A :from session cannot become :to.',
+];

@@ -9,6 +9,7 @@ use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\Assignment;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
+use App\Models\LiveSession;
 use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +68,7 @@ final class ManageAssessmentItems
     {
         CurriculumAccess::authorize($actor, $item->course, CurriculumAccess::DELETE);
         $entity = $item->itemable;
-        if (! $entity instanceof Quiz && ! $entity instanceof Assignment) {
+        if (! $entity instanceof Quiz && ! $entity instanceof Assignment && ! $entity instanceof LiveSession) {
             abort(404);
         }
 

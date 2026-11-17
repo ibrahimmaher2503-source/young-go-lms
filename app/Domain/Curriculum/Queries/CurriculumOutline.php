@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LiveSession;
 use App\Models\Quiz;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,8 +19,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 /** Ordered curriculum for authors (everything not archived) and for students (published only), from one source. */
 final class CurriculumOutline
 {
-    /** Everything that can sit in a section. Add live sessions here when they arrive. */
-    public const array ITEM_TYPES = [Lesson::class, Quiz::class, Assignment::class];
+    /** Everything that can sit in a section. */
+    public const array ITEM_TYPES = [Lesson::class, Quiz::class, Assignment::class, LiveSession::class];
 
     /**
      * Items that are not archived themselves. Extend here when quizzes, assignments and live sessions arrive.

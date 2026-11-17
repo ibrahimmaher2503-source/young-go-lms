@@ -156,6 +156,10 @@
                                     @if($isLesson && $lesson->media && $lesson->media->status !== 'ready')
                                         <span class="yg-cur-badge">{{ __('media.status.'.$lesson->media->status) }}</span>
                                     @endif
+                                    @if($item->itemable_type === 'live_session')
+                                        <span class="yg-cur-meta yg-cur-withicon" data-live-time><x-ui.icon name="clock" /> {{ \App\Domain\Live\LiveSessionTime::label($lesson, auth()->user()) }}</span>
+                                        <span class="yg-cur-badge" data-live-status="{{ $lesson->status }}">{{ __('live.status.'.$lesson->status) }}</span>
+                                    @endif
                                     {{-- Assistant-readiness indicator (T-P3-09) --}}
                                     @if($isLesson) @includeIf('filament.courses.curriculum-readiness', ['item' => $item]) @endif
                                 </span>
@@ -166,6 +170,14 @@
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'up')">{{ __('curriculum.move_up') }}</button>
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'down')">{{ __('curriculum.move_down') }}</button>
                                         @if($isLesson)<button type="button" class="yg-cur-menuitem" wire:click="mountAction('editLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.edit') }}</button>@endif
+                                        @if($item->itemable_type === 'live_session')
+                                            @if($lesson->status === 'scheduled')
+                                                <button type="button" class="yg-cur-menuitem" wire:click="mountAction('rescheduleLiveSession', { session: {{ $lesson->id }} })">{{ __('live.reschedule') }}</button>
+                                                <button type="button" class="yg-cur-menuitem" wire:click="advanceLiveSession({{ $lesson->id }}, 'open')">{{ __('live.open') }}</button>
+                                            @endif
+                                            @if($lesson->status === 'open')<button type="button" class="yg-cur-menuitem" wire:click="advanceLiveSession({{ $lesson->id }}, 'complete')">{{ __('live.complete') }}</button>@endif
+                                            @if(in_array($lesson->status, ['scheduled', 'open'], true))<button type="button" class="yg-cur-menuitem is-danger" wire:click="mountAction('cancelLiveSession', { session: {{ $lesson->id }} })">{{ __('live.cancel') }}</button>@endif
+                                        @endif
                                         <button type="button" class="yg-cur-menuitem is-danger" wire:click="{{ $isLesson ? "mountAction('archiveLesson', { lesson: {$item->itemable_id} })" : "mountAction('archiveAssessment', { item: {$item->id} })" }}">{{ __('curriculum.archive') }}</button>
                                     </div>
                                 </details>

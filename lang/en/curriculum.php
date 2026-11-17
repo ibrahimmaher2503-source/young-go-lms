@@ -25,6 +25,7 @@ return [
         'document' => 'Document',
         'quiz' => 'Quiz',
         'assignment' => 'Assignment',
+        'live_session' => 'Live session',
         'text' => 'Text',
     ],
     'status_draft' => 'Draft',

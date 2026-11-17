@@ -20,6 +20,7 @@ use App\Domain\Media\Actions\UploadLessonMedia;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\Providers\PrivateFileProvider;
 use App\Filament\Resources\Courses\CourseResource;
+use App\Filament\Resources\Courses\Pages\Concerns\ManagesLiveSessions;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
@@ -50,6 +51,7 @@ use Symfony\Component\HttpFoundation\File\File;
 final class ManageCurriculum extends Page
 {
     use InteractsWithRecord;
+    use ManagesLiveSessions;
 
     protected static string $resource = CourseResource::class;
 
@@ -104,6 +106,7 @@ final class ManageCurriculum extends Page
         return [
             $this->addLessonAction(),
             $this->addAssessmentAction(),
+            $this->scheduleLiveSessionAction(),
             $this->addSectionAction(),
             Action::make('viewAsLearner')->label(__('curriculum.view_as_learner'))->icon('heroicon-o-play-circle')->color('gray')
                 ->visible(fn (): bool => $this->firstPreviewItemId() !== null)

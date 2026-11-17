@@ -18,11 +18,14 @@ use App\Domain\Entitlements\EntitlementHistory;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Identity\SessionLimiter;
+use App\Domain\Live\ManualMeetingProvider;
+use App\Domain\Live\MeetingProvider;
 use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\Assignment;
 use App\Models\Lesson;
+use App\Models\LiveSession;
 use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Auth\Events\Logout;
@@ -74,7 +77,8 @@ class AppServiceProvider extends ServiceProvider
             return $user->checkPermissionTo($ability, (string) config('permissions.guard', 'web')) ? true : null;
         });
 
-        Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class]);
+        Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class, 'live_session' => LiveSession::class]);
+        $this->app->bind(MeetingProvider::class, ManualMeetingProvider::class);
         // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
         Event::listen(Logout::class, static function (Logout $event): void {
             if (app()->bound('session.store') && session()->isStarted()) {

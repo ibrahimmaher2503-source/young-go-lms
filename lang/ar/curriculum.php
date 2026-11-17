@@ -25,6 +25,7 @@ return [
         'document' => 'مستند',
         'quiz' => 'اختبار',
         'assignment' => 'واجب',
+        'live_session' => 'جلسة مباشرة',
         'text' => 'نص',
     ],
     'status_draft' => 'مسودة',
