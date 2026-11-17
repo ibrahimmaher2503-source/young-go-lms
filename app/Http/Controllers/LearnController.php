@@ -101,7 +101,19 @@ final class LearnController
             'learner' => $learner,
             'liveSession' => $decision->allowed && $entity instanceof LiveSession ? $entity : null,
             'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,
+            'replayUrl' => $entity instanceof LiveSession ? $this->replayUrl($learner, $course, $entity) : null,
         ]);
+    }
+
+    /** The replay link, only when the replay lesson is published and this learner may open it (same decision as any recorded lesson). */
+    private function replayUrl(User $learner, Course $course, LiveSession $session): ?string
+    {
+        $replay = $session->replay_item_id === null ? null : CurriculumItem::query()->whereKey($session->replay_item_id)->where('status', CurriculumItem::STATUS_PUBLISHED)->first();
+        if ($replay === null || ! $this->access->canAccessItem($learner, $replay)->allowed) {
+            return null;
+        }
+
+        return route('learn.show', ['course' => $course->getKey(), 'item' => $replay->getKey()]);
     }
 
     private function manualAllowed(Lesson $lesson): bool

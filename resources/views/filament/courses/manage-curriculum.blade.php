@@ -175,6 +175,8 @@
                                                 <button type="button" class="yg-cur-menuitem" wire:click="mountAction('rescheduleLiveSession', { session: {{ $lesson->id }} })">{{ __('live.reschedule') }}</button>
                                                 <button type="button" class="yg-cur-menuitem" wire:click="advanceLiveSession({{ $lesson->id }}, 'open')">{{ __('live.open') }}</button>
                                             @endif
+                                            @if(in_array($lesson->status, ['open', 'completed'], true))<button type="button" class="yg-cur-menuitem" wire:click="mountAction('attendance', { session: {{ $lesson->id }} })">{{ __('live.attendance.mark') }}</button>@endif
+                                            @if($lesson->status === 'completed' && $lesson->replay_item_id === null)<button type="button" class="yg-cur-menuitem" wire:click="publishLiveReplay({{ $lesson->id }})">{{ __('live.replay.publish') }}</button>@endif
                                             @if($lesson->status === 'open')<button type="button" class="yg-cur-menuitem" wire:click="advanceLiveSession({{ $lesson->id }}, 'complete')">{{ __('live.complete') }}</button>@endif
                                             @if(in_array($lesson->status, ['scheduled', 'open'], true))<button type="button" class="yg-cur-menuitem is-danger" wire:click="mountAction('cancelLiveSession', { session: {{ $lesson->id }} })">{{ __('live.cancel') }}</button>@endif
                                         @endif

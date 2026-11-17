@@ -1,6 +1,6 @@
 {{-- Props: session (LiveSession), state (JoinWindow state), joinUrl (route for the POST that redirects, never the meeting link), viewer.
      The meeting link is never rendered here; the button posts to the join endpoint, which checks access and the window again. --}}
-@props(['session', 'state', 'joinUrl', 'viewer' => null])
+@props(['session', 'state', 'joinUrl', 'viewer' => null, 'replayUrl' => null])
 @php
     $opensAt = \App\Domain\Live\JoinWindow::opensAt($session);
     $title = (string) $session->title;
@@ -35,6 +35,7 @@
         <p class="font-semibold text-danger" role="status" data-live-cancelled>{{ __('live.cancelled_notice') }}</p>
     @else
         <p class="text-muted" role="status" data-live-ended>{{ __('live.ended_notice') }}</p>
+        @if($replayUrl)<a href="{{ $replayUrl }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary" data-replay-link><x-ui.icon name="play" class="size-5" /> {{ __('live.replay.watch') }}</a>@endif
     @endif
     @if(session('join_error'))<p class="font-semibold text-danger" role="alert" data-join-error>{{ session('join_error') }}</p>@endif
 </section>

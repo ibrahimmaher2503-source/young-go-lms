@@ -6,9 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Live\Actions\GetJoinLink;
+use App\Domain\Live\Actions\RecordJoin;
 use App\Domain\Live\JoinRefusedException;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\LiveSession;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,7 @@ use Illuminate\Http\Request;
 /** Sends an allowed learner to the meeting. POST only, so a link preview or prefetch never triggers it; the URL is never in the page. */
 final class LiveJoinController
 {
-    public function __construct(private readonly ActingLearner $acting, private readonly GetJoinLink $join) {}
+    public function __construct(private readonly ActingLearner $acting, private readonly GetJoinLink $join, private readonly RecordJoin $record) {}
 
     public function __invoke(Request $request, Course $course, CurriculumItem $item): RedirectResponse
     {
@@ -30,6 +32,11 @@ final class LiveJoinController
             abort_if($exception->reason === JoinRefusedException::NO_ACCESS, 404);
 
             return redirect()->route('learn.show', ['course' => $course->getKey(), 'item' => $item->getKey()])->with('join_error', $exception->getMessage());
+        }
+
+        $session = $item->itemable;
+        if ($session instanceof LiveSession) {
+            $this->record->__invoke($session, $learner);
         }
 
         return redirect()->away($url)->withHeaders(['Cache-Control' => 'no-store', 'Referrer-Policy' => 'no-referrer']);

@@ -7,10 +7,15 @@ namespace App\Filament\Resources\Courses\Pages\Concerns;
 use App\Domain\Cohorts\Cohort;
 use App\Domain\Live\Actions\CancelLiveSession;
 use App\Domain\Live\Actions\CompleteLiveSession;
+use App\Domain\Live\Actions\CorrectAttendance;
+use App\Domain\Live\Actions\MarkAttendance;
 use App\Domain\Live\Actions\OpenLiveSession;
+use App\Domain\Live\Actions\PublishLiveReplay;
 use App\Domain\Live\Actions\RescheduleLiveSession;
 use App\Domain\Live\Actions\ScheduleLiveSession;
+use App\Domain\Live\LiveSessionNotices;
 use App\Models\CourseSection;
+use App\Models\LiveAttendance;
 use App\Models\LiveSession;
 use App\Models\User;
 use DateTimeZone;
@@ -81,6 +86,53 @@ trait ManagesLiveSessions
                 $session = $this->liveSessionFor($arguments['session'] ?? 0);
                 $this->attempt($action, fn () => app(CancelLiveSession::class)($this->actor(), $session));
             });
+    }
+
+    public function attendanceAction(): Action
+    {
+        return Action::make('attendance')->label(__('live.attendance.mark'))->modalHeading(__('live.attendance.title'))->modalWidth('2xl')
+            ->schema(function (array $arguments): array {
+                $session = $this->liveSessionFor($arguments['session'] ?? 0);
+                $marks = LiveAttendance::query()->where('live_session_id', $session->getKey())->pluck('status', 'learner_id');
+                $statuses = collect(LiveAttendance::STATUSES)->mapWithKeys(fn (string $s): array => [$s => __('live.attendance.statuses.'.$s)])->all();
+                $fields = [];
+                foreach (app(LiveSessionNotices::class)->audience($session) as $learner) {
+                    $fields[] = Select::make('marks.'.$learner->getKey())->label((string) $learner->name)->options($statuses)->native(false)
+                        ->placeholder(__('live.attendance.none'))->default($marks[$learner->getKey()] ?? null);
+                }
+
+                return [...$fields, TextInput::make('reason')->label(__('live.attendance.reason'))->maxLength(500)];
+            })
+            ->action(function (array $data, array $arguments, Action $action): void {
+                $session = $this->liveSessionFor($arguments['session'] ?? 0);
+                $actor = $this->actor();
+                $ok = $this->attempt($action, function () use ($session, $actor, $data): void {
+                    foreach ((array) ($data['marks'] ?? []) as $learnerId => $status) {
+                        if (! filled($status)) {
+                            continue;
+                        }
+                        $existing = LiveAttendance::query()->where('live_session_id', $session->getKey())->where('learner_id', $learnerId)->first();
+                        if ($existing === null) {
+                            app(MarkAttendance::class)($actor, $session, User::query()->findOrFail($learnerId), (string) $status);
+                        } elseif ($existing->status !== $status) {
+                            app(CorrectAttendance::class)($actor, $existing, (string) $status, (string) ($data['reason'] ?? ''));
+                        }
+                    }
+                });
+                if ($ok) {
+                    Notification::make()->title(__('live.attendance.saved'))->success()->send();
+                }
+            });
+    }
+
+    public function publishLiveReplay(int $sessionId): void
+    {
+        try {
+            app(PublishLiveReplay::class)($this->actor(), $this->liveSessionFor($sessionId));
+            Notification::make()->success()->title(__('live.replay.created'))->send();
+        } catch (ValidationException $exception) {
+            Notification::make()->danger()->title((string) collect($exception->errors())->flatten()->first())->send();
+        }
     }
 
     /** Open and finish are one click each; a refused move (no link yet, wrong state) is shown as a message. */
