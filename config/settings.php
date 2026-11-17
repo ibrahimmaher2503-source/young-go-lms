@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use App\Domain\Settings\AiSettings;
+use App\Domain\Settings\CertificateSettings;
 use App\Domain\Settings\GeneralSettings;
 use App\Domain\Settings\LearningSettings;
 use App\Domain\Settings\MarketsSettings;
@@ -14,5 +15,6 @@ return [
         LearningSettings::class,
         NotificationsSettings::class,
         AiSettings::class,
+        CertificateSettings::class,
     ],
 ];

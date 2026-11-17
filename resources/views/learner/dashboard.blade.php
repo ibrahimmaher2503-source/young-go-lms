@@ -82,7 +82,18 @@
                 </section>
                 <section class="rounded-card border border-border bg-surface p-4 shadow-card">
                     <h2 class="flex items-center justify-between gap-2 border-b border-border pb-3 text-lg font-bold"><span>{{ __('learner.certificates') }}</span> <x-ui.icon name="award" class="size-6" /></h2>
-                    <p class="pt-3 text-muted" data-widget="certificates-slot">{{ __('learner.certificates_empty') }}</p>
+                    @forelse($certificates as $certificate)
+                        <div class="border-b border-border py-3 last:border-0" data-certificate-row>
+                            <p class="break-words font-semibold">{{ $certificate->titleIn(app()->getLocale()) }}</p>
+                            <p class="text-sm text-muted">{{ __('certificates.issued_on', ['date' => $certificate->completed_on->isoFormat('LL')]) }}</p>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                                <x-ui.link :href="route('certificates.download', $certificate->id)" data-certificate-download>{{ __('certificates.download') }}</x-ui.link>
+                                <x-ui.link :href="$certificate->verifyUrl()">{{ __('certificates.verify_link') }}</x-ui.link>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="pt-3 text-muted" data-widget="certificates-slot">{{ __('learner.certificates_empty') }}</p>
+                    @endforelse
                 </section>
                 <section class="rounded-card border border-border bg-surface p-4 shadow-card">
                     <h2 class="flex items-center justify-between gap-2 border-b border-border pb-3 text-lg font-bold"><span>{{ __('learner.notifications') }}</span> <x-ui.icon name="bell" class="size-6" /></h2>

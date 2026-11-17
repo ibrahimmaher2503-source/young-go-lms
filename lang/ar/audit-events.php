@@ -68,4 +68,7 @@ return [
     'course.completion_rules_saved' => 'حفظ قواعد إتمام الدورة',
     'course.completed' => 'إتمام دورة (تلقائي)',
     'course.completion_approved' => 'اعتماد إتمام دورة من الفريق',
+    'certificate.issued' => 'إصدار شهادة',
+    'certificate.revoked' => 'إلغاء شهادة',
+    'certificate.reissued' => 'إعادة إصدار شهادة من الفريق',
 ];

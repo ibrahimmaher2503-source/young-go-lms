@@ -11,7 +11,9 @@ use App\Domain\AI\Ingestion\PdftoppmRenderer;
 use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
+use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
+use App\Domain\Completion\Events\CourseCompleted;
 use App\Domain\Completion\Events\CourseCompletionInputChanged;
 use App\Domain\Completion\Listeners\EvaluateCompletion;
 use App\Domain\Entitlements\Contracts\CompletionLookup;
@@ -89,6 +91,8 @@ class AppServiceProvider extends ServiceProvider
         });
         // T-P6-05: anything that can change a learner's completion asks the evaluator (idempotent, synchronous).
         Event::listen(CourseCompletionInputChanged::class, [EvaluateCompletion::class, 'handle']);
+        // T-P6-06: a completed course gets its certificate once (idempotent) and the learner a single notice.
+        Event::listen(CourseCompleted::class, [IssueCertificateOnCompletion::class, 'handle']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class], 'course.history');
@@ -118,6 +122,8 @@ class AppServiceProvider extends ServiceProvider
             return [Limit::perMinute(5)->by($user.'|'.$request->ip()), Limit::perMinutes(15, 10)->by($user)];
         });
         RateLimiter::for('progress', static fn (Request $request): Limit => Limit::perMinute(max(1, (int) config('learning.progress.heartbeats_per_minute')))->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route('item')));
+        RateLimiter::for('certificate-verify', static fn (Request $request): Limit => Limit::perMinute(30)->by($request->ip()));
+        RateLimiter::for('certificate-download', static fn (Request $request): Limit => Limit::perMinute(10)->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route('certificate')));
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 

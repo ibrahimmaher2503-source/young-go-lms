@@ -68,4 +68,7 @@ return [
     'course.completion_rules_saved' => 'Course completion rules saved',
     'course.completed' => 'Course completed (automatic)',
     'course.completion_approved' => 'Course completion approved by staff',
+    'certificate.issued' => 'Certificate issued',
+    'certificate.revoked' => 'Certificate revoked',
+    'certificate.reissued' => 'Certificate re-issued by staff',
 ];

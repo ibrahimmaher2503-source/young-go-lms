@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Certificates\Certificate;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Live\Queries\UpcomingSessions;
 use App\Domain\Progress\LessonProgress;
@@ -40,6 +41,7 @@ final class LearnerHomeController
             'resumeLessonPercent' => (int) ($resumeProgress->percent ?? 0),
             'courses' => $courses->where('status', 'in_progress')->take(3)->values(),
             'total' => $courses->count(),
+            'certificates' => Certificate::query()->where('learner_id', $learner->getKey())->whereNull('revoked_at')->latest('issued_at')->limit(5)->get(),
             'notifications' => $learner->notifications()->latest()->limit(5)->get(),
         ]);
     }
@@ -53,6 +55,7 @@ final class LearnerHomeController
             'variant' => $this->variant($request),
             'filter' => $filter,
             'filters' => self::FILTERS,
+            'certificates' => Certificate::query()->where('learner_id', $this->learner()->getKey())->whereNull('revoked_at')->latest('issued_at')->get()->unique('course_id')->keyBy('course_id'),
             'courses' => $filter === 'all' ? $all : $all->where('status', $filter)->values(),
             'counts' => collect(self::FILTERS)->mapWithKeys(fn (string $f): array => [$f => $f === 'all' ? $all->count() : $all->where('status', $f)->count()])->all(),
         ]);

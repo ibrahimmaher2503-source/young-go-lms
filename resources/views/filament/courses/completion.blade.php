@@ -22,6 +22,7 @@
                     <thead><tr class="border-b border-gray-200 dark:border-white/10">
                         <th scope="col" class="px-4 py-3 text-start">{{ __('completion.learner') }}</th>
                         <th scope="col" class="px-4 py-3 text-start">{{ __('completion.status') }}</th>
+                        <th scope="col" class="px-4 py-3 text-start">{{ __('certificates.staff.column') }}</th>
                         <th scope="col" class="px-4 py-3"><span class="sr-only">{{ __('completion.approve') }}</span></th>
                     </tr></thead>
                     <tbody>
@@ -44,7 +45,21 @@
                                     @endif
                                 @endif
                             </td>
+                            <td class="px-4 py-3" data-certificate-cell>
+                                @php($certificate = $certificates->get($learner->id))
+                                @if($certificate)
+                                    <span data-certificate-state="{{ $certificate->revoked_at ? 'revoked' : 'valid' }}"><bdi dir="ltr">{{ $certificate->number }}</bdi> · {{ $certificate->revoked_at ? __('certificates.staff.revoked') : __('certificates.staff.valid') }}</span>
+                                @else
+                                    <span class="text-gray-600 dark:text-gray-300" data-certificate-state="none">{{ __('certificates.staff.none') }}</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
+                                @if($completion)
+                                    @if($certificate && ! $certificate->revoked_at)
+                                        <button type="button" class="min-h-11 rounded-lg border border-gray-300 px-3 font-semibold dark:border-white/20" wire:click="mountAction('revokeCertificate', { certificate: {{ $certificate->id }} })" data-revoke-certificate>{{ __('certificates.staff.revoke') }}</button>
+                                    @endif
+                                    <button type="button" class="min-h-11 rounded-lg border border-gray-300 px-3 font-semibold dark:border-white/20" wire:click="mountAction('reissueCertificate', { completion: {{ $completion->id }} })" data-reissue-certificate>{{ __('certificates.staff.reissue') }}</button>
+                                @endif
                                 @unless($completion)
                                     <button type="button" class="min-h-11 rounded-lg border border-gray-300 px-3 font-semibold dark:border-white/20" wire:click="mountAction('approve', { learner: {{ $learner->id }} })" data-approve>{{ __('completion.approve') }}</button>
                                 @endunless

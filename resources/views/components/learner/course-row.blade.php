@@ -1,5 +1,5 @@
 {{-- Props: course (LearnerHomeController row: course, status, percent, done, total, continue, ends_on). Course card with cover, instructor and progress (C12/C13). --}}
-@props(['course'])
+@props(['course', 'certificate' => null])
 @php($instructors = $course['course']->instructors->where('status', 'active')->pluck('name')->implode(', '))
 <article class="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-3 shadow-card" data-course-status="{{ $course['status'] }}">
     <x-learner.course-thumb :course="$course['course']" />
@@ -26,5 +26,8 @@
         </div>
     @elseif($course['ends_at'])
         <p class="px-1 text-sm text-muted">{{ __('learner.ends_on', ['date' => $course['ends_at']->isoFormat('LL')]) }}</p>
+    @endif
+    @if($certificate)
+        <div class="px-1" data-certificate-link><x-ui.link :href="route('certificates.download', $certificate->id)">{{ __('certificates.download') }}</x-ui.link></div>
     @endif
 </article>

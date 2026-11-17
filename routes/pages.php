@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AssignmentSubmissionController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\LiveJoinController;
@@ -39,11 +40,15 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/assignment/attachments/{attachment}', [AssignmentSubmissionController::class, 'attachment'])->whereNumber('attachment')->name('assignment.attachment');
     Route::post('/learn/{course}/{item}/progress', [ProgressController::class, 'heartbeat'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.progress');
     Route::post('/learn/{course}/{item}/complete', [ProgressController::class, 'complete'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.complete');
+    Route::get('/my/certificates/{certificate}', [CertificateController::class, 'download'])->whereNumber('certificate')->middleware('throttle:certificate-download')->name('certificates.download');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');
     Route::get('/profile', [PageController::class, 'profile'])->name('profile.page');
     Route::get('/family', [PageController::class, 'family'])->name('family');
     Route::get('/link', [PageController::class, 'link'])->name('link');
 });
+
+// Public certificate verification: no account, safe fields only, throttled per address.
+Route::get('/verify/{token}', [CertificateController::class, 'verify'])->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:certificate-verify')->name('certificates.verify');
 
 // Unmatched URLs still pass through the web middleware so the branded 404 follows the selected locale.
 Route::fallback(static fn () => abort(404));

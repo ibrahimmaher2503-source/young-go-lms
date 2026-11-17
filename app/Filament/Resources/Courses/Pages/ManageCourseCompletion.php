@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Pages;
 
+use App\Domain\Certificates\Actions\ReissueCertificate;
+use App\Domain\Certificates\Actions\RevokeCertificate;
+use App\Domain\Certificates\Certificate;
 use App\Domain\Completion\Actions\ApproveCourseCompletion;
 use App\Domain\Completion\Actions\SaveCompletionRules;
 use App\Domain\Completion\CompletionReport;
@@ -96,6 +99,44 @@ final class ManageCourseCompletion extends Page
             });
     }
 
+    public function revokeCertificateAction(): Action
+    {
+        return Action::make('revokeCertificate')->label(__('certificates.staff.revoke'))->color('danger')->modalHeading(__('certificates.staff.revoke'))->modalDescription(__('certificates.staff.revoke_confirm'))
+            ->schema([Textarea::make('reason')->label(__('certificates.staff.reason'))->required()->minLength(3)->maxLength(500)])
+            ->action(function (array $data, array $arguments, Action $action): void {
+                try {
+                    $certificate = Certificate::query()->where('course_id', $this->course()->getKey())->find((int) ($arguments['certificate'] ?? 0));
+                    abort_unless($certificate instanceof Certificate, 404);
+                    app(RevokeCertificate::class)($this->actor(), $certificate, (string) $data['reason']);
+                } catch (ValidationException $exception) {
+                    $this->refuse($exception);
+                    $action->halt();
+
+                    return;
+                }
+                Notification::make()->success()->title(__('certificates.staff.revoked_done'))->send();
+            });
+    }
+
+    public function reissueCertificateAction(): Action
+    {
+        return Action::make('reissueCertificate')->label(__('certificates.staff.reissue'))->modalHeading(__('certificates.staff.reissue'))->modalDescription(__('certificates.staff.reissue_confirm'))
+            ->schema([Textarea::make('reason')->label(__('certificates.staff.reason'))->required()->minLength(3)->maxLength(500)])
+            ->action(function (array $data, array $arguments, Action $action): void {
+                try {
+                    $completion = CourseCompletion::query()->where('course_id', $this->course()->getKey())->find((int) ($arguments['completion'] ?? 0));
+                    abort_unless($completion instanceof CourseCompletion, 404);
+                    app(ReissueCertificate::class)($this->actor(), $completion, (string) $data['reason']);
+                } catch (ValidationException $exception) {
+                    $this->refuse($exception);
+                    $action->halt();
+
+                    return;
+                }
+                Notification::make()->success()->title(__('certificates.staff.reissued_done'))->send();
+            });
+    }
+
     /** @return array<string, mixed> */
     protected function getViewData(): array
     {
@@ -104,6 +145,7 @@ final class ManageCourseCompletion extends Page
         /** @var LengthAwarePaginator<int, User> $learners */
         $learners = CourseLearners::query($course)->orderBy('users.name')->paginate(15);
         $done = CourseCompletion::query()->where('course_id', $course->getKey())->whereIn('learner_id', $learners->pluck('id'))->get()->keyBy('learner_id');
+        $certificates = Certificate::query()->where('course_id', $course->getKey())->whereIn('learner_id', $learners->pluck('id'))->orderByDesc('id')->get()->groupBy('learner_id')->map(fn ($rows) => $rows->first());
         $reports = [];
         foreach ($learners as $learner) {
             if (! $done->has($learner->getKey())) {
@@ -111,7 +153,7 @@ final class ManageCourseCompletion extends Page
             }
         }
 
-        return ['course' => $course, 'rules' => $rules, 'learners' => $learners, 'done' => $done, 'reports' => $reports];
+        return ['course' => $course, 'rules' => $rules, 'learners' => $learners, 'done' => $done, 'reports' => $reports, 'certificates' => $certificates];
     }
 
     private function refuse(ValidationException $exception): void

@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Certificates\Notifications;
+
+use App\Domain\Certificates\Certificate;
+use App\Domain\Notifications\LocalizedNotification;
+use App\Models\User;
+
+/** Tells a learner (or, through the router, the guardians of a child without email) that a certificate is ready. Once per completion. */
+final class CertificateIssuedNotice extends LocalizedNotification
+{
+    public function __construct(private readonly Certificate $certificate) {}
+
+    public function dedupeKey(): string
+    {
+        return 'certificate-issued:'.$this->certificate->course_completion_id;
+    }
+
+    protected function title(User $recipient): string
+    {
+        return __('certificates.notice.title');
+    }
+
+    protected function body(User $recipient): string
+    {
+        return __('certificates.notice.body', ['title' => $this->certificate->titleIn(app()->getLocale())]);
+    }
+
+    protected function url(User $recipient): string
+    {
+        return route('certificates.download', ['certificate' => $this->certificate->getKey()]);
+    }
+}
