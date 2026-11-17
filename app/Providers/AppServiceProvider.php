@@ -89,6 +89,7 @@ class AppServiceProvider extends ServiceProvider
             // Per user and address, plus a per-user cap that rotating addresses cannot sidestep.
             return [Limit::perMinute(5)->by($user.'|'.$request->ip()), Limit::perMinutes(15, 10)->by($user)];
         });
+        RateLimiter::for('progress', static fn (Request $request): Limit => Limit::perMinute(max(1, (int) config('learning.progress.heartbeats_per_minute')))->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route('item')));
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 

@@ -23,4 +23,9 @@ return [
     'open_file' => 'فتح :name',
     'types' => ['video' => 'فيديو', 'audio' => 'صوت', 'document' => 'مستند', 'text' => 'نص', 'quiz' => 'اختبار', 'assignment' => 'واجب'],
     'assistant' => 'مساعد الدرس',
+    'course_progress' => 'أنهيت :done من :total درسًا',
+    'course_progress_label' => 'تقدّم الدورة',
+    'completed' => 'مكتمل',
+    'mark_complete' => 'تحديد كمكتمل',
+    'cannot_mark_complete' => 'يكتمل هذا الدرس تلقائيًا عند إنهاء مشاهدته.',
 ];

@@ -23,4 +23,9 @@ return [
     'open_file' => 'Open :name',
     'types' => ['video' => 'Video', 'audio' => 'Audio', 'document' => 'Document', 'text' => 'Text', 'quiz' => 'Quiz', 'assignment' => 'Assignment'],
     'assistant' => 'Lesson assistant',
+    'course_progress' => ':done of :total lessons done',
+    'course_progress_label' => 'Course progress',
+    'completed' => 'Completed',
+    'mark_complete' => 'Mark as complete',
+    'cannot_mark_complete' => 'This lesson completes by itself when you finish watching it.',
 ];
