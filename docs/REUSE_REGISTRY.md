@@ -45,6 +45,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | TranslatableTabs | `app/Filament/Shared/Forms/TranslatableTabs.php` | AR/EN tabs for translatable fields | built | T-P1-08 |
 | StatusBadgeColumn | `app/Filament/Shared/Tables/` | Enum → colored badge | built | T-P1-08 |
 | MoneyColumn | `app/Filament/Shared/Tables/` | Money display | built | T-P1-08 |
+| ApproveRejectAction + RecordReviewDecision | `app/Filament/Shared/Actions/ApproveRejectAction.php`, `app/Domain/Shared/Actions/RecordReviewDecision.php` | Review-queue approve/reject: reason rules, auth recheck, domain mutation + audit in one transaction | built | T-P1-08 |
 | LocalizedDateColumn | `app/Filament/Shared/Tables/` | Date in user tz | built | T-P1-08 |
 | ApproveRejectAction | `app/Filament/Shared/Actions/` | Approve / reject with reason + audit | planned | T-P1-08 |
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |

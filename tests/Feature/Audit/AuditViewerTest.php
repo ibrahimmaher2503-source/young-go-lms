@@ -7,6 +7,7 @@ use App\Filament\Resources\Audit\AuditLogResource;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
@@ -35,4 +36,11 @@ it('requires audit view permission and exposes no audit mutations', function () 
         ->and(AuditLogResource::canEdit(new Activity))->toBeFalse()
         ->and(AuditLogResource::canDelete(new Activity))->toBeFalse()
         ->and(AuditLogResource::canDeleteAny())->toBeFalse();
+})->group('T-P1-04', 'A3');
+
+it('indexes audit queries by log, event and date', function (): void {
+    $indexes = collect(Schema::getIndexes('activity_log'))->pluck('columns')->all();
+
+    expect($indexes)->toContain(['log_name', 'created_at'])
+        ->and($indexes)->toContain(['log_name', 'event', 'created_at']);
 })->group('T-P1-04', 'A3');

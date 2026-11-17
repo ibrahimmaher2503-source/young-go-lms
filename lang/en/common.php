@@ -10,4 +10,10 @@ return [
     'cancel' => 'Cancel',
     'continue' => 'Continue',
     'export_csv' => 'Export CSV',
+    'approve' => 'Approve',
+    'reject' => 'Reject',
+    'approve_heading' => 'Confirm approval',
+    'reject_heading' => 'Confirm rejection',
+    'review_note' => 'Note (optional)',
+    'review_reason' => 'Rejection reason',
 ];
