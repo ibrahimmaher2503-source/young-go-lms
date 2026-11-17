@@ -84,8 +84,12 @@ return [
     'pdf_version' => 'PDF v:version',
     'pdf_status' => [
         'uploaded' => 'Uploaded',
+        'extracting' => 'Reading',
+        'awaiting_approval' => 'Awaiting approval',
+        'indexing' => 'Indexing',
         'ready' => 'Approved',
         'failed' => 'Failed',
+        'rejected' => 'Rejected',
     ],
     'resources_count' => ':count materials',
 ];

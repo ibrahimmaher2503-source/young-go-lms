@@ -127,12 +127,14 @@ it('keeps the previous version active until the new one is approved and then ret
     $approver = User::factory()->create()->assignRole('admin');
 
     $v1 = app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(2)));
+    $v1->update(['status' => 'awaiting_approval']);
     app(ApproveCurriculumDocument::class)($approver, $v1);
     expect($lesson->activeCurriculumDocument()->id)->toBe($v1->id);
 
     $v2 = app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(3)));
     expect($v2->version)->toBe(2)->and($v2->active)->toBeFalse()->and($lesson->activeCurriculumDocument()->id)->toBe($v1->id);
 
+    $v2->update(['status' => 'awaiting_approval']);
     app(ApproveCurriculumDocument::class)($approver, $v2);
     expect($lesson->activeCurriculumDocument()->id)->toBe($v2->id)->and($v1->refresh()->active)->toBeFalse()->and($v1->status)->toBe('ready')
         ->and(LessonCurriculumDocument::query()->where('lesson_id', $lesson->id)->where('active', true)->count())->toBe(1)

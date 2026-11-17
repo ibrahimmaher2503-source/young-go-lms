@@ -12,6 +12,7 @@ use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
+use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\Category;
@@ -128,6 +129,7 @@ final class CourseResource extends FilamentResource
             'view' => ViewCourse::route('/{record}'),
             'edit' => EditCourse::route('/{record}/edit'),
             'curriculum' => ManageCurriculum::route('/{record}/curriculum'),
+            'document' => ReviewCurriculumDocument::route('/{record}/curriculum/documents/{document}'),
         ];
     }
 }

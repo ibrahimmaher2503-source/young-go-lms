@@ -2,15 +2,20 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
+use App\Domain\AI\Ingestion\IngestCurriculumDocument;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Media\Actions\UploadCurriculumDocument;
 use App\Models\Course;
+use App\Models\LessonCurriculumDocument;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\File\File;
 
 uses(RefreshDatabase::class);
@@ -119,3 +124,39 @@ it('shows the curriculum PDF and material fields and the PDF badge accessibly', 
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     $page->screenshot(fullPage: false, filename: "T-P3-08/lesson-editor-pdf-{$locale}-{$width}");
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-08', 'A2', 'PRD-09.7');
+
+it('shows the PDF text approval screen accessibly in both directions and sizes', function (string $locale, int $width, int $height): void {
+    [$course, , , $items] = browserCurriculum($locale);
+    $lesson = $items[0]->itemable;
+    Storage::fake('local');
+    Storage::disk('local')->put('documents/browser.pdf', '%PDF-1.4 fake');
+    $document = LessonCurriculumDocument::query()->create([
+        'lesson_id' => $lesson->id, 'version' => 1, 'path' => 'documents/browser.pdf', 'sha256' => hash('sha256', uniqid()), 'size' => 13, 'pages' => 2,
+        'status' => LessonCurriculumDocument::STATUS_UPLOADED, 'active' => false,
+    ]);
+    App::instance(PdfTextExtractor::class, new class implements PdfTextExtractor
+    {
+        public function extract(string $absolutePath): array
+        {
+            return [
+                'الضوء والظل يعطيان الرسم عمقاً. الضوء يأتي من مصدر واحد، والظل يتبع اتجاه الضوء دائماً.',
+                'Light and shadow give a drawing depth. Shadow follows the direction of the light source.',
+            ];
+        }
+    });
+    app(IngestCurriculumDocument::class)($document);
+    $admin = User::factory()->create(['locale' => $locale])->assignRole('admin');
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($admin);
+
+    $page = $this->visit("/admin/courses/{$course->id}/curriculum/documents/{$document->id}")->resize($width, $height);
+    $page->assertSee(__('media.approve', [], $locale));
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
+
+    $directory = base_path('tests/Browser/screenshots/T-P3-09');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: true, filename: "T-P3-09/approval-{$locale}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-09', 'A5', 'PRD-09.7');

@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\AI\Contracts\AiProviderInterface;
+use App\Domain\AI\Ingestion\Contracts\PageRenderer;
+use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
+use App\Domain\AI\Ingestion\PdftoppmRenderer;
+use App\Domain\AI\Ingestion\PdftotextExtractor;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
@@ -58,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap(['lesson' => Lesson::class]);
         // Fails closed until the EntitlementService exists (T-P4-01), which replaces this binding.
         $this->app->bind(LessonAccessChecker::class, DenyLessonAccess::class);
+        $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
+        $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);
         // O-014: no real provider is approved. Local and test runs get the deterministic fake, everything else the refusing null.
         $this->app->singleton(AiProviderInterface::class, static fn (): AiProviderInterface => config('ai.provider') === 'fake' || app()->environment('local', 'testing')
             ? new FakeAiProvider

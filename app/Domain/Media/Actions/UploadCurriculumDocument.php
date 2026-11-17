@@ -7,6 +7,7 @@ namespace App\Domain\Media\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Media\PdfInspector;
+use App\Jobs\ProcessCurriculumDocument;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\User;
@@ -73,7 +74,7 @@ final class UploadCurriculumDocument
         fclose($stream);
 
         try {
-            return DB::transaction(function () use ($actor, $lesson, $path, $hash, $size, $report): LessonCurriculumDocument {
+            $document = DB::transaction(function () use ($actor, $lesson, $path, $hash, $size, $report): LessonCurriculumDocument {
                 Lesson::query()->whereKey($lesson->getKey())->lockForUpdate()->first();
                 $version = (int) LessonCurriculumDocument::query()->where('lesson_id', $lesson->getKey())->max('version') + 1;
                 $document = LessonCurriculumDocument::query()->create([
@@ -91,5 +92,11 @@ final class UploadCurriculumDocument
             $disk->delete($path);
             throw $exception;
         }
+
+        if (Config::boolean('ai.ingestion.dispatch_on_upload')) {
+            ProcessCurriculumDocument::dispatch($document->getKey());
+        }
+
+        return $document;
     }
 }

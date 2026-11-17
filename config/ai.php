@@ -21,4 +21,17 @@ return [
     'style_tiers' => ['kids', 'teens', 'adults'],
 
     'max_words' => 80,
+
+    // PDF ingestion (AI spec section 6). Thresholds are starting values to tune against real lesson PDFs.
+    'ingestion' => [
+        'dispatch_on_upload' => (bool) env('AI_INGEST_ON_UPLOAD', true),
+        'min_page_chars' => 20,          // below this a page counts as having no text layer, so OCR is tried
+        'page_min_score' => 60,          // a page scoring under this is unreadable
+        'document_min_score' => 70,      // average score under this fails the document
+        'max_unreadable_ratio' => 0.25,  // more unreadable pages than this fails the document
+        'repeat_ratio' => 0.6,           // a line on this share of pages (3+ pages) is a header or footer
+        'key_terms_max' => 8,
+        'key_terms_min' => 3,
+        'chunk_tokens' => 800,           // chunk size in chunked mode
+    ],
 ];

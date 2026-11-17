@@ -113,7 +113,7 @@ final class FakeAiProvider implements AiProviderInterface
 
     public function ocrPage(string $imagePath, array $languages): OcrResult
     {
-        return new OcrResult('FAKE OCR TEXT', 0.9);
+        return new OcrResult('FAKE OCR TEXT read from the scanned page', 0.9);
     }
 
     public function health(): ProviderHealth

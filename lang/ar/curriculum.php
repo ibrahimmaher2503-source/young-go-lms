@@ -84,8 +84,12 @@ return [
     'pdf_version' => 'PDF إصدار :version',
     'pdf_status' => [
         'uploaded' => 'مرفوع',
+        'extracting' => 'قيد القراءة',
+        'awaiting_approval' => 'بانتظار الاعتماد',
+        'indexing' => 'قيد الفهرسة',
         'ready' => 'معتمد',
         'failed' => 'فشل',
+        'rejected' => 'مرفوض',
     ],
     'resources_count' => ':count مواد',
 ];

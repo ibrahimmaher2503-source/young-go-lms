@@ -46,4 +46,5 @@ return ['user' => 'User', 'users' => 'Users', 'roles' => 'Roles', 'name' => 'Nam
     'permission_count' => 'Granted',
     'permissions_scroll_help' => 'Search or scroll the list to see all permissions.',
     'table_scroll_hint' => 'Swipe the table to see more columns',
+    'pagination_summary' => ':first–:last of :total',
 ];

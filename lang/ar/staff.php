@@ -46,4 +46,5 @@ return ['user' => 'مستخدم', 'users' => 'المستخدمون', 'roles' => 
     'permission_count' => 'العدد',
     'permissions_scroll_help' => 'ابحث أو مرّر القائمة لرؤية كل الصلاحيات.',
     'table_scroll_hint' => 'اسحب الجدول لعرض باقي الأعمدة',
+    'pagination_summary' => ':first–:last من :total',
 ];

@@ -29,6 +29,10 @@ return [
     'media.exception_granted' => 'Open media exception granted',
     'curriculum_document.uploaded' => 'Curriculum PDF uploaded',
     'curriculum_document.approved' => 'Curriculum PDF approved',
+    'curriculum_document.extracted' => 'Curriculum PDF text extracted',
+    'curriculum_document.extraction_failed' => 'Curriculum PDF extraction failed',
+    'curriculum_document.text_edited' => 'Extracted page text edited',
+    'curriculum_document.key_terms_approved' => 'Key terms approved',
     'lesson_resource.added' => 'Lesson resource added',
     'lesson_resource.removed' => 'Lesson resource removed',
 ];
