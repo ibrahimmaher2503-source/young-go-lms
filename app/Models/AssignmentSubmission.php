@@ -30,6 +30,11 @@ final class AssignmentSubmission extends Model
 
     public const string GRADED = 'graded';
 
+    /** Reviewer decisions (T-P6-04): accepted and rejected are final for the learner; graded carries a score. */
+    public const string ACCEPTED = 'accepted';
+
+    public const string REJECTED = 'rejected';
+
     protected $guarded = ['id'];
 
     /** @return BelongsTo<Assignment, $this> */
@@ -48,6 +53,18 @@ final class AssignmentSubmission extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(SubmissionRevision::class, 'submission_id')->orderBy('number');
+    }
+
+    /** @return HasMany<SubmissionDecision, $this> */
+    public function decisions(): HasMany
+    {
+        return $this->hasMany(SubmissionDecision::class, 'submission_id')->orderBy('id');
+    }
+
+    /** @return HasMany<SubmissionFeedback, $this> */
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(SubmissionFeedback::class, 'submission_id')->orderBy('id');
     }
 
     public function currentRevision(): ?SubmissionRevision

@@ -116,6 +116,7 @@
                                 <p class="rounded-xl bg-bg px-3 py-2"><span class="text-sm text-muted">{{ __('quiz.attempt.your_answer') }}:</span> {{ $given['text'] ?? __('quiz.attempt.no_answer') }}</p>
                                 @if($q['accepted'] !== [])<p class="text-sm"><span class="text-muted">{{ __('quiz.accepted_answers') }}:</span> {{ collect($q['accepted'])->map(fn ($t) => QuizAttemptView::text($t))->implode('، ') }}</p>@endif
                             @endif
+                            @if(filled($q['feedback']))<p class="rounded-xl border border-border px-3 py-2" data-essay-feedback><span class="text-sm text-muted">{{ __('review.learner_view.instructor_feedback') }}:</span> {{ $q['feedback'] }}</p>@endif
                             @if(filled($q['explanation']))<p class="rounded-xl bg-nav-active-bg px-3 py-2" data-explanation>{{ QuizAttemptView::text($q['explanation']) }}</p>@endif
                         </article>
                     @endforeach

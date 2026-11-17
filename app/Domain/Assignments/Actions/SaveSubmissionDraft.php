@@ -16,12 +16,12 @@ use App\Models\CurriculumItem;
 use App\Models\SubmissionFile;
 use App\Models\SubmissionRevision;
 use App\Models\User;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Throwable;
 
 /**

@@ -9,7 +9,7 @@
     $zone = is_string($zone) && in_array($zone, \DateTimeZone::listIdentifiers(), true) ? $zone : config('app.timezone');
     $due = $view['due_at']?->copy()->timezone($zone)->isoFormat('LLL');
     $title = (string) $assignment->title;
-    $tone = ['not_started' => 'neutral', 'draft' => 'info', 'submitted' => 'success', 'resubmitted' => 'success', 'returned' => 'warning', 'graded' => 'success'][$status] ?? 'neutral';
+    $tone = ['not_started' => 'neutral', 'draft' => 'info', 'submitted' => 'success', 'resubmitted' => 'success', 'returned' => 'warning', 'graded' => 'success', 'accepted' => 'success', 'rejected' => 'danger'][$status] ?? 'neutral';
     $working = $view['working'];
     $locked = ! $view['can_edit'];
     $shown = $locked ? (collect($view['revisions'])->last()) : $working;
@@ -52,6 +52,12 @@
     @if($view['is_past_due'])
         <x-ui.alert tone="warning" role="status" data-assignment-past-due>{{ $view['late_blocked'] ? __('assignment.past_due_blocked') : __('assignment.past_due_late') }}</x-ui.alert>
     @endif
+    @if(in_array($status, ['graded', 'accepted', 'rejected'], true) && $view['decision'])
+        <x-ui.alert :tone="$status === 'rejected' ? 'danger' : 'success'" role="status" data-assignment-decision>
+            <span class="font-bold">{{ __('assignment.decision.'.$view['decision']['decision']) }}</span>
+            @if($view['decision']['final_score'] !== null) · <span data-assignment-score>{{ __('assignment.decision.score', ['score' => rtrim(rtrim(number_format($view['decision']['final_score'], 2), '0'), '.')]) }}</span>@if($view['decision']['penalty']) <span class="text-sm">({{ __('assignment.late_penalty', ['percent' => $view['decision']['penalty']]) }})</span>@endif @endif
+        </x-ui.alert>
+    @endif
     @if($status === 'returned')<x-ui.alert tone="warning" role="status" data-assignment-returned>{{ $view['can_edit'] ? __('assignment.returned_note') : __('assignment.refused.revisions_exhausted') }}</x-ui.alert>@endif
 
     @if($locked)
@@ -91,6 +97,8 @@
             </div>
         </form>
     @endif
+
+    <x-learning.feedback-thread :items="$view['feedback']" :zone="$zone" />
 
     @if(count($view['revisions']) > 1)
         <div class="space-y-2 border-t border-border pt-4">

@@ -7,6 +7,7 @@ namespace App\Domain\Assessment\Actions;
 use App\Domain\Assessment\QuizAnswerWriter;
 use App\Domain\Assessment\QuizGrader;
 use App\Domain\Assessment\QuizRefusedException;
+use App\Domain\Assessment\QuizScoring;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Progress\Actions\CompleteAssessmentItem;
 use App\Models\Question;
@@ -68,37 +69,26 @@ final class SubmitQuizAttempt
     private function grade(QuizAttempt $attempt): void
     {
         $answers = QuizAnswer::query()->where('quiz_attempt_id', $attempt->getKey())->get()->keyBy('question_id');
-        $score = 0.0;
-        $total = 0.0;
-        $pending = false;
 
         foreach ($attempt->snapshot['questions'] as $question) {
-            $total += (float) $question['points'];
             $row = $answers->get((int) $question['id']);
             $given = $row === null ? null : $row->answer;
 
             if ($question['type'] === Question::ESSAY && is_array($given) && trim((string) ($given['text'] ?? '')) !== '') {
-                $pending = true; // a written essay waits for a person
-                $result = ['is_correct' => null, 'points' => null];
+                $result = ['is_correct' => null, 'points' => null]; // a written essay waits for a person
             } elseif ($question['type'] === Question::ESSAY) {
                 $result = ['is_correct' => false, 'points' => 0.0]; // an empty essay has nothing to review
             } else {
                 $result = QuizGrader::grade($question, $given);
             }
 
-            $score += (float) ($result['points'] ?? 0);
             QuizAnswer::query()->updateOrCreate(
                 ['quiz_attempt_id' => $attempt->getKey(), 'question_id' => (int) $question['id']],
                 ['question_version' => (int) $question['version'], 'answer' => $given, 'is_correct' => $result['is_correct'], 'points_awarded' => $result['points']],
             );
         }
 
-        $percent = $total > 0 ? round($score / $total * 100, 2) : 0.0;
-        $mark = $attempt->settings['pass_mark_percent'] ?? null;
-        $attempt->forceFill([
-            'score' => round($score, 2), 'total' => round($total, 2), 'percent' => $percent, 'needs_review' => $pending,
-            'passed' => ($mark === null || $pending) ? null : $percent >= (float) $mark,
-        ])->save();
+        QuizScoring::apply($attempt);
     }
 
     /** Called after the transaction, so a failure here never loses a submitted attempt. */

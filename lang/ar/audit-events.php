@@ -59,4 +59,10 @@ return [
     'assignment.draft_saved' => 'حفظ مسودة واجب',
     'assignment.submitted' => 'تسليم واجب',
     'assignment.resubmitted' => 'إعادة تسليم واجب',
+    'assignment.graded' => 'تقييم واجب',
+    'assignment.accepted' => 'قبول واجب',
+    'assignment.rejected' => 'رفض واجب',
+    'assignment.revision_requested' => 'طلب تعديل على واجب',
+    'assignment.feedback_added' => 'إضافة ملاحظات على واجب',
+    'quiz.essay_graded' => 'تصحيح إجابة مقالية في اختبار',
 ];

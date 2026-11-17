@@ -59,4 +59,10 @@ return [
     'assignment.draft_saved' => 'Assignment draft saved',
     'assignment.submitted' => 'Assignment submitted',
     'assignment.resubmitted' => 'Assignment resubmitted',
+    'assignment.graded' => 'Assignment graded',
+    'assignment.accepted' => 'Assignment accepted',
+    'assignment.rejected' => 'Assignment rejected',
+    'assignment.revision_requested' => 'Assignment revision requested',
+    'assignment.feedback_added' => 'Assignment feedback added',
+    'quiz.essay_graded' => 'Quiz essay answer graded',
 ];

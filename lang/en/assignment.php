@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 return [
     'title' => 'Assignment',
-    'statuses' => ['not_started' => 'Not started', 'draft' => 'Draft', 'submitted' => 'Submitted', 'returned' => 'Needs revision', 'resubmitted' => 'Resubmitted', 'graded' => 'Reviewed'],
+    'statuses' => ['not_started' => 'Not started', 'draft' => 'Draft', 'submitted' => 'Submitted', 'returned' => 'Needs revision', 'resubmitted' => 'Resubmitted', 'graded' => 'Graded', 'accepted' => 'Accepted', 'rejected' => 'Not accepted'],
     'status_notice' => ['submitted' => 'Your work was submitted.', 'resubmitted' => 'Your revised work was submitted.'],
+    'decision' => ['graded' => 'Graded by your instructor', 'accepted' => 'Accepted by your instructor', 'rejected' => 'Not accepted by your instructor', 'score' => 'Score: :score/100'],
     'saved' => 'Draft saved.',
     'brief_files' => 'Files from your instructor',
     'due' => 'Due',

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 return [
     'title' => 'واجب',
-    'statuses' => ['not_started' => 'لم يبدأ', 'draft' => 'مسودة', 'submitted' => 'تم التسليم', 'returned' => 'يحتاج إلى تعديل', 'resubmitted' => 'أُعيد تسليمه', 'graded' => 'تمت المراجعة'],
+    'statuses' => ['not_started' => 'لم يبدأ', 'draft' => 'مسودة', 'submitted' => 'تم التسليم', 'returned' => 'يحتاج إلى تعديل', 'resubmitted' => 'أُعيد تسليمه', 'graded' => 'تم التقييم', 'accepted' => 'مقبول', 'rejected' => 'غير مقبول'],
     'status_notice' => ['submitted' => 'تم تسليم عملك.', 'resubmitted' => 'تم تسليم عملك بعد التعديل.'],
+    'decision' => ['graded' => 'قيّم المدرّب عملك', 'accepted' => 'قبل المدرّب عملك', 'rejected' => 'لم يقبل المدرّب عملك', 'score' => 'الدرجة: :score/100'],
     'saved' => 'تم حفظ المسودة.',
     'brief_files' => 'ملفات من المدرّب',
     'due' => 'موعد التسليم',

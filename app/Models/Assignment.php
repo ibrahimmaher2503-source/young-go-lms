@@ -14,6 +14,7 @@ use Spatie\Translatable\HasTranslations;
  * An assignment placed in the curriculum: brief, rules and the files an instructor attaches. Submissions are separate rows.
  *
  * @property int $id
+ * @property string $title
  * @property Carbon|null $due_at
  * @property list<string>|null $allowed_types
  * @property int|null $max_size_kb

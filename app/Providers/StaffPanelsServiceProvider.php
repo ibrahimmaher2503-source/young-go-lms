@@ -10,6 +10,7 @@ use App\Filament\Resources\Audit\AuditLogResource;
 use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\Courses\CourseResource;
+use App\Filament\Resources\EssayReview\EssayReviewResource;
 use App\Filament\Resources\HomepageBlocks\HomepageBlockResource;
 use App\Filament\Resources\LearnerDevices\LearnerDeviceResource;
 use App\Filament\Resources\Library\LibraryResource;
@@ -17,6 +18,7 @@ use App\Filament\Resources\ManualGrants\ManualGrantResource;
 use App\Filament\Resources\RolePermissions\RolePermissionResource;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
+use App\Filament\Resources\SubmissionReview\SubmissionReviewResource;
 use App\Filament\Shared\WorkspaceAvatarProvider;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -64,9 +66,9 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->resources(match ($id) {
                     'admin' => [
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
-                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class,
+                        CategoryResource::class, CmsPageResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class,
                     ],
-                    'instructor' => [CourseResource::class, LibraryResource::class],
+                    'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class],
                     default => [ManualGrantResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])

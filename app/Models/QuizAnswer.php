@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $answer
  * @property bool|null $is_correct
  * @property float|string|null $points_awarded
+ * @property string|null $feedback
  * @property Carbon|null $graded_at
  */
 final class QuizAnswer extends Model

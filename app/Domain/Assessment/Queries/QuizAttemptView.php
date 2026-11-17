@@ -82,7 +82,7 @@ final class QuizAttemptView
                 'answer' => $row?->answer, 'is_correct' => $row?->is_correct, 'points_awarded' => $row?->points_awarded === null ? null : (float) $row->points_awarded,
                 'options' => array_map(fn (array $o): array => ['key' => (int) $o['key'], 'text' => $o['text'], 'is_correct' => (bool) $o['is_correct']], $question['type'] === Question::SHORT_ANSWER ? [] : $question['options']),
                 'accepted' => $question['type'] === Question::SHORT_ANSWER ? array_map(fn (array $o): array => $o['text'], $question['options']) : [],
-                'explanation' => $question['explanation'],
+                'explanation' => $question['explanation'], 'feedback' => $row?->feedback,
             ];
         }
 

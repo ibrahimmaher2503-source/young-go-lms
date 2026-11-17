@@ -15,6 +15,7 @@ use Spatie\Translatable\HasTranslations;
  * Total marks are derived from the active questions, never stored.
  *
  * @property int $id
+ * @property string $title
  * @property int|null $time_limit_minutes
  * @property int|null $pass_mark_percent
  * @property int|null $max_attempts
