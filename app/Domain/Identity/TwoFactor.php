@@ -54,7 +54,8 @@ final class TwoFactor
     {
         $codes = [];
         for ($i = 0; $i < self::RECOVERY_CODE_COUNT; $i++) {
-            $codes[] = strtolower(bin2hex(random_bytes(2)).'-'.bin2hex(random_bytes(2)));
+            // 40 bits per code (5 + 5 hex characters).
+            $codes[] = substr(bin2hex(random_bytes(3)), 0, 5).'-'.substr(bin2hex(random_bytes(3)), 0, 5);
         }
 
         return $codes;

@@ -44,26 +44,28 @@ final class TwoFactorController
         return response()->noContent();
     }
 
-    public function setupPage(Request $request, BeginTwoFactorEnrollment $begin, TwoFactor $twoFactor): View
+    public function setupPage(Request $request, BeginTwoFactorEnrollment $begin, TwoFactor $twoFactor): Response
     {
         $user = $this->user($request);
         $enabled = $user->hasTwoFactorEnabled();
         $secret = $enabled ? null : $begin->handle($user);
         $account = (string) ($user->email ?? $user->username ?? $user->getKey());
 
-        return view('pages.two-factor-setup', [
+        return response()->view('pages.two-factor-setup', [
             'enabled' => $enabled,
             'required' => $user->requiresTwoFactor(),
             'secret' => $secret,
             'qr' => $secret === null ? null : $twoFactor->qrSvg($twoFactor->provisioningUri($account, $secret)),
             'remaining' => is_array($user->two_factor_recovery_codes) ? count($user->two_factor_recovery_codes) : 0,
-        ]);
+        ])->header('Cache-Control', 'no-store, private');
     }
 
     public function confirm(Request $request, ConfirmTwoFactorEnrollment $confirm): JsonResponse
     {
         $data = $request->validate(['code' => ['required', 'string', 'max:16']]);
         $user = $this->user($request);
+        // Re-authenticate so a hijacked session cannot enroll the attacker's own authenticator.
+        $this->confirmPassword($request, $user);
         $codes = $confirm->handle($user, $data['code']);
         TwoFactorSession::markVerified($user->refresh());
         $request->session()->regenerate();

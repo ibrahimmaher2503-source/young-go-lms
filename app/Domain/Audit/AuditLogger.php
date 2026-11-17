@@ -94,7 +94,7 @@ final class AuditLogger
         }
 
         return preg_match(
-            '/password|passphrase|token|secret|credential|authorization|apikey|privatekey|payout|bank|iban|swift|routing|account(?:number|no)|cardnumber|creditcard|cvv|cvc|securitycode|national(?:id|document)|governmentid|identity(?:document|number|card)|iddocument|idnumber|idcard|idfront|idback|idimage|idscan|passport|ssn|taxid/',
+            '/password|passphrase|token|secret|recovery|credential|authorization|apikey|privatekey|payout|bank|iban|swift|routing|account(?:number|no)|cardnumber|creditcard|cvv|cvc|securitycode|national(?:id|document)|governmentid|identity(?:document|number|card)|iddocument|idnumber|idcard|idfront|idback|idimage|idscan|passport|ssn|taxid/',
             $normalizedKey,
         ) === 1;
     }

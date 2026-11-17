@@ -1,4 +1,4 @@
-<x-layouts.base variant="auth" :title="__('pages.tf_challenge_title')">
+<x-layouts.base variant="auth" :minimal="true" :title="__('pages.tf_challenge_title')">
     <h1 class="mb-4 text-center text-3xl font-bold">{{ __('pages.tf_challenge_title') }}</h1>
     <x-ui.card>
         <p class="mb-4 text-muted">{{ __('pages.tf_challenge_intro') }}</p>

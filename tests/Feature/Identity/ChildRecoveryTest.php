@@ -183,3 +183,20 @@ it('stores the child’s notification in the database for the in-app inbox', fun
         ->and($child->notifications()->first()->data)->toBe(['text' => 'Your lesson starts soon.'])
         ->and($parent->notifications()->count())->toBe(0);
 })->group('T-P1-11', 'A4', 'YG-GAP-FAM-008', 'ED-017');
+
+it('never copies the original action link to a guardian', function (): void {
+    $parent = crUser('parent', ['email' => 'safe@example.test']);
+    $child = crChild($parent);
+
+    $mail = (new GuardianCopyNotification(new ExampleLearnerNotification, $child))->toMail($parent);
+
+    expect($mail->actionUrl)->toBeNull()->and($mail->actionText)->toBeNull();
+})->group('T-P1-11', 'A4', 'ED-017');
+
+it('requires a verified email to redeem a link code', function (): void {
+    $parent = crUser('parent', ['email_verified_at' => null]);
+    $learner = crUser('student');
+    $code = app(IssueLinkCode::class)->handle($learner);
+
+    expect(fn () => app(RedeemLinkCode::class)->handle($parent, $code))->toThrow(ValidationException::class);
+})->group('T-P1-11', 'A2', 'YG-GAP-FAM-007', 'ED-017');

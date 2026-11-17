@@ -9,6 +9,7 @@ use App\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class])->group(function (): void {
+    Route::get('/confirm-password', static fn () => redirect('/family'))->name('password.confirm');
     Route::post('/confirm-password', [AuthenticationController::class, 'confirmPassword'])->middleware('throttle:6,1')->name('password.confirm.store');
 
     Route::prefix('guardian')->name('guardian.')->group(function (): void {

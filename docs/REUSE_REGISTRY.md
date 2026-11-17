@@ -52,7 +52,6 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | MoneyColumn | `app/Filament/Shared/Tables/` | Money display | built | T-P1-08 |
 | ApproveRejectAction + RecordReviewDecision | `app/Filament/Shared/Actions/ApproveRejectAction.php`, `app/Domain/Shared/Actions/RecordReviewDecision.php` | Review-queue approve/reject: reason rules, auth recheck, domain mutation + audit in one transaction | built | T-P1-08 |
 | LocalizedDateColumn | `app/Filament/Shared/Tables/` | Date in user tz | built | T-P1-08 |
-| ApproveRejectAction | `app/Filament/Shared/Actions/` | Approve / reject with reason + audit | planned | T-P1-08 |
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |
 | SeoFieldsGroup | `app/Filament/Shared/Forms/` | Bilingual SEO fields | planned | T-P2-05 |
 | WorkspaceListRecords | `app/Filament/Shared/Pages/WorkspaceListRecords.php` | Native ListRecords shell with optional summary strip and Section/View schema sidebar; resource keeps ownership of the table | built | T-P1-08 |
@@ -65,7 +64,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | Name | Path | Status | Task |
 |---|---|---|---|
 | ui primitives (button, input, card, modal, ...) | `resources/views/components/ui/` | built | T-P1-09 |
-| layouts (public, student, parent, auth) | `resources/views/layouts/` | planned | T-P1-10 |
+| layouts (public, student, parent, auth) | `resources/views/components/layouts/base.blade.php` (one shell, `variant` prop) | built | T-P1-10 |
 | course-card | `resources/views/components/learning/course-card.blade.php` | planned | T-P2-04 |
 | curriculum-list | `resources/views/components/learning/curriculum-list.blade.php` | planned | T-P4-03 |
 | lesson-player | `app/Livewire/Player/LessonPlayer.php` | planned | T-P4-03 |
@@ -73,11 +72,14 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | rich-content renderer | `resources/views/components/learning/rich-content.blade.php` | planned | T-P3-15 |
 | library-picker | `app/Filament/Shared/Forms/LibraryPicker.php` | planned | T-P3-13 |
 | locked-state | `resources/views/components/learning/locked-state.blade.php` | planned | T-P4-09 |
-| child-context-strip | `resources/views/components/ui/child-context-strip.blade.php` | planned | T-P1-10 |
-| error pages | `resources/views/errors/` | planned | T-P1-10 |
+| child-context-strip | inline in `resources/views/components/layouts/base.blade.php` (`data-child-context`) | built | T-P1-10 |
+| error pages | `resources/views/errors/` (403, 404, 419, 429, 500, 503) | built | T-P1-10 |
 
 
 
 ## PRD visual masters — reference assets
 
 The20selectedimages and their source/PRD/shared-component mapping are indexed at docs/design-system/reference-pack-2026-11-17/manifest.json. Read COMMON_COMPONENTS.md to distinguish existing primitives/native components from planned learning/payment/AI patterns. These reference IDs are design vocabulary, not new wrapper classes or evidence of implemented features.
+| AgeBand model + AgeRangeRule + AgeRange | `app/Domain/Catalog/Models/AgeBand.php`, `app/Domain/Catalog/Rules/AgeRangeRule.php`, `app/Domain/Catalog/AgeRange.php` | Configurable age bands and range validation (no seeded cutoffs, O-015) | built | T-P1-07 |
+| Link-code actions + LinkCodeHasher | `app/Domain/Identity/Actions/{IssueLinkCode,RedeemLinkCode,ConfirmGuardianLink,EnterChildContext,ExitChildContext}.php`, `app/Domain/Identity/LinkCodeHasher.php` | One-time guardian link codes and child context | built | T-P1-06 |
+| Audit viewer + audit-events labels | `app/Filament/Resources/Audit/AuditLogResource.php`, `lang/*/audit-events.php` | Read-only audit viewer; add a label for every new audit event | built | T-P1-04 |

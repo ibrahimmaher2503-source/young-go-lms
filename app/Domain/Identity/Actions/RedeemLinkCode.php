@@ -23,6 +23,10 @@ final class RedeemLinkCode
             throw new AuthorizationException;
         }
 
+        if (! $parent->hasVerifiedEmail()) {
+            throw ValidationException::withMessages(['code' => __('guardian.verify_email_first')]);
+        }
+
         return DB::transaction(function () use ($parent, $code): GuardianChildLink {
             $row = DB::table('guardian_link_codes')
                 ->where('code_hash', LinkCodeHasher::hash($code))

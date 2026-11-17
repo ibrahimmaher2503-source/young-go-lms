@@ -41,7 +41,7 @@ it('enrolls in two-factor authentication through the browser and shows recovery 
     $secret = trim((string) $page->text('[data-two-factor-secret]'));
     expect($secret)->not->toBeEmpty();
 
-    $page->type('#code', app(Google2FA::class)->getCurrentOtp($secret))
+    $page->type('#code', app(Google2FA::class)->getCurrentOtp($secret))->type('#enroll-password', 'Password1!secure')
         ->click('main form button[type="submit"]')
         ->waitForText(__('pages.tf_recovery_title'))
         ->assertNoJavaScriptErrors();

@@ -25,12 +25,19 @@
                     <x-ui.form-field for="code" :label="__('pages.tf_code')" :help="__('pages.tf_code_help')" data-field>
                         <x-ui.input id="code" name="code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" aria-describedby="code-help" required />
                     </x-ui.form-field>
+                    <x-ui.form-field for="enroll-password" :label="__('pages.your_password')" data-field>
+                        <x-ui.input id="enroll-password" name="password" type="password" autocomplete="current-password" required />
+                    </x-ui.form-field>
                     <x-ui.button type="submit">{{ __('pages.tf_enable') }}</x-ui.button>
                 </x-ui.ajax-form>
                 <div id="recovery-codes" hidden class="mt-4 rounded-lg bg-page p-4">
                     <h3 class="font-bold">{{ __('pages.tf_recovery_title') }}</h3>
                     <p class="mb-2 text-sm">{{ __('pages.tf_recovery_warning') }}</p>
-                    <ul data-result-list tabindex="-1" dir="ltr" class="grid grid-cols-2 gap-2 font-mono text-lg"></ul>
+                    <ul id="recovery-list" data-result-list tabindex="-1" dir="ltr" class="grid grid-cols-2 gap-2 font-mono text-lg"></ul>
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
+                        <x-ui.button variant="secondary" size="sm" data-copy="#recovery-list" :data-copied="__('pages.tf_copied')">{{ __('pages.tf_copy') }}</x-ui.button>
+                        <span data-copy-status role="status" class="text-sm text-muted"></span>
+                    </div>
                     <x-ui.link class="mt-4" :href="url('/home')">{{ __('pages.tf_continue') }}</x-ui.link>
                 </div>
             </x-ui.card>
@@ -38,6 +45,9 @@
             <x-ui.card :title="__('pages.tf_enabled_title')">
                 <x-ui.badge tone="success">{{ __('pages.tf_enabled') }}</x-ui.badge>
                 <p class="mt-3 text-muted">{{ __('pages.tf_remaining', ['count' => $remaining]) }}</p>
+                @if($remaining === 0)
+                    <x-ui.alert tone="warning" role="status" class="mt-3">{{ __('pages.tf_no_codes') }}</x-ui.alert>
+                @endif
             </x-ui.card>
 
             <x-ui.card :title="__('pages.tf_regenerate_title')">
@@ -49,7 +59,11 @@
                 </x-ui.ajax-form>
                 <div id="recovery-codes" hidden class="mt-4 rounded-lg bg-page p-4">
                     <p class="mb-2 text-sm">{{ __('pages.tf_recovery_warning') }}</p>
-                    <ul data-result-list tabindex="-1" dir="ltr" class="grid grid-cols-2 gap-2 font-mono text-lg"></ul>
+                    <ul id="recovery-list" data-result-list tabindex="-1" dir="ltr" class="grid grid-cols-2 gap-2 font-mono text-lg"></ul>
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
+                        <x-ui.button variant="secondary" size="sm" data-copy="#recovery-list" :data-copied="__('pages.tf_copied')">{{ __('pages.tf_copy') }}</x-ui.button>
+                        <span data-copy-status role="status" class="text-sm text-muted"></span>
+                    </div>
                 </div>
             </x-ui.card>
 

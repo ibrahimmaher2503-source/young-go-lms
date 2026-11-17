@@ -59,7 +59,12 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('address:'.$request->ip()),
             ];
         });
-        RateLimiter::for('two-factor', static fn (Request $request): array => [Limit::perMinute(5)->by('user:'.($request->user()?->getAuthIdentifier() ?? 'guest').'|'.$request->ip())]);
+        RateLimiter::for('two-factor', static function (Request $request): array {
+            $user = 'user:'.($request->user()?->getAuthIdentifier() ?? 'guest');
+
+            // Per user and address, plus a per-user cap that rotating addresses cannot sidestep.
+            return [Limit::perMinute(5)->by($user.'|'.$request->ip()), Limit::perMinutes(15, 10)->by($user)];
+        });
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 

@@ -9,6 +9,7 @@ use App\Domain\Identity\Actions\RegisterAccount;
 use App\Domain\Identity\Actions\ResetAccountPassword;
 use App\Domain\Identity\Actions\VerifyAccountEmail;
 use App\Domain\Identity\AuthMail;
+use App\Domain\Identity\TwoFactorSession;
 use App\Http\Validation\NewPassword;
 use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -71,6 +72,8 @@ final class AuthenticationController
     {
         $validated = $request->validate(['login' => ['required', 'string', 'max:255'], 'password' => ['required', 'string', NewPassword::byteLimit(...)]]);
         $authenticate->handle(mb_strtolower(trim($validated['login'])), $validated['password']);
+        // A passed second factor never carries over to a new sign-in in the same session.
+        $request->session()->forget(TwoFactorSession::KEY);
         $request->session()->regenerate();
 
         return response()->noContent();

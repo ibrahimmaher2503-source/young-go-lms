@@ -7,6 +7,7 @@ namespace App\Domain\Notifications;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Models\User;
 use Illuminate\Notifications\Notification;
+use Throwable;
 
 /**
  * ED-017 / YG-GAP-FAM-008. Every learner notification goes through here.
@@ -36,8 +37,13 @@ final class LearnerNotificationRouter
                 continue;
             }
 
-            $guardian->notifyNow((new GuardianCopyNotification($notification, $learner))->locale($guardian->preferredLocale()), ['mail']);
-            $guardians[] = $guardian;
+            try {
+                $guardian->notifyNow((new GuardianCopyNotification($notification, $learner))->locale($guardian->preferredLocale()), ['mail']);
+                $guardians[] = $guardian;
+            } catch (Throwable $exception) {
+                // One failing mailbox must not stop the other guardians.
+                report($exception);
+            }
         }
 
         return $guardians;

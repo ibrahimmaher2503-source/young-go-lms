@@ -43,7 +43,7 @@ function tfEnroll($test, User $user): array
 {
     tfAs($test, $user)->get('/security/two-factor')->assertOk();
     $secret = (string) $user->refresh()->two_factor_secret;
-    $codes = $test->postJson('/security/two-factor/confirm', ['code' => app(Google2FA::class)->getCurrentOtp($secret)])
+    $codes = $test->postJson('/security/two-factor/confirm', ['code' => app(Google2FA::class)->getCurrentOtp($secret), 'password' => 'Password1!secure'])
         ->assertOk()->json('recovery_codes');
 
     return [$secret, $codes];
@@ -64,11 +64,14 @@ it('enrolls with a valid code and gives eight single-use recovery codes', functi
     tfAs($this, $admin)->get('/security/two-factor')->assertOk()->assertSee('<svg', false)->assertSee('data-two-factor-secret', false);
     $secret = (string) $admin->refresh()->two_factor_secret;
 
-    $this->postJson('/security/two-factor/confirm', ['code' => '000000'])->assertUnprocessable()->assertJsonValidationErrors('code');
-    $codes = $this->postJson('/security/two-factor/confirm', ['code' => app(Google2FA::class)->getCurrentOtp($secret)])
+    $current = app(Google2FA::class)->getCurrentOtp($secret);
+    $this->postJson('/security/two-factor/confirm', ['code' => '000000', 'password' => 'Password1!secure'])->assertUnprocessable()->assertJsonValidationErrors('code');
+    $this->postJson('/security/two-factor/confirm', ['code' => $current, 'password' => 'wrong'])->assertUnprocessable()->assertJsonValidationErrors('password');
+    expect($admin->refresh()->hasTwoFactorEnabled())->toBeFalse();
+    $codes = $this->postJson('/security/two-factor/confirm', ['code' => $current, 'password' => 'Password1!secure'])
         ->assertOk()->assertJsonCount(8, 'recovery_codes')->json('recovery_codes');
 
-    expect($codes)->each->toMatch('/^[0-9a-f]{4}-[0-9a-f]{4}$/')
+    expect($codes)->each->toMatch('/^[0-9a-f]{5}-[0-9a-f]{5}$/')
         ->and($admin->refresh()->hasTwoFactorEnabled())->toBeTrue();
     $this->get('/admin')->assertOk();
     expect(Activity::query()->where('event', 'auth.two_factor_enabled')->sole()->causer_id)->toBe($admin->id);
@@ -174,4 +177,26 @@ it('lets an operator reset 2FA from the command line with an audit entry', funct
     expect($admin->refresh()->hasTwoFactorEnabled())->toBeFalse();
     $entry = Activity::query()->where('event', 'auth.two_factor_disabled')->sole();
     expect($entry->causer_id)->toBeNull()->and($entry->properties->get('context'))->toBe(['via' => 'cli']);
+})->group('T-P1-11', 'A1');
+
+it('applies a per-user cap that a changing address cannot sidestep', function (): void {
+    $admin = tfUser('admin');
+    tfEnroll($this, $admin);
+    tfAs($this, $admin->refresh());
+
+    $statuses = collect(range(1, 14))->map(fn (int $i): int => $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.'.$i])->postJson('/two-factor-challenge', ['code' => '111111'])->status());
+
+    expect($statuses->first())->toBe(422)->and($statuses->last())->toBe(429);
+})->group('T-P1-11', 'A1', 'YG-GAP-SEC-003');
+
+it('forgets a passed challenge when someone signs in again in the same session', function (): void {
+    $user = tfUser('student', ['email' => 'again@example.test']);
+    $this->withSession([TwoFactorSession::KEY => $user->id]);
+
+    $this->postJson('/login', ['login' => 'again@example.test', 'password' => 'Password1!secure'])->assertNoContent();
+    expect(session(TwoFactorSession::KEY))->toBeNull();
+})->group('T-P1-11', 'A1');
+
+it('does not cache the setup page that carries the secret', function (): void {
+    tfAs($this, tfUser('admin'))->get('/security/two-factor')->assertOk()->assertHeader('Cache-Control', 'no-store, private');
 })->group('T-P1-11', 'A1');

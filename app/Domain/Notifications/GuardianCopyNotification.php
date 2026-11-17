@@ -33,12 +33,8 @@ final class GuardianCopyNotification extends Notification
             foreach ($inner->introLines as $line) {
                 $message->line($line);
             }
-            if ($inner->actionText !== null) {
-                $message->action($inner->actionText, $inner->actionUrl);
-            }
-            foreach ($inner->outroLines as $line) {
-                $message->line($line);
-            }
+            // Deliberately no action button: the original link may be a signed or tokenised URL meant for the child.
+            $message->line(__('notifications.guardian_copy_open_app'));
         }
 
         return $message;

@@ -21,7 +21,7 @@
                     </x-ui.select>
                 </x-ui.form-field>
                 <input type="hidden" name="notification_preferences[email]" value="0">
-                <x-ui.checkbox id="notify_email" name="notification_preferences[email]" value="1" :label="__('pages.notifications_email')" :checked="$emailNotifications" />
+                <div><x-ui.checkbox id="notify_email" name="notification_preferences[email]" value="1" :label="__('pages.notifications_email')" :checked="$emailNotifications" /></div>
                 <x-ui.button type="submit">{{ __('pages.save') }}</x-ui.button>
             </x-ui.ajax-form>
         </x-ui.card>
@@ -34,7 +34,7 @@
                     <x-ui.ajax-form :action="url('/profile/certificate-names')" method="PATCH" :message="__('pages.saved')">
                         <x-ui.form-field for="certificate_name_ar" :label="__('pages.certificate_name_ar')" :help="__('pages.certificate_help')" data-field><x-ui.input id="certificate_name_ar" name="certificate_name_ar" lang="ar" dir="rtl" value="{{ $user->certificate_name_ar }}" aria-describedby="certificate_name_ar-help" /></x-ui.form-field>
                         <x-ui.form-field for="certificate_name_en" :label="__('pages.certificate_name_en')" data-field><x-ui.input id="certificate_name_en" name="certificate_name_en" lang="en" dir="ltr" value="{{ $user->certificate_name_en }}" /></x-ui.form-field>
-                        <x-ui.button type="submit">{{ __('pages.save') }}</x-ui.button>
+                        <x-ui.button type="submit">{{ __('pages.save_certificate') }}</x-ui.button>
                     </x-ui.ajax-form>
                 @endif
             </x-ui.card>
@@ -42,7 +42,7 @@
             <x-ui.card :title="__('pages.avatar')">
                 <x-ui.ajax-form :action="url('/profile/avatar')" files reload>
                     <x-ui.file-upload id="avatar" name="avatar" :label="__('pages.avatar')" :hint="__('pages.avatar_help')" accept="image/jpeg,image/png,image/webp" />
-                    <x-ui.button type="submit">{{ __('pages.upload') }}</x-ui.button>
+                    <x-ui.button type="submit" variant="secondary">{{ __('pages.upload') }}</x-ui.button>
                 </x-ui.ajax-form>
             </x-ui.card>
 
@@ -51,7 +51,7 @@
                     <x-ui.form-field for="current_password" :label="__('pages.current_password')" data-field><x-ui.input id="current_password" name="current_password" type="password" autocomplete="current-password" required /></x-ui.form-field>
                     <x-ui.form-field for="new_password" :label="__('pages.new_password')" :help="__('pages.password_help')" data-field><x-ui.input id="new_password" name="password" type="password" autocomplete="new-password" aria-describedby="new_password-help" required /></x-ui.form-field>
                     <x-ui.form-field for="new_password_confirmation" :label="__('pages.password_confirmation')" data-field><x-ui.input id="new_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required /></x-ui.form-field>
-                    <x-ui.button type="submit">{{ __('pages.change_password') }}</x-ui.button>
+                    <x-ui.button type="submit" variant="secondary">{{ __('pages.change_password') }}</x-ui.button>
                 </x-ui.ajax-form>
             </x-ui.card>
         </div>

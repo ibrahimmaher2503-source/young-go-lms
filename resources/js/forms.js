@@ -76,8 +76,10 @@ async function succeed(form, response) {
         show(form, 'success', '');
         return;
     }
-    if (form.dataset.successUrl) return window.location.assign(form.dataset.successUrl);
-    if ('reload' in form.dataset) return window.location.reload();
+    if (form.dataset.successUrl || 'reload' in form.dataset) {
+        form.dataset.navigating = '1'; // keep the buttons disabled while the page changes
+        return form.dataset.successUrl ? window.location.assign(form.dataset.successUrl) : window.location.reload();
+    }
     if (form.dataset.reset !== undefined) form.reset();
     show(form, 'success', form.dataset.successMessage ?? '');
 }
@@ -113,6 +115,23 @@ document.addEventListener('submit', async (event) => {
         show(form, 'danger', message('msgError'));
     } finally {
         delete form.dataset.busy;
-        buttons.forEach((button) => { button.disabled = false; button.removeAttribute('aria-busy'); });
+        if (!form.dataset.navigating) {
+            buttons.forEach((button) => { button.disabled = false; button.removeAttribute('aria-busy'); });
+        }
+    }
+});
+
+// Copy-to-clipboard for one-time codes (data-copy points at the element whose text is copied).
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-copy]');
+    if (!button) return;
+    const source = document.querySelector(button.dataset.copy);
+    if (!source) return;
+    try {
+        await navigator.clipboard.writeText(Array.from(source.children, (item) => item.textContent).join('\n'));
+        const status = button.parentElement.querySelector('[data-copy-status]');
+        if (status) status.textContent = button.dataset.copied ?? '';
+    } catch {
+        // Clipboard can be blocked; the codes stay visible to copy by hand.
     }
 });

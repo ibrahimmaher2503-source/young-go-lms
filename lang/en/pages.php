@@ -138,4 +138,8 @@ return [
     'account_type' => 'I am signing up as',
     'account_learner' => 'A learner',
     'account_parent' => 'A parent or guardian',
+    'save_certificate' => 'Save certificate names',
+    'tf_copy' => 'Copy codes',
+    'tf_copied' => 'Codes copied',
+    'tf_no_codes' => 'You have no recovery codes left. Create new ones now so you can still sign in if you lose your device.',
 ];
