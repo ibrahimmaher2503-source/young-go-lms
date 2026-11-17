@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\GuardianChildLink;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
@@ -63,7 +64,7 @@ it('lets a parent create a child who then signs in with the username', function 
 
     $page = $this->visit('/family');
     $page->type('#child_name_en', 'Little Browser')->type('#child_username', 'little-browser')
-        ->type('#child_birth_year', '2016')->type('#child_birth_month', '4')
+        ->type('#child_birth_year', '2016')->select('#child_birth_month', '4')
         ->type('#child_password', 'ChildBrowser1!')->type('#child_password_confirmation', 'ChildBrowser1!')
         ->click('main form[action$="/guardian/children"] button[type="submit"]')
         ->waitForText('Little Browser')->assertSee('little-browser');
@@ -177,3 +178,28 @@ it('renders the main screens in dark mode', function (string $path, string $loca
     }
     $page->screenshot(fullPage: true, filename: "T-P1-10/{$name}-{$locale}-dark-390");
 })->with(['/login', '/register'])->with(['ar', 'en'])->group('browser', 'T-P1-10', 'A2', 'A3');
+
+it('shows live password strength and a copyable sign-in detail on the family page', function (): void {
+    $this->withSession(['locale' => 'en']);
+    $parent = browserUser('parent');
+    app(CreateChildAccount::class)->handle($parent, ['username' => 'copy-kid', 'password' => 'ChildPassword1!', 'name_en' => 'Copy Kid', 'birth_year' => 2016, 'birth_month' => 3]);
+    $this->actingAs($parent);
+
+    $page = $this->visit('/family');
+    $page->assertPresent('[data-copy-text]')->assertSee(__('pages.copy_login'));
+    expect($page->attribute('[data-copy-text]', 'data-copy-text'))->toContain('copy-kid')->not->toContain('ChildPassword1!');
+
+    $page->type('#child_password', 'abc');
+    expect($page->script("() => document.querySelector('[data-strength-meter] [data-strength-text]').textContent"))->toBe(__('pages.strength_weak'));
+    $page->fill('#child_password', 'LongEnough1!xyz');
+    expect($page->script("() => document.querySelector('[data-strength-meter] [data-strength-text]').textContent"))->toBe(__('pages.strength_strong'));
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+})->group('browser', 'T-P1-10', 'A1', 'J02');
+
+it('offers back and retry actions on error pages', function (): void {
+    config(['app.debug' => false]);
+    Route::middleware('web')->get('/_error/429', static fn () => abort(429));
+    $this->withSession(['locale' => 'en']);
+
+    $this->visit('/_error/429')->assertSee(__('errors.go_back'))->assertSee(__('errors.retry'))->assertNoAccessibilityIssues();
+})->group('browser', 'T-P1-10', 'A2', 'YG-GAP-OPS-004');

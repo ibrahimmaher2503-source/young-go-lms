@@ -142,4 +142,13 @@ return [
     'tf_copy' => 'Copy codes',
     'tf_copied' => 'Codes copied',
     'tf_no_codes' => 'You have no recovery codes left. Create new ones now so you can still sign in if you lose your device.',
+    'strength_label' => 'Password strength',
+    'strength_weak' => 'Weak',
+    'strength_fair' => 'Fair',
+    'strength_good' => 'Good',
+    'strength_strong' => 'Strong',
+    'login_details' => 'Young Go sign-in\nUsername: :username\nSign in at: :url',
+    'login_copied' => 'Sign-in details copied (without the password).',
+    'copy_login' => 'Copy sign-in details',
+    'sending' => 'Please wait…',
 ];

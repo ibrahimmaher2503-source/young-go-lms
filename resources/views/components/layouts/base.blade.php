@@ -22,10 +22,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-page font-sans text-body"
-    data-msg-error="{{ __('pages.error_generic') }}" data-msg-throttle="{{ __('pages.error_throttle') }}" data-msg-expired="{{ __('pages.error_expired') }}">
+    data-msg-error="{{ __('pages.error_generic') }}" data-msg-throttle="{{ __('pages.error_throttle') }}" data-msg-expired="{{ __('pages.error_expired') }}" data-msg-sending="{{ __('pages.sending') }}">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-lg focus:bg-surface focus:p-3">{{ __('pages.skip') }}</a>
 @if($child)
-    <div role="status" class="sticky top-0 z-40 bg-accent font-semibold text-on-accent shadow-md" data-child-context>
+    <div role="status" class="sticky top-0 z-40 bg-accent font-semibold text-on-accent border-b-4 border-primary shadow-md" data-child-context>
         <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-8">
             <p class="font-semibold break-words">{{ __('pages.child_context', ['name' => $child->display_name ?: $child->name]) }}</p>
             <x-ui.ajax-form :action="url('/guardian/context')" method="DELETE" reload class="!space-y-0">

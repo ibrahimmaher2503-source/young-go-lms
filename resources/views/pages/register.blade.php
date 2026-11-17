@@ -21,9 +21,9 @@
                 <x-ui.form-field for="username" :label="__('pages.username_optional')" :help="__('pages.username_help')" data-field><x-ui.input id="username" name="username" dir="ltr" autocomplete="username" aria-describedby="username-help" /></x-ui.form-field>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.form-field for="birth_year" :label="__('pages.birth_year')" data-field><x-ui.input id="birth_year" name="birth_year" type="number" inputmode="numeric" min="1900" max="{{ now()->year }}" /></x-ui.form-field>
-                    <x-ui.form-field for="birth_month" :label="__('pages.birth_month')" data-field><x-ui.input id="birth_month" name="birth_month" type="number" inputmode="numeric" min="1" max="12" /></x-ui.form-field>
+                    <x-ui.form-field for="birth_month" :label="__('pages.birth_month')" data-field><x-ui.month-select id="birth_month" name="birth_month" optional /></x-ui.form-field>
                 </div>
-                <x-ui.form-field for="password" :label="__('pages.password')" :help="__('pages.password_help')" data-field><x-ui.input id="password" name="password" type="password" autocomplete="new-password" aria-describedby="password-help" required /></x-ui.form-field>
+                <x-ui.form-field for="password" :label="__('pages.password')" :help="__('pages.password_help')" data-field><x-ui.input id="password" name="password" type="password" autocomplete="new-password" aria-describedby="password-help" data-strength required /><x-ui.strength-meter for="password" /></x-ui.form-field>
                 <x-ui.form-field for="password_confirmation" :label="__('pages.password_confirmation')" data-field><x-ui.input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required /></x-ui.form-field>
                 <div data-field class="space-y-2">
                     <x-ui.checkbox id="accept_terms" name="accept_terms" value="1" :label="__('pages.accept_terms')" />

@@ -3,8 +3,10 @@
         <p class="text-6xl font-extrabold text-primary" dir="ltr" aria-hidden="true">404</p>
         <h1 class="mt-2 text-2xl font-bold">{{ __('errors.404_title') }}</h1>
         <p class="mt-2 text-muted">{{ __('errors.404_text') }}</p>
-        <p class="mt-2 text-sm text-muted">{{ __('errors.support') }}</p>
+        <p class="mt-2 text-sm text-muted">{{ __('errors.support') }}
+            @if(config('app.support_email'))<a href="mailto:{{ config('app.support_email') }}" class="font-semibold text-primary underline" dir="ltr">{{ config('app.support_email') }}</a>@endif</p>
         <div class="mt-4 flex flex-wrap justify-center gap-2">
+            <x-ui.button variant="secondary" data-history-back>{{ __('errors.go_back') }}</x-ui.button>
             <x-ui.link :href="url('/')">{{ __('errors.home') }}</x-ui.link>
         </div>
     </x-ui.card></div>

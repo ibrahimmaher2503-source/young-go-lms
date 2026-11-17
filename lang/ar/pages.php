@@ -142,4 +142,13 @@ return [
     'tf_copy' => 'نسخ الرموز',
     'tf_copied' => 'تم نسخ الرموز',
     'tf_no_codes' => 'لم يتبقَّ لديك رموز استرداد. أنشئ رموزاً جديدة الآن لتتمكن من الدخول إذا فقدت جهازك.',
+    'strength_label' => 'قوة كلمة المرور',
+    'strength_weak' => 'ضعيفة',
+    'strength_fair' => 'مقبولة',
+    'strength_good' => 'جيدة',
+    'strength_strong' => 'قوية',
+    'login_details' => 'تسجيل الدخول إلى Young Go\nاسم المستخدم: :username\nرابط الدخول: :url',
+    'login_copied' => 'تم نسخ بيانات الدخول (بدون كلمة المرور).',
+    'copy_login' => 'نسخ بيانات الدخول',
+    'sending' => 'يرجى الانتظار…',
 ];

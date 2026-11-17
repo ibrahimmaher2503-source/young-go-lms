@@ -39,7 +39,7 @@ function showErrors(form, errors) {
         const error = document.createElement('p');
         error.id = `${field.id || name}-error`;
         error.dataset.fieldError = '';
-        error.className = 'rounded-md bg-danger px-2 py-1 text-sm text-on-danger';
+        error.className = 'border-s-4 border-danger ps-2 text-sm font-semibold text-body';
         error.textContent = messages[0];
         (field.closest('[data-field]') ?? field.parentElement).append(error);
         field.setAttribute('aria-describedby', [field.getAttribute('aria-describedby'), error.id].filter(Boolean).join(' '));
@@ -92,7 +92,12 @@ document.addEventListener('submit', async (event) => {
     form.dataset.busy = '1';
     clearErrors(form);
     const buttons = form.querySelectorAll('button[type="submit"]');
-    buttons.forEach((button) => { button.disabled = true; button.setAttribute('aria-busy', 'true'); });
+    buttons.forEach((button) => {
+        button.dataset.label = button.textContent;
+        if (message('msgSending')) button.textContent = message('msgSending');
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+    });
 
     try {
         let response;
@@ -116,22 +121,49 @@ document.addEventListener('submit', async (event) => {
     } finally {
         delete form.dataset.busy;
         if (!form.dataset.navigating) {
-            buttons.forEach((button) => { button.disabled = false; button.removeAttribute('aria-busy'); });
+            buttons.forEach((button) => {
+                if (button.dataset.label !== undefined) button.textContent = button.dataset.label;
+                button.disabled = false;
+                button.removeAttribute('aria-busy');
+            });
         }
     }
 });
 
 // Copy-to-clipboard for one-time codes (data-copy points at the element whose text is copied).
 document.addEventListener('click', async (event) => {
-    const button = event.target.closest('[data-copy]');
+    const button = event.target.closest('[data-copy], [data-copy-text]');
     if (!button) return;
-    const source = document.querySelector(button.dataset.copy);
-    if (!source) return;
+    const source = button.dataset.copy ? document.querySelector(button.dataset.copy) : null;
+    if (!source && button.dataset.copyText === undefined) return;
     try {
-        await navigator.clipboard.writeText(Array.from(source.children, (item) => item.textContent).join('\n'));
-        const status = button.parentElement.querySelector('[data-copy-status]');
+        await navigator.clipboard.writeText(source ? Array.from(source.children, (item) => item.textContent).join('\n') : button.dataset.copyText);
+        const status = (button.closest('li') ?? button.parentElement).querySelector('[data-copy-status]');
         if (status) status.textContent = button.dataset.copied ?? '';
     } catch {
         // Clipboard can be blocked; the codes stay visible to copy by hand.
     }
+});
+
+// Error pages: plain history/reload actions without inline scripts.
+document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-history-back]')) window.history.back();
+    if (event.target.closest('[data-reload-page]')) window.location.reload();
+});
+
+// Password strength guidance (length and variety); the server rules remain the authority.
+document.addEventListener('input', (event) => {
+    const input = event.target.closest?.('input[data-strength]');
+    if (!input) return;
+    const meter = document.querySelector(`[data-strength-meter="${CSS.escape(input.id)}"]`);
+    if (!meter) return;
+    const value = input.value;
+    let score = 0;
+    if (value.length >= 8) score += 1;
+    if (value.length >= 12) score += 1;
+    if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+    if (/[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value)) score += 1;
+    meter.hidden = value === '';
+    meter.querySelector('progress').value = value === '' ? 0 : Math.max(1, score);
+    meter.querySelector('[data-strength-text]').textContent = value === '' ? '' : JSON.parse(meter.dataset.labels)[Math.max(1, score) - 1];
 });

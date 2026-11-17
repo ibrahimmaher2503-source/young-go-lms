@@ -18,4 +18,5 @@ return [
     '500_text' => 'We could not complete your request. Please try again shortly.',
     '503_title' => 'We will be right back',
     '503_text' => 'Young Go is being updated. Please check again in a few minutes.',
+    'go_back' => 'Go back',
 ];

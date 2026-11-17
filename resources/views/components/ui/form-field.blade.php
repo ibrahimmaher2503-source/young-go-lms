@@ -4,5 +4,5 @@
     <label for="{{ $for }}" class="block font-semibold">{{ $label }}</label>
     {{ $slot }}
     @if($help)<p id="{{ $for }}-help" class="text-sm text-muted">{{ $help }}</p>@endif
-    @if($error)<p id="{{ $for }}-error" class="rounded-md bg-danger px-2 py-1 text-sm text-on-danger">{{ $error }}</p>@endif
+    @if($error)<p id="{{ $for }}-error" class="border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $error }}</p>@endif
 </div>
