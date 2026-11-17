@@ -38,4 +38,6 @@ return [
     'schedule_title' => 'Coming up',
     'tasks_title' => 'Tasks for you',
     'new_certificate' => 'New certificate',
+    'live_join' => 'Join',
+    'live_open_session' => 'Open',
 ];

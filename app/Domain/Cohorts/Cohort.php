@@ -54,6 +54,12 @@ final class Cohort extends Model
         return $this->members()->where('status', CohortMember::SEATED)->count();
     }
 
+    /** Whether this learner currently holds a seat (a waitlist place or a removal does not count). */
+    public function hasSeat(User $learner): bool
+    {
+        return $this->members()->where('learner_id', $learner->getKey())->where('status', CohortMember::SEATED)->exists();
+    }
+
     public function isFull(): bool
     {
         return $this->capacity !== null && $this->seatedCount() >= $this->capacity;

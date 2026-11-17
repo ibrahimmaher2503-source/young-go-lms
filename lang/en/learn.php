@@ -24,7 +24,7 @@ return [
     'pdf' => 'Lesson PDF',
     'shortcuts' => 'Keyboard: Space or K play/pause, arrows 5 s, J and L 10 s, F full screen, C captions, < and > speed.',
     'open_file' => 'Open :name',
-    'types' => ['video' => 'Video', 'audio' => 'Audio', 'document' => 'Document', 'text' => 'Text', 'quiz' => 'Quiz', 'assignment' => 'Assignment'],
+    'types' => ['video' => 'Video', 'audio' => 'Audio', 'document' => 'Document', 'text' => 'Text', 'quiz' => 'Quiz', 'assignment' => 'Assignment', 'live_session' => 'Live session'],
     'assistant' => 'Lesson assistant',
     'course_progress' => ':done of :total lessons done',
     'course_progress_label' => 'Course progress',

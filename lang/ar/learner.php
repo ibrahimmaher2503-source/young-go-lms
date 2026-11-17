@@ -38,4 +38,6 @@ return [
     'schedule_title' => 'القادم في جدولك',
     'tasks_title' => 'مهام تحتاجك',
     'new_certificate' => 'شهادة جديدة',
+    'live_join' => 'انضم',
+    'live_open_session' => 'افتح',
 ];

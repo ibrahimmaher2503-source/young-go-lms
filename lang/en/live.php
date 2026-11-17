@@ -33,4 +33,12 @@ return [
     'not_reschedulable' => 'Only a session that has not started can be rescheduled.',
     'link_needed_to_open' => 'Add the meeting link before opening the session.',
     'transition_refused' => 'A :from session cannot become :to.',
+    'join' => 'Join the session',
+    'join_now_hint' => 'The session is open. You can join now.',
+    'starts_in' => 'You can join in',
+    'opens_at' => 'The join button appears at :time.',
+    'cancelled_notice' => 'This session was cancelled.',
+    'ended_notice' => 'This session has ended.',
+    'join_not_open' => 'This session cannot be joined right now.',
+    'join_no_link' => 'The meeting link is not ready yet. Please try again shortly.',
 ];

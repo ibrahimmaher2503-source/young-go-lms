@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
+use App\Http\Controllers\LiveJoinController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\PreviewController;
@@ -25,6 +26,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/preview/{course}/{item}', PreviewController::class)->whereNumber(['course', 'item'])->name('learn.preview');
     Route::get('/learn/{course}', [LearnController::class, 'course'])->whereNumber('course')->name('learn.course');
     Route::get('/learn/{course}/{item}', [LearnController::class, 'show'])->whereNumber(['course', 'item'])->name('learn.show');
+    Route::post('/learn/{course}/{item}/join', LiveJoinController::class)->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.join');
     Route::post('/learn/{course}/{item}/progress', [ProgressController::class, 'heartbeat'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.progress');
     Route::post('/learn/{course}/{item}/complete', [ProgressController::class, 'complete'])->whereNumber(['course', 'item'])->middleware('throttle:progress')->name('learn.complete');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');

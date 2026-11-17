@@ -62,7 +62,19 @@
             <aside class="min-w-0 space-y-5" aria-label="{{ __('learner.notifications') }}">
                 <section class="rounded-card border border-border bg-surface p-4 shadow-card">
                     <h2 class="flex items-center justify-between gap-2 border-b border-border pb-3 text-lg font-bold"><span>{{ __('learner.schedule_title') }}</span> <x-ui.icon name="calendar" class="size-6" /></h2>
-                    <p class="pt-3 text-muted" data-widget="live-slot">{{ __('learner.upcoming_empty') }}</p>
+                    <div class="pt-3" data-widget="live-slot">
+                        @forelse($upcoming as $row)
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border py-3 last:border-0" data-live-row data-live-state="{{ $row['state'] }}">
+                                <div class="min-w-0">
+                                    <p class="break-words font-semibold">{{ $row['session']->title }}</p>
+                                    <p class="text-sm text-muted">{{ $row['course_title'] }} · {{ \App\Domain\Live\LiveSessionTime::label($row['session'], $learner) }}</p>
+                                </div>
+                                <a href="{{ route('learn.show', ['course' => $row['course_id'], 'item' => $row['item_id']]) }}" class="inline-flex min-h-11 items-center rounded-xl border border-border px-3 font-semibold text-primary">{{ $row['state'] === 'joinable' ? __('learner.live_join') : __('learner.live_open_session') }}</a>
+                            </div>
+                        @empty
+                            <p class="text-muted">{{ __('learner.upcoming_empty') }}</p>
+                        @endforelse
+                    </div>
                 </section>
                 <section class="rounded-card border border-border bg-surface p-4 shadow-card">
                     <h2 class="flex items-center justify-between gap-2 border-b border-border pb-3 text-lg font-bold"><span>{{ __('learner.tasks_title') }}</span> <x-ui.icon name="clipboard" class="size-6" /></h2>

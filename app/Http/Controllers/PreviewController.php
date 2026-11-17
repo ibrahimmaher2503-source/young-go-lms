@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\AccessDecision;
+use App\Domain\Live\JoinWindow;
 use App\Domain\Media\Queries\LessonPlayback;
 use App\Domain\Media\SignedFileUrl;
 use App\Filament\Resources\Courses\CourseResource;
@@ -13,6 +14,7 @@ use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\LessonResource;
+use App\Models\LiveSession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -68,6 +70,8 @@ final class PreviewController
             'descriptor' => $lesson !== null ? LessonPlayback::for($lesson, $user) : null,
             'aiAvailable' => false,
             'learner' => $user,
+            'liveSession' => $entity instanceof LiveSession ? $entity : null,
+            'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,
         ]);
     }
 }

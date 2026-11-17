@@ -24,7 +24,7 @@ return [
     'pdf' => 'ملف PDF للدرس',
     'shortcuts' => 'لوحة المفاتيح: المسافة أو K تشغيل/إيقاف، الأسهم 5 ثوانٍ، J وL 10 ثوانٍ، F ملء الشاشة، C الترجمة، < و> السرعة.',
     'open_file' => 'فتح :name',
-    'types' => ['video' => 'فيديو', 'audio' => 'صوت', 'document' => 'مستند', 'text' => 'نص', 'quiz' => 'اختبار', 'assignment' => 'واجب'],
+    'types' => ['video' => 'فيديو', 'audio' => 'صوت', 'document' => 'مستند', 'text' => 'نص', 'quiz' => 'اختبار', 'assignment' => 'واجب', 'live_session' => 'جلسة مباشرة'],
     'assistant' => 'مساعد الدرس',
     'course_progress' => 'أنهيت :done من :total درسًا',
     'course_progress_label' => 'تقدّم الدورة',

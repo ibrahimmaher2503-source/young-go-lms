@@ -8,6 +8,7 @@ use App\Domain\AI\AssistantEligibility;
 use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
+use App\Domain\Live\JoinWindow;
 use App\Domain\Media\Queries\LessonPlayback;
 use App\Domain\Media\SignedFileUrl;
 use App\Domain\Progress\LessonProgress;
@@ -16,6 +17,7 @@ use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\LessonResource;
+use App\Models\LiveSession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -97,6 +99,8 @@ final class LearnController
             'descriptor' => $decision->allowed && $lesson !== null ? LessonPlayback::for($lesson, $learner) : null,
             'aiAvailable' => $decision->allowed && $lesson !== null && app(AssistantEligibility::class)->check($learner, $lesson)->isAvailable(),
             'learner' => $learner,
+            'liveSession' => $decision->allowed && $entity instanceof LiveSession ? $entity : null,
+            'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,
         ]);
     }
 

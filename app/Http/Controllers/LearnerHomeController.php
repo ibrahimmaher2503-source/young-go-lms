@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Identity\ActingLearner;
+use App\Domain\Live\Queries\UpcomingSessions;
 use App\Domain\Progress\LessonProgress;
 use App\Domain\Progress\Queries\LearnerCourseRows;
 use App\Models\Course;
@@ -33,6 +34,7 @@ final class LearnerHomeController
         return view('learner.dashboard', [
             'variant' => $this->variant($request),
             'learner' => $learner,
+            'upcoming' => UpcomingSessions::for($learner, 3),
             'resume' => $resume,
             'resumeTitle' => (string) ($resumeItem?->itemable?->getAttribute('title') ?? ''),
             'resumeLessonPercent' => (int) ($resumeProgress->percent ?? 0),
