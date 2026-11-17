@@ -23,12 +23,7 @@
 @endphp
 <x-layouts.base :title="$seo['title']" variant="public" wide indexable>
     <x-slot:head>
-        <meta name="description" content="{{ $seo['description'] }}">
-        @if($seo['keywords'] !== '')<meta name="keywords" content="{{ $seo['keywords'] }}">@endif
-        <meta name="robots" content="index, follow">
-        <link rel="canonical" href="{{ $seo['canonical'] }}">
-        @foreach($seo['og'] as $property => $content)<meta property="{{ $property }}" content="{{ $content }}">@endforeach
-        <script type="application/ld+json">{!! json_encode($seo['jsonld'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+        <x-seo.head :seo="$seo"/>
     </x-slot:head>
 
     <div class="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_20rem] lg:pb-0" data-course-page>

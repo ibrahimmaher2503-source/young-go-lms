@@ -20,4 +20,5 @@ Schedule::command('live:send-reminders')->everyFiveMinutes()->name('live:send-re
 Schedule::command('quiz:expire-attempts')->everyMinute()->name('quiz:expire-attempts')->withoutOverlapping();
 Schedule::command('entitlements:expire')->hourly()->name('entitlements:expire')->withoutOverlapping();
 Schedule::command('help:escalate-overdue')->everyFifteenMinutes()->name('help:escalate-overdue')->withoutOverlapping();
+Schedule::command('seo:sitemap')->dailyAt('02:30')->name('seo:sitemap')->withoutOverlapping();
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();

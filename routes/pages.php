@@ -7,6 +7,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
+use App\Http\Controllers\LegacyRedirectController;
 use App\Http\Controllers\LiveJoinController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
@@ -54,4 +55,4 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
 Route::get('/verify/{token}', [CertificateController::class, 'verify'])->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:certificate-verify')->name('certificates.verify');
 
 // Unmatched URLs still pass through the web middleware so the branded 404 follows the selected locale.
-Route::fallback(static fn () => abort(404));
+Route::fallback(LegacyRedirectController::class);

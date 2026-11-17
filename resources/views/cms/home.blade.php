@@ -1,4 +1,5 @@
-<x-layouts.base variant="public">
+<x-layouts.base variant="public" indexable>
+    <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
     <div class="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-8">
         <h1 class="text-3xl font-bold">{{ __('app.name') }}</h1>
         @foreach($blocks as $block)

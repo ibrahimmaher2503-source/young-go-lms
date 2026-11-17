@@ -8,6 +8,7 @@ use App\Domain\Catalog\CourseSeo;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
+use App\Domain\Seo\PublicUrl;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 
@@ -26,7 +27,7 @@ final class PublicCourseController
         return view('catalog.show', [
             'course' => $found,
             'curriculum' => $curriculum,
-            'seo' => CourseSeo::for($found, route('catalog.show', ['course' => $key]), $curriculum['lessons']),
+            'seo' => CourseSeo::for($found, PublicUrl::course($found, app()->getLocale()), $curriculum['lessons']),
             'key' => $key,
             'entitled' => $learner instanceof User && $access->currentFor($learner, $found) !== null,
             'signedIn' => $learner instanceof User,

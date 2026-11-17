@@ -35,7 +35,13 @@ final class PublicCourseDetail
     /** URL key for a course in the active locale: its slug, falling back to the other locale's slug and then the id. */
     public static function key(Course $course): string
     {
-        $slugs = [(string) $course->getAttribute('slug_'.app()->getLocale()), (string) $course->slug_ar, (string) $course->slug_en];
+        return self::keyFor($course, app()->getLocale());
+    }
+
+    /** URL key for a course in the given locale (used for hreflang and the sitemap). */
+    public static function keyFor(Course $course, string $locale): string
+    {
+        $slugs = [(string) $course->getAttribute('slug_'.$locale), (string) $course->slug_ar, (string) $course->slug_en];
 
         return collect($slugs)->first(static fn (string $slug): bool => $slug !== '') ?? (string) $course->getKey();
     }
