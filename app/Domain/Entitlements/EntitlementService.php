@@ -59,7 +59,10 @@ final class EntitlementService implements LessonAccessChecker
     {
         $item = $lesson->item()->with(['course', 'section'])->first();
 
-        return $item !== null && $this->canAccessItem($user, $item)->allowed;
+        // A lesson preview opens playback; private attachments still require a course entitlement.
+        return $item !== null
+            && $this->canAccessCourse($user, $item->course)->allowed
+            && $this->canAccessItem($user, $item)->allowed;
     }
 
     /** The learner's current entitlement for a course, or null. */

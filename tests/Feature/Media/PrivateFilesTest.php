@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
+use App\Domain\Curriculum\Actions\SetCurriculumStatus;
+use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
+use App\Domain\Entitlements\EntitlementService;
+use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Media\Actions\ApproveCurriculumDocument;
 use App\Domain\Media\Actions\ManageLessonResources;
 use App\Domain\Media\Actions\UploadCurriculumDocument;
@@ -229,7 +233,7 @@ it('refuses a forwarded link: another account cannot use it and an expired link 
 
     $this->actingAs($instructor)->travel(config('media.signed_ttl') + 5)->seconds();
     $this->get($url)->assertForbidden();
-})->group('T-P3-08', 'A1');
+})->group('T-P3-08', 'T-P4-06', 'A1');
 
 it('rechecks access when the link is used: a revoked author gets nothing', function (): void {
     [$instructor, $lesson, $course] = filesLesson();
@@ -273,3 +277,29 @@ it('opens protected files to entitled learners through the entitlement checker',
     expect($urls->for($learner, $resource))->not->toBeNull()->and($urls->for($learner, $document))->not->toBeNull()->and($urls->for($suspended, $resource))->toBeNull();
     $this->actingAs($learner)->get($urls->for($learner, $document))->assertOk();
 })->group('T-P3-08', 'A1');
+
+it('exposes only flagged downloads on a preview lesson until the learner is granted access', function (string $kind): void {
+    [$instructor, $lesson, $course] = filesLesson();
+    $course->update(['status' => 'published']);
+    $item = $lesson->item()->firstOrFail();
+    $item->section->update(['published' => true]);
+    $lesson->update(['is_preview' => true]);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+
+    $resources = app(ManageLessonResources::class);
+    $preview = $resources->addFile($instructor, $lesson, fileOf(pdfBytes(1)), ['title' => ['en' => 'Sample'], 'is_preview' => true]);
+    $protected = match ($kind) {
+        'resource' => $resources->addFile($instructor, $lesson, fileOf(pdfBytes(2)), ['title' => ['en' => 'Worksheet']]),
+        'curriculum PDF' => app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf(pdfBytes(3))),
+    };
+    $learner = User::factory()->create()->assignRole('student');
+    $urls = app(SignedFileUrl::class);
+
+    expect(app(EntitlementService::class)->canAccessItem($learner, $item->refresh())->allowed)->toBeTrue();
+    $this->actingAs($learner)->get($urls->for($learner, $preview))->assertOk();
+    expect($urls->for($learner, $protected))->toBeNull();
+
+    app(GrantEntitlement::class)($learner, $course, EntitlementSource::Free);
+
+    $this->get($urls->for($learner, $protected))->assertOk();
+})->with(['resource', 'curriculum PDF'])->group('T-P4-06', 'A2', 'I01');

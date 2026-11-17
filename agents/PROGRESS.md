@@ -76,7 +76,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P4-03 | Course player and curriculum navigation | review | T-P4-01, T-P3-05, T-P1-09 | ui-builder, implementer, test-writer | L | normal | | |
 | T-P4-04 | Progress, resume and completion state | todo | T-P4-03 | implementer, test-writer | M | high | | |
 | T-P4-05 | Student dashboard and library | todo | T-P4-04 | ui-builder, implementer, test-writer | M | normal | | |
-| T-P4-06 | Protected PDFs, resources and previews | todo | T-P4-03, T-P3-08 | implementer, ui-builder, test-writer | S | high | | |
+| T-P4-06 | Protected PDFs, resources and previews | in_progress | T-P4-03, T-P3-08 | implementer, ui-builder, test-writer | S | high | | Private download authorization; player resource list and G7 pending |
 | T-P4-07 | Watermark, session and device limits | todo | T-P4-03, T-P1-02 | implementer, ui-builder, test-writer | M | normal | | |
 | T-P4-08 | Parent dashboard | todo | T-P4-05, T-P1-06 | ui-builder, implementer, test-writer | M | high | | |
 | T-P4-09 | Layered access: sequence and drip with reason codes | todo | T-P4-01, T-P4-04, T-P3-04 | implementer, ui-builder, test-writer | M | high | | |
@@ -165,6 +165,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 - AI: none — add nothing AI-related. Preserve assistant eligibility behavior except where its existing access dependency requires the authoritative entitlement.
 - A1/A2 evidence plan: use the real entitlement binding with a published preview lesson to distinguish a flagged resource from unflagged materials and curriculum PDF; then exercise a same-account grant, forwarding and expiry in the signed route. Preserve the T-P3-08 domain tests.
 - UI follows the lesson toolbar and existing authorized download primitives. Match the 07/17/06 task references when extending the resource list, with AR/EN viewport captures and visible state review before G7 closure.
+- Authorization slice: both unflagged preview-attachment issuance cases failed before the fix. The real file checker now requires an active course entitlement for private attachments in addition to item access; explicitly public resources retain the existing preview path. Signed forwarding/expiry acceptance passed. PrivateFiles, SubtitleTracks, EntitlementService and AssistantEligibility passed 83 tests / 338 assertions with one existing TODO. Scoped Pint, Larastan and G10 passed. The player still needs the approved PDF link and preview checks for external resources. T-P4-04 landed separately at `5244e00` on the development branch while this worktree was in use; integrate that revision before editing the player.
 
 ### T-P2-01 — Categories and disciplines
 
