@@ -144,7 +144,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-SEC-002 | Sharing flags | T-P9-10; consumes T-P4-07 session/device facts | |
 | YG-GAP-SEC-003 |  | T-P1-11 | |
 | YG-GAP-SEC-004 |  | T-P3-08 | |
-| YG-GAP-SRCH-001 |  | T-P0-06, T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category indexing and search) |
+| YG-GAP-SRCH-001 |  | T-P0-06, T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category indexing); `tests/Feature/Pages/PublicCatalogTest.php` (Arabic course search) |
 | YG-GAP-SUB-001 |  | T-P8-08 | |
 | YG-GAP-SUB-002 |  | T-P8-08 | |
 | YG-GAP-SUB-003 |  | T-P8-08 | |
@@ -157,7 +157,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-VID-004 |  | T-P3-05 | |
 | YG-WEB-001 |  | T-P2-03 | |
 | YG-WEB-002 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (block order and visibility) |
-| YG-WEB-003 |  | T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (category hierarchy) |
+| YG-WEB-003 |  | T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (taxonomy); `tests/Feature/Pages/PublicCatalogTest.php` (published scope and available filters); full availability and sort coverage pending |
 | YG-WEB-004 |  | T-P2-05 | |
 | YG-WEB-005 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (publication, editor preview and draft seeds) |
 | YG-WEB-006 |  | T-P2-07 | |

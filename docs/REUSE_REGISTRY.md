@@ -14,6 +14,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | HasSearchText | `app/Domain/Shared/Search/HasSearchText.php` | Fill `search_text` on save | built | T-P0-06 |
 | Category / SaveCategory | `app/Models/Category.php`, `app/Domain/Catalog/Actions/SaveCategory.php` | Bilingual catalog taxonomy and authorized writes that preserve a two-level hierarchy | built | T-P2-01 |
 | Course / CoursePolicy / CourseDirectory | `app/Models/Course.php`, `app/Policies/CoursePolicy.php`, `app/Domain/Catalog/Queries/CourseDirectory.php` | Course state, instructor scope and shared staff directory counters | built | T-P3-01 |
+| CatalogQuery | `app/Domain/Catalog/Queries/CatalogQuery.php` | Public-only course scope, normalized text search and combinable catalog filters | built | T-P2-04 |
 | PublishCourse / FeatureCourse | `app/Domain/Catalog/Actions/` | Explicit course status and featured mutations with execution-time policy checks | built | T-P3-01 |
 | CmsPage / HomepageBlock / SaveCmsContent | `app/Models/CmsPage.php`, `app/Models/HomepageBlock.php`, `app/Domain/Content/Actions/SaveCmsContent.php` | Bilingual pages and ordered homepage blocks with permission-gated editor writes | built | T-P2-02 |
 | Money / PriceFormatter | `app/Domain/Shared/Money/` | Integer-minor money + locale formatting | built | T-P0-06 |
@@ -70,7 +71,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 |---|---|---|---|
 | ui primitives (button, input, card, modal, ...) | `resources/views/components/ui/` | built | T-P1-09 |
 | layouts (public, student, parent, auth) | `resources/views/components/layouts/base.blade.php` (one shell, `variant` prop) | built | T-P1-10 |
-| course-card | `resources/views/components/learning/course-card.blade.php` | planned | T-P2-04 |
+| course-card | `resources/views/components/learning/course-card.blade.php` | built | T-P2-04 |
 | curriculum-list | `resources/views/components/learning/curriculum-list.blade.php` | planned | T-P4-03 |
 | lesson-player | `app/Livewire/Player/LessonPlayer.php` | planned | T-P4-03 |
 | ai-assistant-panel | `app/Livewire/Player/AiAssistantPanel.php` | planned | T-P7-03 |

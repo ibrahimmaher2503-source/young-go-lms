@@ -5,6 +5,7 @@
 - T-P2-01 adds an Arabic/English admin category directory with a two-level hierarchy, display ordering, locale-specific slugs, normalized search, and image uploads. The seeder provides seven editable creative disciplines.
 - T-P2-02 adds bilingual CMS pages and ordered homepage blocks. Editors can preview drafts using expiring signed links, while public routes render published pages and visible blocks. Six editable placeholder pages start as drafts.
 - T-P3-01 adds the course model, instructor assignment and publishing policies, and scoped staff course directories with real status counts, filters, and export.
+- T-P2-04 adds the published-course catalog with Arabic-aware search, URL-backed filters, mobile filter dialog, and newest-first pagination. Price and popularity sorts and availability filtering await their canonical data sources.
 
 ## 2026-11-16 --- Pack v3.2: LearnHouse reference study + second gap review
 

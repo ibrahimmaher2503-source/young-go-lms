@@ -39,7 +39,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P2-01 | Categories and disciplines | review | T-P1-08 | implementer, test-writer, chore | S | normal | | See task log |
 | T-P2-02 | CMS pages and homepage blocks | review | T-P1-08, T-P1-10 | implementer, ui-builder, test-writer, chore | M | normal | | See task log |
 | T-P2-03 | Brand public shell and homepage UI | todo | T-P2-02, T-P1-09 | ui-builder, chore | L | normal | | |
-| T-P2-04 | Catalog, search and filters | todo | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | |
+| T-P2-04 | Catalog, search and filters | blocked | T-P2-01, T-P3-01, T-P1-07 | implementer, ui-builder, test-writer | L | normal | | Search/filter slice verified; price, popularity and availability data pending |
 | T-P2-05 | Course detail page and SEO fields group | todo | T-P2-04 | ui-builder, implementer, test-writer | M | normal | | |
 | T-P2-06 | SEO infrastructure | todo | T-P2-02, T-P2-05 | implementer, test-writer | S | normal | | |
 | T-P2-07 | Blog | todo | T-P2-06 | implementer, ui-builder, test-writer, chore | M | normal | | |
@@ -141,6 +141,18 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P2-04 — Catalog, search and filters
+
+- Outcome: make published courses discoverable with YG-WEB-003 and YG-GAP-SRCH-001. The owner pulled T-P3-01 forward for this task; it is now in `review`.
+- Reuse `Course`, `Category`, `ArabicNormalizer`, `AgeBandResolver`, `ActingLearner`, public layout and existing UI primitives. AI: none — add nothing AI-related.
+- UI: search, URL-backed filters, mobile expandable filter panel, result cards and pagination, bilingual empty state. Available filters: category/subcategory, manual or learner/configured age band, level, format, content language, instructor and access type. Newest order uses persisted timestamps.
+- No schema changes. S0 route tests for A1 normalized matches and A2 combined filters/public visibility. Then query/controller/route, course card and filters, AR/EN browser captures including empty state. Visual deferred per PO.
+- Missing data sources for the full task: prices per market (T-P3-03/T-P8-01), popularity metric/enrollment data (T-P4-02), and live availability/capacity (T-P5-01). No guessed amounts, counts or capacity. Deliver the independently testable catalog slice; full A2 remains open.
+- Search uses the existing status index to narrow candidates to published courses. Portable substring LIKE scans the normalized text of those rows; evaluate an Arabic-aware index against catalog volume and the agreed search/performance budget before changing semantics.
+- S0 RED: `PublicCatalogTest.php` exited 1 (3 failures on missing /courses). GREEN: 3/27 for Arabic substitutions, published-only combined filters, manual/configured age, timestamp order and pagination.
+- G1 Pint, G2 Larastan, G6 AR/EN/RTL/audit/build/isolated SQLite migration and seed, G10 requirement coverage and G11 doctor passed for this slice. G3 full non-browser: 322/1819, 93.3% coverage, 1 existing I02 TODO; module coverage verifier exited 0. G4 architecture 6/29. G5 invariants 6/33 with the same TODO. `agents/logs/T-P2-04/`.
+- G7 browser: 4/36, 10 captures for results, mobile filters and empty state in AR/EN at 390/1440. `tests/Browser/screenshots/T-P2-04/`. Visual deferred per PO. G8/G9 N/A. Full task stays blocked; G10 tags do not close the missing A2 behavior.
 
 ### T-P3-01 — Course domain, ownership and course list
 
