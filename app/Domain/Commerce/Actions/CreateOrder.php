@@ -139,7 +139,7 @@ final class CreateOrder
             $seen[$key] = true;
 
             $course = Course::query()->find($line->productId);
-            if (! $course instanceof Course || $course->status !== CourseStatus::Published || $course->access_mode !== Course::ACCESS_PAID) {
+            if (! $course instanceof Course || $course->status !== CourseStatus::Published || ! in_array($course->access_mode, Course::INDIVIDUAL_ACCESS_MODES, true)) {
                 $this->refuse('product_unavailable');
             }
             $price = CoursePrice::query()->where('course_id', $course->getKey())->where('market', $market->value)->first();

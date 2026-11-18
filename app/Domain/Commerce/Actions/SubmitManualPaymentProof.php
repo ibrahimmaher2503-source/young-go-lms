@@ -45,7 +45,7 @@ final class SubmitManualPaymentProof
         try {
             return DB::transaction(function () use ($payer, $order, $values, $file, &$stored): ManualPaymentProof {
                 $locked = Order::query()->lockForUpdate()->findOrFail($order->getKey());
-                if ((int) $locked->payer_id !== (int) $payer->getKey() || $locked->status !== OrderStatus::Pending || $locked->total_minor <= 0) {
+                if ((int) $locked->payer_id !== (int) $payer->getKey() || $locked->status !== OrderStatus::Pending || $locked->total_minor <= 0 || ! $locked->isInActiveMarket()) {
                     $this->refuse('order', 'order_invalid');
                 }
                 if (ManualPaymentProof::query()->where('order_id', $locked->getKey())->where('status', ManualPaymentStatus::Pending->value)->exists()) {

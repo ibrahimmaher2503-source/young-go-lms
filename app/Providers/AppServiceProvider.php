@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Assessment\AssessmentHistory;
+
 use App\Domain\AI\Assistant\AssistantEngine;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Contracts\ModerationClassifier;
@@ -18,6 +20,8 @@ use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\Resilience\ResilientProvider;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
+use App\Domain\Commerce\Contracts\PaymentGateway;
+use App\Domain\Commerce\Payments\PaymentGatewayResolver;
 use App\Domain\Completion\Events\CourseCompleted;
 use App\Domain\Completion\Events\CourseCompletionInputChanged;
 use App\Domain\Completion\Listeners\EvaluateCompletion;
@@ -25,6 +29,7 @@ use App\Domain\Entitlements\Contracts\CompletionLookup;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Entitlements\EntitlementHistory;
 use App\Domain\Entitlements\EntitlementService;
+use App\Domain\Identity\Actions\AuthorizeSuperAdminBypass;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Identity\SessionLimiter;
 use App\Domain\Live\ManualMeetingProvider;
@@ -39,6 +44,7 @@ use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -73,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(static function (User $user, string $ability): ?bool {
+        Gate::before(static function (User $user, string $ability, array $arguments): ?bool {
             if ($user->getAttribute('status') !== 'active') {
                 return false;
             }
@@ -83,20 +89,25 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            if ($user->hasRole('super_admin', (string) config('permissions.guard', 'web'))) {
+            $guard = (string) config('permissions.guard', 'web');
+            $permissionNames = array_column(config('permissions.permissions', []), 'name');
+            if (in_array($ability, $permissionNames, true) && $user->checkPermissionTo($ability, $guard)) {
                 return true;
             }
 
-            $permissionNames = array_column(config('permissions.permissions', []), 'name');
-            if (! in_array($ability, $permissionNames, true)) {
-                return null;
+            if ($user->hasRole('super_admin', $guard)) {
+                $target = $arguments[0] ?? null;
+
+                return app(AuthorizeSuperAdminBypass::class)($user, $ability, $target instanceof Model ? $target : null);
             }
 
-            return $user->checkPermissionTo($ability, (string) config('permissions.guard', 'web')) ? true : null;
+            return null;
         });
 
         Relation::morphMap(['lesson' => Lesson::class, 'quiz' => Quiz::class, 'assignment' => Assignment::class, 'live_session' => LiveSession::class]);
         $this->app->bind(MeetingProvider::class, ManualMeetingProvider::class);
+        // T-P8-02: Paymob when credentials are complete, else Fake (local/testing) or the refusing Null gateway (B-07). Singleton so the Fake keeps its recorded calls.
+        $this->app->singleton(PaymentGateway::class, static fn (): PaymentGateway => (new PaymentGatewayResolver)());
         // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
         Event::listen(Logout::class, static function (Logout $event): void {
             if (app()->bound('session.store') && session()->isStarted()) {
@@ -109,7 +120,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(CourseCompleted::class, [IssueCertificateOnCompletion::class, 'handle']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
-        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class], 'course.history');
+        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);

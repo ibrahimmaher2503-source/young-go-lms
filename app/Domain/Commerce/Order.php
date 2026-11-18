@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Commerce;
 
+use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\Money;
 use App\Models\User;
 use Closure;
@@ -80,6 +81,13 @@ final class Order extends Model
     public function total(): Money
     {
         return Money::ofMinor($this->total_minor, $this->currency);
+    }
+
+    public function isInActiveMarket(): bool
+    {
+        $market = Market::tryFrom($this->market);
+
+        return $market !== null && $market->isActive() && $market->currency() === $this->currency;
     }
 
     /** @return BelongsTo<User, $this> */

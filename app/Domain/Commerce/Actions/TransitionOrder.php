@@ -32,6 +32,9 @@ final class TransitionOrder
             if (! $from->canMoveTo($to)) {
                 throw ValidationException::withMessages(['order' => __('commerce.transition_invalid')]);
             }
+            if ($to === OrderStatus::Paid && ! $locked->isInActiveMarket()) {
+                throw ValidationException::withMessages(['order' => __('commerce.market_unavailable')]);
+            }
 
             $locked->status = $to;
             if ($to === OrderStatus::Paid && $locked->paid_at === null) {
