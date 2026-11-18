@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Commerce\CoursePrice;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
@@ -37,3 +38,46 @@ it('renders both wizard steps accessibly in both directions and sizes', function
     $page->screenshot(fullPage: true, filename: "T-P3-02/wizard-{$step}-{$locale}-{$width}");
 })->with(['basic', 'information'])->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
     ->group('browser', 'T-P3-02', 'A3', 'PRD-09.2');
+
+it('renders the pricing step with market amounts, localized labels and no overflow', function (string $locale, int $width, int $height, string $theme): void {
+    $this->actingAs(User::factory()->create(['locale' => $locale, 'name' => 'Admin'])->assignRole('admin'));
+    $course = Course::query()->create([
+        'title' => ['ar' => 'أساسيات الرسم الرقمي', 'en' => 'Digital drawing basics'],
+        'slug_ar' => 'digital-drawing-ar', 'slug_en' => 'digital-drawing',
+        'access_mode' => Course::ACCESS_BOTH, 'wizard_step' => 3, 'wizard_completed' => ['1' => true, '2' => true],
+    ]);
+    CoursePrice::query()->create(['course_id' => $course->id, 'market' => 'EG', 'currency' => 'EGP', 'amount_minor' => 59900]);
+
+    $page = $this->visit("/admin/courses/{$course->id}/edit")->resize($width, $height);
+    $page->script("async () => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); await document.fonts.ready; }");
+    $page->assertSee('EGP')->assertSee('SAR')
+        ->assertSee(trans('courses.market_price_disabled', locale: $locale))
+        ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script(<<<'JS'
+        () => document.querySelector('input[id$=".market_prices.EG"]')?.value ?? null
+        JS))->toBe('599.00')
+        ->and($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
+        ->and($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue()
+        ->and($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
+
+    if ($width >= 1440) {
+        expect($page->script(<<<'JS'
+            () => {
+                const rail = document.querySelector('.fi-sc-wizard-header');
+                const step = document.querySelector('.fi-sc-wizard-step.fi-active');
+                const form = step.querySelector('.fi-section').getBoundingClientRect();
+                const progress = step.querySelector('progress').closest('.fi-section').getBoundingClientRect();
+                return rail.offsetWidth >= form.width + progress.width && Math.abs(form.top - progress.top) < 2;
+            }
+            JS))->toBeTrue();
+    }
+    $directory = base_path('tests/Browser/screenshots/T-P3-03');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: $width === 390, filename: "T-P3-03/pricing-{$locale}-{$theme}-{$width}");
+})->with([
+    ['ar', 390, 844, 'light'], ['ar', 390, 844, 'dark'], ['en', 390, 844, 'light'], ['en', 390, 844, 'dark'],
+    ['ar', 1440, 900, 'light'], ['ar', 1440, 900, 'dark'], ['en', 1440, 900, 'light'], ['en', 1440, 900, 'dark'],
+    ['ar', 1568, 1003, 'light'],
+])->group('browser', 'T-P3-03', 'PRD-09-2');

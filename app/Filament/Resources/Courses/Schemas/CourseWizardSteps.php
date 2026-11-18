@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Courses\Schemas;
 
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Shared\Markets\Market;
 use App\Filament\Shared\Forms\TranslatableTabs;
 use App\Models\Category;
 use App\Models\Course;
@@ -16,11 +17,15 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Wizard\Step;
 use Illuminate\Support\Facades\Auth;
 
-/** Steps 1 (Basic) and 2 (Information) of the course wizard. Validation lives in SaveCourseWizard. */
+/** Native course wizard steps. Validation lives in SaveCourseWizard. */
 final class CourseWizardSteps
 {
     /**
@@ -30,11 +35,52 @@ final class CourseWizardSteps
     public static function make(Closure $persist): array
     {
         return [
-            Step::make('basic')->label(__('courses.step_basic'))->icon('heroicon-o-pencil-square')
-                ->afterValidation(static fn () => $persist(1))->schema(self::basic()),
-            Step::make('information')->label(__('courses.step_information'))->icon('heroicon-o-list-bullet')
-                ->afterValidation(static fn () => $persist(2))->schema(self::information()),
+            Step::make('basic')->label(__('courses.step_basic'))
+                ->afterValidation(static fn () => $persist(1))->schema([self::withProgress(self::basic())]),
+            Step::make('information')->label(__('courses.step_information'))
+                ->afterValidation(static fn () => $persist(2))->schema([self::withProgress(self::information())]),
+            Step::make('pricing')->label(__('courses.step_pricing'))
+                ->afterValidation(static fn () => $persist(3))->schema([self::withProgress([self::pricing()])]),
         ];
+    }
+
+    /** @param list<mixed> $fields */
+    private static function withProgress(array $fields): Grid
+    {
+        return Grid::make(['default' => 1, 'xl' => 3])->schema([
+            Group::make($fields)->columnSpan(['xl' => 2]),
+            Section::make(__('courses.setup_progress'))->icon('heroicon-o-squares-2x2')->columnSpan(['xl' => 1])->schema([
+                View::make('filament.courses.wizard-progress')->viewData(static fn ($livewire): array => ['course' => $livewire->record ?? null]),
+            ]),
+        ]);
+    }
+
+    private static function pricing(): Section
+    {
+        $user = Auth::user();
+        $section = Section::make(__('courses.step_pricing'))->icon('heroicon-o-banknotes');
+        if (! $user instanceof User || ! SaveCourseWizard::canSetPricing($user)) {
+            return $section->schema([Text::make(__('courses.pricing_managed'))]);
+        }
+
+        return $section->schema([
+            Select::make('access_mode')->label(__('courses.access'))->live()->markAsRequired()->options([
+                Course::ACCESS_FREE => __('courses.free'),
+                Course::ACCESS_PAID => __('courses.access_individual'),
+                Course::ACCESS_SUBSCRIPTION => __('courses.subscription_only'),
+                Course::ACCESS_BOTH => __('courses.both'),
+            ]),
+            Grid::make(['default' => 1, 'md' => 2])->schema(array_map(
+                static fn (Market $market): TextInput => TextInput::make('market_prices.'.$market->value)
+                    ->label(__('courses.market_price.'.$market->value))
+                    ->suffix($market->currency())
+                    ->inputMode('decimal')
+                    ->maxLength(12)
+                    ->markAsRequired($market->isActive())
+                    ->helperText($market->isActive() ? null : __('courses.market_price_disabled')),
+                Market::cases(),
+            ))->visible(static fn (Get $get): bool => in_array($get('access_mode'), Course::INDIVIDUAL_ACCESS_MODES, true)),
+        ]);
     }
 
     /** @return list<mixed> */
@@ -72,7 +118,10 @@ final class CourseWizardSteps
                         ->visible(static fn ($get): bool => $canOwnership && $get('owner_type') === Course::OWNER_INDEPENDENT)
                         ->options(static fn (): array => User::query()->role(['instructor_academy', 'instructor_independent'])->orderBy('name')->pluck('name', 'id')->all()),
                     Select::make('status')->label(__('courses.status'))->visible($canStatus)
-                        ->options(self::labelled('statuses', SaveCourseWizard::WIZARD_STATUSES, 'courses.')),
+                        ->options(static fn (?Course $record): array => self::labelled('statuses', array_unique([
+                            ...SaveCourseWizard::WIZARD_STATUSES,
+                            ...($record === null ? [] : [$record->status->value]),
+                        ]))),
                     Toggle::make('featured')->label(__('courses.featured'))->visible($canStatus),
                 ]),
             ]),

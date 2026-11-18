@@ -34,6 +34,14 @@ final class Course extends Model
 
     public const ACCESS_PAID = 'paid';
 
+    public const ACCESS_SUBSCRIPTION = 'subscription_only';
+
+    public const ACCESS_BOTH = 'both';
+
+    public const INDIVIDUAL_ACCESS_MODES = [self::ACCESS_PAID, self::ACCESS_BOTH];
+
+    public const PAID_ACCESS_MODES = [self::ACCESS_PAID, self::ACCESS_SUBSCRIPTION, self::ACCESS_BOTH];
+
     public const INSTRUCTOR_SCOPE_MANAGE = 'manage';
 
     public const SEQUENCE_FREE = 'free';

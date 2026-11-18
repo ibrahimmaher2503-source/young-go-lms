@@ -27,6 +27,37 @@
     --font-family: var(--font-sans);
 }
 
+.yg-course-wizard .fi-sc-wizard-header {
+    background: var(--yg-color-surface);
+    border: 1px solid var(--yg-color-border);
+    border-radius: var(--yg-radius-card);
+    box-shadow: var(--yg-shadow-card);
+}
+
+@media (min-width: 48rem) {
+    .yg-course-wizard .fi-sc-wizard-header {
+        grid-auto-columns: minmax(0, 1fr);
+    }
+
+    .yg-course-wizard .fi-sc-wizard-header-step-btn {
+        flex-direction: column;
+        justify-content: center;
+        gap: .5rem;
+        inline-size: 100%;
+        padding: .75rem .5rem;
+    }
+
+    .yg-course-wizard .fi-sc-wizard-header-step-separator {
+        display: none;
+    }
+}
+
+@media (min-width: 80rem) {
+    .yg-course-wizard .fi-sc-wizard-footer {
+        margin-inline-end: calc((100% + var(--yg-space-layout)) / 3);
+    }
+}
+
 .fi-body {
     background-color: var(--yg-color-page);
     color: var(--yg-color-body);

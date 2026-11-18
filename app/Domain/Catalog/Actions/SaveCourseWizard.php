@@ -6,8 +6,13 @@ namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\CoursePrice;
+use App\Domain\Media\LessonPublishRule;
+use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
+use App\Models\CurriculumItem;
 use App\Models\User;
+use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -18,13 +23,13 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 /**
- * Course wizard steps 1 (Basic) and 2 (Information). A draft may be saved at any point with
+ * A course draft may be saved at any point with
  * incomplete data ($complete = false); passing a step ($complete = true) enforces its required fields.
  * Ownership, status and featured are changed only by users who hold the matching permission.
  */
 final class SaveCourseWizard
 {
-    public const int LAST_STEP = 2;
+    public const int LAST_STEP = 3;
 
     public const array LEVELS = ['beginner', 'intermediate', 'advanced', 'all'];
 
@@ -47,7 +52,7 @@ final class SaveCourseWizard
     public function __invoke(User $actor, array $data, ?Course $course = null, int $step = 1, bool $complete = false): Course
     {
         if ($course === null) {
-            Gate::forUser($actor)->authorize('course.create');
+            Gate::forUser($actor)->authorize('create', Course::class);
         } else {
             Gate::forUser($actor)->authorize('update', $course);
         }
@@ -55,8 +60,9 @@ final class SaveCourseWizard
         $data = $this->guardPrivileged($actor, $course, $data);
         $clean = $this->validate($data, $course, $complete ? $step : null);
 
-        return DB::transaction(function () use ($actor, $clean, $course, $step, $complete): Course {
-            $record = $course ?? new Course;
+        return DB::transaction(function () use ($actor, $clean, $course, $step, $complete, $data): Course {
+            $record = $course === null ? new Course : Course::query()->lockForUpdate()->findOrFail($course->getKey());
+            $pricing = $this->validatePricing($actor, $record, $data, $step === self::LAST_STEP && $complete);
             $before = $record->exists ? Arr::only($record->getAttributes(), ['owner_type', 'owner_instructor_id', 'status', 'featured']) : null;
             $record->fill($clean['attributes']);
             $record->slug_ar = $clean['slugs']['slug_ar'] ?? $record->slug_ar ?? $this->uniqueSlug('slug_ar', $record, $record->getTranslation('title', 'ar', false) ?: $record->getTranslation('title', 'en', false), 'ar');
@@ -72,9 +78,116 @@ final class SaveCourseWizard
             $record->save();
 
             $this->auditChange($actor, $record, $created, $before);
+            if ($pricing !== []) {
+                $this->savePricing($actor, $record, $pricing);
+            }
 
             return $record;
         });
+    }
+
+    public static function canSetPricing(User $actor): bool
+    {
+        return $actor->can('panel.admin.access') && $actor->can('course.publish') && ! $actor->hasRole('instructor_independent');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{access_mode?: string|null, market_prices?: array<string, string|null>}
+     */
+    private function validatePricing(User $actor, Course $course, array $data, bool $complete): array
+    {
+        $fields = Arr::only($data, ['access_mode', 'market_prices']);
+        if (in_array($fields['access_mode'] ?? null, [null, ''], true)) {
+            unset($fields['access_mode']);
+        }
+        $canSetPricing = self::canSetPricing($actor);
+        $prices = $fields['market_prices'] ?? [];
+        if ((! $canSetPricing || ! isset($fields['access_mode'])) && is_array($prices)
+            && array_filter($prices, static fn ($amount): bool => $amount !== null && $amount !== '') === []) {
+            unset($fields['market_prices']);
+        }
+        if (! $canSetPricing) {
+            if ($fields !== []) {
+                throw new AuthorizationException;
+            }
+
+            return [];
+        }
+
+        $mode = $fields['access_mode'] ?? $course->access_mode;
+        $individual = in_array($mode, Course::INDIVIDUAL_ACCESS_MODES, true);
+        if ($complete) {
+            $fields['access_mode'] = $mode;
+        }
+        $rules = [
+            'access_mode' => [$complete ? 'required' : 'nullable', Rule::in([Course::ACCESS_FREE, ...Course::PAID_ACCESS_MODES])],
+            'market_prices' => ['nullable', 'array:'.implode(',', array_column(Market::cases(), 'value'))],
+        ];
+        foreach (Market::cases() as $market) {
+            $rules['market_prices.'.$market->value] = [
+                $individual && $complete && $market->isActive() ? 'required' : 'nullable',
+                'regex:/^\d{1,9}(?:\.\d{1,2})?$/D', 'numeric', 'gt:0',
+            ];
+        }
+
+        if (! $individual) {
+            unset($fields['market_prices']);
+        }
+
+        return Validator::make($fields, $rules)->validate();
+    }
+
+    /** @param array{access_mode?: string|null, market_prices?: array<string, string|null>} $pricing */
+    private function savePricing(User $actor, Course $course, array $pricing): void
+    {
+        $mode = $pricing['access_mode'] ?? $course->access_mode;
+        $before = ['access_mode' => $course->access_mode, 'market_prices' => []];
+        $after = ['access_mode' => $mode, 'market_prices' => []];
+        if ($mode !== $course->access_mode) {
+            if (in_array($mode, Course::PAID_ACCESS_MODES, true)) {
+                $items = CurriculumItem::query()->where('course_id', $course->getKey())
+                    ->where('status', CurriculumItem::STATUS_PUBLISHED)->where('itemable_type', 'lesson')->with('itemable.media')->get();
+                $course->access_mode = $mode;
+                foreach ($items as $item) {
+                    $item->setRelation('course', $course);
+                }
+                if (LessonPublishRule::blocked($items) !== []) {
+                    throw ValidationException::withMessages(['access_mode' => __('courses.pricing_protected_media')]);
+                }
+            }
+            $course->access_mode = $mode;
+            $course->save();
+        }
+
+        if (in_array($mode, Course::INDIVIDUAL_ACCESS_MODES, true)) {
+            foreach ($pricing['market_prices'] ?? [] as $code => $amount) {
+                $market = Market::from($code);
+                $key = ['course_id' => $course->getKey(), 'market' => $code];
+                $current = CoursePrice::query()->where($key)->first();
+                $minor = blank($amount) ? null : Money::of((string) $amount, $market->currency())->getMinorAmount()->toInt();
+                if ($current?->amount_minor === $minor && ($current === null || $current->currency === $market->currency())) {
+                    continue;
+                }
+                $before['market_prices'][$code] = $current?->amount_minor;
+                $after['market_prices'][$code] = $minor;
+                if ($minor === null) {
+                    $current?->delete();
+                } else {
+                    CoursePrice::query()->updateOrCreate($key, ['currency' => $market->currency(), 'amount_minor' => $minor]);
+                }
+            }
+        } elseif ($before['access_mode'] !== $mode) {
+            foreach (CoursePrice::query()->where('course_id', $course->getKey())->get() as $existingPrice) {
+                $before['market_prices'][$existingPrice->market] = $existingPrice->amount_minor;
+                $after['market_prices'][$existingPrice->market] = null;
+                $existingPrice->delete();
+            }
+        }
+
+        if ($before !== $after && $this->audit->record('course.pricing_changed', $course, (int) $actor->getKey(), $before, $after) === null) {
+            throw new RuntimeException('Unable to record course pricing audit.');
+        }
     }
 
     /**
@@ -88,6 +201,9 @@ final class SaveCourseWizard
             if (array_key_exists($optional, $data) && ($data[$optional] === null || $data[$optional] === '')) {
                 unset($data[$optional]);
             }
+        }
+        if ($course !== null && ($data['status'] ?? null) === $course->status->value) {
+            unset($data['status']);
         }
 
         $canOwnership = $actor->can('panel.admin.access') && $actor->can('course.create');

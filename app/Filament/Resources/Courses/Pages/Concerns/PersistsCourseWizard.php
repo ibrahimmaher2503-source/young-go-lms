@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Courses\Pages\Concerns;
 
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Commerce\CoursePrice;
 use App\Models\Course;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +43,7 @@ trait PersistsCourseWizard
     /** @return array<string, mixed> */
     protected static function courseFormData(Course $course): array
     {
-        return [
+        $data = [
             ...$course->attributesToArray(),
             'title' => $course->getTranslations('title'),
             'short_description' => $course->getTranslations('short_description'),
@@ -55,16 +53,22 @@ trait PersistsCourseWizard
             'requirements' => $course->requirements ?? [],
             'outcomes' => $course->outcomes ?? [],
         ];
+        $user = Auth::user();
+        if ($user instanceof User && SaveCourseWizard::canSetPricing($user)) {
+            $data['market_prices'] = CoursePrice::query()->where('course_id', $course->getKey())->get()
+                ->mapWithKeys(static fn (CoursePrice $price): array => [$price->market => (string) $price->money()->value->getAmount()])
+                ->all();
+        } else {
+            unset($data['access_mode']);
+        }
+
+        return $data;
     }
 
-    /** Wizard on the left, setup progress on the right (wide screens). */
     protected function courseWizardForm(Schema $schema): Schema
     {
-        return parent::form($schema)->columns(['default' => 1, 'xl' => 3])->components([
-            Group::make([$this->getWizardComponent()])->columnSpan(['xl' => 2]),
-            Section::make(__('courses.setup_progress'))->icon('heroicon-o-squares-2x2')->columnSpan(['xl' => 1])->schema([
-                View::make('filament.courses.wizard-progress')->viewData(fn ($livewire): array => ['course' => $livewire->record ?? null]),
-            ]),
+        return parent::form($schema)->columns(null)->components([
+            $this->getWizardComponent()->extraAttributes(['class' => 'yg-course-wizard']),
         ]);
     }
 
