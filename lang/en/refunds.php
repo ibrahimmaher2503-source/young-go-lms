@@ -73,4 +73,6 @@ return [
     'summary_requested' => 'Waiting for review',
     'summary_approved' => 'Approved, not yet refunded',
     'summary_returned' => 'Money returned',
+    'queue_empty_title' => 'No refunds',
+    'queue_empty_hint' => 'Refund requests from learners appear here for review.',
 ];

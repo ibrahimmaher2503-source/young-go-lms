@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Statements;
 use App\Domain\InstructorFinance\InstructorStatement;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Filament\Resources\Statements\Pages\ListStatements;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Filters\SelectFilter;
@@ -69,6 +70,7 @@ final class StatementResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id', 'desc')
+            ->emptyState(EmptyStateView::make('heroicon-o-document-text', 'settlements.statements_empty_title', 'settlements.statements_empty_hint'))
             ->columns(StatementTable::columns(true))
             ->filters([
                 SelectFilter::make('instructor_id')->label(__('ledger.instructor'))->searchable()

@@ -58,7 +58,7 @@
                                 <td>{{ __('payment_reconciliation.types.'.$mismatch->type->value) }}</td>
                                 <td>{{ __('payment_reconciliation.reasons.'.$mismatch->reason) }}</td>
                                 <td class="yg-ai-num">{{ $mismatch->attempt_reference ?? '-' }}<br><span class="yg-rv-meta">{{ $mismatch->provider_transaction_id }}</span></td>
-                                <td class="yg-ai-num">{{ $mismatch->order?->reference ?? '-' }}</td>
+                                <td class="yg-ai-num"><x-ui.ltr>{{ $mismatch->order?->reference ?? '-' }}</x-ui.ltr></td>
                                 <td class="yg-ai-num">{{ $money($mismatch->gateway_amount_minor, $mismatch->currency) }}</td>
                                 <td class="yg-ai-num">{{ $money($mismatch->local_amount_minor, $mismatch->currency) }}</td>
                                 <td><span class="yg-rv-badge">{{ __('payment_reconciliation.status.'.$mismatch->status->value) }}</span>

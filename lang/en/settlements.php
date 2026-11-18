@@ -124,4 +124,8 @@ return [
         'footer' => 'This statement is a record of the ledger for the period. Payments are made by finance outside the platform.',
         'methods' => 'Payout methods for :currency',
     ],
+    'settlements_empty_title' => 'No settlement batches',
+    'settlements_empty_hint' => 'Create a batch from approved ledger entries to start a payout.',
+    'statements_empty_title' => 'No instructor statements',
+    'statements_empty_hint' => 'Monthly statements are generated from ledger entries once a period closes.',
 ];

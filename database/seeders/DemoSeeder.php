@@ -130,7 +130,7 @@ final class DemoSeeder extends Seeder
     private function person(string $key, string $name, string $nameEn, array $roles, string $locale = 'ar'): User
     {
         $user = User::factory()->create([
-            'name' => $name, 'name_ar' => $name, 'name_en' => $nameEn, 'display_name' => $name,
+            'name' => $name, 'name_ar' => $name, 'name_en' => $nameEn, 'display_name' => null,
             'email' => $this->email($key), 'password' => $this->password(), 'locale' => $locale, 'status' => 'active',
         ]);
         foreach ($roles as $role) {
@@ -148,9 +148,9 @@ final class DemoSeeder extends Seeder
         $this->person('finance', 'مالية العرض', 'Demo Finance', ['finance']);
         $this->academy = $this->person('instructor.academy', 'سارة المدربة', 'Sara (academy instructor)', ['instructor_academy']);
         $this->indie = $this->person('instructor.indie', 'كريم المستقل', 'Karim (independent instructor)', ['instructor_independent']);
-        $this->learners['nour'] = $this->person('learner.nour', 'نور', 'Nour', ['student']);
-        $this->learners['omar'] = $this->person('learner.omar', 'عمر', 'Omar', ['student'], 'en');
-        $this->learners['laila'] = $this->person('learner.laila', 'ليلى', 'Laila', ['student']);
+        $this->learners['nour'] = $this->person('learner.nour', 'نور', 'Nour Demo', ['student']);
+        $this->learners['omar'] = $this->person('learner.omar', 'عمر', 'Omar Demo', ['student'], 'en');
+        $this->learners['laila'] = $this->person('learner.laila', 'ليلى', 'Layla Demo', ['student']);
         $this->learners['parent'] = $this->person('parent', 'منى (ولي أمر)', 'Mona (parent)', ['parent']);
 
         Auth::setUser($this->admin);

@@ -13,6 +13,7 @@ use App\Domain\InstructorFinance\SettlementItem;
 use App\Domain\InstructorFinance\SettlementStatus;
 use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Resources\Settlements\Pages\ListSettlements;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -84,6 +85,7 @@ final class SettlementResource extends Resource
         $colors = ['draft' => 'info', 'approved' => 'warning', 'paid' => 'success', 'cancelled' => 'gray'];
 
         return $table->defaultSort('id', 'desc')
+            ->emptyState(EmptyStateView::make('heroicon-o-clipboard-document-check', 'settlements.settlements_empty_title', 'settlements.settlements_empty_hint'))
             ->columns([
                 TextColumn::make('reference')->label(__('settlements.reference'))->fontFamily('mono')->searchable(),
                 TextColumn::make('instructor_count')->label(__('settlements.instructors')),

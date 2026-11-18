@@ -55,7 +55,7 @@ final class RoleDashboard
             'finance' => $this->financeKpis($user, $days),
             default => $this->instructorKpis($user, $days),
         };
-        $kpis = $seconds > 0 ? Cache::remember('dashboard:v1:'.$panel.':'.$user->getKey(), $seconds, $build) : $build();
+        $kpis = $seconds > 0 ? $this->cached('dashboard:v2:'.$panel.':'.$user->getKey(), $seconds, $build) : $build();
 
         $queues = match ($panel) {
             'admin' => $this->adminQueues($user),
@@ -64,6 +64,37 @@ final class RoleDashboard
         };
 
         return new DashboardData($kpis, $queues, $days);
+    }
+
+    /**
+     * Cache plain arrays only (objects deserialize to `__PHP_Incomplete_Class` under `serializable_classes => false`); anything not the
+     * expected shape is a miss and is rebuilt.
+     *
+     * @param  callable(): list<DashboardKpi>  $build
+     * @return list<DashboardKpi>
+     */
+    private function cached(string $key, int $seconds, callable $build): array
+    {
+        $stored = Cache::get($key);
+        if (is_array($stored)) {
+            $kpis = [];
+            foreach ($stored as $row) {
+                $kpi = DashboardKpi::fromArray($row);
+                if ($kpi === null) {
+                    $kpis = null;
+                    break;
+                }
+                $kpis[] = $kpi;
+            }
+            if ($kpis !== null) {
+                return $kpis;
+            }
+        }
+
+        $kpis = $build();
+        Cache::put($key, array_map(static fn (DashboardKpi $kpi): array => $kpi->toArray(), $kpis), $seconds);
+
+        return $kpis;
     }
 
     /** @return list<DashboardKpi> */

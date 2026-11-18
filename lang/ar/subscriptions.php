@@ -66,7 +66,7 @@ return [
     'my_payments_link' => 'سجل المدفوعات',
     'plans_page_title' => 'خطط الاشتراك',
     'plans_page_intro' => 'سعر واحد ودورات كثيرة. ادفع لشهر أو لسنة وجدّد وقتما تريد.',
-    'plans_page_description' => 'خطط شهرية وسنوية للوصول إلى مجموعة من دورات يونغ جو.',
+    'plans_page_description' => 'خطط شهرية وسنوية للوصول إلى مجموعة من دورات يونج جو.',
     'per_monthly' => 'شهريًا',
     'per_annual' => 'سنويًا',
     'plan_includes' => 'الدورات المشمولة',
@@ -77,6 +77,6 @@ return [
     'bundle_includes' => 'الدورات في هذه الحزمة',
     'bundle_buy' => 'اشترِ الحزمة',
     'bundle_sign_in' => 'سجّل الدخول للشراء',
-    'bundle_description' => 'حزمة من دورات يونغ جو بسعر واحد.',
+    'bundle_description' => 'حزمة من دورات يونج جو بسعر واحد.',
     'bundle_one_price' => 'سعر واحد لجميع الدورات أدناه.',
 ];

@@ -8,6 +8,7 @@ use App\Domain\InstructorFinance\InstructorStatement;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Filament\Resources\MyStatements\Pages\ListMyStatements;
 use App\Filament\Resources\Statements\StatementTable;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -67,7 +68,7 @@ final class MyStatementsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('period', 'desc')->columns(StatementTable::columns(false))->recordActions([StatementTable::downloadAction()]);
+        return $table->defaultSort('period', 'desc')->emptyState(EmptyStateView::make('heroicon-o-document-text', 'settlements.statements_empty_title', 'settlements.statements_empty_hint'))->columns(StatementTable::columns(false))->recordActions([StatementTable::downloadAction()]);
     }
 
     public static function getPages(): array

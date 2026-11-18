@@ -9,6 +9,7 @@ use App\Domain\InstructorFinance\Actions\HoldLedgerEntries;
 use App\Domain\InstructorFinance\LedgerEntry;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Filament\Resources\LedgerEntries\Pages\ListLedgerEntries;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Models\User;
 use Closure;
 use Filament\Actions\BulkAction;
@@ -79,6 +80,7 @@ final class LedgerEntryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id', 'desc')
+            ->emptyState(EmptyStateView::make('heroicon-o-banknotes', 'ledger.ledger_empty_title', 'ledger.ledger_empty_hint'))
             ->columns(LedgerTable::columns(true))
             ->filters([
                 SelectFilter::make('instructor_id')->label(__('ledger.instructor'))->searchable()

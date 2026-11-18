@@ -15,6 +15,7 @@ use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Resources\Refunds\Pages\ListRefunds;
 use App\Filament\Shared\Actions\ApproveRejectAction;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -119,6 +120,7 @@ final class RefundResource extends Resource
             });
 
         return $table->defaultSort('id', 'desc')
+            ->emptyState(EmptyStateView::make('heroicon-o-arrow-uturn-left', 'refunds.queue_empty_title', 'refunds.queue_empty_hint'))
             ->columns([
                 TextColumn::make('reference')->label(__('refunds.col_reference'))->fontFamily('mono')->searchable(),
                 TextColumn::make('order.reference')->label(__('refunds.col_order'))->fontFamily('mono')->searchable(),

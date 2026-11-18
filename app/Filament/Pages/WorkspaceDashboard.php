@@ -33,7 +33,7 @@ final class WorkspaceDashboard extends Dashboard
     #[Unexposed]
     public function getHeading(): string
     {
-        return $this->isAdminOverview() ? __('staff.overview') : __('staff.welcome_name', ['name' => auth()->user()?->name]);
+        return $this->isAdminOverview() ? __('staff.overview') : __('staff.welcome_name', ['name' => auth()->user()?->display_name ?: auth()->user()?->name]);
     }
 
     #[Unexposed]

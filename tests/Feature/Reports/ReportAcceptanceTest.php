@@ -194,7 +194,7 @@ it('keeps AI and help reports aggregate when stored conversations contain privat
         ->set('from', $input['from'])
         ->set('to', $input['to'])
         ->set('report', 'ai_usage')
-        ->assertSee('2026-11-12');
+        ->assertSee('12/11/2026');
     $csv = $this->get(route('reports.export', ['report' => 'ai_usage'] + $input))->assertOk()->streamedContent();
     expect(trim($csv))->toBe("\xEF\xBB\xBFDay,Requests,Failures,Cost\n2026-11-12,2,1,0.5");
 

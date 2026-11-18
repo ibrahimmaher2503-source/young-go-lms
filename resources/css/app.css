@@ -75,3 +75,6 @@ progress::-moz-progress-bar {
     border-radius: 999px;
     background: var(--yg-color-primary);
 }
+
+/* D7: LTR codes (references, numbers, emails, phones, URLs) stay in reading order inside RTL text. */
+.yg-ltr { direction: ltr; unicode-bidi: isolate; }

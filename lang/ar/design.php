@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    'brand' => 'يونغ غو',
+    'brand' => 'يونج جو',
     'title' => 'رموز الهوية البصرية',
     'preview_options' => 'خيارات المعاينة',
     'switch_language' => 'English',

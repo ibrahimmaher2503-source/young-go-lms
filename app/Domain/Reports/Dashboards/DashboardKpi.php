@@ -48,6 +48,38 @@ final readonly class DashboardKpi
         return new self($key, self::MONEY, array_sum($money), $money, $secondary, $icon, $tone);
     }
 
+    /**
+     * Plain-array form for the cache: object payloads come back as `__PHP_Incomplete_Class` when `cache.serializable_classes` is false.
+     *
+     * @return array{key: string, kind: string, value: int|float, money: array<string, int>, secondary: int|null, icon: string, tone: string}
+     */
+    public function toArray(): array
+    {
+        return ['key' => $this->key, 'kind' => $this->kind, 'value' => $this->value, 'money' => $this->money, 'secondary' => $this->secondary, 'icon' => $this->icon, 'tone' => $this->tone];
+    }
+
+    /** Rebuild from `toArray()`; null when the payload is not the expected shape (treated as a cache miss by the caller). */
+    public static function fromArray(mixed $row): ?self
+    {
+        if (! is_array($row)) {
+            return null;
+        }
+        $money = $row['money'] ?? null;
+        if (! isset($row['key'], $row['kind'], $row['icon'], $row['tone']) || ! is_string($row['key']) || ! is_string($row['kind']) || ! is_string($row['icon']) || ! is_string($row['tone'])
+            || ! (is_int($row['value'] ?? null) || is_float($row['value'] ?? null)) || ! is_array($money) || ! (($row['secondary'] ?? null) === null || is_int($row['secondary']))) {
+            return null;
+        }
+        $clean = [];
+        foreach ($money as $currency => $minor) {
+            if (! is_string($currency) || ! is_int($minor)) {
+                return null;
+            }
+            $clean[$currency] = $minor;
+        }
+
+        return new self($row['key'], $row['kind'], $row['value'], $clean, $row['secondary'] ?? null, $row['icon'], $row['tone']);
+    }
+
     /** True when there is nothing to show yet (no value in any currency). */
     public function isEmpty(): bool
     {

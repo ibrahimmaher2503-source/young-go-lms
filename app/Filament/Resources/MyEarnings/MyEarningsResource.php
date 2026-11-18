@@ -8,6 +8,7 @@ use App\Domain\InstructorFinance\LedgerEntry;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Filament\Resources\LedgerEntries\LedgerTable;
 use App\Filament\Resources\MyEarnings\Pages\ListMyEarnings;
+use App\Filament\Shared\Tables\EmptyStateView;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -70,7 +71,7 @@ final class MyEarningsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')->columns(LedgerTable::columns(false))->filters(LedgerTable::filters());
+        return $table->defaultSort('id', 'desc')->emptyState(EmptyStateView::make('heroicon-o-banknotes', 'ledger.ledger_empty_title', 'ledger.ledger_empty_hint'))->columns(LedgerTable::columns(false))->filters(LedgerTable::filters());
     }
 
     public static function getPages(): array

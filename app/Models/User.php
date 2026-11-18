@@ -14,6 +14,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -38,6 +39,32 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     use HasFactory, HasRoles, Notifiable;
 
     protected $attributes = ['status' => 'active', 'timezone' => 'UTC'];
+
+    /**
+     * The name to show in the current UI language: the explicit display name when the person set one, otherwise the name stored for
+     * the active locale, then the other language's name, then the account name. Writes still go to the raw column.
+     *
+     * @return Attribute<non-empty-string|null, never>
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function (mixed $value, array $attributes): ?string {
+            $own = $attributes['display_name'] ?? null;
+            if (is_string($own) && trim($own) !== '') {
+                return $own;
+            }
+            $primary = app()->getLocale() === 'ar' ? 'name_ar' : 'name_en';
+            $secondary = $primary === 'name_ar' ? 'name_en' : 'name_ar';
+            foreach ([$primary, $secondary] as $column) {
+                $candidate = $attributes[$column] ?? null;
+                if (is_string($candidate) && trim($candidate) !== '') {
+                    return $candidate;
+                }
+            }
+
+            return null;
+        });
+    }
 
     public function preferredLocale(): ?string
     {

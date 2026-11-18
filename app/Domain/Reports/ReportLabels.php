@@ -48,6 +48,16 @@ final class ReportLabels
         return round(((int) $minor) / 100, 2);
     }
 
+    /** The one on-screen report date format (d/m/Y, Latin digits in AR and EN). Exports keep ISO. Anything not a date is returned as is. */
+    public static function display(?string $value, bool $withTime = false): string
+    {
+        if ($value === null || preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/', $value, $m) !== 1) {
+            return (string) $value;
+        }
+
+        return $m[3].'/'.$m[2].'/'.$m[1].($withTime && isset($m[4]) ? ' '.$m[4] : '');
+    }
+
     public static function datetime(?string $value): string
     {
         return $value === null ? '' : substr($value, 0, 19);

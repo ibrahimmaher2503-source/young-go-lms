@@ -74,4 +74,5 @@ return [
         'disputed' => 'متنازع عليه', 'gateway' => 'البوابة', 'manual' => 'يدوي', 'scheduled' => 'مجدولة', 'open' => 'مفتوحة', 'completed' => 'مكتملة',
         'active' => 'سارية', 'revoked' => 'ملغاة', 'reviewed' => 'تمت المراجعة',
     ],
+    'empty_title' => 'لا توجد بيانات للتقرير',
 ];

@@ -7,7 +7,8 @@
             $type === 'money' => number_format((float) $cell, 2),
             $type === 'percent' => rtrim(rtrim(number_format((float) $cell, 1), '0'), '.').'%',
             $type === 'int' => number_format((int) $cell),
-            default => (string) $cell,
+            $type === 'datetime' => \App\Domain\Reports\ReportLabels::display((string) $cell, true),
+            default => \App\Domain\Reports\ReportLabels::display((string) $cell),
         };
     @endphp
 
@@ -74,7 +75,7 @@
                         </x-filament::input.wrapper>
                     </div>
                 @endif
-                <span class="yg-rv-meta">{{ __('reports.showing', ['from' => $range[0], 'to' => $range[1]]) }}</span>
+                <span class="yg-rv-meta">{{ __('reports.showing', ['from' => \App\Domain\Reports\ReportLabels::display($range[0]), 'to' => \App\Domain\Reports\ReportLabels::display($range[1])]) }}</span>
             </div>
         </section>
 
@@ -100,7 +101,7 @@
             </div>
 
             @if($rows === [])
-                <p data-report-empty>{{ __('reports.empty') }}</p>
+                <x-ui.empty-state icon="heroicon-o-chart-bar" :title="__('reports.empty_title')" :description="__('reports.empty')" data-report-empty />
             @else
                 <div class="yg-ai-scroll">
                     <table class="yg-ai-table" data-report-table>

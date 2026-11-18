@@ -5,7 +5,7 @@
             <x-ui.ajax-form :action="url('/profile')" method="PATCH" :message="__('pages.saved')">
                 <x-ui.form-field for="name_ar" :label="__('pages.name_ar')" data-field><x-ui.input id="name_ar" name="name_ar" lang="ar" dir="rtl" value="{{ $user->name_ar }}" /></x-ui.form-field>
                 <x-ui.form-field for="name_en" :label="__('pages.name_en')" data-field><x-ui.input id="name_en" name="name_en" lang="en" dir="ltr" value="{{ $user->name_en }}" /></x-ui.form-field>
-                <x-ui.form-field for="display_name" :label="__('pages.display_name')" data-field><x-ui.input id="display_name" name="display_name" value="{{ $user->display_name }}" /></x-ui.form-field>
+                <x-ui.form-field for="display_name" :label="__('pages.display_name')" data-field><x-ui.input id="display_name" name="display_name" value="{{ $user->getRawOriginal('display_name') }}" /></x-ui.form-field>
                 <x-ui.form-field for="locale" :label="__('pages.locale')" data-field>
                     <x-ui.select id="locale" name="locale">
                         @foreach(config('app.supported_locales') as $code)

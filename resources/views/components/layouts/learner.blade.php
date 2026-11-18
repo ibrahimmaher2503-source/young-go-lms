@@ -1,4 +1,4 @@
-{{-- Learner shell (C01/C03/C24): brand, learning navigation, notifications, language, account; four-item bottom nav on phones.
+{{-- Learner shell (C01/C03/C24): brand, learning navigation, notifications, language, account; single-row bottom nav (five items, truncating short labels) on phones.
      Props: title, wide (player uses the full width), back (optional [url, label] shown instead of the brand row on phones). --}}
 @props(['title' => null, 'wide' => false, 'back' => null])
 @php
@@ -86,12 +86,12 @@
     {{ $slot }}
 </main>
 <nav aria-label="{{ __('pages.main_nav') }}" class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-2 py-1 shadow-floating lg:hidden" data-bottom-nav>
-    <ul class="mx-auto grid max-w-md grid-cols-4 gap-1">
+    <ul class="mx-auto grid max-w-md grid-flow-col auto-cols-fr gap-0.5">
         @foreach($items as [$href, $icon, $label, $active])
-            <li>
-                <a href="{{ url($href) }}" @if($active) aria-current="page" @endif
-                    class="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-sm font-semibold {{ $active ? 'bg-nav-active-bg text-nav-active-text' : 'text-body' }}">
-                    <x-ui.icon :name="$icon" class="size-6" /> <span class="break-words text-center">{{ $label }}</span>
+            <li class="min-w-0">
+                <a href="{{ url($href) }}" @if($active) aria-current="page" @endif title="{{ $label }}"
+                    class="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-xs font-semibold {{ $active ? 'bg-nav-active-bg text-nav-active-text' : 'text-body' }}">
+                    <x-ui.icon :name="$icon" class="size-6" /> <span class="w-full truncate text-center">{{ $label }}</span>
                 </a>
             </li>
         @endforeach

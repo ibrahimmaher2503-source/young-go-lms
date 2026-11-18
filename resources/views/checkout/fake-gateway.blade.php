@@ -3,7 +3,7 @@
     <div class="mx-auto max-w-md space-y-4" data-fake-gateway>
         <x-ui.alert tone="warning">{{ __('fake_gateway.notice') }}</x-ui.alert>
         <x-ui.card :title="__('fake_gateway.title')">
-            <p>{{ __('fake_gateway.order') }}: <bdi dir="ltr">{{ $orderReference }}</bdi></p>
+            <p>{{ __('fake_gateway.order') }}: <x-ui.ltr>{{ $orderReference }}</x-ui.ltr></p>
             <p class="text-xl font-bold"><x-ui.price :money="$money" :market="$market" /></p>
             <form method="post" action="{{ route('fake-gateway.complete', ['reference' => $attempt->reference]) }}" class="mt-4 flex flex-wrap gap-3">
                 @csrf

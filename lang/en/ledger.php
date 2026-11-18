@@ -77,4 +77,6 @@ return [
     'close_date_invalid' => 'The end date must be on or after the start date and not later than the current end date.',
     'adjustment_amount_invalid' => 'Enter an amount that is not zero.',
     'reason_invalid' => 'Enter a reason of 5 to 500 characters.',
+    'ledger_empty_title' => 'No ledger entries',
+    'ledger_empty_hint' => 'Earnings are recorded here when a paid order is shared with an instructor.',
 ];

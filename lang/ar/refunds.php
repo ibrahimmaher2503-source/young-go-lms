@@ -73,4 +73,6 @@ return [
     'summary_requested' => 'بانتظار المراجعة',
     'summary_approved' => 'معتمد ولم يُسترد بعد',
     'summary_returned' => 'المبالغ المستردة',
+    'queue_empty_title' => 'لا توجد استردادات',
+    'queue_empty_hint' => 'تظهر هنا طلبات الاسترداد من المتعلمين للمراجعة.',
 ];

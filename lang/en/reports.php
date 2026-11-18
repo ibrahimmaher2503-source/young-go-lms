@@ -74,4 +74,5 @@ return [
         'disputed' => 'Disputed', 'gateway' => 'Gateway', 'manual' => 'Manual', 'scheduled' => 'Scheduled', 'open' => 'Open', 'completed' => 'Completed',
         'active' => 'Valid', 'revoked' => 'Revoked', 'reviewed' => 'Reviewed',
     ],
+    'empty_title' => 'No report data',
 ];

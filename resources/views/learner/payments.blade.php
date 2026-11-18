@@ -23,7 +23,7 @@
                 <x-ui.card data-order="{{ $order->reference }}">
                     <div class="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                            <p class="font-semibold"><bdi dir="ltr">{{ $order->reference }}</bdi></p>
+                            <p class="font-semibold"><x-ui.ltr>{{ $order->reference }}</x-ui.ltr></p>
                             <p class="text-sm text-muted">{{ $order->created_at?->locale(app()->getLocale())->isoFormat('LL') }}</p>
                         </div>
                         <x-ui.badge :tone="$tones[$order->status->value] ?? 'neutral'">{{ __('refunds.order_status_'.$order->status->value) }}</x-ui.badge>
