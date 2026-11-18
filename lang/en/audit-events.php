@@ -187,4 +187,9 @@ return [
     'privacy.retention_pruned' => 'Expired data pruned',
     'privacy_review.approved' => 'Privacy approval recorded from the request queue',
     'privacy_review.rejected' => 'Privacy rejection recorded from the request queue',
+    'commission_rule.created' => 'Commission rule added',
+    'commission_rule.closed' => 'Commission rule ended',
+    'ledger.earnings_recorded' => 'Instructor earnings recorded for a paid order',
+    'ledger.earnings_reversed' => 'Instructor earnings reversed for a refund',
+    'ledger.adjustment_recorded' => 'Instructor ledger adjustment recorded',
 ];

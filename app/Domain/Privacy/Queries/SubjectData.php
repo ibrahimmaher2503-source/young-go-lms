@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Privacy\Queries;
 
+use App\Domain\Entitlements\LearnerEntitlementExport;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class SubjectData
 {
+    public function __construct(private readonly LearnerEntitlementExport $entitlementExport = new LearnerEntitlementExport) {}
+
     /** Columns of `users` that belong in an export. */
     private const array USER_COLUMNS = [
         'id', 'name', 'email', 'username', 'phone', 'name_ar', 'name_en', 'display_name', 'birth_year', 'birth_month', 'timezone',
@@ -48,7 +51,7 @@ final class SubjectData
             'profile' => $this->rows(DB::table('users')->where('id', $userId), [], self::USER_COLUMNS),
             'consents' => $this->rows(DB::table('consents')->where('user_id', $userId)),
             'guardian_links' => $this->rows(DB::table('guardian_child_links')->where(static fn (Builder $q): Builder => $q->where('guardian_id', $userId)->orWhere('child_id', $userId)), [], ['id', 'guardian_id', 'child_id', 'status', 'method', 'verified_at', 'created_at']),
-            'entitlements' => $this->rows(DB::table('entitlements')->where('learner_id', $userId), ['reason']),
+            ...$this->entitlementExport->sectionFor($userId),
             'lesson_progress' => $this->rows(DB::table('lesson_progress')->where('learner_id', $userId)),
             'course_progress' => $this->rows(DB::table('course_progress')->where('learner_id', $userId)),
             'course_completions' => $this->rows(DB::table('course_completions')->where('learner_id', $userId), ['snapshot']),

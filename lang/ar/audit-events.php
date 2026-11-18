@@ -187,4 +187,9 @@ return [
     'privacy.retention_pruned' => 'تم حذف بيانات منتهية المدة',
     'privacy_review.approved' => 'تم تسجيل الموافقة من قائمة طلبات الخصوصية',
     'privacy_review.rejected' => 'تم تسجيل الرفض من قائمة طلبات الخصوصية',
+    'commission_rule.created' => 'تمت إضافة قاعدة عمولة',
+    'commission_rule.closed' => 'تم إنهاء قاعدة عمولة',
+    'ledger.earnings_recorded' => 'تم تسجيل أرباح المدرّبين لطلب مدفوع',
+    'ledger.earnings_reversed' => 'تم عكس أرباح المدرّبين بسبب استرداد',
+    'ledger.adjustment_recorded' => 'تم تسجيل تسوية في دفتر المدرّبين',
 ];

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Commerce;
 
-use App\Domain\Entitlements\Entitlement;
 use App\Models\Course;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,11 +44,5 @@ final class OrderItemAllocation extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
-    }
-
-    /** @return BelongsTo<Entitlement, $this> */
-    public function entitlement(): BelongsTo
-    {
-        return $this->belongsTo(Entitlement::class);
     }
 }

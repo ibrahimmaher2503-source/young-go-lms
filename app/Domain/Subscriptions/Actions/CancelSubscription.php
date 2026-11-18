@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Subscriptions\Actions;
 
 use App\Domain\Audit\AuditLogger;
-use App\Domain\Entitlements\Entitlement;
+use App\Domain\Entitlements\Actions\CapEntitlementsEndForSource;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\GuardianAccess;
@@ -25,7 +25,11 @@ use RuntimeException;
  */
 final class CancelSubscription
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $entitlements) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly EntitlementService $entitlements,
+        private readonly CapEntitlementsEndForSource $capEntitlements,
+    ) {}
 
     public function __invoke(User $actor, Subscription $subscription): Subscription
     {
@@ -41,8 +45,7 @@ final class CancelSubscription
 
             $locked->forceFill(['cancelled_at' => now()])->save();
             foreach ($locked->periods()->get() as $period) {
-                Entitlement::query()->where('source_type', EntitlementSource::Subscription->value)->where('source_ref', $period->entitlementRef())
-                    ->where('status', Entitlement::ACTIVE)->where('ends_at', '>', $period->ends_at)->update(['ends_at' => $period->ends_at]);
+                ($this->capEntitlements)(EntitlementSource::Subscription, $period->entitlementRef(), $period->ends_at);
             }
 
             if ($this->audit->record('subscription.cancelled', $locked, (int) $actor->getKey(), ['cancelled' => false], ['cancelled' => true]) === null) {

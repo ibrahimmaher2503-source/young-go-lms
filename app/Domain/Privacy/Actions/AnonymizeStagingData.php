@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Privacy\Actions;
 
+use App\Domain\Entitlements\Actions\ScrubEntitlementReasons;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -35,9 +36,10 @@ final class AnonymizeStagingData
         'submission_feedback' => ['body', 'feedback'],
         'course_reviews' => ['body'],
         'refunds' => ['reason', 'review_note'],
-        'entitlements' => ['reason'],
         'activity_log' => ['properties'],
     ];
+
+    public function __construct(private readonly ScrubEntitlementReasons $scrubEntitlementReasons = new ScrubEntitlementReasons) {}
 
     /** @return array<string, int> rows rewritten or removed, by area */
     public function __invoke(?string $password = null): array
@@ -86,6 +88,7 @@ final class AnonymizeStagingData
                 $scrubbed += $this->scrubColumn($table, $column);
             }
         }
+        $scrubbed += ($this->scrubEntitlementReasons)(self::scrub(...));
         $report['free_text'] = $scrubbed;
 
         $cleared = 0;

@@ -6,6 +6,7 @@ namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Commerce\Contracts\PaymentGateway;
+use App\Domain\Commerce\Events\RefundExecuted;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\Payments\PaymentGatewayException;
@@ -115,6 +116,8 @@ final class ExecuteRefund
             if ($recorded === null) {
                 throw new RuntimeException('Unable to record refund audit.');
             }
+
+            DB::afterCommit(static fn () => event(new RefundExecuted($locked)));
 
             return $locked;
         });

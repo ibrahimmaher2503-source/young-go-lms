@@ -10,7 +10,6 @@ use App\Domain\Commerce\OrderItem;
 use App\Domain\Commerce\OrderItemAllocation;
 use App\Domain\Commerce\ProductType;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
-use App\Domain\Entitlements\Entitlement;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Subscriptions\Actions\StartSubscriptionPeriod;
@@ -80,8 +79,8 @@ final class GrantOrderEntitlements
                 throw new RuntimeException('Bundle allocation points at a missing course.');
             }
 
-            $own = Entitlement::query()->where(['source_type' => EntitlementSource::Bundle->value, 'source_ref' => $ref, 'learner_id' => $learner->getKey(), 'course_id' => $course->getKey()])->first();
-            if ($own === null && $this->entitlements->currentFor($learner, $course) !== null) {
+            $ownId = $this->entitlements->idForSource($learner, $course, EntitlementSource::Bundle, $ref);
+            if ($ownId === null && $this->entitlements->currentFor($learner, $course) !== null) {
                 if (! $allocation->skipped_existing) {
                     $allocation->forceFill(['skipped_existing' => true, 'granted_at' => now()])->save();
                     $skipped[] = $course->getKey();
@@ -90,9 +89,9 @@ final class GrantOrderEntitlements
                 continue;
             }
 
-            $entitlement = $own ?? ($this->grant)($learner, $course, EntitlementSource::Bundle, $ref, null, null, $actor);
-            if ($allocation->entitlement_id !== $entitlement->getKey()) {
-                $allocation->forceFill(['entitlement_id' => $entitlement->getKey(), 'skipped_existing' => false, 'granted_at' => $allocation->granted_at ?? now()])->save();
+            $entitlementId = $ownId ?? (int) ($this->grant)($learner, $course, EntitlementSource::Bundle, $ref, null, null, $actor)->getKey();
+            if ($allocation->entitlement_id !== $entitlementId) {
+                $allocation->forceFill(['entitlement_id' => $entitlementId, 'skipped_existing' => false, 'granted_at' => $allocation->granted_at ?? now()])->save();
                 $granted[] = $course->getKey();
             }
         }
