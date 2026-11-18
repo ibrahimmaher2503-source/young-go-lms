@@ -29,7 +29,7 @@ final class SetCurriculumStatus
      */
     public function __invoke(User $actor, Course $course, array $itemIds, string $status): int
     {
-        CurriculumAccess::authorize($actor, $course);
+        CurriculumAccess::authorizeStructure($actor, $course);
         if (! in_array($status, [CurriculumItem::STATUS_DRAFT, CurriculumItem::STATUS_PUBLISHED], true)) {
             throw ValidationException::withMessages(['status' => __('curriculum.stale')]);
         }

@@ -23,7 +23,7 @@ final class ManageSections
     /** @param array<string, mixed> $data */
     public function add(User $actor, Course $course, array $data): CourseSection
     {
-        CurriculumAccess::authorize($actor, $course, CurriculumAccess::CREATE);
+        CurriculumAccess::authorizeStructure($actor, $course, CurriculumAccess::CREATE);
         $title = CurriculumAccess::validTitle($data);
 
         return DB::transaction(static function () use ($course, $title): CourseSection {
@@ -37,7 +37,7 @@ final class ManageSections
     /** @param array<string, mixed> $data */
     public function rename(User $actor, CourseSection $section, array $data): CourseSection
     {
-        CurriculumAccess::authorize($actor, $section->course);
+        CurriculumAccess::authorizeStructure($actor, $section->course);
         $section->update(['title' => CurriculumAccess::validTitle($data)]);
 
         return $section;
@@ -46,7 +46,7 @@ final class ManageSections
     /** Publishing a section publishes every active item in it; unpublishing hides it from students. Audited. */
     public function setPublished(User $actor, CourseSection $section, bool $published): void
     {
-        CurriculumAccess::authorize($actor, $section->course);
+        CurriculumAccess::authorizeStructure($actor, $section->course);
 
         DB::transaction(function () use ($actor, $section, $published): void {
             $status = $published ? CurriculumItem::STATUS_PUBLISHED : CurriculumItem::STATUS_DRAFT;
@@ -67,7 +67,7 @@ final class ManageSections
     /** Archiving hides the section from students but keeps it and its items for history. */
     public function archive(User $actor, CourseSection $section): void
     {
-        CurriculumAccess::authorize($actor, $section->course, CurriculumAccess::DELETE);
+        CurriculumAccess::authorizeStructure($actor, $section->course, CurriculumAccess::DELETE);
 
         DB::transaction(function () use ($actor, $section): void {
             $section->update(['archived_at' => now()]);

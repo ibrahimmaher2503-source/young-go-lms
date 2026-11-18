@@ -213,7 +213,7 @@ final class CourseWizardSteps
     }
 
     /** @return list<mixed> */
-    private static function information(): array
+    public static function information(): array
     {
         $pair = static fn (string $key, string $label, bool $area = false): array => [
             ($area ? Textarea::make("{$key}.ar")->rows(2) : TextInput::make("{$key}.ar"))->label($label.' (AR)')->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
@@ -234,7 +234,7 @@ final class CourseWizardSteps
     }
 
     /** @return array<int, string> */
-    private static function categoryOptions(): array
+    public static function categoryOptions(): array
     {
         $options = [];
         foreach (Category::query()->whereNull('parent_id')->orderBy('sort')->with(['children' => static fn ($query) => $query->orderBy('sort')])->get() as $parent) {

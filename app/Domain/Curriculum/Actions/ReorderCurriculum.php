@@ -27,7 +27,7 @@ final class ReorderCurriculum
     /** @param list<array{section_id: int|string, items: list<int|string>}> $layout */
     public function __invoke(User $actor, Course $course, array $layout): void
     {
-        CurriculumAccess::authorize($actor, $course);
+        CurriculumAccess::authorizeStructure($actor, $course);
 
         // The payload comes from the browser: refuse anything that is not a list of {section_id, items[]} before touching the database.
         Validator::make(['layout' => $layout], [

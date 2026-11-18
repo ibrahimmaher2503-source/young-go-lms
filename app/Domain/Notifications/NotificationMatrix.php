@@ -100,6 +100,9 @@ final class NotificationMatrix
 
             self::fresh('course.approved', 'course_review', true, ['course']),
             self::fresh('course.rejected', 'course_review', true, ['course', 'reason']),
+            self::fresh('course.revision_submitted', 'course_review', true, ['course', 'revision']),
+            self::fresh('course.revision_approved', 'course_review', true, ['course', 'revision']),
+            self::fresh('course.revision_rejected', 'course_review', true, ['course', 'revision', 'reason']),
         ];
 
         $indexed = [];

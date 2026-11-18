@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Curriculum;
 
+use App\Domain\Catalog\Revisions\RevisionAccess;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\User;
@@ -29,6 +30,13 @@ final class CurriculumAccess
         if (! $actor->can($permission)) {
             throw new AuthorizationException;
         }
+    }
+
+    /** T-P3-07: structure changes (sections, items, order, status) also stop where a published independent course needs a revision. */
+    public static function authorizeStructure(User $actor, Course $course, string $permission = self::UPDATE): void
+    {
+        self::authorize($actor, $course, $permission);
+        RevisionAccess::assertLiveEditable($actor, $course);
     }
 
     public static function authorizeLesson(User $actor, Lesson $lesson, string $permission): void

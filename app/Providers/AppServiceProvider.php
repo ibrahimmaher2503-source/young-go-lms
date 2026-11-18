@@ -18,6 +18,8 @@ use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\Resilience\ResilientProvider;
 use App\Domain\Assessment\AssessmentHistory;
 use App\Domain\Catalog\Events\CourseReviewed;
+use App\Domain\Catalog\Revisions\Events\CourseRevisionReviewed;
+use App\Domain\Catalog\Revisions\Events\CourseRevisionSubmitted;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
 use App\Domain\Commerce\Contracts\EReceiptProvider;
@@ -42,6 +44,7 @@ use App\Domain\InstructorFinance\Listeners\AccrueInstructorEarnings;
 use App\Domain\Live\ManualMeetingProvider;
 use App\Domain\Live\MeetingProvider;
 use App\Domain\Notifications\Listeners\NotifyInstructorsOfCourseReview;
+use App\Domain\Notifications\Listeners\NotifyOfCourseRevision;
 use App\Domain\Notifications\Listeners\NotifyPayerOfPayment;
 use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
@@ -138,6 +141,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ManualPaymentProofSubmitted::class, [NotifyPayerOfPayment::class, 'proofSubmitted']);
         // T-P3-03: instructors hear the course review outcome (never undoes the decision).
         Event::listen(CourseReviewed::class, [NotifyInstructorsOfCourseReview::class, 'handle']);
+        // T-P3-07: reviewers hear a submitted revision; the author and instructors hear its outcome.
+        Event::listen(CourseRevisionSubmitted::class, [NotifyOfCourseRevision::class, 'submitted']);
+        Event::listen(CourseRevisionReviewed::class, [NotifyOfCourseRevision::class, 'reviewed']);
         // T-P8-09: instructor ledger earnings on paid orders, reversals on executed refunds (idempotent; failures are reported, never thrown).
         Event::listen(PaymentVerified::class, [AccrueInstructorEarnings::class, 'verified']);
         Event::listen(ManualPaymentApproved::class, [AccrueInstructorEarnings::class, 'manualApproved']);

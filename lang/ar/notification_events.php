@@ -39,6 +39,9 @@ return [
         'settlement_status' => 'حالة تسوية المدرب',
         'course_approved' => 'اعتماد الدورة',
         'course_rejected' => 'إعادة الدورة للتعديل',
+        'course_revision_submitted' => 'مراجعة دورة بانتظار الاعتماد',
+        'course_revision_approved' => 'اعتماد مراجعة دورة',
+        'course_revision_rejected' => 'رفض مراجعة دورة',
     ],
     'groups' => [
         'account' => 'الحساب',
@@ -129,6 +132,18 @@ return [
         'course_rejected' => [
             'title' => 'دورتك ":course" تحتاج إلى تعديلات',
             'body' => 'أُعيدت دورتك ":course" إلى المسودة. السبب: :reason',
+        ],
+        'course_revision_submitted' => [
+            'title' => 'المراجعة رقم :revision للدورة ":course" بانتظار الاعتماد',
+            'body' => 'أرسل مدرب تعديلات على الدورة المنشورة ":course". راجعها قبل أن تصبح مباشرة.',
+        ],
+        'course_revision_approved' => [
+            'title' => 'تم اعتماد المراجعة رقم :revision للدورة ":course"',
+            'body' => 'اجتازت تعديلات ":course" المراجعة وأصبحت مباشرة الآن.',
+        ],
+        'course_revision_rejected' => [
+            'title' => 'المراجعة رقم :revision للدورة ":course" تحتاج إلى تعديلات',
+            'body' => 'لم يتم اعتماد تعديلات ":course". الدورة المنشورة كما هي. السبب: :reason',
         ],
     ],
     'template' => 'قالب الإشعار',

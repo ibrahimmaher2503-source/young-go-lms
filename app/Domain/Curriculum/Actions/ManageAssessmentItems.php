@@ -28,7 +28,7 @@ final class ManageAssessmentItems
     /** @param array<string, mixed> $data title.ar / title.en and an optional description */
     public function add(User $actor, CourseSection $section, string $kind, array $data): CurriculumItem
     {
-        CurriculumAccess::authorize($actor, $section->course, CurriculumAccess::CREATE);
+        CurriculumAccess::authorizeStructure($actor, $section->course, CurriculumAccess::CREATE);
         if (! array_key_exists($kind, self::KINDS)) {
             throw ValidationException::withMessages(['kind' => __('curriculum.assessment_kind_invalid')]);
         }
@@ -79,7 +79,7 @@ final class ManageAssessmentItems
 
     public function archive(User $actor, CurriculumItem $item): void
     {
-        CurriculumAccess::authorize($actor, $item->course, CurriculumAccess::DELETE);
+        CurriculumAccess::authorizeStructure($actor, $item->course, CurriculumAccess::DELETE);
         $entity = $item->itemable;
         if (! $entity instanceof Quiz && ! $entity instanceof Assignment && ! $entity instanceof LiveSession) {
             abort(404);

@@ -32,6 +32,7 @@ use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\CommissionRules\CommissionRuleResource;
 use App\Filament\Resources\ContactEnquiries\ContactEnquiryResource;
 use App\Filament\Resources\Coupons\CouponResource;
+use App\Filament\Resources\CourseRevisions\CourseRevisionResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\DataRequests\DataRequestResource;
 use App\Filament\Resources\EssayReview\EssayReviewResource;
@@ -117,7 +118,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
                         ContactEnquiryResource::class, NewsletterSubscriberResource::class,
                         CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class,
-                        CourseReviewResource::class,
+                        CourseReviewResource::class, CourseRevisionResource::class,
                         InstructorApplicationResource::class, InstructorAgreementResource::class,
                         NotificationTemplateResource::class, AnnouncementResource::class,
                         DataRequestResource::class,

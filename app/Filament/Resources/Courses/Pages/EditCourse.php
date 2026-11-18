@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Courses\Pages;
 
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Catalog\Revisions\RevisionAccess;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Courses\Pages\Concerns\PersistsCourseWizard;
 use App\Filament\Resources\Courses\Schemas\CourseWizardSteps;
 use App\Models\Course;
+use App\Models\User;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\EditRecord\Concerns\HasWizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 /** @extends EditRecord<Course> */
 final class EditCourse extends EditRecord
@@ -32,6 +35,17 @@ final class EditCourse extends EditRecord
     public function form(Schema $schema): Schema
     {
         return $this->courseWizardForm($schema);
+    }
+
+    /** T-P3-07: a published independent course is edited through a revision, so the wizard hands the author over to it. */
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        $user = Auth::user();
+        if ($this->record instanceof Course && $user instanceof User && RevisionAccess::requiresRevision($user, $this->record)) {
+            $this->redirect(CourseResource::getUrl('revision', ['record' => $this->record]));
+        }
     }
 
     protected function currentCourse(): ?Course

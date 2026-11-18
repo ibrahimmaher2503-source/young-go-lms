@@ -9,6 +9,7 @@ use App\Domain\Catalog\CourseCustomValues;
 use App\Domain\Catalog\CourseDescription;
 use App\Domain\Catalog\CourseMedia;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Catalog\Revisions\RevisionAccess;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Content\RichContent;
 use App\Domain\Media\LessonPublishRule;
@@ -61,6 +62,8 @@ final class SaveCourseWizard
             Gate::forUser($actor)->authorize('create', Course::class);
         } else {
             Gate::forUser($actor)->authorize('update', $course);
+            // T-P3-07: a published independent course is changed through a revision, not here.
+            RevisionAccess::assertLiveEditable($actor, $course);
         }
 
         $data = $this->guardPrivileged($actor, $course, $data);
@@ -124,6 +127,10 @@ final class SaveCourseWizard
             $record->wizard_completed = $completed;
             $record->wizard_step = min(self::LAST_STEP, max((int) $record->wizard_step, $complete ? $step + 1 : $step));
             $created = ! $record->exists;
+            // T-P3-07 (YG-GAP-CHG-002): direct edits to a live course are audited with before and after.
+            $liveChanges = $record->exists && $record->getOriginal('status') === CourseStatus::Published
+                ? Arr::except($record->getDirty(), ['wizard_step', 'wizard_completed', 'updated_at', 'search_text']) : [];
+            $liveBefore = Arr::only($record->getOriginal(), array_keys($liveChanges));
             $instructorCreator = $created && ! $actor->can('panel.admin.access');
             if ($instructorCreator && $actor->hasRole('instructor_independent')) {
                 $record->owner_type = Course::OWNER_INDEPENDENT;
@@ -141,6 +148,9 @@ final class SaveCourseWizard
             }
 
             $this->auditChange($actor, $record, $created, $before);
+            if ($liveChanges !== [] && $this->audit->record('course.updated_live', $record, (int) $actor->getKey(), $liveBefore, $liveChanges) === null) {
+                throw new RuntimeException('Unable to record course audit.');
+            }
             if ($pricing !== []) {
                 $this->savePricing($actor, $record, $pricing);
             }

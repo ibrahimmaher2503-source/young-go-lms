@@ -43,6 +43,9 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `help.reply` | help | mandatory | wired | `:lesson` | `help.notice.reply.title` |  |
 | `settlement.statement` | settlement | mandatory | wired | `:period` | `notification_events.templates.settlement_statement.title` |  |
 | `settlement.status` | settlement | mandatory | wired | `:period` `:status` | `notification_events.templates.settlement_status.title` |  |
+| `course.revision_submitted` | course_review | mandatory | wired | `:course` `:revision` | `notification_events.templates.course_revision_submitted.title` |  |
+| `course.revision_approved` | course_review | mandatory | wired | `:course` `:revision` | `notification_events.templates.course_revision_approved.title` |  |
+| `course.revision_rejected` | course_review | mandatory | wired | `:course` `:revision` `:reason` | `notification_events.templates.course_revision_rejected.title` |  |
 
 ## Wiring notes
 

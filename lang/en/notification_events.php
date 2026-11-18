@@ -39,6 +39,9 @@ return [
         'settlement_status' => 'Instructor settlement status',
         'course_approved' => 'Course approved',
         'course_rejected' => 'Course returned for changes',
+        'course_revision_submitted' => 'Course revision awaiting review',
+        'course_revision_approved' => 'Course revision approved',
+        'course_revision_rejected' => 'Course revision rejected',
     ],
     'groups' => [
         'account' => 'Account',
@@ -129,6 +132,18 @@ return [
         'course_rejected' => [
             'title' => 'Your course ":course" needs changes',
             'body' => 'Your course ":course" was returned to draft. Reason: :reason',
+        ],
+        'course_revision_submitted' => [
+            'title' => 'Revision #:revision of ":course" is waiting for review',
+            'body' => 'An instructor submitted changes to the published course ":course". Review them before they go live.',
+        ],
+        'course_revision_approved' => [
+            'title' => 'Revision #:revision of ":course" was approved',
+            'body' => 'The changes to ":course" passed review and are now live.',
+        ],
+        'course_revision_rejected' => [
+            'title' => 'Revision #:revision of ":course" needs changes',
+            'body' => 'The changes to ":course" were not approved. The published course is unchanged. Reason: :reason',
         ],
     ],
     'template' => 'Notification template',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Curriculum\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Catalog\Revisions\RevisionAccess;
 use App\Domain\Content\RichContent;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Library\Actions\AttachLibraryItem;
@@ -28,7 +29,7 @@ final class ManageLessons
     /** @param array<string, mixed> $data */
     public function add(User $actor, CourseSection $section, array $data): CurriculumItem
     {
-        CurriculumAccess::authorize($actor, $section->course, CurriculumAccess::CREATE);
+        CurriculumAccess::authorizeStructure($actor, $section->course, CurriculumAccess::CREATE);
         if ($section->archived_at !== null) {
             throw ValidationException::withMessages(['section' => __('curriculum.section_archived')]);
         }
@@ -55,6 +56,12 @@ final class ManageLessons
         $item = $this->itemFor($lesson);
         CurriculumAccess::authorize($actor, $item->course);
         $attributes = $this->attributes($data);
+        // T-P3-07: a changed title or description is a content change; it goes through a revision where one is required.
+        foreach (['title', 'description'] as $text) {
+            if (array_key_exists($text, $attributes) && $attributes[$text] != $lesson->getTranslations($text)) {
+                RevisionAccess::assertLiveEditable($actor, $item->course);
+            }
+        }
 
         return DB::transaction(function () use ($actor, $item, $lesson, $attributes): Lesson {
             $currentItem = CurriculumItem::query()->lockForUpdate()->findOrFail($item->getKey());
@@ -72,7 +79,7 @@ final class ManageLessons
     public function archive(User $actor, Lesson $lesson): void
     {
         $item = $this->itemFor($lesson);
-        CurriculumAccess::authorize($actor, $item->course, CurriculumAccess::DELETE);
+        CurriculumAccess::authorizeStructure($actor, $item->course, CurriculumAccess::DELETE);
 
         DB::transaction(function () use ($actor, $lesson): void {
             $lesson->update(['archived_at' => now()]);

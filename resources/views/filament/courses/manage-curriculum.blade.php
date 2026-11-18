@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    @include('filament.courses.revision-banner', ['course' => $this->course()])
     {{-- The Filament theme does not scan this folder, so the rules live here and use the shared tokens. --}}
     <style>
         .yg-cur { display: grid; gap: 1rem; }

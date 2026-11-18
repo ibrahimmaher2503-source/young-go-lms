@@ -31,6 +31,7 @@ use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\CommissionRules\CommissionRuleResource;
 use App\Filament\Resources\ContactEnquiries\ContactEnquiryResource;
 use App\Filament\Resources\Coupons\CouponResource;
+use App\Filament\Resources\CourseRevisions\CourseRevisionResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\DataRequests\DataRequestResource;
 use App\Filament\Resources\EssayReview\EssayReviewResource;
@@ -74,7 +75,7 @@ final class StaffNavigation
     public const array GROUPS = [
         'courses' => [
             CourseResource::class, CategoryResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class,
-            CourseReviewResource::class, LearnerDeviceResource::class,
+            CourseReviewResource::class, CourseRevisionResource::class, LearnerDeviceResource::class,
         ],
         'site' => [
             HomepageBlockResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class,
