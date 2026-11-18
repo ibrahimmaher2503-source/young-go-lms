@@ -54,6 +54,7 @@ final class DuplicateCourse
                 }
 
                 $items = CurriculumItem::query()->where('course_id', $source->getKey())->whereIn('section_id', array_keys($sections))->orderBy('section_id')->orderBy('sort')->orderBy('id')->with('itemable')->get();
+                $itemCopies = [];
                 foreach ($items as $item) {
                     $entity = $item->itemable;
                     if ($entity === null || $entity->getAttribute('archived_at') !== null) {
@@ -69,12 +70,19 @@ final class DuplicateCourse
                         continue;
                     }
 
-                    CurriculumItem::query()->create([
+                    $itemCopies[$item->getKey()] = CurriculumItem::query()->create([
                         'course_id' => $copy->getKey(), 'section_id' => $sections[$item->section_id]->getKey(), 'sort' => $item->sort,
                         'itemable_type' => $item->itemable_type, 'itemable_id' => $newEntity->getKey(), 'status' => CurriculumItem::STATUS_DRAFT,
                         'visibility' => $item->visibility, 'unlock_rule' => $item->unlock_rule, 'unlock_at' => $item->unlock_at, 'unlock_days' => $item->unlock_days,
-                        'required' => $item->required, 'ai_enabled' => $item->ai_enabled,
+                        'required' => $item->required, 'ai_enabled' => $item->ai_enabled, 'association' => $item->association,
                     ]);
+                }
+
+                foreach ($items as $item) {
+                    $lessonId = $item->associated_lesson_item_id;
+                    if ($lessonId !== null && isset($itemCopies[$item->getKey()], $itemCopies[$lessonId])) {
+                        $itemCopies[$item->getKey()]->update(['associated_lesson_item_id' => $itemCopies[$lessonId]->getKey()]);
+                    }
                 }
 
                 $copy->instructors()->sync($source->instructors->mapWithKeys(function (User $u): array {
