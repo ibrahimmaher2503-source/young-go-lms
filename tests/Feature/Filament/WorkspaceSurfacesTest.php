@@ -18,12 +18,16 @@ it('uses the shared branded login layout on every panel', function (string $pane
     $this->get('/'.$panel.'/login')->assertOk()->assertSee('yg-auth-layout', false);
 })->with(['admin', 'instructor', 'finance'])->group('T-P1-08', 'A1', 'A4', 'D-026');
 
-it('shows only the current panels available resources in its welcome workspace', function () {
+it('shows the admin overview with a real learner count and authorized resources', function () {
     $actor = User::factory()->create(['locale' => 'en'])->assignRole('super_admin');
+    User::factory()->count(2)->create()->each(fn (User $learner) => $learner->assignRole('student'));
     $this->actingAs($actor)->get('/admin')->assertOk()
-        ->assertSee('yg-dashboard-intro', false)
+        ->assertSee(__('staff.overview', [], 'en'))
+        ->assertSee('yg-summary-strip', false)
+        ->assertSee('data-workspace-value="2"', false)
+        ->assertSee('data-dashboard-manage-courses', false)
         ->assertSee('href="'.route('filament.admin.resources.staff-users.index').'"', false);
-});
+})->group('T-P1-08', 'A4', 'D-026');
 
 it('gives an instructor a designed empty workspace without administrator metrics', function () {
     $actor = User::factory()->create(['locale' => 'en'])->assignRole('instructor_academy');
