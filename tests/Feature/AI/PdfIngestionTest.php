@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -342,7 +343,7 @@ it('queues ingestion on upload and the job runs the pipeline', function (): void
     config(['ai.ingestion.dispatch_on_upload' => true]);
     Queue::fake();
     [$instructor, $lesson] = ingDocument(1);
-    $bytes = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF";
+    $bytes = PdfFixture::bytes();
     $file = UploadedFile::fake()->createWithContent('lesson.pdf', $bytes);
 
     $document = app(UploadCurriculumDocument::class)($instructor, $lesson, $file);
