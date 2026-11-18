@@ -19,6 +19,7 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
@@ -58,6 +59,45 @@ it('does not let a client complete a video by sending the end position or by mar
 
     expect(fn () => $record->markComplete($learner, $items['video']))->toThrow(ValidationException::class);
     expect(LessonProgress::query()->where('status', 'completed')->count())->toBe(0);
+})->group('T-P4-04', 'A1');
+
+it('never accrues watching credit from same-time heartbeats, including after an idle resume', function (bool $resume): void {
+    [, $items, $learner] = pgBuild();
+    $this->travelTo(now()->startOfSecond());
+    $record = app(RecordProgress::class);
+    if ($resume) {
+        $record->heartbeat($learner, $items['video'], 20);
+        $this->travelTo(now()->addDay());
+        $record->heartbeat($learner, $items['video'], 25);
+    }
+
+    for ($i = 0; $i < 3; $i++) {
+        $row = $record->heartbeat($learner, $items['video'], 100);
+    }
+
+    expect($row->status)->toBe(LessonProgress::IN_PROGRESS)
+        ->and($row->furthest_seconds)->toBe($resume ? 20 : 30)
+        ->and($row->completed_at)->toBeNull();
+})->with([false, true])->group('T-P4-04', 'A1');
+
+it('preserves double-speed playback and rewind after pausing without minting tolerance', function (): void {
+    [, $items, $learner] = pgBuild();
+    $this->travelTo(now()->startOfSecond());
+    $record = app(RecordProgress::class);
+    $record->heartbeat($learner, $items['video'], 0);
+    $this->travelTo(now()->addSeconds(15));
+    expect($record->heartbeat($learner, $items['video'], 30)->furthest_seconds)->toBe(30);
+
+    $row = $record->heartbeat($learner, $items['video'], 10);
+    expect($row->position_seconds)->toBe(10)->and($row->furthest_seconds)->toBe(30);
+    $this->travelTo(now()->addMinutes(5));
+    $record->heartbeat($learner, $items['video'], 10);
+    $this->travelTo(now()->addSeconds(15));
+    $row = $record->heartbeat($learner, $items['video'], 40);
+    expect($row->position_seconds)->toBe(40)->and($row->furthest_seconds)->toBe(40);
+
+    $this->travelTo(now()->addSeconds(25));
+    expect($record->heartbeat($learner, $items['video'], 90)->status)->toBe(LessonProgress::COMPLETED);
 })->group('T-P4-04', 'A1');
 
 it('completes a video once it has really been played far enough and keeps it complete', function (): void {
@@ -175,3 +215,69 @@ it('shows course progress and completed lessons on the player page', function ()
     $other = User::factory()->create()->assignRole('student');
     $this->actingAs($other)->get("/learn/{$course->id}/{$items['text']->id}")->assertNotFound();
 })->group('T-P4-04', 'A2');
+
+it('rejects a video seek on the first heartbeat after a long idle gap', function (): void {
+    [, $items, $learner] = pgBuild();
+    $this->travelTo(now()->startOfSecond());
+    $record = app(RecordProgress::class);
+    $record->heartbeat($learner, $items['video'], 20);
+
+    $this->travelTo(now()->addDay());
+    $row = $record->heartbeat($learner, $items['video'], 100);
+
+    expect($row->furthest_seconds)->toBe(20)->and($row->status)->toBe(LessonProgress::IN_PROGRESS);
+})->group('T-P4-04', 'YG-GAP-LRN-006', 'ISSUE-038');
+
+it('writes course progress only when a watching heartbeat changes completion', function (): void {
+    [, $items, $learner] = pgBuild();
+    $this->travelTo(now()->startOfSecond());
+    $record = app(RecordProgress::class);
+    $record->heartbeat($learner, $items['video'], 20);
+    expect(CourseProgress::query()->count())->toBe(0);
+
+    $this->travel(40)->seconds();
+    $record->heartbeat($learner, $items['video'], 100);
+    expect(CourseProgress::query()->sole()->percent)->toBe(50);
+    $updatedAt = CourseProgress::query()->sole()->updated_at;
+
+    $this->travel(10)->seconds();
+    $record->heartbeat($learner, $items['video'], 10);
+    expect(CourseProgress::query()->sole()->updated_at->equalTo($updatedAt))->toBeTrue();
+})->group('T-P4-04', 'YG-GAP-LRN-006', 'ISSUE-078');
+
+it('can retry a completion heartbeat after its aggregate write fails', function (): void {
+    [, $items, $learner] = pgBuild();
+    $this->travelTo(now()->startOfSecond());
+    $record = app(RecordProgress::class);
+    $record->heartbeat($learner, $items['video'], 20);
+    $this->travel(40)->seconds();
+
+    $fail = true;
+    CourseProgress::creating(function () use (&$fail): void {
+        if ($fail) {
+            throw new RuntimeException('aggregate write failed');
+        }
+    });
+
+    expect(fn () => $record->heartbeat($learner, $items['video'], 100))->toThrow(RuntimeException::class, 'aggregate write failed');
+    expect(LessonProgress::query()->sole()->status)->toBe(LessonProgress::IN_PROGRESS);
+
+    $fail = false;
+    expect($record->heartbeat($learner, $items['video'], 100)->status)->toBe(LessonProgress::COMPLETED);
+    expect(CourseProgress::query()->sole()->percent)->toBe(50);
+})->group('T-P4-04', 'YG-GAP-LRN-006', 'ISSUE-078');
+
+it('loads the published player outline once for a sequential course', function (): void {
+    [$course, $items, $learner] = pgBuild();
+    $course->update(['sequence_mode' => Course::SEQUENCE_SEQUENTIAL]);
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    $this->actingAs($learner)->get("/learn/{$course->id}/{$items['video']->id}")->assertOk();
+
+    $outlines = collect(DB::getQueryLog())->filter(
+        fn (array $entry): bool => str_contains($entry['query'], 'from "course_sections"') && str_contains($entry['query'], '"published"'),
+    );
+    DB::disableQueryLog();
+    expect($outlines)->toHaveCount(1);
+})->group('T-P4-03', 'YG-GAP-LRN-004', 'ISSUE-002');

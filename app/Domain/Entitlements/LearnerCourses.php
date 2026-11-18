@@ -23,6 +23,7 @@ final class LearnerCourses
     public static function for(User $learner): Collection
     {
         $rows = Entitlement::query()->where('learner_id', $learner->getKey())->with('course')->orderByDesc('starts_at')->get();
+        app(EntitlementService::class)->primeLearnerCourses($learner, $rows);
         $byCourse = [];
 
         foreach ($rows as $entitlement) {

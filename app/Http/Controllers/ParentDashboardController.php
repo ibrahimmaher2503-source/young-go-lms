@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Domain\Identity\GuardianAccess;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Progress\Queries\LearnerCourseRows;
 use App\Models\User;
@@ -27,7 +26,7 @@ final class ParentDashboardController
         $children = GuardianChildLink::query()->with('child')->where('guardian_id', $parent->getKey())
             ->where('status', GuardianChildLink::STATUS_VERIFIED)->orderBy('id')->get()
             ->map(fn (GuardianChildLink $link): User => $link->child)
-            ->filter(fn (User $child): bool => GuardianAccess::parentCanAccessChild($parent, $child)->allowed() && $child->getAttribute('status') === 'active')
+            ->filter(fn (User $child): bool => $parent->getAttribute('status') === 'active' && $child->getAttribute('status') === 'active')
             ->values();
 
         $selected = null;
@@ -37,14 +36,16 @@ final class ParentDashboardController
         }
         $selected ??= $children->first();
 
-        $courses = $selected === null ? collect() : $this->rows->for($selected);
+        $courses = $selected === null ? collect() : $this->rows->for($selected, withResume: false);
         $active = $courses->where('access', 'active');
+        $page = LearnerCourseRows::paginate($courses);
+        LearnerCourseRows::loadCards($page->getCollection());
 
         return view('parent.dashboard', [
             'parent' => $parent,
             'children' => $children,
             'selected' => $selected,
-            'courses' => $courses->values(),
+            'courses' => $page,
             'summary' => [
                 'courses' => $courses->count(),
                 'completed' => $courses->where('status', 'completed')->count(),

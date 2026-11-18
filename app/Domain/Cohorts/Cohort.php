@@ -10,11 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int $course_id
  * @property string $name
+ * @property array<string, string>|null $name_translations
+ * @property Carbon|null $enrollment_opens_on
+ * @property Carbon|null $enrollment_closes_on
+ * @property Carbon|null $starts_on
+ * @property Carbon|null $ends_on
  * @property int|null $capacity
  * @property string $status
  */
@@ -28,7 +34,10 @@ final class Cohort extends Model
 
     protected function casts(): array
     {
-        return ['capacity' => 'integer', 'starts_on' => 'date', 'ends_on' => 'date'];
+        return [
+            'capacity' => 'integer', 'starts_on' => 'date', 'ends_on' => 'date', 'name_translations' => 'array',
+            'enrollment_opens_on' => 'date', 'enrollment_closes_on' => 'date',
+        ];
     }
 
     /** @return BelongsTo<Course, $this> */
@@ -47,6 +56,20 @@ final class Cohort extends Model
     public function instructors(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'cohort_instructors', 'cohort_id', 'user_id')->withTimestamps();
+    }
+
+    public function localizedName(?string $locale = null): string
+    {
+        return $this->name_translations[$locale ?? app()->getLocale()] ?? $this->name;
+    }
+
+    public function enrollmentIsOpen(): bool
+    {
+        $today = now('Africa/Cairo')->toDateString();
+
+        return $this->status === self::OPEN
+            && ($this->enrollment_opens_on === null || $today >= $this->enrollment_opens_on->toDateString())
+            && ($this->enrollment_closes_on === null || $today <= $this->enrollment_closes_on->toDateString());
     }
 
     public function seatedCount(): int

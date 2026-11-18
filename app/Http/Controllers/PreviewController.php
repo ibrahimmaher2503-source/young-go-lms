@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\AI\AssistantEligibility;
 use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\AccessDecision;
 use App\Domain\Live\JoinWindow;
@@ -69,6 +70,7 @@ final class PreviewController
             'neighbours' => EntitledCurriculumQuery::neighbours($sections, (int) $item->getKey()),
             'descriptor' => $lesson !== null ? LessonPlayback::for($lesson, $user) : null,
             'aiAvailable' => false,
+            'previewAssistant' => $lesson === null ? null : app(AssistantEligibility::class)->forPreview($lesson, (bool) ($entry['draft'] ?? false) || filled($entry['reason'] ?? null)),
             'learner' => $user,
             'quizOverview' => null,
             'liveSession' => $entity instanceof LiveSession ? $entity : null,

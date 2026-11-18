@@ -21,7 +21,7 @@ final class JoinWaitlist
     {
         return DB::transaction(function () use ($cohort, $learner): CohortMember {
             $locked = Cohort::query()->whereKey($cohort->getKey())->lockForUpdate()->firstOrFail();
-            if ($locked->status !== Cohort::OPEN) {
+            if (! $locked->enrollmentIsOpen()) {
                 throw ValidationException::withMessages(['cohort' => __('cohorts.closed')]);
             }
 

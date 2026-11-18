@@ -62,7 +62,7 @@ it('lets an instructor schedule for an assigned course only', function (): void 
     expect($item->itemable_type)->toBe('live_session')->and($item->status)->toBe(CurriculumItem::STATUS_DRAFT)
         ->and(fn () => app(ScheduleLiveSession::class)($instructor, $otherSection, lsData()))->toThrow(AuthorizationException::class)
         ->and(fn () => app(ScheduleLiveSession::class)($learner, $section, lsData()))->toThrow(AuthorizationException::class);
-});
+})->group('T-P5-02', 'A1');
 
 it('stores UTC and shows the learner their own timezone', function (): void {
     [, $instructor, $section] = lsCourse();
@@ -80,7 +80,7 @@ it('stores UTC and shows the learner their own timezone', function (): void {
         ->and(LiveSessionTime::startsAt($session, $newYork)->format('H:i'))->toBe('11:00')
         ->and(LiveSessionTime::startsAt($session, $default)->format('H:i'))->toBe('16:00')
         ->and(LiveSessionTime::startsAt($session, null)->format('H:i'))->toBe('18:00'); // no viewer: the scheduler zone
-});
+})->group('T-P5-02', 'A2', 'ED-032');
 
 it('rejects bad times, links, providers and foreign cohorts or instructors', function (): void {
     [$course, $instructor, $section] = lsCourse();
@@ -113,7 +113,7 @@ it('marks live items as not eligible for the assistant', function (): void {
     $item = app(ScheduleLiveSession::class)($instructor, $section, lsData());
 
     expect($item->refresh()->ai_enabled)->toBeFalse();
-});
+})->group('T-P5-02', 'ED-032');
 
 it('runs the lifecycle in order and audits each step', function (): void {
     [, $instructor, $section] = lsCourse();
@@ -170,11 +170,13 @@ it('schedules, reschedules, opens and cancels from the curriculum manager', func
 
     $page->callAction('scheduleLiveSession', [
         'section_id' => $section->id, 'title' => ['en' => 'Workshop', 'ar' => 'ورشة'], 'timezone' => 'Africa/Cairo', 'starts_at' => '2027-04-01 18:00:00', 'ends_at' => '2027-04-01 19:00:00',
+        'description' => ['en' => 'Bring a notebook', 'ar' => 'أحضر دفترًا'],
         'provider' => 'meet', 'meeting_url' => 'https://meet.example.com/abc', 'join_window_minutes' => 15,
     ])->assertHasNoActionErrors();
 
     $session = LiveSession::query()->firstOrFail();
-    expect($session->starts_at->utc()->format('H:i'))->toBe('16:00');
+    expect($session->starts_at->utc()->format('H:i'))->toBe('16:00')
+        ->and($session->getTranslations('description'))->toMatchArray(['en' => 'Bring a notebook', 'ar' => 'أحضر دفترًا']);
     $page->assertSee('data-live-time', false)->assertSee('Workshop');
 
     $page->callAction('rescheduleLiveSession', ['timezone' => 'Africa/Cairo', 'starts_at' => '2027-04-02 18:00:00', 'ends_at' => '2027-04-02 19:00:00', 'meeting_url' => 'https://meet.example.com/abc'], arguments: ['session' => $session->id])->assertHasNoActionErrors()->assertNotified();

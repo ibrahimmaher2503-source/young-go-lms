@@ -43,8 +43,48 @@ final class CurriculumOutline
     /** @return Collection<int, CourseSection> */
     public static function forStudents(Course $course): Collection
     {
-        return CourseSection::query()->where('course_id', $course->getKey())->whereNull('archived_at')->where('published', true)->orderBy('sort')->orderBy('id')
-            ->with(['items' => static fn ($items) => self::activeItems($items)->where('status', CurriculumItem::STATUS_PUBLISHED)->with('itemable')->orderBy('sort')->orderBy('id')])->get();
+        return self::forStudentCourses(new Collection([$course]));
+    }
+
+    /**
+     * Course models picked out of plucked rows (pluck('course') loses the model type), ready for forStudentCourses().
+     *
+     * @param  iterable<mixed>  $items
+     * @return Collection<int, Course>
+     */
+    public static function coursesFrom(iterable $items): Collection
+    {
+        $courses = [];
+        foreach ($items as $item) {
+            if ($item instanceof Course) {
+                $courses[] = $item;
+            }
+        }
+
+        return new Collection($courses);
+    }
+
+    /** @param Collection<int, Course> $courses
+     * @return Collection<int, CourseSection>
+     */
+    public static function forStudentCourses(Collection $courses): Collection
+    {
+        if ($courses->isEmpty()) {
+            return new Collection;
+        }
+
+        $byId = $courses->keyBy('id');
+        $sections = CourseSection::query()->whereIn('course_id', $byId->keys())->whereNull('archived_at')->where('published', true)->orderBy('sort')->orderBy('id')
+            ->with(['items' => static fn ($items) => self::activeItems($items)->where('status', CurriculumItem::STATUS_PUBLISHED)
+                ->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media'], LiveSession::class => ['cohort']])])->orderBy('sort')->orderBy('id')])->get();
+
+        foreach ($sections as $section) {
+            foreach ($section->items as $item) {
+                $item->setRelation('course', $byId->get($section->course_id))->setRelation('section', $section);
+            }
+        }
+
+        return $sections;
     }
 
     /**

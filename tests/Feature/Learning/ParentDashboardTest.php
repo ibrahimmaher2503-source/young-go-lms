@@ -9,6 +9,7 @@ use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Progress\Actions\RecordProgress;
+use App\Domain\Progress\CourseProgress;
 use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -109,3 +110,29 @@ it('renders no assistant conversation content and shows calm empty states', func
     $lonely = User::factory()->create()->assignRole('parent');
     $this->actingAs($lonely)->get('/parent')->assertOk()->assertSee(__('parent.no_children'))->assertSee('data-empty', false);
 })->group('T-P4-08', 'A2');
+
+it('offers the existing password-confirmed child context switch for the selected child', function (): void {
+    $parent = User::factory()->create()->assignRole('parent');
+    pdChild($parent, 'First child');
+    $selected = pdChild($parent, 'Selected child');
+
+    $this->actingAs($parent)->get('/parent?child='.$selected->id)->assertOk()
+        ->assertSee(route('guardian.context.enter', $selected->id), false)
+        ->assertSee(__('pages.switch_child'));
+})->group('T-P4-08', 'YG-GAP-FAM-004', 'ISSUE-047');
+
+it('paginates child courses without shrinking the summary or writing progress', function (): void {
+    $parent = User::factory()->create()->assignRole('parent');
+    pdChild($parent, 'First child');
+    $child = pdChild($parent, 'Selected child');
+    foreach (range(1, 13) as $number) {
+        [$course] = pdCourse(sprintf('Child course %02d', $number));
+        app(GrantEntitlement::class)($child, $course, EntitlementSource::Free);
+    }
+
+    $url = '/parent?child='.$child->id;
+    $this->actingAs($parent)->get($url)->assertOk()->assertSee('Child course 01')->assertDontSee('Child course 13');
+    $this->get($url.'&page=2')->assertOk()->assertSee('Child course 13')->assertDontSee('Child course 01')
+        ->assertViewHas('summary', fn (array $summary): bool => $summary['courses'] === 13 && $summary['lessons_total'] === 26);
+    expect(CourseProgress::query()->count())->toBe(0);
+})->group('T-P4-08', 'ISSUE-001', 'ISSUE-079');

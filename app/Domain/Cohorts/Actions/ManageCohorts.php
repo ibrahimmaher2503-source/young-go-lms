@@ -38,14 +38,20 @@ final class ManageCohorts
     public function update(User $actor, Cohort $cohort, array $data): Cohort
     {
         CohortAccess::authorize($actor, $cohort->course);
-        $clean = $this->validated($data);
 
-        return DB::transaction(function () use ($actor, $cohort, $clean): Cohort {
+        return DB::transaction(function () use ($actor, $cohort, $data): Cohort {
             $locked = Cohort::query()->whereKey($cohort->getKey())->lockForUpdate()->firstOrFail();
+            $clean = $this->validated($data + [
+                'starts_on' => $locked->starts_on?->toDateString(),
+                'ends_on' => $locked->ends_on?->toDateString(),
+                'enrollment_opens_on' => $locked->enrollment_opens_on?->toDateString(),
+                'enrollment_closes_on' => $locked->enrollment_closes_on?->toDateString(),
+                'name_translations' => $locked->name_translations,
+            ]);
             if ($clean['capacity'] !== null && $clean['capacity'] < $locked->seatedCount()) {
                 throw ValidationException::withMessages(['capacity' => __('cohorts.capacity_below_seated', ['count' => $locked->seatedCount()])]);
             }
-            $before = $locked->only(['name', 'capacity', 'starts_on', 'ends_on']);
+            $before = $locked->only(array_keys($clean));
             $locked->update($clean);
             $this->log('cohort.updated', $locked, $actor, $before, $clean);
 
@@ -79,19 +85,32 @@ final class ManageCohorts
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{name: string, capacity: int|null, starts_on: string|null, ends_on: string|null}
+     * @return array{name: string, capacity: int|null, starts_on: string|null, ends_on: string|null, name_translations: array<string, string>|null, enrollment_opens_on: string|null, enrollment_closes_on: string|null}
      */
     private function validated(array $data): array
     {
-        /** @var array{name: string, capacity?: int|null, starts_on?: string|null, ends_on?: string|null} $clean */
         $clean = Validator::make($data, [
             'name' => ['required', 'string', 'max:120'],
+            'name_translations' => ['nullable', 'array:ar'],
+            'name_translations.ar' => ['nullable', 'string', 'max:120'],
+            'enrollment_opens_on' => ['nullable', 'date_format:Y-m-d'],
+            'enrollment_closes_on' => ['nullable', 'date_format:Y-m-d', ...(! empty($data['enrollment_opens_on']) ? ['after_or_equal:enrollment_opens_on'] : [])],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'starts_on' => ['nullable', 'date'],
-            'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
+            'ends_on' => ['nullable', 'date', ...(! empty($data['starts_on']) ? ['after_or_equal:starts_on'] : [])],
         ])->validate();
 
-        return ['name' => $clean['name'], 'capacity' => $clean['capacity'] ?? null, 'starts_on' => $clean['starts_on'] ?? null, 'ends_on' => $clean['ends_on'] ?? null];
+        $arabic = trim((string) ($clean['name_translations']['ar'] ?? ''));
+
+        return [
+            'name' => $clean['name'],
+            'capacity' => $clean['capacity'] ?? null,
+            'starts_on' => $clean['starts_on'] ?? null,
+            'ends_on' => $clean['ends_on'] ?? null,
+            'name_translations' => $arabic === '' ? null : ['ar' => $arabic],
+            'enrollment_opens_on' => $clean['enrollment_opens_on'] ?? null,
+            'enrollment_closes_on' => $clean['enrollment_closes_on'] ?? null,
+        ];
     }
 
     /**

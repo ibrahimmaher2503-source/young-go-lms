@@ -15,12 +15,17 @@
                 <p class="font-bold">{{ __('learn.preview_banner') }}</p>
                 @if($previewDraft)<p class="text-sm" data-preview-draft>{{ __('learn.preview_draft') }}</p>@endif
                 @if($previewReason)<p class="text-sm" data-preview-reason>{{ __('learn.preview_would_lock', ['reason' => $previewReason]) }}</p>@endif
+                @if($previewAssistant !== null)
+                    <p class="text-sm" data-preview-assistant="{{ $previewAssistant->isAvailable() ? 'available' : 'unavailable' }}">
+                        {{ $previewAssistant->message() ?? __('learn.preview_assistant_available') }}
+                    </p>
+                @endif
             </div>
         @endif
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0 space-y-1">
-                <a href="{{ $backUrl ?? route('learner.courses') }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back" /> {{ $preview ? __('learn.back_to_curriculum') : __('learn.back_to_courses') }}</a>
-                <h1 class="break-words text-3xl font-extrabold" data-course-title>{{ $course->title }}</h1>
+        <div class="relative flex flex-wrap items-start justify-between gap-3 2xl:min-h-26 2xl:px-4">
+            <div class="min-w-0 space-y-1 2xl:pe-48">
+                <a href="{{ $backUrl ?? route('learner.courses') }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary 2xl:absolute 2xl:end-4 2xl:top-2"><x-ui.icon name="back" /> {{ $preview ? __('learn.back_to_curriculum') : __('learn.back_to_courses') }}</a>
+                <h1 class="break-words text-3xl font-extrabold 2xl:text-4xl" data-course-title>{{ $course->title }}</h1>
                 <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted">
                     @if($instructors !== '')<span class="inline-flex items-center gap-1"><x-ui.icon name="user" class="size-4" /> {{ __('learn.by_instructor', ['name' => $instructors]) }}</span>@endif
                     <span>{{ __('learn.lessons_count', ['count' => $flat->count()]) }}</span>
@@ -28,7 +33,7 @@
             </div>
         </div>
 
-        <div class="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]{{ $aiAvailable ? ' 2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,24rem)]' : '' }}">
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]{{ $aiAvailable ? ' 2xl:grid-cols-[minmax(0,26fr)_minmax(0,46fr)_minmax(0,27fr)] 2xl:gap-3' : '' }}">
             {{-- Curriculum (first column: right in Arabic, left in English) --}}
             <aside class="hidden space-y-3 lg:block" aria-label="{{ __('learn.curriculum') }}">
                 @if($courseProgress)
@@ -83,28 +88,32 @@
                             @if($descriptor === null)
                                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
                             @else
-                                <x-learning.lesson-media :descriptor="$descriptor" :title="$title" />
-                                @if(in_array($descriptor->type, ['video', 'audio'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
-                                    <span class="pointer-events-none absolute end-3 top-3 select-none rounded bg-black/40 px-2 py-0.5 text-sm text-white/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
-                                @endif
+                                <div class="relative" data-player-surface>
+                                    <x-learning.lesson-media :descriptor="$descriptor" :title="$title" managed-stage />
+                                    @if(in_array($descriptor->type, ['video', 'audio', 'embed'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
+                                        <span class="pointer-events-none absolute z-10 select-none rounded bg-black/40 px-2 py-0.5 text-sm text-white/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                         @endif
 
-                        @if($descriptor !== null && in_array($descriptor->type, ['video', 'audio'], true))
+                        @if($descriptor !== null && (in_array($descriptor->type, ['video', 'audio'], true) || $descriptor->provider === 'vimeo'))
                             <div role="toolbar" aria-label="{{ __('learn.toolbar') }}" class="flex flex-wrap items-center gap-2">
-                                <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3">
-                                    <span class="font-semibold">{{ __('learn.speed') }}</span>
-                                    <select data-player-speed class="min-h-11 bg-transparent px-1">
-                                        @foreach([0.75, 1, 1.25, 1.5, 2] as $speed)
-                                            <option value="{{ $speed }}" @selected($speed === 1)>{{ $speed }}×</option>
-                                        @endforeach
-                                    </select>
-                                </label>
-                                @if($descriptor->tracks !== [])
-                                    <x-ui.button type="button" variant="secondary" data-player-captions aria-pressed="false">{{ __('learn.captions') }}</x-ui.button>
+                                @if($descriptor->type !== 'embed')
+                                    <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3">
+                                        <span class="font-semibold">{{ __('learn.speed') }}</span>
+                                        <select data-player-speed class="min-h-11 bg-transparent px-1">
+                                            @foreach([0.75, 1, 1.25, 1.5, 2] as $speed)
+                                                <option value="{{ $speed }}" @selected($speed === 1)>{{ $speed }}×</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+                                    @if($descriptor->tracks !== [])
+                                        <x-ui.button type="button" variant="secondary" data-player-captions aria-pressed="false">{{ __('learn.captions') }}</x-ui.button>
+                                    @endif
                                 @endif
-                                @if($descriptor->type === 'video')
+                                @if($descriptor->type !== 'audio')
                                     <x-ui.button type="button" variant="secondary" data-player-fullscreen>{{ __('learn.fullscreen') }}</x-ui.button>
                                 @endif
                                 @if($canMarkComplete)

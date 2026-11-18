@@ -41,4 +41,5 @@ return [
     'preview_banner' => 'Previewing as a learner. Nothing you do here is saved.',
     'preview_draft' => 'This item is still a draft, so learners cannot see it yet.',
     'preview_would_lock' => 'A learner would find it locked: :reason',
+    'preview_assistant_available' => 'Lesson assistant available to eligible learners.',
 ];

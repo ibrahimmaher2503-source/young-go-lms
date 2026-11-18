@@ -32,28 +32,35 @@ final class SessionLimiter
     }
 
     /** @return self::OK|self::SIGNED_OUT|self::DEVICE_LIMIT */
-    public function check(User $user, string $sessionId, string $deviceToken, string $ip, string $userAgent): string
+    public function check(User $user, string $sessionId, string $deviceToken, string $ip, string $userAgent, bool $register = true): string
     {
         $hash = hash('sha256', $sessionId);
-        $session = UserSession::query()->where('session_hash', $hash)->first();
 
-        if ($session !== null) {
-            if ($session->user_id !== $user->getKey()) {
-                // The browser session id now belongs to another account: treat it as a fresh session below.
-                $session->delete();
-                $session = null;
-            } elseif ($session->signed_out_at !== null) {
-                return self::SIGNED_OUT;
-            } else {
-                $this->touch($session, $ip);
-
-                return self::OK;
-            }
-        }
-
-        return DB::transaction(function () use ($user, $hash, $deviceToken, $ip, $userAgent): string {
-            // Serialise per learner so two simultaneous logins cannot both slip under the limit.
+        return DB::transaction(function () use ($user, $hash, $deviceToken, $ip, $userAgent, $register): string {
+            // Serialise new and resumed sessions before reading their state or enforcing the limit.
             User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+
+            $session = UserSession::query()->where('session_hash', $hash)->first();
+            if ($session !== null) {
+                if ($session->user_id !== $user->getKey()) {
+                    if (! $register) {
+                        return self::SIGNED_OUT;
+                    }
+                    // The browser session id now belongs to another account: treat it as a fresh session below.
+                    $session->delete();
+                } elseif ($session->signed_out_at !== null) {
+                    return self::SIGNED_OUT;
+                } else {
+                    $this->touch($session, $ip);
+                    $this->enforceConcurrentLimit($user, $hash);
+
+                    return self::OK;
+                }
+            }
+
+            if (! $register) {
+                return self::SIGNED_OUT;
+            }
 
             $device = UserDevice::query()->where('user_id', $user->getKey())->where('token_hash', hash('sha256', $deviceToken))->first();
             if ($device === null) {
@@ -75,6 +82,17 @@ final class SessionLimiter
             $this->enforceConcurrentLimit($user, $hash);
 
             return self::OK;
+        });
+    }
+
+    public function rotate(User $user, string $previousId, string $sessionId): bool
+    {
+        return DB::transaction(function () use ($user, $previousId, $sessionId): bool {
+            User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+
+            return UserSession::query()->where('user_id', $user->getKey())
+                ->where('session_hash', hash('sha256', $previousId))->whereNull('signed_out_at')
+                ->update(['session_hash' => hash('sha256', $sessionId)]) === 1;
         });
     }
 
@@ -110,7 +128,9 @@ final class SessionLimiter
 
     private function touch(UserSession $session, string $ip): void
     {
-        if ($session->last_active_at->diffInSeconds(now()) >= (int) config('security.sessions.touch_seconds')) {
+        $now = now();
+        if ($session->last_active_at->diffInSeconds($now) >= (int) config('security.sessions.touch_seconds')
+            || $session->last_active_at->lt($now->copy()->subMinutes((int) config('security.sessions.idle_minutes')))) {
             $session->forceFill(['last_active_at' => now(), 'ip' => $ip])->save();
         }
     }

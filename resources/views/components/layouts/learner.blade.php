@@ -45,7 +45,7 @@
     </div>
 @endif
 <header class="border-b border-border bg-surface/95 shadow-card backdrop-blur">
-    <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8">
+    <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8 {{ $wide ? '2xl:max-w-[100rem] 2xl:px-8' : '' }}">
         <div class="flex shrink-0 items-center gap-6">
             <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
                 <x-ui.icon name="book" class="size-8 shrink-0 text-primary" />
@@ -80,7 +80,7 @@
         </div>
     </div>
 </header>
-<main id="main" tabindex="-1" class="mx-auto px-4 py-6 sm:px-8 sm:py-8 {{ $wide ? 'max-w-[90rem]' : 'max-w-6xl' }}">
+<main id="main" tabindex="-1" class="mx-auto px-4 py-6 sm:px-8 sm:py-8 {{ $wide ? 'max-w-[90rem] 2xl:max-w-[100rem] 2xl:px-4 2xl:py-4' : 'max-w-6xl' }}">
     {{ $slot }}
 </main>
 <nav aria-label="{{ __('pages.main_nav') }}" class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-2 py-1 shadow-floating lg:hidden" data-bottom-nav>

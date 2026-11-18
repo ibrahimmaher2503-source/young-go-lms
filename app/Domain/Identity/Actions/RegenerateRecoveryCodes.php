@@ -8,6 +8,7 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Identity\TwoFactor;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class RegenerateRecoveryCodes
@@ -21,12 +22,14 @@ final class RegenerateRecoveryCodes
             throw new AuthorizationException;
         }
 
-        $codes = $this->twoFactor->newRecoveryCodes();
-        $user->forceFill(['two_factor_recovery_codes' => array_map(TwoFactor::hashRecoveryCode(...), $codes)])->save();
-        if ($this->audit->record('auth.two_factor_recovery_regenerated', $user, (int) $user->getKey()) === null) {
-            throw new RuntimeException('Unable to record recovery code audit.');
-        }
+        return DB::transaction(function () use ($user): array {
+            $codes = $this->twoFactor->newRecoveryCodes();
+            $user->forceFill(['two_factor_recovery_codes' => array_map(TwoFactor::hashRecoveryCode(...), $codes)])->save();
+            if ($this->audit->record('auth.two_factor_recovery_regenerated', $user, (int) $user->getKey()) === null) {
+                throw new RuntimeException('Unable to record recovery code audit.');
+            }
 
-        return $codes;
+            return $codes;
+        });
     }
 }

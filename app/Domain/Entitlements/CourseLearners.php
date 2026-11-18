@@ -17,19 +17,27 @@ final class CourseLearners
     /** @return Builder<User> learners who have (or had) access to this course, with access state and dates */
     public static function query(Course $course): Builder
     {
-        $entitlements = Entitlement::query()->where('course_id', $course->getKey());
+        $now = now();
+        $entitlements = Entitlement::query()->where('course_id', $course->getKey())
+            ->select('learner_id')
+            ->selectRaw("case when max(case when status = ? and starts_at <= ? and (ends_at is null or ends_at > ?) then 1 else 0 end) = 1 then 'active' else 'ended' end as access_status", [Entitlement::ACTIVE, $now, $now])
+            ->selectRaw('min(starts_at) as enrolled_at')
+            ->groupBy('learner_id');
 
         return User::query()
-            ->whereIn('users.id', (clone $entitlements)->select('learner_id'))
-            ->addSelect([
-                'access_status' => Entitlement::query()->selectRaw("case when sum(case when status = 'active' and starts_at <= ? and (ends_at is null or ends_at > ?) then 1 else 0 end) > 0 then 'active' else 'ended' end", [now(), now()])
-                    ->whereColumn('entitlements.learner_id', 'users.id')->where('entitlements.course_id', $course->getKey()),
-                'enrolled_at' => Entitlement::query()->selectRaw('min(starts_at)')->whereColumn('entitlements.learner_id', 'users.id')->where('entitlements.course_id', $course->getKey()),
-            ]);
+            ->joinSub($entitlements, 'course_access', 'course_access.learner_id', '=', 'users.id')
+            ->select('users.*', 'course_access.access_status', 'course_access.enrolled_at');
     }
 
     public static function count(Course $course): int
     {
         return Entitlement::query()->where('course_id', $course->getKey())->distinct()->count('learner_id');
+    }
+
+    /** @return Builder<Entitlement> Correlated count for a course directory row. */
+    public static function countForDirectory(): Builder
+    {
+        return Entitlement::query()->selectRaw('count(distinct learner_id)')
+            ->whereColumn('entitlements.course_id', 'courses.id');
     }
 }

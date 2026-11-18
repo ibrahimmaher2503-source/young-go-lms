@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Domain\AI\AssistantEligibility;
 use App\Domain\Assessment\Queries\QuizOverview;
 use App\Domain\Assignments\Queries\SubmissionView;
+use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
@@ -15,8 +16,10 @@ use App\Domain\Media\Queries\LessonPlayback;
 use App\Domain\Media\SignedFileUrl;
 use App\Domain\Progress\LessonProgress;
 use App\Domain\Progress\Queries\ContinueLearning;
+use App\Domain\Progress\Queries\CourseProgressSnapshot;
 use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\LessonResource;
@@ -43,11 +46,12 @@ final class LearnController
     public function course(Request $request, Course $course): RedirectResponse
     {
         $learner = $this->learner($request);
-        $first = collect($this->curriculum->for($learner, $course))->flatMap(fn (array $s): array => $s['items'])->first(fn (array $i): bool => $i['state'] !== 'locked');
+        $sections = $this->curriculum->for($learner, $course);
+        $first = collect($sections)->flatMap(fn (array $s): array => $s['items'])->first(fn (array $i): bool => $i['state'] !== 'locked');
         abort_if($first === null || ! $this->access->canAccessCourse($learner, $course)->allowed && $first['state'] !== 'preview', 404);
 
         // An enrolled learner goes back to where they stopped; anyone else (preview only) to the first open lesson.
-        $resume = $this->access->currentFor($learner, $course) !== null ? $this->continue->for($learner, $course) : null;
+        $resume = $this->access->currentFor($learner, $course) !== null ? $this->continue->for($learner, $course, $sections) : null;
         $first = $resume !== null ? ['id' => $resume['item_id']] : $first;
 
         return redirect()->route('learn.show', ['course' => $course->getKey(), 'item' => $first['id']]);
@@ -57,18 +61,22 @@ final class LearnController
     {
         abort_unless((int) $item->course_id === (int) $course->getKey(), 404);
         $learner = $this->learner($request);
-        $decision = $this->access->canAccessItem($learner, $item);
+        $outline = CurriculumOutline::forStudents($course);
+        $ordered = $outline->flatMap(fn (CourseSection $section) => $section->items)->values();
+        $item = $ordered->firstWhere('id', $item->id) ?? $item->setRelation('course', $course);
+        $decision = $this->access->canAccessItem($learner, $item, $ordered);
 
         // Only a learner who is entitled and merely early may see the lock reason; everyone else sees nothing.
         abort_unless($decision->allowed || in_array($decision->reason, ['drip_locked', 'sequence_locked'], true), 404);
 
-        $sections = $this->curriculum->for($learner, $course);
+        $sections = $this->curriculum->for($learner, $course, $outline);
         $entity = $item->itemable;
         $lesson = $entity instanceof Lesson ? $entity : null;
         $entitled = $this->access->currentFor($learner, $course) !== null;
-        $lessonProgress = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('curriculum_item_id', $item->getKey())->first() : null;
-        $courseProgress = $entitled ? $this->continue->progress($learner, $course) : null;
-        $completed = $entitled ? LessonProgress::query()->where('learner_id', $learner->getKey())->where('status', LessonProgress::COMPLETED)->pluck('curriculum_item_id')->map(fn ($id): int => (int) $id)->all() : [];
+        $lessonRows = $entitled ? CourseProgressSnapshot::lessonRows($learner, [$course->id])->get($course->id, collect()) : collect();
+        $lessonProgress = $lessonRows->get($item->id);
+        $courseProgress = $entitled ? CourseProgressSnapshot::for($learner, $course, $lessonRows) : null;
+        $completed = $lessonRows->where('status', LessonProgress::COMPLETED)->keys()->map(fn ($id): int => (int) $id)->all();
         $openLesson = $decision->allowed ? $lesson : null;
         $urls = app(SignedFileUrl::class);
         $document = $entitled ? $openLesson?->activeCurriculumDocument() : null;
@@ -101,7 +109,7 @@ final class LearnController
             'decision' => $decision,
             'neighbours' => EntitledCurriculumQuery::neighbours($sections, (int) $item->getKey()),
             'descriptor' => $decision->allowed && $lesson !== null ? LessonPlayback::for($lesson, $learner) : null,
-            'aiAvailable' => $decision->allowed && $lesson !== null && app(AssistantEligibility::class)->check($learner, $lesson)->isAvailable(),
+            'aiAvailable' => $decision->allowed && $lesson !== null && $this->acting->canViewPrivateLearnerConversations() && app(AssistantEligibility::class)->check($learner, $lesson)->isAvailable(),
             'learner' => $learner,
             'liveSession' => $decision->allowed && $entity instanceof LiveSession ? $entity : null,
             'liveState' => $entity instanceof LiveSession ? JoinWindow::state($entity) : null,

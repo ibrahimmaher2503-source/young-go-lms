@@ -88,13 +88,8 @@ final class ManualGrantResource extends Resource
                 TextColumn::make('reason')->label(__('entitlements.reason'))->limit(40)->placeholder('-'),
             ])
             ->filters([
-                SelectFilter::make('status')->label(__('entitlements.status'))->options(['active' => __('entitlements.states.active'), 'expired' => __('entitlements.states.expired'), 'revoked' => __('entitlements.states.revoked')])
-                    ->query(static fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
-                        'active' => $query->where('status', Entitlement::ACTIVE)->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now())),
-                        'expired' => $query->where(fn (Builder $q) => $q->where('status', Entitlement::EXPIRED)->orWhere(fn (Builder $e) => $e->where('status', Entitlement::ACTIVE)->whereNotNull('ends_at')->where('ends_at', '<=', now()))),
-                        'revoked' => $query->where('status', Entitlement::REVOKED),
-                        default => $query,
-                    }),
+                SelectFilter::make('status')->label(__('entitlements.status'))->options(__('entitlements.states'))
+                    ->query(self::filterByAccessState(...)),
                 SelectFilter::make('source_type')->label(__('entitlements.source'))->options(collect(EntitlementSource::cases())->mapWithKeys(static fn (EntitlementSource $s): array => [$s->value => __('entitlements.sources.'.$s->value)])->all()),
                 SelectFilter::make('course_id')->label(__('entitlements.course'))->searchable()
                     ->options(static fn (): array => Course::query()->orderByDesc('id')->limit(200)->get()->mapWithKeys(static fn (Course $c): array => [$c->getKey() => (string) $c->title])->all()),
@@ -122,13 +117,20 @@ final class ManualGrantResource extends Resource
         return ['index' => Pages\ListManualGrants::route('/')];
     }
 
-    /** active / expired / revoked, with an end time in the past counting as expired even before the sweep runs. */
+    /**
+     * @param  Builder<Entitlement>  $query
+     * @param  array<string, mixed>  $data
+     * @return Builder<Entitlement>
+     */
+    private static function filterByAccessState(Builder $query, array $data): Builder
+    {
+        $state = $data['value'] ?? null;
+
+        return $query->withAccessState(is_string($state) ? $state : null);
+    }
+
     public static function state(Entitlement $entitlement): string
     {
-        return match (true) {
-            $entitlement->status === Entitlement::REVOKED => 'revoked',
-            $entitlement->status === Entitlement::EXPIRED, $entitlement->ends_at !== null && $entitlement->ends_at->lte(now()) => 'expired',
-            default => 'active',
-        };
+        return $entitlement->accessState();
     }
 }

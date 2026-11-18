@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'description' => 'Session description',
     'title' => 'Live session',
     'schedule' => 'Schedule a live session',
     'reschedule' => 'Reschedule',

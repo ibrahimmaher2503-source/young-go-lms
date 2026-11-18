@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    'enrollment_opens_on' => 'Enrollment opens',
+    'enrollment_closes_on' => 'Enrollment closes',
     'title' => 'Cohorts',
     'cohort' => 'Cohort',
     'name' => 'Cohort name',

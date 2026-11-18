@@ -20,7 +20,7 @@ return [
     'reason' => 'Reason',
     'not_free' => 'This course is not free.',
     'not_open' => 'This course is not open for enrollment.',
-    'states' => ['active' => 'Active', 'expired' => 'Expired', 'revoked' => 'Revoked'],
+    'states' => ['active' => 'Active', 'scheduled' => 'Scheduled', 'expired' => 'Expired', 'revoked' => 'Revoked'],
     'sources' => [
         'free' => 'Free enrollment',
         'purchase' => 'Purchase',

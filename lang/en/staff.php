@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
-return ['user' => 'User', 'users' => 'Users', 'roles' => 'Roles', 'name' => 'Name', 'email' => 'Email', 'status' => 'Status', 'active' => 'Active', 'suspended' => 'Suspended', 'deactivated' => 'Deactivated', 'permissions' => 'Permissions',
+return ['user' => 'User', 'table_user' => 'User', 'table_role' => 'Role', 'users' => 'Users', 'roles' => 'Roles', 'name' => 'Name', 'email' => 'Email', 'status' => 'Status', 'active' => 'Active', 'suspended' => 'Suspended', 'deactivated' => 'Deactivated', 'permissions' => 'Permissions',
+    'overview' => 'Overview',
+    'overview_description' => 'Monitor the academy from one place.',
+    'manage_courses' => 'Manage courses',
+    'overview_learners' => 'Learners',
+    'overview_courses' => 'Published courses',
+    'overview_help' => 'Open help requests',
     'manage_users' => 'Manage users',
     'users_description' => 'Manage accounts and roles in one place',
     'total_users' => 'Total users',
-    'inactive_users' => 'Inactive accounts',
+    'inactive_users' => 'Pending activation',
     'all_users' => 'All users',
     'students' => 'Students',
     'instructors' => 'Instructors',

@@ -6,6 +6,9 @@ return [
     // Minutes before the start at which a reminder goes out. Working defaults (one day and one hour); change here, no code needed.
     'reminder_offsets_minutes' => [1440, 60],
 
+    // Use 'fake' for either channel in local/testing. Real delivery awaits O-021.
+    'phone_reminders' => ['whatsapp' => null, 'sms' => null],
+
     // A learner who uses the join link more than this many minutes after the start is recorded as late. Working default.
     'late_after_minutes' => 10,
 ];

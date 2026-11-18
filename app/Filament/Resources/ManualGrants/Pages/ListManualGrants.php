@@ -59,8 +59,9 @@ final class ListManualGrants extends WorkspaceListRecords
                     ->getOptionLabelUsing(static fn ($value): ?string => User::query()->find($value)?->email),
                 Select::make('course_id')->label(__('entitlements.course'))->required()->searchable()
                     ->options(static fn (): array => Course::query()->orderByDesc('id')->limit(200)->get()->mapWithKeys(static fn (Course $c): array => [$c->getKey() => (string) $c->title])->all()),
+                DatePicker::make('starts_at')->label(__('entitlements.starts'))->native(false)->default(now()->toDateString())->required(),
                 Toggle::make('lifetime')->label(__('entitlements.lifetime'))->default(true)->live(),
-                DatePicker::make('ends_at')->label(__('entitlements.ends'))->native(false)->minDate(now()->addDay())->visible(static fn ($get): bool => ! $get('lifetime'))->required(static fn ($get): bool => ! $get('lifetime')),
+                DatePicker::make('ends_at')->label(__('entitlements.ends'))->native(false)->afterOrEqual('starts_at')->visible(static fn ($get): bool => ! $get('lifetime'))->required(static fn ($get): bool => ! $get('lifetime')),
                 Textarea::make('reason')->label(__('entitlements.reason'))->required()->minLength(3)->maxLength(500),
             ])
             ->action(function (array $data, Action $action): void {
@@ -69,7 +70,8 @@ final class ListManualGrants extends WorkspaceListRecords
                 try {
                     app(GrantEntitlement::class)(
                         User::query()->findOrFail($data['learner_id']), Course::query()->findOrFail($data['course_id']), EntitlementSource::ManualGrant,
-                        'manual-'.Str::uuid()->toString(), null, ($data['lifetime'] ?? true) ? null : Carbon::parse($data['ends_at'])->endOfDay(), $actor, (string) $data['reason'],
+                        'manual-'.Str::uuid()->toString(), Carbon::parse($data['starts_at'])->startOfDay(),
+                        ($data['lifetime'] ?? true) ? null : Carbon::parse($data['ends_at'])->endOfDay()->setMicrosecond(0), $actor, (string) $data['reason'],
                     );
                 } catch (ValidationException $exception) {
                     Notification::make()->danger()->title((string) collect($exception->errors())->flatten()->first())->send();

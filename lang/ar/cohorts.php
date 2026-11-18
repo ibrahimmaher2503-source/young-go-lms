@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    'enrollment_opens_on' => 'فتح التسجيل',
+    'enrollment_closes_on' => 'إغلاق التسجيل',
     'title' => 'الدفعات',
     'cohort' => 'الدفعة',
     'name' => 'اسم الدفعة',

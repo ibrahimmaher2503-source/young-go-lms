@@ -23,6 +23,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -97,10 +98,12 @@ it('hands the link out only inside the join window', function (): void {
     $this->actingAs($learner)->post("/learn/{$course->id}/{$item->id}/join")->assertSessionHas('join_error');
 });
 
-it('lets an opened session be joined early and never a cancelled one', function (): void {
+it('keeps an opened session in its window and never joins a cancelled one', function (): void {
     [$course, $item, $learner, , $admin] = jlBuild();
     app(OpenLiveSession::class)($admin, $item->itemable);
 
+    $this->actingAs($learner)->post("/learn/{$course->id}/{$item->id}/join")->assertSessionHas('join_error');
+    $this->travelTo(now()->addHours(8)->subMinutes(15));
     $this->actingAs($learner)->post("/learn/{$course->id}/{$item->id}/join")->assertRedirect(JL_URL);
 
     app(CancelLiveSession::class)($admin, $item->itemable->refresh());
@@ -139,3 +142,29 @@ it('shows staff the real card in the preview without a link', function (): void 
 
     $this->actingAs($admin)->get("/preview/{$course->id}/{$item->id}")->assertOk()->assertSee('data-live-card', false)->assertDontSee('secret-room-42');
 });
+
+it('batches the dashboard live access checks across sequential cohorts', function (): void {
+    $learner = User::factory()->create()->assignRole('student');
+    $enroll = function () use ($learner): void {
+        [$course, $item] = jlBuild(true);
+        $course->update(['sequence_mode' => Course::SEQUENCE_SEQUENTIAL]);
+        app(GrantEntitlement::class)($learner, $course, EntitlementSource::Free);
+        app(ReserveCohortSeat::class)($item->itemable->cohort, $learner);
+    };
+    $count = function () use ($learner): int {
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        expect(UpcomingSessions::for($learner, limit: 1))->toHaveCount(1);
+        $queries = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        return $queries;
+    };
+    $enroll();
+    $base = $count();
+    foreach (range(1, 5) as $index) {
+        $enroll();
+    }
+
+    expect($count())->toBeLessThanOrEqual($base + 2);
+})->group('T-P5-03', 'YG-GAP-COH-001', 'ISSUE-001');

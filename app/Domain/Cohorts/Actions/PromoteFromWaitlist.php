@@ -25,6 +25,10 @@ final class PromoteFromWaitlist
 
         return DB::transaction(function () use ($actor, $cohort): CohortMember {
             $locked = Cohort::query()->whereKey($cohort->getKey())->lockForUpdate()->firstOrFail();
+            if (! $locked->enrollmentIsOpen()) {
+                throw ValidationException::withMessages(['cohort' => __('cohorts.closed')]);
+            }
+
             $next = CohortMember::query()->where('cohort_id', $locked->getKey())->where('status', CohortMember::WAITLISTED)->orderBy('queued_at')->orderBy('id')->first();
             if ($next === null) {
                 throw ValidationException::withMessages(['cohort' => __('cohorts.waitlist_empty')]);

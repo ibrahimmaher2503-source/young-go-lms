@@ -12,11 +12,13 @@ use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Progress\Actions\RecordProgress;
+use App\Domain\Progress\CourseProgress;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
@@ -122,3 +124,32 @@ it('lists the latest notifications of the acting learner only', function (): voi
 
     $this->actingAs($learner)->get('/my')->assertOk()->assertSee('Your lesson is ready')->assertDontSee('Secret for someone else')->assertSee('data-unread-dot', false);
 })->group('T-P4-05', 'A1');
+
+it('paginates courses with bounded query growth and no course progress writes', function (): void {
+    $learner = User::factory()->create()->assignRole('student');
+    [$first] = ldCourse('Course 00');
+    ldEnroll($learner, $first);
+    $this->actingAs($learner);
+
+    $countQueries = function (string $url): int {
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->get($url)->assertOk();
+        $count = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        return $count;
+    };
+    $base = $countQueries('/my');
+    $baseCourses = $countQueries('/my/courses');
+    foreach (range(1, 13) as $index) {
+        [$course] = ldCourse(sprintf('Course %02d', $index));
+        ldEnroll($learner, $course);
+    }
+
+    expect($countQueries('/my'))->toBeLessThanOrEqual($base + 14);
+    expect($countQueries('/my/courses'))->toBeLessThanOrEqual($baseCourses + 6);
+    $this->get('/my/courses?status=in_progress')->assertOk()->assertSee('Course 00')->assertDontSee('Course 13');
+    $this->get('/my/courses?status=in_progress&page=2')->assertOk()->assertSee('Course 13')->assertDontSee('Course 00');
+    expect(CourseProgress::query()->count())->toBe(0);
+})->group('T-P4-05', 'ISSUE-001', 'ISSUE-079');

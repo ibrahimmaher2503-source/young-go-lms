@@ -22,11 +22,10 @@ final class CourseAccessSummary
         }
 
         foreach ($query->get(['source_type', 'status', 'starts_at', 'ends_at']) as $row) {
-            $state = match (true) {
-                $row->status === Entitlement::REVOKED => 'revoked',
-                $row->status === Entitlement::EXPIRED, $row->ends_at !== null && $row->ends_at->lte(now()) => 'expired',
-                default => 'active',
-            };
+            $state = $row->accessState();
+            if ($state === Entitlement::SCHEDULED) {
+                continue;
+            }
             $summary[$state]++;
             $source = $row->source_type->value;
             $summary['by_source'][$source] ??= ['active' => 0, 'expired' => 0, 'revoked' => 0];

@@ -20,7 +20,7 @@ return [
     'reason' => 'السبب',
     'not_free' => 'هذه الدورة ليست مجانية.',
     'not_open' => 'هذه الدورة غير مفتوحة للتسجيل.',
-    'states' => ['active' => 'فعّال', 'expired' => 'منتهٍ', 'revoked' => 'مسحوب'],
+    'states' => ['active' => 'فعّال', 'scheduled' => 'مجدول', 'expired' => 'منتهٍ', 'revoked' => 'مسحوب'],
     'sources' => [
         'free' => 'تسجيل مجاني',
         'purchase' => 'شراء',

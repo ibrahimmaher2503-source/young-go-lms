@@ -12,4 +12,10 @@ interface CompletionLookup
 {
     /** @return list<int> curriculum item ids the learner completed in this course */
     public function completedItemIds(User $learner, Course $course): array;
+
+    /**
+     * @param  list<int>  $courseIds
+     * @return array<int, list<int>>
+     */
+    public function completedItemIdsByCourse(User $learner, array $courseIds): array;
 }

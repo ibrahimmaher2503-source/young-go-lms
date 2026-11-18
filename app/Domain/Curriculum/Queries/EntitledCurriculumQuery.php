@@ -6,9 +6,11 @@ namespace App\Domain\Curriculum\Queries;
 
 use App\Domain\Entitlements\EntitlementService;
 use App\Models\Course;
+use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 /**
  * The curriculum as one learner sees it: the published sections and items in the shared order, each marked open,
@@ -19,18 +21,24 @@ final class EntitledCurriculumQuery
     public function __construct(private readonly EntitlementService $access) {}
 
     /**
+     * @param  Collection<int, CourseSection>|null  $outline
      * @return list<array{id: int, title: string, items: list<array{id: int, title: string, type: string, state: string, reason: string|null, unlock_at: string|null, minutes: int}>}>
      */
-    public function for(User $learner, Course $course): array
+    public function for(User $learner, Course $course, ?Collection $outline = null): array
     {
+        $outline ??= CurriculumOutline::forStudents($course);
         $entitled = $this->access->currentFor($learner, $course) !== null;
         $sections = [];
+        $ordered = $outline->flatMap(fn (CourseSection $section) => $section->items)->values();
 
-        foreach (CurriculumOutline::forStudents($course) as $section) {
+        foreach ($outline as $section) {
             $items = [];
             foreach ($section->items as $item) {
                 /** @var CurriculumItem $item */
-                $decision = $this->access->canAccessItem($learner, $item);
+                $decision = $this->access->canAccessItem($learner, $item, $ordered);
+                if ($decision->reason === 'cohort_locked' || (! $decision->allowed && ! $this->access->canSeeCohortItem($learner, $item))) {
+                    continue;
+                }
                 $entity = $item->itemable;
                 $state = match (true) {
                     ! $decision->allowed => 'locked',

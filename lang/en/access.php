@@ -7,6 +7,7 @@ return [
     'item_unpublished' => 'This lesson is not published yet.',
     'not_entitled' => 'Enroll in this course to open this lesson.',
     'entitlement_expired' => 'Your access to this course has ended.',
+    'cohort_locked' => 'This session is open to learners with a seat in its cohort.',
     'drip_locked' => 'This lesson opens on :time.',
     'preview_only' => 'Only the free preview lessons are open without enrolling.',
     'ends_before_start' => 'The end date must be after the start date.',

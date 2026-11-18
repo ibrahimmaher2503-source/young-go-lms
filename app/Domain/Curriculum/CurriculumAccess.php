@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Curriculum;
 
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +29,12 @@ final class CurriculumAccess
         if (! $actor->can($permission)) {
             throw new AuthorizationException;
         }
+    }
+
+    public static function authorizeLesson(User $actor, Lesson $lesson, string $permission): void
+    {
+        $item = $lesson->item()->with('course')->firstOrFail();
+        self::authorize($actor, $item->course, $permission);
     }
 
     /**

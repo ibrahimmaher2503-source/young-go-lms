@@ -2,7 +2,7 @@
     <h1 class="text-3xl font-bold">{{ __('pages.family_title') }}</h1>
     <p class="mb-6 mt-1 text-muted">{{ __('pages.family_intro') }}</p>
 
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid items-start gap-4 lg:grid-cols-2">
         <x-ui.card :title="__('pages.children')" class="lg:col-span-2">
             @if($children->isEmpty())
                 <x-ui.empty-state :title="__('pages.no_children_title')" :description="__('pages.no_children_desc')"><x-ui.link href="#add-child">{{ __('pages.add_child') }}</x-ui.link></x-ui.empty-state>

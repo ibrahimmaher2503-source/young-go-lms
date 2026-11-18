@@ -19,7 +19,6 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Events\Logout;
-use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -60,9 +59,12 @@ it('does not count idle sessions or touch staff and keeps one session stable', f
     slCheck($user, 'new-1');
     slCheck($user, 'new-2');
 
-    expect(UserSession::query()->whereNull('signed_out_at')->count())->toBe(3)->and(slCheck($user, 'old'))->toBe('ok'); // idle, never signed out, simply not counted
+    expect(UserSession::query()->whereNull('signed_out_at')->count())->toBe(3); // idle sessions do not count until resumed
 
     expect(slCheck($user, 'new-1'))->toBe('ok')->and(slCheck($user, 'new-1'))->toBe('ok')->and(UserSession::query()->where('session_hash', hash('sha256', 'new-1'))->count())->toBe(1);
+
+    expect(slCheck($user, 'old'))->toBe('ok')->and(UserSession::query()->whereNull('signed_out_at')->count())->toBe(2)
+        ->and(slCheck($user, 'new-1'))->toBe('signed_out')->and(slCheck($user, 'new-2'))->toBe('ok');
 
     $staff = User::factory()->create()->assignRole('instructor_academy');
     expect(app(SessionLimiter::class)->applies($staff))->toBeFalse()->and(app(SessionLimiter::class)->applies($user))->toBeTrue()
@@ -70,6 +72,32 @@ it('does not count idle sessions or touch staff and keeps one session stable', f
     config(['security.sessions.enabled' => false]);
     expect(app(SessionLimiter::class)->applies($user))->toBeFalse();
 })->group('T-P4-07', 'A1');
+
+it('enforces the concurrent limit when an idle session resumes and is replayed', function (int $idleSeconds): void {
+    config(['security.sessions.idle_minutes' => 120, 'security.sessions.touch_seconds' => 60]);
+    $this->travelTo(now()->startOfSecond());
+    $user = User::factory()->create()->assignRole('student');
+    expect(slCheck($user, 'idle'))->toBe('ok');
+    $this->travelTo(now()->addSeconds($idleSeconds));
+    expect(slCheck($user, 'new-1'))->toBe('ok');
+    $this->travelTo(now()->addSecond());
+    expect(slCheck($user, 'new-2'))->toBe('ok')->and(slCheck($user, 'idle'))->toBe('ok');
+
+    expect(UserSession::query()->where('user_id', $user->id)->whereNull('signed_out_at')
+        ->where('last_active_at', '>=', now()->subMinutes(120))->count())->toBe(2)
+        ->and(slCheck($user, 'new-1'))->toBe('signed_out');
+    $oldest = UserSession::query()->where('session_hash', hash('sha256', 'new-1'))->firstOrFail();
+    expect($oldest->signed_out_reason)->toBe('limit');
+    $resumed = UserSession::query()->where('session_hash', hash('sha256', 'idle'))->firstOrFail();
+    $lastActive = $resumed->last_active_at;
+    $this->travelTo(now()->addSecond());
+    expect(slCheck($user, 'idle'))->toBe('ok')->and(slCheck($user, 'idle'))->toBe('ok')
+        ->and($resumed->refresh()->last_active_at->equalTo($lastActive))->toBeTrue()
+        ->and(UserSession::query()->count())->toBe(3)->and(UserDevice::query()->count())->toBe(1);
+    $audit = Activity::query()->where('event', 'security.session_limit_signout')->sole();
+    expect($audit->causer_id)->toBe($user->id)->and($audit->subject_id)->toBe($user->id)
+        ->and($audit->properties->get('context')['session_id'])->toBe($oldest->id);
+})->with([120 * 60 + 1, 200 * 60])->group('T-P4-07', 'A1', 'YG-GAP-SEC-001');
 
 it('refuses a new device over the limit and lets known devices back in', function (): void {
     $user = User::factory()->create()->assignRole('student');
@@ -114,17 +142,16 @@ it('offers the reset in the learner devices screen for admins only', function ()
     $this->actingAs(User::factory()->create()->assignRole('instructor_academy'))->get('/instructor/learner-devices')->assertNotFound();
 })->group('T-P4-07', 'A2');
 
-it('tracks sessions through the middleware, sets the device cookie and signs out an ended session', function (): void {
+it('registers devices during login, without inserting on learner dashboard reads', function (): void {
     $user = User::factory()->create()->assignRole('student');
 
     $sessionCookie = config('session.cookie');
-    $sameBrowser = str_repeat('a', 40); // one browser session id for every request below
-    $first = $this->actingAs($user)->withCookie($sessionCookie, $sameBrowser)->get('/my')->assertOk();
+    $first = $this->postJson('/login', ['login' => $user->email, 'password' => 'password'])->assertNoContent();
     $first->assertCookie('yg_device');
     expect(UserSession::query()->where('user_id', $user->id)->count())->toBe(1)->and(UserDevice::query()->where('user_id', $user->id)->count())->toBe(1);
 
-    $encrypted = collect($first->headers->getCookies())->first(fn ($c) => $c->getName() === 'yg_device')->getValue();
-    $token = CookieValuePrefix::remove(app('encrypter')->decrypt($encrypted, false));
+    $sameBrowser = $first->getCookie($sessionCookie)->getValue();
+    $token = $first->getCookie('yg_device')->getValue();
     $this->withCookie($sessionCookie, $sameBrowser)->withCookie('yg_device', $token)->get('/my')->assertOk();
     expect(UserDevice::query()->count())->toBe(1)->and(UserSession::query()->count())->toBe(1);
 
@@ -140,13 +167,44 @@ it('refuses a fourth device at the door with a clear message', function (): void
         slCheck($user, "s{$i}", $device);
     }
 
-    $this->actingAs($user)->get('/my')->assertRedirect('/login')->assertSessionHas('session_notice', __('auth.device_limit'));
+    $this->postJson('/login', ['login' => $user->email, 'password' => 'password'])
+        ->assertUnauthorized()->assertJsonPath('message', __('auth.device_limit'));
+    $this->assertGuest();
     expect(UserDevice::query()->count())->toBe(3);
 })->group('T-P4-07', 'A1');
 
+it('requires a fresh login for an unregistered browser session without inserting tracking rows on GET', function (): void {
+    $user = User::factory()->create()->assignRole('student');
+    $this->actingAs($user)->get('/my')->assertRedirect('/login');
+    $this->assertDatabaseCount('user_devices', 0);
+    $this->assertDatabaseCount('user_sessions', 0);
+})->group('T-P4-07', 'A1', 'YG-GAP-SEC-001');
+
+it('keeps the same registered device and tracker when a password update rotates the session', function (): void {
+    $user = User::factory()->create()->assignRole('student');
+    $sessionCookie = (string) config('session.cookie');
+    $login = $this->postJson('/login', ['login' => $user->email, 'password' => 'password'])->assertNoContent();
+    $original = UserSession::query()->sole();
+
+    $update = $this->withCredentials()->withCookie($sessionCookie, $login->getCookie($sessionCookie)->getValue())
+        ->putJson('/profile/password', [
+            'current_password' => 'password',
+            'password' => 'Replacement-password-123',
+            'password_confirmation' => 'Replacement-password-123',
+        ])->assertNoContent();
+    $newId = $update->getCookie($sessionCookie)->getValue();
+
+    $this->withCookie($sessionCookie, $newId)->get('/my')->assertOk();
+    $tracker = UserSession::query()->sole();
+    expect($tracker->id)->toBe($original->id)
+        ->and($tracker->session_hash)->toBe(hash('sha256', $newId))
+        ->and($tracker->session_hash)->not->toBe($original->session_hash);
+    $this->assertDatabaseCount('user_devices', 1);
+})->group('T-P4-07', 'A1', 'YG-GAP-SEC-001');
+
 it('ends the stored session on sign-out', function (): void {
     $user = User::factory()->create()->assignRole('student');
-    $this->actingAs($user)->get('/my')->assertOk();
+    $this->postJson('/login', ['login' => $user->email, 'password' => 'password'])->assertNoContent();
     $hash = UserSession::query()->firstOrFail()->session_hash;
 
     app(SessionLimiter::class)->end('unrelated');
@@ -178,6 +236,8 @@ it('builds a masked watermark label and shows it only on protected playback', fu
     app(SetCurriculumStatus::class)($instructor, $course, [$protected->id, $open->id], 'published');
     app(GrantEntitlement::class)($learner, $course, EntitlementSource::Free);
 
-    $this->actingAs($learner)->get("/learn/{$course->id}/{$protected->id}")->assertOk()->assertSee('data-watermark', false)->assertSee($label);
+    $login = $this->postJson('/login', ['login' => $learner->email, 'password' => 'password'])->assertNoContent();
+    $this->withCookie((string) config('session.cookie'), $login->getCookie((string) config('session.cookie'))->getValue())
+        ->get("/learn/{$course->id}/{$protected->id}")->assertOk()->assertSee('data-watermark', false)->assertSee($label);
     $this->actingAs($learner)->get("/learn/{$course->id}/{$open->id}")->assertOk()->assertDontSee('data-watermark', false);
 })->group('T-P4-07', 'A3', 'YG-GAP-VID-003');

@@ -57,6 +57,21 @@ function entGrant(User $learner, Course $course, array $overrides = []): Entitle
     );
 }
 
+it('closes preview access and public resources when their section is archived', function (): void {
+    [, $item, $learner, $admin] = entBuilt();
+    $lesson = $item->itemable;
+    $lesson->update(['is_preview' => true]);
+    $access = app(EntitlementService::class);
+
+    expect($access->canPreviewPublicly($item->refresh())->allowed)->toBeTrue()
+        ->and($access->canAccessPublicResource($learner, $lesson))->toBeTrue();
+    app(ManageSections::class)->archive($admin, $item->section);
+
+    expect($access->canPreviewPublicly($item->refresh())->reason)->toBe('item_unpublished')
+        ->and($access->canAccessItem($learner, $item)->reason)->toBe('item_unpublished')
+        ->and($access->canAccessPublicResource($learner, $lesson))->toBeFalse();
+})->group('T-P4-09', 'A1', 'ED-005');
+
 it('creates one row for the same source however many times it is granted', function (): void {
     [$course, , $learner] = entBuilt();
 
@@ -187,10 +202,10 @@ it('lets staff grant access by hand without any payment (I05) and refuses everyo
     $entitlement = $grant($learner, $course, EntitlementSource::ManualGrant, 'support-ticket-7', null, now()->addMonth(), $admin, 'scholarship');
 
     expect($entitlement->status)->toBe(Entitlement::ACTIVE)->and($entitlement->granted_by)->toBe($admin->id)->and($entitlement->reason)->toBe('scholarship')
-        ->and(Schema::hasTable('orders'))->toBeFalse() // no payment exists, none was needed
         ->and(fn () => $grant($learner, $course, EntitlementSource::ManualGrant, 'x', null, null, $learner))->toThrow(AuthorizationException::class)
         ->and(fn () => $grant($learner, $course, EntitlementSource::ManualPayment, 'x'))->toThrow(AuthorizationException::class)
         ->and(fn () => $grant($learner, $course, EntitlementSource::Free, '', now(), now()->subDay()))->toThrow(ValidationException::class);
+    $this->assertDatabaseCount('orders', 0);
 })->group('T-P4-01', 'A1', 'I05');
 
 it('refuses to revoke without permission or a reason', function (): void {

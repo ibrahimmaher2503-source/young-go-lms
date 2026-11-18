@@ -22,6 +22,7 @@ use DateTimeZone;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Illuminate\Validation\ValidationException;
@@ -38,12 +39,14 @@ trait ManagesLiveSessions
                     ->options(fn (): array => CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->orderBy('sort')->get()->mapWithKeys(fn (CourseSection $s): array => [$s->getKey() => (string) $s->title])->all()),
                 TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
                 TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+                Textarea::make('description.ar')->label(__('live.description').' (AR)')->maxLength(5000)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                Textarea::make('description.en')->label(__('live.description').' (EN)')->maxLength(5000)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
                 ...$this->liveTimeFields(),
                 Select::make('provider')->label(__('live.provider'))->options($this->meetingProviderOptions())->default('manual_zoom')->required()->native(false),
                 TextInput::make('meeting_url')->label(__('live.meeting_url'))->helperText(__('live.meeting_url_help'))->url()->maxLength(2048)->extraInputAttributes(['dir' => 'ltr']),
                 TextInput::make('join_window_minutes')->label(__('live.join_window'))->numeric()->minValue(0)->maxValue(240)->default(15),
                 Select::make('cohort_id')->label(__('live.cohort'))->native(false)->placeholder(__('live.whole_course'))
-                    ->options(fn (): array => Cohort::query()->where('course_id', $this->course()->getKey())->orderBy('id')->pluck('name', 'id')->all()),
+                    ->options(fn (): array => Cohort::query()->where('course_id', $this->course()->getKey())->orderBy('id')->get()->mapWithKeys(fn (Cohort $cohort): array => [$cohort->id => $cohort->localizedName()])->all()),
                 Select::make('instructor_id')->label(__('live.instructor'))->native(false)
                     ->options(fn (): array => $this->course()->instructors()->orderBy('name')->pluck('users.name', 'users.id')->all()),
             ])

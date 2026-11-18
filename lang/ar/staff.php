@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
-return ['user' => 'مستخدم', 'users' => 'المستخدمون', 'roles' => 'الأدوار', 'name' => 'الاسم', 'email' => 'البريد الإلكتروني', 'status' => 'الحالة', 'active' => 'نشط', 'suspended' => 'موقوف', 'deactivated' => 'معطل', 'permissions' => 'الصلاحيات',
+return ['user' => 'مستخدم', 'table_user' => 'المستخدم', 'table_role' => 'الدور', 'users' => 'المستخدمون', 'roles' => 'الأدوار', 'name' => 'الاسم', 'email' => 'البريد الإلكتروني', 'status' => 'الحالة', 'active' => 'نشط', 'suspended' => 'موقوف', 'deactivated' => 'معطل', 'permissions' => 'الصلاحيات',
+    'overview' => 'نظرة عامة',
+    'overview_description' => 'متابعة الأكاديمية من مكان واحد.',
+    'manage_courses' => 'إدارة الدورات',
+    'overview_learners' => 'الطلاب',
+    'overview_courses' => 'الدورات المنشورة',
+    'overview_help' => 'طلبات المساعدة المفتوحة',
     'manage_users' => 'إدارة المستخدمين',
     'users_description' => 'إدارة الحسابات والأدوار من مكان واحد',
     'total_users' => 'إجمالي المستخدمين',
-    'inactive_users' => 'غير نشط',
+    'inactive_users' => 'بانتظار التفعيل',
     'all_users' => 'كل المستخدمين',
     'students' => 'الطلاب',
     'instructors' => 'المدرّبون',

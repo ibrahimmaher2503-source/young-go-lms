@@ -8,6 +8,7 @@ use Filament\Panel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -84,6 +85,24 @@ it('lets super admin pass policy gates while ordinary roles still require permis
 
     expect($superAdmin->can('system.security.manage'))->toBeTrue()
         ->and($student->can('system.security.manage'))->toBeFalse();
+})->group('T-P1-03', 'PRD-06');
+
+it('audits super admin overrides with the actor, ability and target', function (): void {
+    $admin = User::factory()->create();
+    $admin->assignRole('super_admin');
+    $target = User::factory()->create();
+
+    Gate::define('test.override', static fn (User $actor, User $subject): bool => false);
+
+    expect($admin->can('system.security.manage'))->toBeTrue()
+        ->and(Activity::query()->where('event', 'permission.super_admin_bypass')->count())->toBe(0)
+        ->and($admin->can('test.override', $target))->toBeTrue();
+
+    $entry = Activity::query()->where('event', 'permission.super_admin_bypass')->sole();
+
+    expect($entry->causer?->is($admin))->toBeTrue()
+        ->and($entry->subject?->is($target))->toBeTrue()
+        ->and($entry->properties->get('context'))->toBe(['ability' => 'test.override']);
 })->group('T-P1-03', 'PRD-06');
 
 it('restricts Filament panels to active users with the matching permission', function (): void {

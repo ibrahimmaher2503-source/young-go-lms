@@ -26,7 +26,10 @@
                 <x-ui.link :href="url('/family#add-child')">{{ __('parent.add_child') }}</x-ui.link>
             </x-ui.card>
         @else
-            <p class="flex items-center gap-2 rounded-card bg-assistant px-4 py-3 text-lg font-semibold text-primary" role="status" data-viewing><x-ui.icon name="user" /> {{ __('parent.viewing', ['name' => $childName($selected)]) }}</p>
+            <div class="flex flex-wrap items-center justify-between gap-2 rounded-card bg-assistant px-4 py-3 text-lg font-semibold text-primary">
+                <p class="flex items-center gap-2" role="status" data-viewing><x-ui.icon name="user" /> {{ __('parent.viewing', ['name' => $childName($selected)]) }}</p>
+                <x-family.child-switcher :child="$selected" :success="url('/my')" />
+            </div>
 
             <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
                 <div class="min-w-0 space-y-5">
@@ -57,6 +60,7 @@
                         @empty
                             <p class="text-muted" data-widget="child-courses-empty">{{ __('parent.no_courses', ['name' => $childName($selected)]) }}</p>
                         @endforelse
+                        @if($courses->hasPages())<x-ui.pagination :paginator="$courses" />@endif
                     </section>
 
                     <section class="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="results-title">

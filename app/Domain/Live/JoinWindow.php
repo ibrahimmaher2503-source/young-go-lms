@@ -8,8 +8,8 @@ use App\Models\LiveSession;
 use Carbon\CarbonInterface;
 
 /**
- * Whether a session can be joined right now. Cancelled and finished sessions never can; an opened session can until it
- * ends; a scheduled one only from its join window (minutes before the start) until the end. Time comes from the server.
+ * Whether a session can be joined right now. Cancelled and finished sessions never can; an opened or scheduled
+ * session can only be joined from the start of its configured window until it ends. Time comes from the server.
  */
 final class JoinWindow
 {
@@ -30,7 +30,7 @@ final class JoinWindow
         if ($session->status === LiveSession::COMPLETED || $now->gte($session->ends_at)) {
             return self::ENDED;
         }
-        if ($session->status === LiveSession::OPEN || $now->gte($session->starts_at->copy()->subMinutes($session->join_window_minutes))) {
+        if ($now->gte(self::opensAt($session))) {
             return self::JOINABLE;
         }
 

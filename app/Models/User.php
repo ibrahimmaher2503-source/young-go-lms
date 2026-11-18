@@ -31,7 +31,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
  * @property int|null $two_factor_last_step
  */
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'phone_reminder_opt_ins'])]
 class User extends Authenticatable implements FilamentUser, HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -93,6 +93,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             'password' => 'hashed',
             'birth_year' => 'integer',
             'birth_month' => 'integer',
+            'phone_reminder_opt_ins' => 'encrypted:array',
             'last_login_at' => 'datetime',
             'two_factor_secret' => 'encrypted',
             'two_factor_recovery_codes' => 'encrypted:array',

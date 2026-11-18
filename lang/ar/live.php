@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'description' => 'وصف الجلسة',
     'title' => 'جلسة مباشرة',
     'schedule' => 'جدولة جلسة مباشرة',
     'reschedule' => 'إعادة جدولة',

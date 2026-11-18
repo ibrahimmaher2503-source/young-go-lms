@@ -71,7 +71,7 @@ final class ManageCourseCohorts extends Page
     {
         return Action::make('editCohort')->label(__('cohorts.edit'))->modalHeading(__('cohorts.edit'))
             ->schema($this->schema())
-            ->fillForm(fn (array $arguments): array => $this->cohortFor($arguments['cohort'] ?? 0)->only(['name', 'capacity', 'starts_on', 'ends_on']))
+            ->fillForm(fn (array $arguments): array => $this->cohortFor($arguments['cohort'] ?? 0)->only(['name', 'capacity', 'starts_on', 'ends_on', 'name_translations', 'enrollment_opens_on', 'enrollment_closes_on']))
             ->action(function (array $data, array $arguments, Action $action): void {
                 try {
                     app(ManageCohorts::class)->update($this->actor(), $this->cohortFor($arguments['cohort'] ?? 0), $data);
@@ -125,10 +125,13 @@ final class ManageCourseCohorts extends Page
     private function schema(): array
     {
         return [
-            TextInput::make('name')->label(__('cohorts.name'))->required()->maxLength(120),
+            TextInput::make('name_translations.ar')->label(__('cohorts.name').' (AR)')->maxLength(120)->extraInputAttributes(['lang' => 'ar', 'dir' => 'rtl']),
+            TextInput::make('name')->label(__('cohorts.name').' (EN)')->required()->maxLength(120)->extraInputAttributes(['lang' => 'en', 'dir' => 'ltr']),
             TextInput::make('capacity')->label(__('cohorts.capacity'))->numeric()->minValue(1)->helperText(__('cohorts.unlimited')),
             DatePicker::make('starts_on')->label(__('cohorts.starts_on')),
             DatePicker::make('ends_on')->label(__('cohorts.ends_on'))->afterOrEqual('starts_on'),
+            DatePicker::make('enrollment_opens_on')->label(__('cohorts.enrollment_opens_on')),
+            DatePicker::make('enrollment_closes_on')->label(__('cohorts.enrollment_closes_on')),
         ];
     }
 

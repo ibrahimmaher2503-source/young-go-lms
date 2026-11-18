@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 use App\Domain\AI\AssistantEligibility;
 use App\Domain\AI\UnavailableReason;
+use App\Domain\Assessment\Actions\ManageQuestions;
+use App\Domain\Assessment\Actions\StartQuizAttempt;
+use App\Domain\Assessment\Actions\SubmitQuizAttempt;
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Cohorts\Cohort;
 use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
+use App\Domain\Curriculum\Queries\EntitledCurriculumQuery;
 use App\Domain\Entitlements\AccessDecision;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\Entitlement;
@@ -19,6 +24,7 @@ use App\Domain\Settings\PlatformFlag;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\LessonCurriculumDocument;
+use App\Models\LiveSession;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -86,7 +92,7 @@ it('covers every layer and reason code in one ordered decision', function (calla
         app(RecordProgress::class)->markComplete($l, $i['a']);
         app(RecordProgress::class)->markComplete($l, $i['c']);
     }, 'quiz', null],
-    'drip comes before sequence' => [fn ($c, $i) => $i['c']->update(['unlock_rule' => 'date', 'unlock_at' => now()->addWeek()]), 'c', 'drip_locked'],
+    'sequence comes before drip' => [fn ($c, $i) => $i['c']->update(['unlock_rule' => 'date', 'unlock_at' => now()->addWeek()]), 'c', 'sequence_locked'],
     'course not open' => [fn ($c) => $c->update(['status' => 'suspended']), 'a', 'course_unpublished'],
     'item not published' => [fn ($c, $i) => $i['a']->update(['status' => 'draft']), 'a', 'item_unpublished'],
     'not enrolled' => [fn ($c, $i, $l) => Entitlement::query()->delete(), 'a', 'not_entitled'],
@@ -155,3 +161,52 @@ it('lets staff set the lesson order in the course basics', function (): void {
     expect($updated->sequence_mode)->toBe('sequential');
     expect(fn () => app(SaveCourseWizard::class)($admin, ['title' => ['en' => 'Order'], 'sequence_mode' => 'random'], $course, 1))->toThrow(ValidationException::class);
 })->group('T-P4-09', 'A1');
+
+it('requires passing a required quiz before the next item even in free course order', function (): void {
+    [$course, $items, $learner] = alBuild('free');
+    $quiz = $items['quiz']->itemable;
+    $quiz->update(['progression' => 'require_pass', 'pass_mark_percent' => 100]);
+    $question = app(ManageQuestions::class)->add($course->instructors()->sole(), $quiz, [
+        'type' => 'true_false', 'prompt' => ['en' => 'Is this a quiz?'], 'true_is_correct' => true, 'points' => 1,
+    ]);
+    $start = app(StartQuizAttempt::class);
+    $submit = app(SubmitQuizAttempt::class);
+
+    expect(alDecide($learner, $items['a'])->allowed)->toBeTrue()
+        ->and(alDecide($learner, $items['d'])->reason)->toBe('sequence_locked');
+
+    $failed = $submit($learner, $start($learner, $items['quiz']));
+    expect($failed->passed)->toBeFalse()->and(alDecide($learner, $items['d'])->reason)->toBe('sequence_locked');
+    $passed = $submit($learner, $start($learner, $items['quiz']), [$question->id => ['selected' => [$question->options->first()->id]]]);
+    expect($passed->passed)->toBeTrue();
+    expect(alDecide($learner, $items['d'])->allowed)->toBeTrue();
+})->group('T-P6-02', 'A1', 'ED-025');
+
+it('applies cohort seat and drip checks in the shared item decision', function (): void {
+    [$course, $items, $learner] = alBuild('free');
+    $start = now()->subDay()->startOfDay();
+    $cohort = Cohort::query()->create(['course_id' => $course->id, 'name' => 'Test cohort', 'starts_on' => $start]);
+    $session = LiveSession::query()->create([
+        'course_id' => $course->id, 'cohort_id' => $cohort->id, 'title' => ['en' => 'Cohort session'],
+        'starts_at' => now()->addDays(5), 'ends_at' => now()->addDays(5)->addHour(), 'timezone' => 'UTC', 'provider' => 'manual_zoom',
+    ]);
+    $item = $session->item()->create([
+        'course_id' => $course->id, 'section_id' => $items['a']->section_id, 'sort' => 999,
+        'status' => 'published', 'unlock_rule' => 'days', 'unlock_days' => 3,
+    ]);
+
+    expect(alDecide($learner, $item)->reason)->toBe('cohort_locked');
+    $outline = fn (): string => json_encode(app(EntitledCurriculumQuery::class)->for($learner, $course), JSON_THROW_ON_ERROR);
+    expect($outline())->not->toContain('Cohort session');
+    $this->actingAs($learner)->get("/learn/{$course->id}/{$item->id}")->assertNotFound();
+    $member = $cohort->members()->create(['learner_id' => $learner->id, 'status' => 'waitlisted']);
+    expect(alDecide($learner, $item)->reason)->toBe('cohort_locked');
+    expect($outline())->not->toContain('Cohort session');
+    $member->update(['status' => 'seated']);
+
+    $decision = alDecide($learner, $item);
+    expect($decision->reason)->toBe('drip_locked')->and($decision->unlockAt->equalTo($start->copy()->addDays(3)))->toBeTrue();
+    expect($outline())->toContain('Cohort session');
+    $this->travelTo($start->copy()->addDays(3));
+    expect(alDecide($learner, $item)->allowed)->toBeTrue();
+})->group('T-P4-09', 'A1', 'ED-005', 'ED-025');

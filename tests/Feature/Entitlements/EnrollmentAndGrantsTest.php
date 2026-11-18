@@ -105,8 +105,8 @@ it('grants by hand without any order and revokes with a reason that blocks acces
 
     $entitlement = Entitlement::query()->firstOrFail();
     expect($entitlement->source_type)->toBe(EntitlementSource::ManualGrant)->and($entitlement->ends_at)->toBeNull()->and($entitlement->granted_by)->toBe($admin->id)
-        ->and(app(EntitlementService::class)->canAccessCourse($learner, $course)->allowed)->toBeTrue()
-        ->and(Schema::hasTable('orders'))->toBeFalse();
+        ->and(app(EntitlementService::class)->canAccessCourse($learner, $course)->allowed)->toBeTrue();
+    $this->assertDatabaseCount('orders', 0);
 
     Livewire::test(ListManualGrants::class)
         ->assertCanSeeTableRecords([$entitlement])

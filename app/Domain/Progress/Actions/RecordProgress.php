@@ -28,7 +28,7 @@ final class RecordProgress
         $lesson = $this->lessonFor($learner, $item);
         $position = max(0, $position);
 
-        $progress = DB::transaction(function () use ($learner, $item, $lesson, $position): LessonProgress {
+        [$progress, $newlyCompleted] = DB::transaction(function () use ($learner, $item, $lesson, $position): array {
             $row = LessonProgress::query()->where('learner_id', $learner->getKey())->where('curriculum_item_id', $item->getKey())->lockForUpdate()->first()
                 ?? new LessonProgress(['learner_id' => $learner->getKey(), 'curriculum_item_id' => $item->getKey()]);
 
@@ -41,8 +41,12 @@ final class RecordProgress
             $furthest = (int) $row->furthest_seconds;
             if ($row->last_accessed_at !== null) {
                 $elapsed = max(0, (int) $row->last_accessed_at->diffInSeconds($now));
-                $allowed = $furthest + (int) ceil($elapsed * (float) config('learning.progress.max_speed')) + (int) config('learning.progress.slack_seconds');
+                if ($elapsed > (int) config('learning.progress.max_heartbeat_gap_seconds')) {
+                    $elapsed = 0;
+                }
+                $allowed = $furthest + (int) ceil($elapsed * (float) config('learning.progress.max_speed'));
             } else {
+                // Grant startup tolerance once; repeating a heartbeat must not create watching credit.
                 $allowed = $furthest + (int) config('learning.progress.slack_seconds');
             }
             $furthest = max($furthest, min($position, $allowed));
@@ -53,17 +57,20 @@ final class RecordProgress
                 'status' => $row->status ?? LessonProgress::IN_PROGRESS,
             ]);
 
-            if ($row->status !== LessonProgress::COMPLETED && $this->completesByWatching($lesson, (int) $row->percent, $duration)) {
+            $newlyCompleted = $row->status !== LessonProgress::COMPLETED && $this->completesByWatching($lesson, (int) $row->percent, $duration);
+            if ($newlyCompleted) {
                 $row->forceFill(['status' => LessonProgress::COMPLETED, 'completed_at' => $now, 'completion_source' => 'auto']);
             }
             $row->save();
+            if ($newlyCompleted) {
+                ($this->recalculate)($learner, $item->course);
+            }
 
-            return $row;
+            return [$row, $newlyCompleted];
         });
 
-        ($this->recalculate)($learner, $item->course);
-        $this->access->flush(); // a finished lesson can open the next one in a sequential course
-        if ($progress->status === LessonProgress::COMPLETED) {
+        if ($newlyCompleted) {
+            $this->access->flush(); // a finished lesson can open the next one in a sequential course
             CompletionTrigger::changed($learner, (int) $item->course_id);
         }
 
@@ -89,11 +96,11 @@ final class RecordProgress
                 $row->forceFill(['status' => LessonProgress::COMPLETED, 'percent' => 100, 'completed_at' => now(), 'completion_source' => 'manual']);
             }
             $row->forceFill(['last_accessed_at' => now()])->save();
+            ($this->recalculate)($learner, $item->course);
 
             return $row;
         });
 
-        ($this->recalculate)($learner, $item->course);
         $this->access->flush();
         CompletionTrigger::changed($learner, (int) $item->course_id);
 

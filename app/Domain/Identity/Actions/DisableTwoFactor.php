@@ -7,6 +7,7 @@ namespace App\Domain\Identity\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class DisableTwoFactor
@@ -24,13 +25,15 @@ final class DisableTwoFactor
             return;
         }
 
-        $user->forceFill([
-            'two_factor_secret' => null, 'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null, 'two_factor_last_step' => null,
-        ])->save();
+        DB::transaction(function () use ($user, $actorId): void {
+            $user->forceFill([
+                'two_factor_secret' => null, 'two_factor_recovery_codes' => null,
+                'two_factor_confirmed_at' => null, 'two_factor_last_step' => null,
+            ])->save();
 
-        if ($this->audit->record('auth.two_factor_disabled', $user, $actorId, null, null, ['via' => $actorId === null ? 'cli' : 'self']) === null) {
-            throw new RuntimeException('Unable to record two-factor audit.');
-        }
+            if ($this->audit->record('auth.two_factor_disabled', $user, $actorId, null, null, ['via' => $actorId === null ? 'cli' : 'self']) === null) {
+                throw new RuntimeException('Unable to record two-factor audit.');
+            }
+        });
     }
 }

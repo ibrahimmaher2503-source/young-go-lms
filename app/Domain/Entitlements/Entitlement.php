@@ -6,6 +6,7 @@ namespace App\Domain\Entitlements;
 
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -27,6 +28,8 @@ final class Entitlement extends Model
 
     public const string REVOKED = 'revoked';
 
+    public const string SCHEDULED = 'scheduled';
+
     protected $guarded = ['id'];
 
     protected function casts(): array
@@ -37,7 +40,35 @@ final class Entitlement extends Model
     /** Active means: not revoked or expired, already started, and not past its end. */
     public function isCurrent(): bool
     {
-        return $this->status === self::ACTIVE && $this->starts_at->lte(now()) && ($this->ends_at === null || $this->ends_at->gt(now()));
+        return $this->accessState() === self::ACTIVE;
+    }
+
+    public function accessState(): string
+    {
+        $now = now();
+
+        return match (true) {
+            $this->status === self::REVOKED => self::REVOKED,
+            $this->status === self::EXPIRED, $this->ends_at !== null && $this->ends_at->lte($now) => self::EXPIRED,
+            $this->status === self::ACTIVE && $this->starts_at->lte($now) => self::ACTIVE,
+            default => self::SCHEDULED,
+        };
+    }
+
+    /** @param Builder<self> $query */
+    public function scopeWithAccessState(Builder $query, ?string $state): void
+    {
+        $now = now();
+
+        match ($state) {
+            self::ACTIVE, self::SCHEDULED => $query->where('status', self::ACTIVE)
+                ->where('starts_at', $state === self::ACTIVE ? '<=' : '>', $now)
+                ->where(fn (Builder $row) => $row->whereNull('ends_at')->orWhere('ends_at', '>', $now)),
+            self::EXPIRED => $query->where(fn (Builder $row) => $row->where('status', self::EXPIRED)
+                ->orWhere(fn (Builder $active) => $active->where('status', self::ACTIVE)->where('ends_at', '<=', $now))),
+            self::REVOKED => $query->where('status', self::REVOKED),
+            default => null,
+        };
     }
 
     /** @return BelongsTo<User, $this> */

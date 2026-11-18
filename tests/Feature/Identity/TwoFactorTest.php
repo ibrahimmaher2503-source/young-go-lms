@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Identity\Actions\DisableTwoFactor;
+use App\Domain\Identity\Actions\RegenerateRecoveryCodes;
 use App\Domain\Identity\TwoFactorSession;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -167,7 +169,45 @@ it('regenerates recovery codes only with the password', function (): void {
     $this->postJson('/security/two-factor/recovery-codes', ['password' => 'nope'])->assertUnprocessable();
     $new = $this->postJson('/security/two-factor/recovery-codes', ['password' => 'Password1!secure'])->assertOk()->json('recovery_codes');
     expect($new)->toHaveCount(8)->and($new)->not->toContain($old[0]);
+    $entry = Activity::query()->where('event', 'auth.two_factor_recovery_regenerated')->sole();
+    expect($entry->causer_id)->toBe($admin->id)->and($entry->subject_id)->toBe($admin->id);
 })->group('T-P1-11', 'A1');
+
+it('preserves two-factor state when its mandatory audit fails', function (string $operation, string $failure): void {
+    $user = tfUser('parent');
+    tfEnroll($this, $user);
+    $columns = ['two_factor_secret', 'two_factor_recovery_codes', 'two_factor_confirmed_at', 'two_factor_last_step'];
+    $before = (array) DB::table('users')->where('id', $user->id)->first($columns);
+    $auditCount = Activity::query()->count();
+
+    if ($failure === 'null') {
+        activity()->disableLogging();
+    } else {
+        Activity::creating(static function (): void {
+            throw new RuntimeException('Audit storage unavailable.');
+        });
+    }
+
+    try {
+        expect(function () use ($operation, $user): void {
+            if ($operation === 'disable') {
+                app(DisableTwoFactor::class)->handle($user, (int) $user->id);
+            } else {
+                app(RegenerateRecoveryCodes::class)->handle($user);
+            }
+        })->toThrow(RuntimeException::class);
+    } finally {
+        activity()->enableLogging();
+    }
+
+    expect((array) DB::table('users')->where('id', $user->id)->first($columns))->toBe($before)
+        ->and(Activity::query()->count())->toBe($auditCount);
+})->with([
+    'disable with null audit' => ['disable', 'null'],
+    'disable with throwing audit' => ['disable', 'throw'],
+    'regenerate with null audit' => ['regenerate', 'null'],
+    'regenerate with throwing audit' => ['regenerate', 'throw'],
+])->group('T-P1-11', 'A1', 'YG-GAP-SEC-003', 'ED-016');
 
 it('lets an operator reset 2FA from the command line with an audit entry', function (): void {
     $admin = tfUser('admin', ['email' => 'ops@example.test']);

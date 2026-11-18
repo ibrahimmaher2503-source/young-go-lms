@@ -26,7 +26,7 @@ final class ReserveCohortSeat
     {
         return DB::transaction(function () use ($cohort, $learner, $actor): CohortMember {
             $locked = Cohort::query()->whereKey($cohort->getKey())->lockForUpdate()->firstOrFail();
-            if ($locked->status !== Cohort::OPEN) {
+            if (! $locked->enrollmentIsOpen()) {
                 throw ValidationException::withMessages(['cohort' => __('cohorts.closed')]);
             }
 
