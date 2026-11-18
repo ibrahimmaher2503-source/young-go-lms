@@ -34,6 +34,7 @@ return [
     'points' => 'الدرجات',
     'feedback' => 'ملاحظات للمتعلم',
     'comment_added' => 'تمت إضافة الملاحظات.',
+    'release_result' => 'نشر النتيجة والإجابات',
     'essay_graded' => 'تم تصحيح الإجابة.',
     'not_allowed' => 'لا يمكنك مراجعة هذا العمل.',
     'actions' => [

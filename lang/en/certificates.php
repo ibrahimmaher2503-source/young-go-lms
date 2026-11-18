@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'edit_templates' => 'Edit site-wide certificate templates',
+    'issuer_text_ar' => 'Arabic issuer text',
+    'issuer_text_en' => 'English issuer text',
     'reason_required' => 'Enter a reason of 3 to 500 characters.',
     'not_active' => 'This certificate is no longer valid.',
     'render_failed' => 'We could not prepare the certificate right now. Please try again later.',
@@ -16,6 +19,11 @@ return [
         'body' => 'You completed ":title". Your certificate is ready to download.',
     ],
     'verify' => [
+        'registry' => 'Official certificate verification',
+        'description' => 'Check the certificate against Young Go’s issuance record.',
+        'scan' => 'Scan to open this verification page',
+        'copy_link' => 'Copy verification link',
+        'copied' => 'Link copied',
         'title' => 'Certificate verification',
         'valid' => 'Valid certificate',
         'revoked' => 'This certificate has been revoked',

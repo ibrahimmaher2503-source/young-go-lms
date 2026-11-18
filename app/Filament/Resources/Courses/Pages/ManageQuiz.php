@@ -22,9 +22,10 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 
 /** T-P6-01: author one quiz of a course: settings, questions per type, order, and a learner-style preview that never shows the answer key. */
 final class ManageQuiz extends Page
@@ -35,6 +36,7 @@ final class ManageQuiz extends Page
 
     protected string $view = 'filament.courses.manage-quiz';
 
+    #[Locked]
     public int $quizId = 0;
 
     public bool $previewing = false;
@@ -43,9 +45,7 @@ final class ManageQuiz extends Page
     {
         $this->record = $this->resolveRecord($record);
         $this->quizId = (int) $quiz;
-        $found = $this->quiz();
-        abort_unless((int) QuizAccess::courseOf($found)->getKey() === (int) $this->course()->getKey(), 404);
-        abort_unless($this->actor()->can('assessment.manage') && Gate::forUser($this->actor())->allows('update', $this->course()), 403);
+        $this->quiz();
     }
 
     public function getTitle(): string
@@ -199,12 +199,15 @@ final class ManageQuiz extends Page
 
     private function quiz(): Quiz
     {
-        return Quiz::query()->findOrFail($this->quizId);
+        $quiz = Quiz::query()->whereHas('item', fn (Builder $item): Builder => $item->where('course_id', $this->course()->getKey()))->findOrFail($this->quizId);
+        QuizAccess::authorize($this->actor(), $quiz);
+
+        return $quiz;
     }
 
     private function questionFor(int|string $id): Question
     {
-        return Question::query()->where('quiz_id', $this->quizId)->with(['options', 'quiz'])->findOrFail($id);
+        return $this->quiz()->questions()->with(['options', 'quiz'])->findOrFail($id);
     }
 
     private function course(): Course

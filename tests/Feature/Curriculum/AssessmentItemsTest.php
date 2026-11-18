@@ -123,3 +123,27 @@ it('adds and archives quizzes and assignments from the curriculum manager', func
 
     expect(aiItemsManagerOrder($course))->toBe([])->and($item->itemable->refresh()->archived_at)->not->toBeNull();
 })->group('T-P3-11', 'A1', 'YG-GAP-CNT-001', 'ED-002');
+
+it('authors a course quiz and a lesson assignment without changing their curriculum placement', function (): void {
+    [$course, $instructor, $section] = aiItemsCourse();
+    $lesson = app(ManageLessons::class)->add($instructor, $section, ['title' => ['en' => 'Lesson']]);
+    [, $otherInstructor, $otherSection] = aiItemsCourse();
+    $otherLesson = app(ManageLessons::class)->add($otherInstructor, $otherSection, ['title' => ['en' => 'Other lesson']]);
+    $this->actingAs($instructor);
+
+    $page = Livewire::test(ManageCurriculum::class, ['record' => $course->id])
+        ->callAction('addAssessment', ['kind' => 'quiz', 'section_id' => $section->id, 'association' => 'course', 'title' => ['en' => 'Course quiz']])
+        ->assertHasNoActionErrors()
+        ->callAction('addAssessment', ['kind' => 'assignment', 'section_id' => $section->id, 'association' => 'lesson', 'associated_lesson_item_id' => $lesson->id, 'title' => ['en' => 'Lesson assignment']])
+        ->assertHasNoActionErrors();
+
+    $quiz = CurriculumItem::query()->where('itemable_type', 'quiz')->firstOrFail();
+    $assignment = CurriculumItem::query()->where('itemable_type', 'assignment')->firstOrFail();
+    expect($quiz->association)->toBe('course')->and($quiz->course_id)->toBe($course->id)
+        ->and($assignment->association)->toBe('lesson')->and($assignment->associated_lesson_item_id)->toBe($lesson->id)
+        ->and(aiItemsManagerOrder($course))->toBe(['Lesson', 'Course quiz', 'Lesson assignment']);
+
+    expect(fn () => app(ManageAssessmentItems::class)->add($instructor, $section, 'quiz', [
+        'title' => ['en' => 'Bad association'], 'association' => 'lesson', 'associated_lesson_item_id' => $otherLesson->id,
+    ]))->toThrow(ValidationException::class);
+})->group('T-P3-11', 'PRD-12', 'PRD-13', 'ED-002');

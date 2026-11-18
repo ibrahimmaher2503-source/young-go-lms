@@ -9,6 +9,7 @@ use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\Assignment;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
+use App\Models\Lesson;
 use App\Models\LiveSession;
 use App\Models\Quiz;
 use App\Models\User;
@@ -40,6 +41,8 @@ final class ManageAssessmentItems
             'title' => ['required', 'array'],
             'title.ar' => ['nullable', 'string', 'max:150', Rule::requiredIf(blank($data['title']['en'] ?? null))],
             'title.en' => ['nullable', 'string', 'max:150', Rule::requiredIf(blank($data['title']['ar'] ?? null))],
+            'association' => ['sometimes', 'required', 'in:course,section,lesson'],
+            'associated_lesson_item_id' => ['exclude_unless:association,lesson', 'required', 'integer'],
             'description' => ['nullable', 'array'],
             'description.ar' => ['nullable', 'string', 'max:5000'],
             'description.en' => ['nullable', 'string', 'max:5000'],
@@ -49,10 +52,17 @@ final class ManageAssessmentItems
 
         return DB::transaction(function () use ($actor, $section, $kind, $model, $validated): CurriculumItem {
             CourseSection::query()->whereKey($section->getKey())->lockForUpdate()->first();
+            $lessonItemId = $validated['associated_lesson_item_id'] ?? null;
+            if ($lessonItemId !== null && ! CurriculumItem::query()->where('course_id', $section->course_id)
+                ->whereKey($lessonItemId)->whereMorphedTo('itemable', Lesson::class)
+                ->whereHasMorph('itemable', [Lesson::class], fn ($lesson) => $lesson->whereNull('archived_at'))->exists()) {
+                throw ValidationException::withMessages(['associated_lesson_item_id' => __('curriculum.associated_lesson_invalid')]);
+            }
             $entity = $model::query()->create(['title' => array_filter($validated['title']), 'description' => array_filter($validated['description'] ?? [])]);
             $sort = (int) CurriculumItem::query()->where('section_id', $section->getKey())->max('sort') + 1;
             $item = CurriculumItem::query()->create([
                 'course_id' => $section->course_id, 'section_id' => $section->getKey(), 'sort' => $sort,
+                'association' => $validated['association'] ?? 'section', 'associated_lesson_item_id' => $lessonItemId,
                 'itemable_type' => $kind, 'itemable_id' => $entity->getKey(), 'status' => CurriculumItem::STATUS_DRAFT,
             ]);
 

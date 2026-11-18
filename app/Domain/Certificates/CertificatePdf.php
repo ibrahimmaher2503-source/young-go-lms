@@ -27,24 +27,27 @@ final class CertificatePdf
     {
         $locale = in_array($locale, self::LOCALES, true) ? $locale : 'ar';
 
-        return Pdf::view('certificates.pdf', $this->data($certificate, $locale))
+        $template = $this->template($locale);
+
+        return Pdf::view($template->view(), $this->data($certificate, $locale, $template))
             ->format('a4')->landscape()->margins(0, 0, 0, 0)
             ->download($certificate->number.'.pdf')
             ->headers(['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     /** @return array<string, mixed> */
-    public function data(Certificate $certificate, string $locale): array
+    public function data(Certificate $certificate, string $locale, ?CertificateTemplate $template = null): array
     {
         $other = $locale === 'ar' ? 'en' : 'ar';
-        $issuer = $locale === 'ar' ? $this->settings->issuer_text_ar : $this->settings->issuer_text_en;
+        $template ??= $this->template($locale);
+        $issuer = $template->issuer_text ?? ($locale === 'ar' ? $this->settings->issuer_text_ar : $this->settings->issuer_text_en);
         $title = $certificate->titleIn($locale);
         $otherTitle = $certificate->titleIn($other);
 
         return [
             'locale' => $locale,
             'dir' => $locale === 'ar' ? 'rtl' : 'ltr',
-            'name' => $certificate->learner_name,
+            'name' => $certificate->nameIn($locale),
             'courseTitle' => $title,
             'otherTitle' => $otherTitle !== $title ? $otherTitle : null,
             'otherDir' => $other === 'ar' ? 'rtl' : 'ltr',
@@ -53,15 +56,21 @@ final class CertificatePdf
             'number' => $certificate->number,
             'issuer' => filled($issuer) ? $issuer : __('certificates.pdf.issuer_placeholder', [], $locale),
             'verifyUrl' => $certificate->verifyUrl(),
-            'qr' => 'data:image/svg+xml;base64,'.base64_encode($this->qrSvg($certificate->verifyUrl())),
+            'qr' => $this->verificationQr($certificate),
             'font' => 'data:font/ttf;base64,'.base64_encode((string) file_get_contents(resource_path('fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf'))),
         ];
     }
 
-    private function qrSvg(string $url): string
+    private function template(string $locale): CertificateTemplate
+    {
+        return CertificateTemplate::query()->firstWhere('locale', $locale)
+            ?? new CertificateTemplate(['locale' => $locale, 'layout' => CertificateTemplate::DEFAULT_LAYOUT]);
+    }
+
+    public function verificationQr(Certificate $certificate): string
     {
         $writer = new Writer(new ImageRenderer(new RendererStyle(240, 0), new SvgImageBackEnd));
 
-        return $writer->writeString($url, Encoder::DEFAULT_BYTE_MODE_ENCODING);
+        return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($certificate->verifyUrl(), Encoder::DEFAULT_BYTE_MODE_ENCODING));
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\EssayReview\Pages;
 
 use App\Domain\Assessment\Actions\GradeEssayAnswer;
+use App\Domain\Assessment\Actions\ReleaseQuizResult;
 use App\Domain\Assessment\QuizAccess;
 use App\Domain\Assignments\ReviewAccess;
 use App\Domain\Assignments\ReviewRefusedException;
@@ -46,6 +47,18 @@ final class ReviewEssayAttempt extends Page
     public function getBreadcrumbs(): array
     {
         return [];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('releaseResult')->label(__('review.release_result'))->requiresConfirmation()
+                ->visible(fn (): bool => ReleaseQuizResult::canRelease($this->attempt()))
+                ->action(function (): void {
+                    app(ReleaseQuizResult::class)($this->actor(), $this->attempt());
+                    $this->record = $this->resolveRecord($this->attempt()->getKey());
+                }),
+        ];
     }
 
     public function gradeAction(): Action

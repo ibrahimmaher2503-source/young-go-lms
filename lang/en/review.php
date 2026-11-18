@@ -34,6 +34,7 @@ return [
     'points' => 'Points',
     'feedback' => 'Feedback for the learner',
     'comment_added' => 'Feedback added.',
+    'release_result' => 'Release result and answers',
     'essay_graded' => 'Answer graded.',
     'not_allowed' => 'You cannot review this work.',
     'actions' => [

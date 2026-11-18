@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Completion;
 
 use App\Domain\Curriculum\Queries\CurriculumOutline;
-use App\Domain\Progress\Actions\RecalculateCourseProgress;
+use App\Domain\Progress\Queries\CourseProgressSnapshot;
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Course;
@@ -42,9 +42,8 @@ final class CompletionReport
         $criteria = [];
 
         if ($rules->lesson_percent !== null) {
-            $progress = app(RecalculateCourseProgress::class)($learner, $course);
-            $total = (int) $progress->total_required;
-            $done = (int) $progress->completed_required;
+            ['done' => $done, 'total' => $total] = CourseProgressSnapshot::counts($learner, [$course->id])
+                ->get($course->id, ['done' => 0, 'total' => 0]);
             $criteria[self::LESSONS] = ['met' => $total > 0 && $done * 100 >= $rules->lesson_percent * $total, 'have' => $total === 0 ? 0 : intdiv($done * 100, $total), 'need' => $rules->lesson_percent];
         }
         if ($rules->require_quizzes) {
@@ -92,11 +91,7 @@ final class CompletionReport
     private static function assignments(User $learner, Course $course): array
     {
         $required = self::requiredItems($course, Assignment::class);
-        $counted = [AssignmentSubmission::ACCEPTED];
-        if ((bool) config('learning.completion.graded_counts_as_accepted')) {
-            $counted[] = AssignmentSubmission::GRADED;
-        }
-        $accepted = $required === [] ? 0 : AssignmentSubmission::query()->where('learner_id', $learner->getKey())->whereIn('assignment_id', $required)->whereIn('status', $counted)->distinct()->count('assignment_id');
+        $accepted = $required === [] ? 0 : AssignmentSubmission::query()->where('learner_id', $learner->getKey())->whereIn('assignment_id', $required)->where('status', AssignmentSubmission::ACCEPTED)->distinct()->count('assignment_id');
 
         return ['met' => $required !== [] && $accepted === count($required), 'have' => $accepted, 'need' => count($required)];
     }

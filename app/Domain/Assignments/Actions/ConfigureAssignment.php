@@ -17,7 +17,7 @@ use RuntimeException;
 /**
  * Saves the assignment rules: instructions, due date (entered in a timezone, stored in UTC), what learners may hand in,
  * the file size limit, the late policy and how many resubmissions are allowed. Late policy values and the way revisions
- * are counted are working choices pending the owner (O-024).
+ * are counted are the current assignment configuration defaults.
  */
 final class ConfigureAssignment
 {

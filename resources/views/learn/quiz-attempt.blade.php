@@ -15,7 +15,15 @@
         @if(session('quiz_notice'))<div class="rounded-card border border-primary bg-assistant px-4 py-3 font-semibold text-primary" role="status" data-quiz-notice>{{ session('quiz_notice') }}</div>@endif
         @if(session('quiz_error'))<div class="rounded-card border border-danger px-4 py-3 font-semibold text-danger" role="alert" data-quiz-error>{{ session('quiz_error') }}</div>@endif
 
-        @if($open)
+        @if($expired)
+            <div class="space-y-3 rounded-card border border-border bg-surface p-4">
+                <p role="status">{{ __('quiz.attempt.expired_pending') }}</p>
+                <form method="POST" action="{{ route('quiz.submit', ['course' => $course->id, 'item' => $item->id, 'attempt' => $attempt->id]) }}">
+                    @csrf
+                    <button type="submit" class="inline-flex min-h-12 items-center rounded-xl bg-primary px-5 font-bold text-on-primary">{{ __('quiz.attempt.submit') }}</button>
+                </form>
+            </div>
+        @elseif($open)
             <form method="POST" action="{{ route('quiz.submit', ['course' => $course->id, 'item' => $item->id, 'attempt' => $attempt->id]) }}" class="space-y-5"
                 data-quiz-form data-save-url="{{ route('quiz.save', ['course' => $course->id, 'item' => $item->id, 'attempt' => $attempt->id]) }}" data-total="{{ $total }}"
                 data-text-saved="{{ __('quiz.attempt.saved') }}" data-text-saving="{{ __('quiz.attempt.saving') }}" data-text-save-failed="{{ __('quiz.attempt.save_failed') }}"

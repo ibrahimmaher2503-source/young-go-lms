@@ -97,6 +97,7 @@ return [
         'legend_current' => 'Current question',
         'legend_unanswered' => 'Not answered',
         'minute_left' => 'One minute left.',
+        'expired_pending' => 'Time is up. Submit your saved answers or wait for automatic submission.',
         'time_up' => 'Time is up. Your saved answers were submitted.',
         'submitted' => 'Your answers were submitted.',
         'auto_submitted' => 'This attempt was submitted automatically when the time ended.',

@@ -35,6 +35,10 @@ final class ReviewAccess
             return [];
         }
 
+        if (! $viewer->hasRole('super_admin')) {
+            return CourseDirectory::for($viewer, manage: true)->pluck('id')->map(static fn ($id): int => (int) $id)->all();
+        }
+
         return CourseDirectory::for($viewer)->get()
             ->filter(static fn (Course $course): bool => Gate::forUser($viewer)->allows('update', $course))
             ->map(static fn (Course $course): int => (int) $course->getKey())

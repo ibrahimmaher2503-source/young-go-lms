@@ -7,6 +7,7 @@ namespace App\Domain\Certificates\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Certificates\Certificate;
 use App\Domain\Completion\CourseCompletion;
+use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -44,11 +45,14 @@ final class IssueCertificate
      */
     public function create(CourseCompletion $completion, string $event, ?int $actorId, array $context): Certificate
     {
-        $completion->loadMissing(['learner', 'course']);
-        $learner = $completion->learner;
+        $completion->loadMissing('course');
         $course = $completion->course;
 
-        return DB::transaction(function () use ($completion, $learner, $course, $event, $actorId, $context): Certificate {
+        return DB::transaction(function () use ($completion, $course, $event, $actorId, $context): Certificate {
+            $learner = User::query()->lockForUpdate()->findOrFail($completion->learner_id);
+            if ($learner->getAttribute('certificate_names_locked_at') === null) {
+                $learner->setAttribute('certificate_names_locked_at', now())->save();
+            }
             $name = filled($learner->getAttribute('display_name')) ? $learner->getAttribute('display_name') : $learner->getAttribute('name');
             $certificate = Certificate::query()->create([
                 'course_completion_id' => $completion->getKey(),
@@ -59,6 +63,8 @@ final class IssueCertificate
                 'active' => 1,
                 'issued_at' => now(),
                 'learner_name' => mb_substr((string) $name, 0, 191),
+                'learner_name_ar' => $learner->getAttribute('certificate_name_ar'),
+                'learner_name_en' => $learner->getAttribute('certificate_name_en'),
                 'course_title_ar' => mb_substr((string) $course->getTranslation('title', 'ar', false), 0, 255) ?: null,
                 'course_title_en' => mb_substr((string) $course->getTranslation('title', 'en', false), 0, 255) ?: null,
                 'completed_on' => $completion->completed_at->toDateString(),

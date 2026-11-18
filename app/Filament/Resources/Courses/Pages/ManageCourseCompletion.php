@@ -6,7 +6,9 @@ namespace App\Filament\Resources\Courses\Pages;
 
 use App\Domain\Certificates\Actions\ReissueCertificate;
 use App\Domain\Certificates\Actions\RevokeCertificate;
+use App\Domain\Certificates\Actions\SaveCertificateTemplates;
 use App\Domain\Certificates\Certificate;
+use App\Domain\Certificates\CertificateTemplate;
 use App\Domain\Completion\Actions\ApproveCourseCompletion;
 use App\Domain\Completion\Actions\SaveCompletionRules;
 use App\Domain\Completion\CompletionReport;
@@ -53,7 +55,22 @@ final class ManageCourseCompletion extends Page
 
     protected function getHeaderActions(): array
     {
-        return [$this->editRulesAction()];
+        return [$this->editRulesAction(), $this->editCertificateTemplatesAction()];
+    }
+
+    public function editCertificateTemplatesAction(): Action
+    {
+        return Action::make('editCertificateTemplates')->label(__('certificates.edit_templates'))
+            ->visible(fn (): bool => $this->actor()->can('system.settings.manage'))
+            ->schema([
+                Textarea::make('ar')->label(__('certificates.issuer_text_ar'))->maxLength(500)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                Textarea::make('en')->label(__('certificates.issuer_text_en'))->maxLength(500)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+            ])
+            ->fillForm(fn (): array => CertificateTemplate::query()->pluck('issuer_text', 'locale')->all())
+            ->action(function (array $data): void {
+                app(SaveCertificateTemplates::class)($this->actor(), $data);
+                Notification::make()->success()->title(__('completion.saved'))->send();
+            });
     }
 
     public function editRulesAction(): Action

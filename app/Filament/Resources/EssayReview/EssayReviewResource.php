@@ -83,7 +83,8 @@ final class EssayReviewResource extends Resource
         return parent::getEloquentQuery()
             ->where('status', QuizAttempt::SUBMITTED)
             ->whereHas('quiz.item', static fn (Builder $item): Builder => $item->whereIn('course_id', $ids))
-            ->where(static fn (Builder $q): Builder => $q->where('needs_review', true)->orWhereHas('answers', static fn (Builder $a): Builder => $a->whereNotNull('graded_by')))
+            ->where(static fn (Builder $q): Builder => $q->where('needs_review', true)->orWhereHas('answers', static fn (Builder $a): Builder => $a->whereNotNull('graded_by'))
+                ->orWhere('settings->result_visibility', 'hidden'))
             ->with(['learner', 'quiz.item.course']);
     }
 

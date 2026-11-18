@@ -8,6 +8,7 @@ use App\Domain\Assessment\QuizAccess;
 use App\Domain\Audit\AuditLogger;
 use App\Models\Quiz;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -15,7 +16,6 @@ use RuntimeException;
 /**
  * Saves the quiz settings: time limit, pass mark (percent of total marks), attempts, what a learner sees after submitting,
  * shuffling, and whether passing is needed to move on. Empty means "no limit" (time, attempts) or "no pass mark".
- * Which result visibility values and what unit the pass mark uses are open owner decisions (O-021, O-022).
  */
 final class ConfigureQuiz
 {
@@ -41,16 +41,19 @@ final class ConfigureQuiz
             throw ValidationException::withMessages(['pass_mark_percent' => __('quiz.errors.pass_mark_needed')]);
         }
 
-        $before = $quiz->only(['time_limit_minutes', 'pass_mark_percent', 'max_attempts', 'result_visibility', 'randomize', 'progression']);
-        $quiz->update([
-            'time_limit_minutes' => $clean['time_limit_minutes'] ?? null, 'pass_mark_percent' => $clean['pass_mark_percent'] ?? null, 'max_attempts' => $clean['max_attempts'] ?? null,
-            'result_visibility' => $clean['result_visibility'], 'randomize' => (bool) ($clean['randomize'] ?? false), 'progression' => $clean['progression'],
-        ]);
+        return DB::transaction(function () use ($actor, $quiz, $clean): Quiz {
+            $quiz = Quiz::query()->lockForUpdate()->findOrFail($quiz->getKey());
+            $before = $quiz->only(['time_limit_minutes', 'pass_mark_percent', 'max_attempts', 'result_visibility', 'randomize', 'progression']);
+            $quiz->update([
+                'time_limit_minutes' => $clean['time_limit_minutes'] ?? null, 'pass_mark_percent' => $clean['pass_mark_percent'] ?? null, 'max_attempts' => $clean['max_attempts'] ?? null,
+                'result_visibility' => $clean['result_visibility'], 'randomize' => (bool) ($clean['randomize'] ?? false), 'progression' => $clean['progression'],
+            ]);
 
-        if ($this->audit->record('quiz.settings_changed', $quiz, (int) $actor->getKey(), $before, $quiz->only(array_keys($before))) === null) {
-            throw new RuntimeException('Unable to record quiz audit.');
-        }
+            if ($this->audit->record('quiz.settings_changed', $quiz, (int) $actor->getKey(), $before, $quiz->only(array_keys($before))) === null) {
+                throw new RuntimeException('Unable to record quiz audit.');
+            }
 
-        return $quiz;
+            return $quiz;
+        });
     }
 }

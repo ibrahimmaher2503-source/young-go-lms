@@ -56,17 +56,14 @@ final class QuizAttemptController
         $learner = $this->learner();
         $quiz = $this->guardAttempt($course, $item, $attempt, $learner);
 
-        // A timed attempt that ran out is closed now, so the page never offers a form that can no longer be saved.
-        if ($attempt->isOpen() && $attempt->deadline_at !== null && now()->gt($attempt->deadline_at->copy()->addSeconds((int) config('assessment.grace_seconds')))) {
-            $attempt = $this->submit->__invoke($learner, $attempt, null, true);
-        }
-
-        $open = $attempt->isOpen();
+        $expired = $attempt->isOpen() && $attempt->deadline_at !== null
+            && now()->gt($attempt->deadline_at->copy()->addSeconds((int) config('assessment.grace_seconds')));
+        $open = $attempt->isOpen() && ! $expired;
 
         return view('learn.quiz-attempt', [
-            'course' => $course, 'item' => $item, 'quiz' => $quiz, 'attempt' => $attempt, 'learner' => $learner, 'open' => $open,
+            'course' => $course, 'item' => $item, 'quiz' => $quiz, 'attempt' => $attempt, 'learner' => $learner, 'open' => $open, 'expired' => $expired,
             'questions' => $open ? QuizAttemptView::questions($attempt) : [],
-            'result' => $open ? null : QuizAttemptView::result($attempt),
+            'result' => $attempt->isOpen() ? null : QuizAttemptView::result($attempt),
             'remaining' => $open && $attempt->deadline_at !== null ? max(0, (int) now()->diffInSeconds($attempt->deadline_at, false)) : null,
         ]);
     }

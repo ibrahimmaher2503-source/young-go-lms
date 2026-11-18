@@ -23,6 +23,8 @@ use Illuminate\Support\Carbon;
  * @property string $token
  * @property int|null $active
  * @property Carbon $issued_at
+ * @property string|null $learner_name_ar
+ * @property string|null $learner_name_en
  * @property string $learner_name
  * @property string|null $course_title_ar
  * @property string|null $course_title_en
@@ -53,6 +55,14 @@ final class Certificate extends Model
     public function verifyUrl(): string
     {
         return route('certificates.verify', ['token' => $this->token]);
+    }
+
+    public function nameIn(string $locale): string
+    {
+        $primary = $locale === 'ar' ? $this->learner_name_ar : $this->learner_name_en;
+        $other = $locale === 'ar' ? $this->learner_name_en : $this->learner_name_ar;
+
+        return filled($primary) ? $primary : (filled($other) ? $other : $this->learner_name);
     }
 
     /** The course title in the wanted language, falling back to the other one. */

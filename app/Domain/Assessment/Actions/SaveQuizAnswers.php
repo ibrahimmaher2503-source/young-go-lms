@@ -8,6 +8,7 @@ use App\Domain\Assessment\QuizAnswerWriter;
 use App\Domain\Assessment\QuizRefusedException;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Saves the learner answers of an open attempt (autosave). Nothing is accepted after the deadline (plus a small network
@@ -26,16 +27,23 @@ final class SaveQuizAnswers
         if ((int) $attempt->learner_id !== (int) $learner->getKey()) {
             throw new QuizRefusedException(QuizRefusedException::NO_ACCESS);
         }
-        $fresh = $attempt->refresh();
-        if (! $fresh->isOpen()) {
-            throw new QuizRefusedException(QuizRefusedException::NOT_OPEN);
-        }
-        if ($fresh->deadline_at !== null && now()->gt($fresh->deadline_at->copy()->addSeconds((int) config('assessment.grace_seconds')))) {
-            $this->submit->__invoke($learner, $fresh, null, true);
+        $saved = DB::transaction(function () use ($attempt, $answers): ?int {
+            $locked = QuizAttempt::query()->lockForUpdate()->findOrFail($attempt->getKey());
+            if (! $locked->isOpen()) {
+                throw new QuizRefusedException(QuizRefusedException::NOT_OPEN);
+            }
+            if ($locked->deadline_at !== null && now()->gt($locked->deadline_at->copy()->addSeconds((int) config('assessment.grace_seconds')))) {
+                return null;
+            }
+
+            return $this->writer->apply($locked, $answers);
+        });
+        if ($saved === null) {
+            $this->submit->__invoke($learner, $attempt, null, true);
 
             throw new QuizRefusedException(QuizRefusedException::EXPIRED);
         }
 
-        return $this->writer->apply($fresh, $answers);
+        return $saved;
     }
 }

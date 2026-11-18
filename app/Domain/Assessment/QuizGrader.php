@@ -7,7 +7,7 @@ namespace App\Domain\Assessment;
 use App\Models\Question;
 
 /**
- * Grades one answer against its snapshot question. Choice questions are all or nothing (open decision O-023: no partial
+ * Grades one answer against its snapshot question. Choice questions are all or nothing (current scoring rule: no partial
  * credit); short answers match an accepted answer after light normalisation (case, spaces, Arabic marks and alef forms);
  * essays are never graded here: they return null and wait for a person (T-P6-04).
  */

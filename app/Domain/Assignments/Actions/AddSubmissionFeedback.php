@@ -11,6 +11,7 @@ use App\Domain\Audit\AuditLogger;
 use App\Models\AssignmentSubmission;
 use App\Models\SubmissionFeedback;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /** A reviewer comment in the feedback thread without a decision. It does not notify (decisions do). */
@@ -29,13 +30,15 @@ final class AddSubmissionFeedback
             throw new ReviewRefusedException(ReviewRefusedException::NOT_DECIDABLE);
         }
 
-        $feedback = SubmissionFeedback::query()->create([
-            'submission_id' => $submission->getKey(), 'revision_number' => $submission->current_revision, 'author_id' => $reviewer->getKey(), 'body' => $body,
-        ]);
-        if ($this->audit->record('assignment.feedback_added', $submission->assignment, (int) $reviewer->getKey(), null, null, ['submission_id' => $submission->getKey(), 'feedback_id' => $feedback->getKey()]) === null) {
-            throw new RuntimeException('Unable to record review audit.');
-        }
+        return DB::transaction(function () use ($reviewer, $submission, $body): SubmissionFeedback {
+            $feedback = SubmissionFeedback::query()->create([
+                'submission_id' => $submission->getKey(), 'revision_number' => $submission->current_revision, 'author_id' => $reviewer->getKey(), 'body' => $body,
+            ]);
+            if ($this->audit->record('assignment.feedback_added', $submission->assignment, (int) $reviewer->getKey(), null, null, ['submission_id' => $submission->getKey(), 'feedback_id' => $feedback->getKey()]) === null) {
+                throw new RuntimeException('Unable to record review audit.');
+            }
 
-        return $feedback;
+            return $feedback;
+        });
     }
 }

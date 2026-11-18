@@ -40,12 +40,15 @@ final class CertificateController
         }
     }
 
-    public function verify(string $token): View|Response
+    public function verify(string $token, CertificatePdf $pdf): View|Response
     {
         $certificate = Certificate::query()->where('token', $token)->first();
         abort_if($certificate === null, 404);
 
-        return response()->view('certificates.verify', ['certificate' => $certificate])
+        return response()->view('certificates.verify', [
+            'certificate' => $certificate,
+            'qr' => $certificate->isValid() ? $pdf->verificationQr($certificate) : null,
+        ])
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     }

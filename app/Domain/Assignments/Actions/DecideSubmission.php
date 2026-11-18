@@ -24,7 +24,7 @@ use Throwable;
 /**
  * A reviewer decision on the current revision of a submission: grade, accept, reject or ask for a revision. The late
  * penalty copied onto the revision at submit time is applied to the score here. Every decision is a new row, is audited
- * with the status and score before and after, and notifies the learner once (the dedupe key is the decision id).
+ * with the status and score before and after. A changed decision notifies the learner once.
  * Authorization is checked here, at execution time: assessment permission plus the course update gate.
  */
 final class DecideSubmission
@@ -53,7 +53,7 @@ final class DecideSubmission
             $score = null; // a score belongs to a decision on the work, not to a request for changes
         }
 
-        $made = DB::transaction(function () use ($reviewer, $submission, $decision, $score, $feedback, $assignment): SubmissionDecision {
+        [$made, $changed] = DB::transaction(function () use ($reviewer, $submission, $decision, $score, $feedback, $assignment): array {
             $locked = AssignmentSubmission::query()->whereKey($submission->getKey())->lockForUpdate()->firstOrFail();
             if (! SubmissionReview::canDecide($locked->status)) {
                 throw new ReviewRefusedException(ReviewRefusedException::NOT_DECIDABLE);
@@ -63,9 +63,16 @@ final class DecideSubmission
             }
 
             $revision = $locked->currentRevision();
-            $before = ['status' => $locked->status, 'score' => $locked->decisions()->latest('id')->first()?->final_score];
+            $previous = $locked->decisions()->latest('id')->first();
+            $before = ['status' => $locked->status, 'score' => $previous?->final_score];
             $penalty = $revision?->is_late === true ? $revision->late_penalty_percent : null;
             $final = $score === null ? null : SubmissionReview::finalScore($score, $penalty);
+
+            $changed = $previous === null
+                || $previous->revision_number !== $locked->current_revision
+                || $previous->decision !== $decision
+                || ($previous->final_score === null ? null : (float) $previous->final_score) !== $final
+                || (string) $locked->feedback()->where('decision_id', $previous->getKey())->value('body') !== $feedback;
 
             $made = SubmissionDecision::query()->create([
                 'submission_id' => $locked->getKey(), 'revision_number' => $locked->current_revision, 'decision' => $decision, 'reviewer_id' => $reviewer->getKey(),
@@ -83,10 +90,12 @@ final class DecideSubmission
                 throw new RuntimeException('Unable to record review audit.');
             }
 
-            return $made;
+            return [$made, $changed];
         });
 
-        $this->notify($submission, $made);
+        if ($changed) {
+            $this->notify($submission, $made);
+        }
         $item = $assignment->item()->first();
         if ($item !== null) {
             CompletionTrigger::changed((int) $submission->learner_id, (int) $item->course_id);
