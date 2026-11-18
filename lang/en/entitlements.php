@@ -19,6 +19,7 @@ return [
     'lifetime' => 'Lifetime',
     'reason' => 'Reason',
     'not_free' => 'This course is not free.',
+    'manual_not_allowed' => 'Manual access is not allowed for this course.',
     'not_open' => 'This course is not open for enrollment.',
     'states' => ['active' => 'Active', 'scheduled' => 'Scheduled', 'expired' => 'Expired', 'revoked' => 'Revoked'],
     'sources' => [

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Settings\PlatformFlag;
 use App\Domain\Shared\Search\HasSearchText;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -20,6 +21,14 @@ use Spatie\Translatable\HasTranslations;
  * @property list<array<string, mixed>>|null $faqs
  * @property list<array<string, mixed>>|null $requirements
  * @property list<array<string, mixed>>|null $outcomes
+ * @property int|null $access_duration_days
+ * @property bool $bundle_eligible
+ * @property bool $manual_access_allowed
+ * @property string|null $cover_image
+ * @property array<string, mixed>|null $promo_video
+ * @property array<string, mixed>|null $custom_values
+ * @property string|null $review_reason
+ * @property CarbonInterface|null $reviewed_at
  */
 final class Course extends Model
 {
@@ -57,6 +66,7 @@ final class Course extends Model
         'format', 'owner_type', 'status', 'access_mode', 'sequence_mode', 'featured', 'ai_enabled',
         'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
         'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
+        'access_duration_days', 'bundle_eligible', 'manual_access_allowed', 'cover_image', 'promo_video', 'custom_values',
     ];
 
     protected $attributes = [
@@ -67,6 +77,8 @@ final class Course extends Model
         'ai_enabled' => true,
         'wizard_step' => 1,
         'sequence_mode' => 'free',
+        'bundle_eligible' => true,
+        'manual_access_allowed' => true,
     ];
 
     protected function casts(): array
@@ -82,6 +94,13 @@ final class Course extends Model
             'faqs' => 'array',
             'requirements' => 'array',
             'outcomes' => 'array',
+            'access_duration_days' => 'integer',
+            'bundle_eligible' => 'boolean',
+            'manual_access_allowed' => 'boolean',
+            'promo_video' => 'array',
+            'custom_values' => 'array',
+            'submitted_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
     }
 

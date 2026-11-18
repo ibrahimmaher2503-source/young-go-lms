@@ -37,6 +37,8 @@ return [
         'help_reply' => 'Instructor reply to a help request',
         'settlement_statement' => 'Instructor settlement statement',
         'settlement_status' => 'Instructor settlement status',
+        'course_approved' => 'Course approved',
+        'course_rejected' => 'Course returned for changes',
     ],
     'groups' => [
         'account' => 'Account',
@@ -49,6 +51,7 @@ return [
         'announcement' => 'Announcements',
         'help' => 'Help requests',
         'settlement' => 'Instructor settlements',
+        'course_review' => 'Course review',
     ],
     'templates' => [
         'access_granted' => [
@@ -118,6 +121,14 @@ return [
         'settlement_status' => [
             'title' => 'Settlement update for :period',
             'body' => 'The settlement for :period is now :status.',
+        ],
+        'course_approved' => [
+            'title' => 'Your course ":course" was approved',
+            'body' => 'Your course ":course" passed review and is now published.',
+        ],
+        'course_rejected' => [
+            'title' => 'Your course ":course" needs changes',
+            'body' => 'Your course ":course" was returned to draft. Reason: :reason',
         ],
     ],
     'template' => 'Notification template',

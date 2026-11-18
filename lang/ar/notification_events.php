@@ -37,6 +37,8 @@ return [
         'help_reply' => 'رد المدرب على طلب مساعدة',
         'settlement_statement' => 'كشف تسوية المدرب',
         'settlement_status' => 'حالة تسوية المدرب',
+        'course_approved' => 'اعتماد الدورة',
+        'course_rejected' => 'إعادة الدورة للتعديل',
     ],
     'groups' => [
         'account' => 'الحساب',
@@ -49,6 +51,7 @@ return [
         'announcement' => 'الإعلانات',
         'help' => 'طلبات المساعدة',
         'settlement' => 'تسويات المدربين',
+        'course_review' => 'مراجعة الدورات',
     ],
     'templates' => [
         'access_granted' => [
@@ -118,6 +121,14 @@ return [
         'settlement_status' => [
             'title' => 'تحديث تسوية :period',
             'body' => 'أصبحت تسوية :period الآن :status.',
+        ],
+        'course_approved' => [
+            'title' => 'تم اعتماد دورتك ":course"',
+            'body' => 'اجتازت دورتك ":course" المراجعة وأصبحت منشورة.',
+        ],
+        'course_rejected' => [
+            'title' => 'دورتك ":course" تحتاج إلى تعديلات',
+            'body' => 'أُعيدت دورتك ":course" إلى المسودة. السبب: :reason',
         ],
     ],
     'template' => 'قالب الإشعار',

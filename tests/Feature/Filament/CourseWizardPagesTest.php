@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Commerce\Actions\CreateOrder;
+use App\Domain\Commerce\CoursePrice;
+use App\Domain\Commerce\OrderLine;
+use App\Domain\Commerce\ProductType;
+use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Models\Category;
@@ -9,6 +14,7 @@ use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -36,10 +42,10 @@ function wizardPageInstructorCourse(User $instructor, string $scope = 'manage'):
     return $course;
 }
 
-it('opens the wizard for admin and content manager only', function (): void {
+it('opens the wizard for authorized staff and instructors', function (): void {
     $this->actingAs(wizardPageUser('admin'))->get('/admin/courses/create')->assertOk()->assertSee(__('courses.step_basic'));
     $this->actingAs(wizardPageUser('content_manager'))->get('/admin/courses/create')->assertOk();
-    $this->actingAs(wizardPageUser('instructor_academy'))->get('/instructor/courses/create')->assertForbidden();
+    $this->actingAs(wizardPageUser('instructor_academy'))->get('/instructor/courses/create')->assertOk();
 })->group('T-P3-02', 'A2', 'PRD-09.2');
 
 it('creates a draft through the pages and keeps it when the author saves mid-way', function (): void {
@@ -78,9 +84,11 @@ it('saves the Information step with reorderable rows', function (): void {
 
     Livewire::test(CreateCourse::class)
         ->fillForm(['title' => ['en' => 'Rows'], 'category_id' => $category->id, 'level' => 'all', 'content_language' => 'en', 'format' => 'live'])
-        ->goToNextWizardStep()
+        ->goToNextWizardStep();
+
+    Livewire::test(EditCourse::class, ['record' => Course::query()->sole()->getKey()])
         ->fillForm(['outcomes' => [['text' => ['en' => 'First']], ['text' => ['en' => 'Second']]], 'faqs' => [['question' => ['en' => 'Q'], 'answer' => ['en' => 'A']]]])
-        ->call('create')
+        ->goToNextWizardStep()
         ->assertHasNoFormErrors();
 
     $course = Course::query()->sole();
@@ -88,6 +96,42 @@ it('saves the Information step with reorderable rows', function (): void {
         ->and($course->faqs)->toHaveCount(1)
         ->and($course->wizard_completed)->toBe(['1' => true, '2' => true]);
 })->group('T-P3-02', 'A1');
+
+it('saves exact market prices from the wizard and rejects checkout in the disabled market', function (): void {
+    $this->actingAs(wizardPageUser('admin'));
+    $course = Course::query()->create([
+        'title' => ['en' => 'Market pricing'], 'slug_ar' => 'market-ar', 'slug_en' => 'market-en',
+        'wizard_step' => 3, 'wizard_completed' => ['1' => true, '2' => true],
+    ]);
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['access_mode' => 'both', 'market_prices' => ['EG' => '19.99', 'SA' => '31.50']])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $prices = CoursePrice::query()->where('course_id', $course->id)->get()->keyBy('market');
+    expect($course->refresh()->access_mode)->toBe('both')
+        ->and($prices['EG']->amount_minor)->toBe(1999)
+        ->and($prices['EG']->money()->value->getCurrency()->getCurrencyCode())->toBe('EGP')
+        ->and($prices['SA']->amount_minor)->toBe(3150)
+        ->and($prices['SA']->money()->value->getCurrency()->getCurrencyCode())->toBe('SAR');
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->assertFormSet(['market_prices' => ['EG' => '19.99', 'SA' => '31.50']]);
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['market_prices' => ['EG' => '0.001', 'SA' => '31.50']])
+        ->call('save')
+        ->assertHasFormErrors(['market_prices.EG']);
+    expect($prices['EG']->refresh()->amount_minor)->toBe(1999);
+
+    $course->update(['status' => 'published']);
+    $learner = wizardPageUser('student');
+    $line = new OrderLine(ProductType::Course, $course->id, $learner);
+    expect(fn () => app(CreateOrder::class)($learner, Market::SaudiArabia, [$line], 'sa-disabled'))
+        ->toThrow(ValidationException::class, __('commerce.market_unavailable'));
+    expect(app(CreateOrder::class)($learner, Market::Egypt, [$line], 'eg-enabled')->total_minor)->toBe(1999);
+})->group('T-P3-03', 'T-P3-03:A2', 'PRD-09-2');
 
 it('hides ownership, status and featured from instructors and keeps their values', function (): void {
     $instructor = wizardPageUser('instructor_academy');

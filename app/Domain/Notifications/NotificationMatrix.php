@@ -97,6 +97,9 @@ final class NotificationMatrix
 
             self::fresh('settlement.statement', 'settlement', true, ['period']),
             self::fresh('settlement.status', 'settlement', true, ['period', 'status']),
+
+            self::fresh('course.approved', 'course_review', true, ['course']),
+            self::fresh('course.rejected', 'course_review', true, ['course', 'reason']),
         ];
 
         $indexed = [];

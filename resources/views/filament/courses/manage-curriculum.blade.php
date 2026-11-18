@@ -145,7 +145,7 @@
                                     @if($minutesCount)<span class="yg-cur-meta yg-cur-withicon"><x-ui.icon name="clock" /> {{ __('curriculum.minutes', ['count' => $minutesCount]) }}</span>@endif
                                     <span class="yg-cur-iconchip" title="{{ $isLesson ? __("curriculum.types.{$lesson->type}") : __("curriculum.types.{$item->itemable_type}") }}"><x-ui.icon :name="$isLesson ? ($lesson->type === 'video' ? 'video' : 'file') : 'clipboard'" /><span class="yg-cur-sr">{{ $isLesson ? __("curriculum.types.{$lesson->type}") : __("curriculum.types.{$item->itemable_type}") }}</span></span>
                                     @if($isLesson && $lesson->media)
-                                        <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.$lesson->media->protection_tier) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
+                                        <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.\App\Domain\Media\LessonPublishRule::effectiveTier($lesson->media)) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>
                                     @endif
                                     @if($document)
                                         <span class="yg-cur-badge" title="{{ __('curriculum.curriculum_pdf') }}">{{ __('curriculum.pdf_version', ['version' => $document->version]) }} · {{ __('curriculum.pdf_status.'.$document->status) }}</span>
@@ -170,6 +170,7 @@
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'up')">{{ __('curriculum.move_up') }}</button>
                                         <button type="button" class="yg-cur-menuitem" wire:click="moveItem({{ $item->id }}, 'down')">{{ __('curriculum.move_down') }}</button>
                                         @if($isLesson)<button type="button" class="yg-cur-menuitem" wire:click="mountAction('editLesson', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.edit') }}</button>@endif
+                                        @if($isLesson)<button type="button" class="yg-cur-menuitem" wire:click="mountAction('manageResources', { lesson: {{ $item->itemable_id }} })">{{ __('curriculum.manage_resources') }}</button>@endif
                                         @if($item->itemable_type === 'quiz')<a class="yg-cur-menuitem" href="{{ \App\Filament\Resources\Courses\CourseResource::getUrl('quiz', ['record' => $item->course_id, 'quiz' => $item->itemable_id]) }}" data-edit-quiz>{{ __('quiz.edit') }}</a>@endif
                                         @if($item->itemable_type === 'assignment')<button type="button" class="yg-cur-menuitem" wire:click="mountAction('configureAssignment', { assignment: {{ $item->itemable_id }} })" data-configure-assignment>{{ __('curriculum.assignment.configure') }}</button>@endif
                                         @if($item->itemable_type === 'live_session')

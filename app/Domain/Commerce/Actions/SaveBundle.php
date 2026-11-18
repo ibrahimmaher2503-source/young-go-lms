@@ -100,6 +100,9 @@ final class SaveBundle
         if (Course::query()->whereIn('id', $ids)->count() !== count($ids)) {
             $this->refuse('items', 'courses_missing');
         }
+        if (Course::query()->whereIn('id', $ids)->where('bundle_eligible', false)->exists()) {
+            $this->refuse('items', 'courses_not_eligible');
+        }
         $weighted = count(array_filter($items, static fn (array $i): bool => $i['weight'] !== null));
         if ($weighted !== 0 && $weighted !== count($items)) {
             $this->refuse('items', 'weights_mixed');

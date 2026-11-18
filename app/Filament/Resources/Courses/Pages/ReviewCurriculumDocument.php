@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Courses\Pages;
 
 use App\Domain\AI\Ingestion\DocumentReadiness;
 use App\Domain\AI\Ingestion\IngestionFailure;
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Media\Actions\ApproveCurriculumDocument;
 use App\Domain\Media\Actions\ApproveKeyTerms;
 use App\Domain\Media\Actions\EditExtractedPage;
@@ -18,8 +19,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 
 /**
  * Approval screen for a curriculum PDF version (AI spec 6.5): the PDF beside the text that was extracted from it. The
@@ -33,6 +34,7 @@ final class ReviewCurriculumDocument extends Page
 
     protected string $view = 'filament.courses.review-curriculum-document';
 
+    #[Locked]
     public int $documentId = 0;
 
     /** @var array<int, string> page number => text being edited */
@@ -44,8 +46,6 @@ final class ReviewCurriculumDocument extends Page
     public function mount(int|string $record, int|string $document): void
     {
         $this->record = $this->resolveRecord($record);
-        abort_unless(Gate::allows('update', $this->record) && $this->actor()->can('lesson_document.approve'), 403);
-
         $found = $this->loadDocument((int) $document);
         $this->documentId = (int) $found->getKey();
         $this->loadState($found);
@@ -116,6 +116,7 @@ final class ReviewCurriculumDocument extends Page
     {
         /** @var Course $course */
         $course = $this->record;
+        CurriculumAccess::authorize($this->actor(), $course, 'lesson_document.approve');
         $document = LessonCurriculumDocument::query()->with(['documentPages', 'keyTerms', 'lesson'])->findOrFail($id);
         abort_unless((int) $document->lesson->item()->value('course_id') === (int) $course->getKey(), 404);
 

@@ -5,9 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Catalog\CourseCustomValues;
+use App\Domain\Catalog\CourseDescription;
+use App\Domain\Catalog\CourseMedia;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\CoursePrice;
+use App\Domain\Content\RichContent;
+use App\Domain\Media\LessonPublishRule;
+use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
+use App\Models\CurriculumItem;
 use App\Models\User;
+use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -16,15 +25,17 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Throwable;
 
 /**
- * Course wizard steps 1 (Basic) and 2 (Information). A draft may be saved at any point with
+ * A draft may be saved at any point with
  * incomplete data ($complete = false); passing a step ($complete = true) enforces its required fields.
  * Ownership, status and featured are changed only by users who hold the matching permission.
  */
 final class SaveCourseWizard
 {
-    public const int LAST_STEP = 2;
+    public const int LAST_STEP = 7;
 
     public const array LEVELS = ['beginner', 'intermediate', 'advanced', 'all'];
 
@@ -47,16 +58,60 @@ final class SaveCourseWizard
     public function __invoke(User $actor, array $data, ?Course $course = null, int $step = 1, bool $complete = false): Course
     {
         if ($course === null) {
-            Gate::forUser($actor)->authorize('course.create');
+            Gate::forUser($actor)->authorize('create', Course::class);
         } else {
             Gate::forUser($actor)->authorize('update', $course);
         }
 
         $data = $this->guardPrivileged($actor, $course, $data);
+        $pricing = $this->validatePricing($actor, $data, $step === 3 && $complete);
         $clean = $this->validate($data, $course, $complete ? $step : null);
+        if ($course?->status === CourseStatus::PendingReview && ! $actor->can('course.publish')) {
+            throw ValidationException::withMessages(['status' => __('course_wizard.review.locked_pending')]);
+        }
+        // T-P3-03: custom values, promo video and cover validate before anything is written.
+        $custom = array_key_exists('custom', $data) ? CourseCustomValues::validated((array) $data['custom'], $course?->custom_values, $step === 6 && $complete) : null;
+        $promo = array_key_exists('promo_video', $data) ? ['value' => CourseMedia::promoVideo((array) $data['promo_video'])] : null;
+        $cover = $this->coverChange($data, $course);
+        $newCover = $cover['file'] === null ? null : CourseMedia::storeCover($cover['file']);
 
-        return DB::transaction(function () use ($actor, $clean, $course, $step, $complete): Course {
-            $record = $course ?? new Course;
+        try {
+            $saved = $this->persist($actor, $clean, $course, $step, $complete, $pricing, $custom, $promo, $newCover, $cover['remove']);
+        } catch (Throwable $exception) {
+            CourseMedia::deleteCover($newCover);
+
+            throw $exception;
+        }
+
+        $oldCover = $course?->cover_image;
+        if (($newCover !== null || $cover['remove']) && $oldCover !== null && $oldCover !== $saved->cover_image) {
+            CourseMedia::deleteCover($oldCover);
+        }
+
+        return $saved;
+    }
+
+    /**
+     * @param  array{attributes: array<string, mixed>, slugs: array<string, string>}  $clean
+     * @param  array<string, mixed>  $pricing
+     * @param  array<string, mixed>|null  $custom
+     * @param  array{value: array<string, mixed>|null}|null  $promo
+     */
+    private function persist(User $actor, array $clean, ?Course $course, int $step, bool $complete, array $pricing, ?array $custom, ?array $promo, ?string $newCover, bool $removeCover): Course
+    {
+        return DB::transaction(function () use ($actor, $clean, $course, $step, $complete, $pricing, $custom, $promo, $newCover, $removeCover): Course {
+            $record = $course === null ? new Course : Course::query()->lockForUpdate()->findOrFail($course->getKey());
+            if ($custom !== null) {
+                $record->custom_values = $custom;
+            }
+            if ($promo !== null) {
+                $record->promo_video = $promo['value'];
+            }
+            if ($newCover !== null) {
+                $record->cover_image = $newCover;
+            } elseif ($removeCover) {
+                $record->cover_image = null;
+            }
             $before = $record->exists ? Arr::only($record->getAttributes(), ['owner_type', 'owner_instructor_id', 'status', 'featured']) : null;
             $record->fill($clean['attributes']);
             $record->slug_ar = $clean['slugs']['slug_ar'] ?? $record->slug_ar ?? $this->uniqueSlug('slug_ar', $record, $record->getTranslation('title', 'ar', false) ?: $record->getTranslation('title', 'en', false), 'ar');
@@ -69,12 +124,169 @@ final class SaveCourseWizard
             $record->wizard_completed = $completed;
             $record->wizard_step = min(self::LAST_STEP, max((int) $record->wizard_step, $complete ? $step + 1 : $step));
             $created = ! $record->exists;
+            $instructorCreator = $created && ! $actor->can('panel.admin.access');
+            if ($instructorCreator && $actor->hasRole('instructor_independent')) {
+                $record->owner_type = Course::OWNER_INDEPENDENT;
+                $record->owner_instructor_id = $actor->getKey();
+            }
+            if ($record->getTranslations('title') === []) {
+                $record->setTranslations('title', []);
+            }
             $record->save();
+            if ($instructorCreator) {
+                $record->instructors()->attach($actor, [
+                    'role' => $record->owner_type === Course::OWNER_INDEPENDENT ? 'owner' : 'instructor',
+                    'scope' => Course::INSTRUCTOR_SCOPE_MANAGE,
+                ]);
+            }
 
             $this->auditChange($actor, $record, $created, $before);
+            if ($pricing !== []) {
+                $this->savePricing($actor, $record, $pricing);
+            }
 
             return $record;
         });
+    }
+
+    public static function canSetPricing(User $actor): bool
+    {
+        return $actor->can('panel.admin.access') && $actor->can('course.publish') && ! $actor->hasRole('instructor_independent');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{access_mode?: string|null, market_prices?: array<string, string|null>, access_duration_days?: int|string|null, bundle_eligible?: bool|null, manual_access_allowed?: bool|null}
+     */
+    private function validatePricing(User $actor, array $data, bool $complete): array
+    {
+        $fields = Arr::only($data, ['access_mode', 'market_prices', 'access_duration_days', 'bundle_eligible', 'manual_access_allowed']);
+        if (! self::canSetPricing($actor)) {
+            if ($fields !== []) {
+                throw new AuthorizationException;
+            }
+
+            return [];
+        }
+
+        $individual = in_array($fields['access_mode'] ?? null, Course::INDIVIDUAL_ACCESS_MODES, true);
+        $rules = [
+            'access_mode' => [$complete ? 'required' : 'nullable', Rule::in([Course::ACCESS_FREE, ...Course::PAID_ACCESS_MODES])],
+            'market_prices' => ['nullable', 'array:'.implode(',', array_column(Market::cases(), 'value'))],
+            // Empty means lifetime access; the duration is applied to free, purchase and bundle grants (GrantEntitlement).
+            'access_duration_days' => ['nullable', 'integer', 'between:1,3650'],
+            'bundle_eligible' => ['nullable', 'boolean'],
+            'manual_access_allowed' => ['nullable', 'boolean'],
+        ];
+        foreach (Market::cases() as $market) {
+            $rules['market_prices.'.$market->value] = [
+                $individual && $complete && $market->isActive() ? 'required' : 'nullable',
+                'regex:/^\d{1,9}(?:\.\d{1,2})?$/D', 'numeric', 'gt:0',
+            ];
+        }
+
+        return Validator::make($fields, $rules)->validate();
+    }
+
+    /** @param array{access_mode?: string|null, market_prices?: array<string, string|null>, access_duration_days?: int|string|null, bundle_eligible?: bool|null, manual_access_allowed?: bool|null} $pricing */
+    private function savePricing(User $actor, Course $course, array $pricing): void
+    {
+        $mode = $pricing['access_mode'] ?? $course->access_mode;
+        $before = ['access_mode' => $course->access_mode, 'market_prices' => []];
+        $after = ['access_mode' => $mode, 'market_prices' => []];
+
+        $settings = [];
+        if (array_key_exists('access_duration_days', $pricing)) {
+            $settings['access_duration_days'] = blank($pricing['access_duration_days']) ? null : (int) $pricing['access_duration_days'];
+        }
+        foreach (['bundle_eligible', 'manual_access_allowed'] as $flag) {
+            if (array_key_exists($flag, $pricing) && $pricing[$flag] !== null) {
+                $settings[$flag] = (bool) $pricing[$flag];
+            }
+        }
+        foreach ($settings as $name => $value) {
+            if ($course->getAttribute($name) !== $value) {
+                $before[$name] = $course->getAttribute($name);
+                $after[$name] = $value;
+            }
+        }
+        if ($settings !== []) {
+            $course->forceFill($settings)->save();
+        }
+        if ($mode !== $course->access_mode) {
+            if (in_array($mode, Course::PAID_ACCESS_MODES, true)) {
+                $items = CurriculumItem::query()->where('course_id', $course->getKey())
+                    ->where('status', CurriculumItem::STATUS_PUBLISHED)->where('itemable_type', 'lesson')->with('itemable.media')->get();
+                $course->access_mode = $mode;
+                foreach ($items as $item) {
+                    $item->setRelation('course', $course);
+                }
+                if (LessonPublishRule::blocked($items) !== []) {
+                    throw ValidationException::withMessages(['access_mode' => __('courses.pricing_protected_media')]);
+                }
+            }
+            $course->access_mode = $mode;
+            $course->save();
+        }
+
+        if (in_array($mode, Course::INDIVIDUAL_ACCESS_MODES, true)) {
+            foreach ($pricing['market_prices'] ?? [] as $code => $amount) {
+                $market = Market::from($code);
+                $key = ['course_id' => $course->getKey(), 'market' => $code];
+                $current = CoursePrice::query()->where($key)->first();
+                $minor = blank($amount) ? null : Money::of((string) $amount, $market->currency())->getMinorAmount()->toInt();
+                if ($current?->amount_minor === $minor && ($current === null || $current->currency === $market->currency())) {
+                    continue;
+                }
+                $before['market_prices'][$code] = $current?->amount_minor;
+                $after['market_prices'][$code] = $minor;
+                if ($minor === null) {
+                    $current?->delete();
+                } else {
+                    CoursePrice::query()->updateOrCreate($key, ['currency' => $market->currency(), 'amount_minor' => $minor]);
+                }
+            }
+        } else {
+            foreach (CoursePrice::query()->where('course_id', $course->getKey())->get() as $existingPrice) {
+                $before['market_prices'][$existingPrice->market] = $existingPrice->amount_minor;
+                $after['market_prices'][$existingPrice->market] = null;
+                $existingPrice->delete();
+            }
+        }
+
+        if ($before !== $after && $this->audit->record('course.pricing_changed', $course, (int) $actor->getKey(), $before, $after) === null) {
+            throw new RuntimeException('Unable to record course pricing audit.');
+        }
+    }
+
+    /**
+     * Reads the cover field: an upload replaces, an empty value removes, a stored path equal to the current one is "no change"
+     * and any other string is refused (it would point the course at somebody else's file).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{file: UploadedFile|null, remove: bool}
+     */
+    private function coverChange(array $data, ?Course $course): array
+    {
+        if (! array_key_exists('cover_image', $data)) {
+            return ['file' => null, 'remove' => false];
+        }
+
+        $items = $data['cover_image'] instanceof UploadedFile ? [$data['cover_image']] : array_values((array) $data['cover_image']);
+        $items = array_values(array_filter($items, static fn (mixed $item): bool => $item !== null && $item !== ''));
+        foreach ($items as $item) {
+            if ($item instanceof UploadedFile) {
+                return ['file' => $item, 'remove' => false];
+            }
+        }
+        if ($items === []) {
+            return ['file' => null, 'remove' => $course?->cover_image !== null];
+        }
+        if ($course === null || $items !== [$course->cover_image]) {
+            throw ValidationException::withMessages(['cover_image' => __('media.invalid_path')]);
+        }
+
+        return ['file' => null, 'remove' => false];
     }
 
     /**
@@ -118,6 +330,17 @@ final class SaveCourseWizard
      */
     private function validate(array $data, ?Course $course, ?int $strictStep): array
     {
+        foreach (['ar', 'en'] as $locale) {
+            $description = data_get($data, 'description.'.$locale);
+            if (is_array($description)) {
+                try {
+                    $data['description'][$locale] = $description === [] ? null : (string) RichContent::html(RichContent::clean($description));
+                } catch (ValidationException $exception) {
+                    throw ValidationException::withMessages(['description.'.$locale => $exception->errors()['content'] ?? __('content.invalid')]);
+                }
+            }
+        }
+
         $strict1 = $strictStep === 1;
         $required = static fn (bool $on): array => $on ? ['required'] : ['nullable'];
         $row = static fn (int $max): array => ['nullable', 'string', 'max:'.$max];
@@ -142,6 +365,10 @@ final class SaveCourseWizard
             'owner_instructor_id' => ['nullable', 'integer', Rule::exists('users', 'id')],
             'status' => ['sometimes', Rule::in(self::WIZARD_STATUSES)],
             'featured' => ['sometimes', 'boolean'],
+            'seo_title' => ['nullable', 'array:ar,en'], 'seo_title.ar' => $row(160), 'seo_title.en' => $row(160),
+            'seo_description' => ['nullable', 'array:ar,en'], 'seo_description.ar' => $row(320), 'seo_description.en' => $row(320),
+            'seo_keywords' => ['nullable', 'array:ar,en'], 'seo_keywords.ar' => $row(300), 'seo_keywords.en' => $row(300),
+            'canonical_url' => ['nullable', 'string', 'max:500', 'url:https', 'regex:/^\S+$/D'],
             'faqs' => ['nullable', 'array', 'max:'.self::MAX_ROWS],
             'faqs.*.question.ar' => $row(300), 'faqs.*.question.en' => $row(300),
             'faqs.*.answer.ar' => $row(2000), 'faqs.*.answer.en' => $row(2000),
@@ -174,11 +401,18 @@ final class SaveCourseWizard
         $attributes = Arr::only($validated, [
             'title', 'short_description', 'description', 'category_id', 'level', 'content_language', 'format',
             'min_age', 'max_age', 'owner_type', 'owner_instructor_id', 'status', 'featured', 'sequence_mode',
+            'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
         ]);
-        foreach (['title', 'short_description', 'description'] as $field) {
+        if (array_key_exists('canonical_url', $attributes)) {
+            $attributes['canonical_url'] = blank($attributes['canonical_url']) ? null : trim((string) $attributes['canonical_url']);
+        }
+        foreach (['title', 'short_description', 'description', 'seo_title', 'seo_description', 'seo_keywords'] as $field) {
             if (array_key_exists($field, $attributes)) {
                 $attributes[$field] = array_filter(array_map(static fn ($v) => is_string($v) ? trim($v) : $v, (array) $attributes[$field]), static fn ($v) => $v !== null && $v !== '');
             }
+        }
+        if (isset($attributes['description'])) {
+            $attributes['description'] = array_filter(array_map(CourseDescription::clean(...), $attributes['description']));
         }
         foreach (['faqs', 'requirements', 'outcomes'] as $field) {
             if (array_key_exists($field, $validated)) {
@@ -224,12 +458,13 @@ final class SaveCourseWizard
     private function uniqueSlug(string $column, Course $course, ?string $source, string $locale): string
     {
         $base = $this->slugify($source ?? '') ?: ($locale === 'ar' ? 'دورة' : 'course');
-        $slug = $base;
+        $slug = rtrim(mb_substr($base, 0, 120), '-');
         for ($i = 2; Course::query()->where($column, $slug)->when($course->exists, static fn ($q) => $q->whereKeyNot($course->getKey()))->exists(); $i++) {
-            $slug = $base.'-'.$i;
+            $suffix = '-'.$i;
+            $slug = rtrim(mb_substr($base, 0, 120 - strlen($suffix)), '-').$suffix;
         }
 
-        return mb_substr($slug, 0, 120);
+        return $slug;
     }
 
     private function slugify(string $text): string

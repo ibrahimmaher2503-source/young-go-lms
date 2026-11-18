@@ -6,6 +6,7 @@ return [
     'name_invalid' => 'Enter a name of 2 to 120 characters in Arabic and in English.',
     'courses_invalid' => 'Choose 2 to 20 different courses.',
     'courses_missing' => 'One of the chosen courses does not exist.',
+    'courses_not_eligible' => 'One of the chosen courses is not eligible for bundles.',
     'weight_invalid' => 'A weight must be a whole number from 1 to 1,000,000.',
     'weights_mixed' => 'Set a weight for every course or for none.',
     'price_invalid' => 'Enter a valid price greater than zero.',

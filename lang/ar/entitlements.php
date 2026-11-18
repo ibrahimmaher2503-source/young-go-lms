@@ -19,6 +19,7 @@ return [
     'lifetime' => 'مدى الحياة',
     'reason' => 'السبب',
     'not_free' => 'هذه الدورة ليست مجانية.',
+    'manual_not_allowed' => 'الوصول اليدوي غير مسموح لهذه الدورة.',
     'not_open' => 'هذه الدورة غير مفتوحة للتسجيل.',
     'states' => ['active' => 'فعّال', 'scheduled' => 'مجدول', 'expired' => 'منتهٍ', 'revoked' => 'مسحوب'],
     'sources' => [

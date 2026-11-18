@@ -122,6 +122,32 @@ final class DuplicateCourse
         ]);
     }
 
+    /** @param array<string, mixed> $node
+     * @param  array<int, int>  $resourceIds
+     * @return array<string, mixed>|null
+     */
+    private function remapImages(array $node, array $resourceIds): ?array
+    {
+        if (($node['type'] ?? null) === 'image') {
+            $id = $resourceIds[(int) ($node['attrs']['resource_id'] ?? 0)] ?? null;
+            if ($id === null) {
+                return null;
+            }
+            $node['attrs']['resource_id'] = $id;
+        }
+        if (is_array($node['content'] ?? null)) {
+            $children = [];
+            foreach ($node['content'] as $child) {
+                if (is_array($child) && ($mapped = $this->remapImages($child, $resourceIds)) !== null) {
+                    $children[] = $mapped;
+                }
+            }
+            $node['content'] = $children;
+        }
+
+        return $node;
+    }
+
     private function uniqueSlug(string $column, string $base): string
     {
         $base = $base === '' ? 'course' : $base;
@@ -141,7 +167,7 @@ final class DuplicateCourse
     {
         $new = Lesson::query()->create([
             'type' => $lesson->type, 'title' => $lesson->getTranslations('title'), 'description' => $lesson->getTranslations('description'),
-            'content' => $lesson->content, 'duration_seconds' => $lesson->duration_seconds, 'is_preview' => $lesson->is_preview,
+            'duration_seconds' => $lesson->duration_seconds, 'is_preview' => $lesson->is_preview,
         ]);
 
         $media = MediaAsset::query()->where('lesson_id', $lesson->getKey())->first();
@@ -152,10 +178,17 @@ final class DuplicateCourse
             MediaAsset::query()->create(['lesson_id' => $new->getKey()] + $attributes);
         }
 
+        $resourceIds = [];
         foreach (LessonResource::query()->where('lesson_id', $lesson->getKey())->get() as $resource) {
             $attributes = $resource->only(['type', 'url', 'mime', 'size', 'sha256', 'downloadable', 'visibility', 'is_preview', 'sort', 'uploaded_by', 'library_item_id']);
             $path = $resource->library_item_id === null ? $this->copyFile($resource->path, 'resources', $copied) : $resource->path; // library files are shared by reference
-            LessonResource::query()->create(['lesson_id' => $new->getKey(), 'title' => $resource->getTranslations('title'), 'path' => $path] + $attributes);
+            $copy = LessonResource::query()->create(['lesson_id' => $new->getKey(), 'title' => $resource->getTranslations('title'), 'path' => $path] + $attributes);
+            if ($resource->type === 'image') {
+                $resourceIds[$resource->getKey()] = $copy->getKey();
+            }
+        }
+        if (is_array($lesson->content)) {
+            $new->update(['content' => $this->remapImages($lesson->content, $resourceIds)]);
         }
 
         foreach (SubtitleTrack::query()->where('lesson_id', $lesson->getKey())->get() as $track) {

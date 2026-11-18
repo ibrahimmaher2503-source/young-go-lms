@@ -63,7 +63,9 @@ final class CourseSeo
         foreach (PublicUrl::localesWithTitle($course) as $each) {
             $urls[$each] = PublicUrl::course($course, $each);
         }
-        $urls[$locale] ??= $url;
+        if ($urls === []) {
+            $urls[$locale] = $url;
+        }
 
         $jsonld = array_filter([
             '@context' => 'https://schema.org',

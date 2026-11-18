@@ -10,7 +10,9 @@
         return ['name' => (string) ($profile?->publicName($locale) ?: $user->name), 'url' => $profile ? route('instructors.show', ['instructor' => App\Domain\Instructors\Queries\PublicInstructors::keyFor($profile, $locale)]) : null];
     })->filter(fn ($row) => $row['name'] !== '')->values();
     $instructors = $instructorRows->pluck('name');
-    $cover = $course->category?->image && $course->category->status === 'active' ? Illuminate\Support\Facades\Storage::disk('public')->url($course->category->image) : null;
+    $cover = filled($course->cover_image) ? Illuminate\Support\Facades\Storage::disk('public')->url($course->cover_image)
+        : ($course->category?->image && $course->category->status === 'active' ? Illuminate\Support\Facades\Storage::disk('public')->url($course->category->image) : null);
+    $customRows = \App\Domain\Catalog\CourseCustomValues::publicRows($course);
     $previewUrl = $curriculum['preview_item'] ? route('catalog.preview', ['course' => $key, 'item' => $curriculum['preview_item']]) : null;
     $levelLabel = filled($course->level) ? (trans()->has('catalog.'.$course->level) ? __('catalog.'.$course->level) : $course->level) : null;
     $languageLabel = filled($course->content_language) ? (trans()->has('catalog.'.$course->content_language) ? __('catalog.'.$course->content_language) : $course->content_language) : null;
@@ -126,6 +128,12 @@
                     <ul class="space-y-2">
                         @foreach($instructorRows as $row)<li class="flex items-center gap-2"><x-ui.icon name="user" class="size-5 text-muted"/>@if($row['url'])<a href="{{ $row['url'] }}" class="{{ $linkClass }} break-words" data-instructor-link>{{ $row['name'] }}</a>@else<span class="break-words">{{ $row['name'] }}</span>@endif</li>@endforeach
                     </ul>
+                </x-ui.card>
+            @endif
+
+            @if($customRows !== [])
+                <x-ui.card :title="__('course_wizard.custom_extra')" data-section="custom-fields">
+                    <dl class="grid gap-3 sm:grid-cols-2">@foreach($customRows as $row)<div><dt class="text-muted">{{ $row['label'] }}</dt><dd class="break-words font-semibold">{{ $row['value'] }}</dd></div>@endforeach</dl>
                 </x-ui.card>
             @endif
 

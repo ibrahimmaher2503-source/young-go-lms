@@ -1,0 +1,92 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'step_media' => 'Media',
+    'step_seo' => 'SEO',
+    'step_custom' => 'Custom fields',
+    'step_finish' => 'Finish',
+
+    'access_duration' => 'Access duration (days)',
+    'access_duration_help' => 'Leave empty for lifetime access. Applies to free, purchased and bundle access.',
+    'bundle_eligible' => 'Can be added to bundles',
+    'manual_access_allowed' => 'Staff may grant access manually',
+    'enrollment_settings' => 'Access settings',
+
+    'media_section' => 'Cover and promo video',
+    'cover_image' => 'Cover image (16:9)',
+    'cover_help' => 'JPG, PNG or WebP up to 4 MB, at least 640 px wide. It is cropped to 16:9.',
+    'cover_too_small' => 'The cover image must be at least :width px wide.',
+    'promo_provider' => 'Promo video source',
+    'promo_url' => 'Promo video link',
+    'promo_help' => 'A link only; the video stays on its own platform.',
+    'provider' => ['youtube' => 'YouTube', 'vimeo' => 'Vimeo', 'external_url' => 'Direct video file (https)'],
+
+    'custom_empty' => 'No custom fields are defined yet.',
+    'custom_yes' => 'Yes',
+    'custom_extra' => 'More details',
+
+    'finish_summary' => 'Review before you finish',
+    'finish_status' => 'Current status',
+    'finish_ready' => 'Ready',
+    'finish_missing' => 'Needs attention',
+    'finish_optional' => 'Recommended',
+    'finish_fix' => 'Go to step :step',
+    'finish_save_first' => 'Complete the earlier steps to see the checklist.',
+    'review_note' => 'Reviewer note: :reason',
+    'submit_review' => 'Submit for review',
+    'submit_review_confirm' => 'Send this course to the academy for approval?',
+    'submitted' => 'Course submitted for review.',
+    'publish' => 'Publish',
+    'publish_confirm' => 'Publish this course now?',
+    'published' => 'Course published.',
+    'preview_link' => 'Open the course page',
+    'preview_unavailable' => 'The public page is available after publication.',
+
+    'check' => [
+        'basic' => 'Basic data',
+        'curriculum' => 'At least one lesson',
+        'custom' => 'Required custom fields',
+        'pricing' => 'Pricing',
+        'cover' => 'Cover image',
+        'seo' => 'SEO text',
+    ],
+
+    'review' => [
+        'not_draft' => 'Only a draft can be submitted for review.',
+        'not_pending' => 'This course is not waiting for review.',
+        'blocked' => 'Complete these first: :items.',
+        'cannot_publish' => 'This course cannot be published from its current status.',
+        'locked_pending' => 'The course is under review and cannot be edited now.',
+        'queue' => 'Pending review',
+    ],
+
+    'fields' => [
+        'title' => 'Custom fields',
+        'singular' => 'Custom field',
+        'create' => 'New custom field',
+        'edit' => 'Edit',
+        'key' => 'Key',
+        'key_help' => 'Lowercase letters, numbers and underscores. It cannot change after the field is used.',
+        'type' => 'Type',
+        'label' => 'Label',
+        'options' => 'Options',
+        'required' => 'Required',
+        'min' => 'Minimum (length or value)',
+        'max' => 'Maximum (length or value)',
+        'visibility' => 'Visibility',
+        'public' => 'Shown on the course page',
+        'internal' => 'Staff only',
+        'translatable' => 'Separate Arabic and English values',
+        'active' => 'Active',
+        'sort' => 'Order',
+        'saved' => 'Custom field saved.',
+        'types' => [
+            'text' => 'Short text', 'textarea' => 'Long text', 'number' => 'Number', 'select' => 'Choice',
+            'toggle' => 'Yes or no', 'url' => 'Link', 'date' => 'Date',
+        ],
+        'key_taken' => 'This key is already used.',
+        'options_needed' => 'A choice field needs at least two options.',
+    ],
+];

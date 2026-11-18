@@ -42,7 +42,7 @@ final class CreateCourse extends CreateRecord
     /** @return list<Step> */
     public function getSteps(): array
     {
-        return CourseWizardSteps::make(fn (int $step) => $this->persistStep($step));
+        return CourseWizardSteps::make(fn (int $step) => $this->persistStep($step), $this->finishActions());
     }
 
     protected function handleRecordCreation(array $data): Model

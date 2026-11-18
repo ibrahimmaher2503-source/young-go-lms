@@ -5,36 +5,168 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Courses\Schemas;
 
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Catalog\CourseCustomValues;
+use App\Domain\Catalog\CourseMedia;
+use App\Domain\Catalog\Models\CourseCustomField;
+use App\Domain\Shared\Markets\Market;
+use App\Filament\Shared\Forms\SeoFieldsGroup;
 use App\Filament\Shared\Forms\TranslatableTabs;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
 use Closure;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Components\Wizard\Step;
 use Illuminate\Support\Facades\Auth;
 
-/** Steps 1 (Basic) and 2 (Information) of the course wizard. Validation lives in SaveCourseWizard. */
+/** Native wizard steps. Validation lives in SaveCourseWizard. */
 final class CourseWizardSteps
 {
     /**
      * @param  Closure(int): mixed  $persist  saves the current form state when a step is passed
+     * @param  list<Action>  $finishActions  submit-for-review and publish buttons shown on the Finish step
      * @return list<Step>
      */
-    public static function make(Closure $persist): array
+    public static function make(Closure $persist, array $finishActions = []): array
     {
         return [
-            Step::make('basic')->label(__('courses.step_basic'))->icon('heroicon-o-pencil-square')
-                ->afterValidation(static fn () => $persist(1))->schema(self::basic()),
-            Step::make('information')->label(__('courses.step_information'))->icon('heroicon-o-list-bullet')
-                ->afterValidation(static fn () => $persist(2))->schema(self::information()),
+            Step::make('basic')->label(__('courses.step_basic'))
+                ->afterValidation(static fn () => $persist(1))->schema([self::withProgress(self::basic())]),
+            Step::make('information')->label(__('courses.step_information'))
+                ->afterValidation(static fn () => $persist(2))->schema([self::withProgress(self::information())]),
+            Step::make('pricing')->label(__('courses.step_pricing'))
+                ->afterValidation(static fn () => $persist(3))->schema([self::withProgress([self::pricing()])]),
+            Step::make('media')->label(__('course_wizard.step_media'))
+                ->afterValidation(static fn () => $persist(4))->schema([self::withProgress([self::media()])]),
+            Step::make('seo')->label(__('course_wizard.step_seo'))
+                ->afterValidation(static fn () => $persist(5))->schema([self::withProgress([SeoFieldsGroup::make()])]),
+            Step::make('custom')->label(__('course_wizard.step_custom'))
+                ->afterValidation(static fn () => $persist(6))->schema([self::withProgress(self::custom())]),
+            Step::make('finish')->label(__('course_wizard.step_finish'))
+                ->schema([self::withProgress([self::finish($finishActions)])]),
         ];
+    }
+
+    /** @param list<mixed> $fields */
+    private static function withProgress(array $fields): Grid
+    {
+        return Grid::make(['default' => 1, 'xl' => 3])->schema([
+            Group::make($fields)->columnSpan(['xl' => 2]),
+            Section::make(__('courses.setup_progress'))->icon('heroicon-o-squares-2x2')->columnSpan(['xl' => 1])->schema([
+                View::make('filament.courses.wizard-progress')->viewData(static fn ($livewire): array => ['course' => $livewire->record ?? null]),
+            ]),
+        ]);
+    }
+
+    private static function pricing(): Section
+    {
+        $user = Auth::user();
+        $section = Section::make(__('courses.step_pricing'))->icon('heroicon-o-banknotes');
+        if (! $user instanceof User || ! SaveCourseWizard::canSetPricing($user)) {
+            return $section->schema([Text::make(__('courses.pricing_managed'))]);
+        }
+
+        return $section->schema([
+            Select::make('access_mode')->label(__('courses.access'))->live()->markAsRequired()->options([
+                Course::ACCESS_FREE => __('courses.free'),
+                Course::ACCESS_PAID => __('courses.access_individual'),
+                Course::ACCESS_SUBSCRIPTION => __('courses.access_subscription'),
+                Course::ACCESS_BOTH => __('courses.access_both'),
+            ]),
+            Grid::make(['default' => 1, 'md' => 2])->schema(array_map(
+                static fn (Market $market): TextInput => TextInput::make('market_prices.'.$market->value)
+                    ->label(__('courses.market_price.'.$market->value))
+                    ->suffix($market->currency())
+                    ->inputMode('decimal')
+                    ->maxLength(12)
+                    ->markAsRequired($market->isActive())
+                    ->helperText($market->isActive() ? null : __('courses.market_price_disabled')),
+                Market::cases(),
+            ))->visible(static fn (Get $get): bool => in_array($get('access_mode'), Course::INDIVIDUAL_ACCESS_MODES, true)),
+            Grid::make(['default' => 1, 'md' => 2])->schema([
+                TextInput::make('access_duration_days')->label(__('course_wizard.access_duration'))->helperText(__('course_wizard.access_duration_help'))
+                    ->numeric()->integer()->minValue(1)->maxValue(3650),
+                Toggle::make('bundle_eligible')->label(__('course_wizard.bundle_eligible'))->default(true),
+                Toggle::make('manual_access_allowed')->label(__('course_wizard.manual_access_allowed'))->default(true),
+            ]),
+        ]);
+    }
+
+    private static function media(): Section
+    {
+        return Section::make(__('course_wizard.media_section'))->icon('heroicon-o-photo')->schema([
+            FileUpload::make('cover_image')->label(__('course_wizard.cover_image'))->helperText(__('course_wizard.cover_help'))
+                ->disk('public')->directory('courses')->visibility('public')->image()
+                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(CourseMedia::MAX_KILOBYTES)
+                ->imageEditor()->imageEditorAspectRatios(['16:9'])->imageAspectRatio('16:9')->automaticallyCropImagesToAspectRatio()
+                ->storeFiles(false)->preventFilePathTampering(),
+            Grid::make(['default' => 1, 'md' => 2])->schema([
+                Select::make('promo_video.provider')->label(__('course_wizard.promo_provider'))->native(false)
+                    ->options(array_combine(CourseMedia::PROMO_PROVIDERS, array_map(static fn (string $p): string => __('course_wizard.provider.'.$p), CourseMedia::PROMO_PROVIDERS))),
+                TextInput::make('promo_video.url')->label(__('course_wizard.promo_url'))->helperText(__('course_wizard.promo_help'))
+                    ->url()->maxLength(2048)->extraInputAttributes(['dir' => 'ltr']),
+            ]),
+        ]);
+    }
+
+    /** @return list<mixed> */
+    private static function custom(): array
+    {
+        $fields = CourseCustomValues::definitions();
+        $section = Section::make(__('course_wizard.step_custom'))->icon('heroicon-o-adjustments-horizontal');
+
+        return [$fields->isEmpty()
+            ? $section->schema([Text::make(__('course_wizard.custom_empty'))])
+            : $section->schema($fields->map(static fn (CourseCustomField $field) => self::customField($field))->all())];
+    }
+
+    private static function customField(CourseCustomField $field): mixed
+    {
+        $name = 'custom.'.$field->field_key;
+        $label = (string) $field->getTranslation('label', app()->getLocale());
+
+        if ($field->perLocale()) {
+            $make = static fn (string $locale) => ($field->type === CourseCustomField::TYPE_TEXTAREA ? Textarea::make($name.'.'.$locale)->rows(3) : TextInput::make($name.'.'.$locale))
+                ->label($label.' ('.strtoupper($locale).')')->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]);
+
+            return Grid::make(['default' => 1, 'md' => 2])->schema([$make('ar'), $make('en')]);
+        }
+
+        $component = match ($field->type) {
+            CourseCustomField::TYPE_TEXTAREA => Textarea::make($name)->rows(3),
+            CourseCustomField::TYPE_NUMBER => TextInput::make($name)->numeric(),
+            CourseCustomField::TYPE_SELECT => Select::make($name)->native(false)->options(array_combine((array) $field->options, (array) $field->options)),
+            CourseCustomField::TYPE_TOGGLE => Toggle::make($name),
+            CourseCustomField::TYPE_URL => TextInput::make($name)->url()->extraInputAttributes(['dir' => 'ltr']),
+            CourseCustomField::TYPE_DATE => DatePicker::make($name)->native(false)->format('Y-m-d'),
+            default => TextInput::make($name),
+        };
+
+        return $component->label($label)->markAsRequired($field->is_required && $field->type !== CourseCustomField::TYPE_TOGGLE);
+    }
+
+    /** @param list<Action> $actions */
+    private static function finish(array $actions): Section
+    {
+        return Section::make(__('course_wizard.finish_summary'))->icon('heroicon-o-flag')->schema([
+            View::make('filament.courses.wizard-finish')->viewData(static fn ($livewire): array => ['course' => $livewire->record ?? null]),
+            Actions::make($actions),
+        ]);
     }
 
     /** @return list<mixed> */
@@ -54,8 +186,9 @@ final class CourseWizardSteps
                         ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]),
                     Textarea::make("short_description.{$locale}")->label(__('courses.short_description'))->maxLength(300)->rows(2)
                         ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]),
-                    Textarea::make("description.{$locale}")->label(__('courses.description'))->maxLength(10000)->rows(6)
-                        ->extraInputAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]),
+                    RichEditor::make("description.{$locale}")->label(__('courses.description'))
+                        ->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3'], ['bulletList', 'orderedList', 'blockquote'], ['undo', 'redo']])
+                        ->extraAttributes(['dir' => $locale === 'ar' ? 'rtl' : 'ltr', 'lang' => $locale]),
                 ]),
                 Grid::make(['default' => 1, 'md' => 2])->schema([
                     Select::make('category_id')->label(__('courses.category'))->options(static fn (): array => self::categoryOptions())->searchable()->markAsRequired(),

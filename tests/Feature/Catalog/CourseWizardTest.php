@@ -85,6 +85,22 @@ it('saves an incomplete draft at any step and resumes with the data intact', fun
         ->and($again->faqs)->toBe([['question' => ['en' => 'Q?'], 'answer' => ['en' => 'A.']]]);
 })->group('T-P3-02', 'A1');
 
+it('generates distinct bounded slugs for repeated long titles and titles sharing their prefix', function (): void {
+    $admin = wizardUser('admin');
+    $title = ['ar' => str_repeat('ر', 130), 'en' => str_repeat('a', 130)];
+
+    $first = app(SaveCourseWizard::class)($admin, ['title' => $title]);
+    $second = app(SaveCourseWizard::class)($admin, ['title' => $title]);
+    $third = app(SaveCourseWizard::class)($admin, ['title' => ['ar' => $title['ar'].'ب', 'en' => $title['en'].'b']]);
+
+    expect($first->slug_en)->toBe(str_repeat('a', 120))
+        ->and($second->slug_en)->toBe(str_repeat('a', 118).'-2')
+        ->and($third->slug_en)->toBe(str_repeat('a', 118).'-3')
+        ->and($first->slug_ar)->toBe(str_repeat('ر', 120))
+        ->and($second->slug_ar)->toBe(str_repeat('ر', 118).'-2')
+        ->and($third->slug_ar)->toBe(str_repeat('ر', 118).'-3');
+})->group('T-P3-02', 'A1', 'PRD-09.2');
+
 it('enforces required Basic fields only when the step is passed', function (): void {
     $admin = wizardUser('admin');
 
@@ -167,6 +183,7 @@ it('ignores privileged fields an instructor resubmits unchanged', function (): v
 
 it('refuses instructors who cannot create, view-only assignees and unassigned instructors', function (): void {
     $instructor = wizardUser('instructor_academy');
+    $instructor->roles()->firstOrFail()->revokePermissionTo('course.create');
     $viewOnly = instructorCourse($instructor, 'view');
     $other = instructorCourse(wizardUser('instructor_academy'));
 

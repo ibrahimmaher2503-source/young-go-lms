@@ -17,6 +17,7 @@ use App\Domain\AI\Resilience\CircuitBreaker;
 use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\Resilience\ResilientProvider;
 use App\Domain\Assessment\AssessmentHistory;
+use App\Domain\Catalog\Events\CourseReviewed;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
 use App\Domain\Commerce\Contracts\EReceiptProvider;
@@ -40,6 +41,7 @@ use App\Domain\Identity\SessionLimiter;
 use App\Domain\InstructorFinance\Listeners\AccrueInstructorEarnings;
 use App\Domain\Live\ManualMeetingProvider;
 use App\Domain\Live\MeetingProvider;
+use App\Domain\Notifications\Listeners\NotifyInstructorsOfCourseReview;
 use App\Domain\Notifications\Listeners\NotifyPayerOfPayment;
 use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
@@ -134,6 +136,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PaymentVerified::class, [NotifyPayerOfPayment::class, 'verified']);
         Event::listen(ManualPaymentApproved::class, [NotifyPayerOfPayment::class, 'manualApproved']);
         Event::listen(ManualPaymentProofSubmitted::class, [NotifyPayerOfPayment::class, 'proofSubmitted']);
+        // T-P3-03: instructors hear the course review outcome (never undoes the decision).
+        Event::listen(CourseReviewed::class, [NotifyInstructorsOfCourseReview::class, 'handle']);
         // T-P8-09: instructor ledger earnings on paid orders, reversals on executed refunds (idempotent; failures are reported, never thrown).
         Event::listen(PaymentVerified::class, [AccrueInstructorEarnings::class, 'verified']);
         Event::listen(ManualPaymentApproved::class, [AccrueInstructorEarnings::class, 'manualApproved']);

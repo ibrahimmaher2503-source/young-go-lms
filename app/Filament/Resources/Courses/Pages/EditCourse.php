@@ -48,7 +48,7 @@ final class EditCourse extends EditRecord
     /** @return list<Step> */
     public function getSteps(): array
     {
-        return CourseWizardSteps::make(fn (int $step) => $this->persistStep($step));
+        return CourseWizardSteps::make(fn (int $step) => $this->persistStep($step), $this->finishActions());
     }
 
     /**

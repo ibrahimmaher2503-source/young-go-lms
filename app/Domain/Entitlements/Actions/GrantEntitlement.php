@@ -39,7 +39,14 @@ final class GrantEntitlement
         if ($source->isManual() && ($actor === null || $actor->getAttribute('status') !== 'active' || ! $actor->can('manual_entitlement.grant'))) {
             throw new AuthorizationException;
         }
+        if ($source === EntitlementSource::ManualGrant && ! $course->manual_access_allowed) {
+            throw ValidationException::withMessages(['course' => __('entitlements.manual_not_allowed')]);
+        }
         $startsAt ??= now();
+        // T-P3-03: a course's access duration caps free, purchase and bundle access; manual grants and subscriptions set their own end.
+        if ($endsAt === null && $course->access_duration_days !== null && in_array($source, [EntitlementSource::Free, EntitlementSource::Purchase, EntitlementSource::Bundle], true)) {
+            $endsAt = $startsAt->copy()->addDays($course->access_duration_days);
+        }
         if ($endsAt !== null && $endsAt->lte($startsAt)) {
             throw ValidationException::withMessages(['ends_at' => __('access.ends_before_start')]);
         }

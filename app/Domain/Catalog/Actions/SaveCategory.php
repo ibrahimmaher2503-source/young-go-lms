@@ -29,8 +29,10 @@ final class SaveCategory
             throw ValidationException::withMessages(['image' => __('media.invalid_path')]);
         }
 
+        $oldPath = $category?->getAttribute('image');
+
         try {
-            return $this->persist($data, $category);
+            $saved = $this->persist($data, $category);
         } catch (Throwable $exception) {
             if ($newPath !== null) {
                 Storage::disk('public')->delete($newPath);
@@ -38,6 +40,13 @@ final class SaveCategory
 
             throw $exception;
         }
+
+        $currentPath = $saved->getAttribute('image');
+        if (is_string($oldPath) && $oldPath !== '' && $oldPath !== $currentPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        return $saved;
     }
 
     private function storeImage(string $bytes): string

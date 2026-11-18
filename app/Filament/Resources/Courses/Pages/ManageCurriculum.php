@@ -12,6 +12,7 @@ use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\MoveCurriculumItem;
 use App\Domain\Curriculum\Actions\ReorderCurriculum;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Library\Actions\AttachLibraryItem;
 use App\Domain\Library\LibraryAccess;
@@ -21,8 +22,12 @@ use App\Domain\Media\Actions\UploadCurriculumDocument;
 use App\Domain\Media\Actions\UploadLessonMedia;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\Providers\PrivateFileProvider;
+use App\Domain\Media\SignedFileUrl;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Courses\Pages\Concerns\ManagesLiveSessions;
+use App\Filament\Shared\Forms\LessonBlocks\CalloutBlock;
+use App\Filament\Shared\Forms\LessonBlocks\EmbedBlock;
+use App\Filament\Shared\Forms\LessonBlocks\LibraryImageBlock;
 use App\Filament\Shared\Forms\TranslatableTabs;
 use App\Models\Assignment;
 use App\Models\AssignmentAttachment;
@@ -30,6 +35,7 @@ use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LessonResource;
 use App\Models\LibraryItem;
 use App\Models\User;
 use Closure;
@@ -46,6 +52,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +202,59 @@ final class ManageCurriculum extends Page
             });
     }
 
+    public function manageResourcesAction(): Action
+    {
+        return Action::make('manageResources')->label(__('curriculum.manage_resources'))->modalHeading(__('curriculum.manage_resources'))->modalSubmitAction(false)
+            ->modalContent(function (array $arguments): View {
+                $lesson = $this->lessonFor($arguments['lesson'] ?? 0);
+                $actor = $this->actor();
+                CurriculumAccess::authorizeLesson($actor, $lesson, CurriculumAccess::UPDATE);
+                $links = app(SignedFileUrl::class);
+
+                return view('filament.courses.lesson-resources', [
+                    'lesson' => $lesson,
+                    'canDelete' => $actor->can('curriculum.delete'),
+                    'resources' => $lesson->resources()->get()->map(fn (LessonResource $resource): array => [
+                        'record' => $resource,
+                        'preview' => $resource->type === LessonResource::TYPE_LINK ? $resource->url : $links->for($actor, $resource, staffPreview: true),
+                    ]),
+                ]);
+            });
+    }
+
+    public function editResourceAction(): Action
+    {
+        return Action::make('editResource')->label(__('curriculum.edit'))
+            ->fillForm(function (array $arguments): array {
+                $resource = $this->resourceFor($arguments);
+
+                return ['title' => $resource->getTranslations('title'), 'url' => $resource->url, 'downloadable' => $resource->downloadable];
+            })
+            ->schema(fn (array $arguments): array => [
+                TextInput::make('title.ar')->label(__('curriculum.resource_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                TextInput::make('title.en')->label(__('curriculum.resource_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+                ...($this->resourceFor($arguments)->type === LessonResource::TYPE_LINK
+                    ? [TextInput::make('url')->label(__('curriculum.media_link'))->url()->required()->maxLength(2048)]
+                    : [Toggle::make('downloadable')->label(__('curriculum.resource_downloadable'))]),
+            ])
+            ->action(function (array $data, array $arguments, Action $action): void {
+                $this->attempt($action, fn () => app(ManageLessonResources::class)->update($this->actor(), $this->resourceFor($arguments), $data));
+            });
+    }
+
+    public function removeResourceAction(): Action
+    {
+        return Action::make('removeResource')->label(__('curriculum.remove_resource'))->color('danger')->requiresConfirmation()
+            ->authorize('curriculum.delete')
+            ->action(fn (array $arguments) => app(ManageLessonResources::class)->remove($this->actor(), $this->resourceFor($arguments)));
+    }
+
+    /** @param array<string, int|string> $arguments */
+    private function resourceFor(array $arguments): LessonResource
+    {
+        return $this->lessonFor($arguments['lesson'] ?? 0)->resources()->findOrFail($arguments['resource'] ?? 0);
+    }
+
     public function addAssessmentAction(): Action
     {
         return Action::make('addAssessment')->label(__('curriculum.add_assessment'))->icon('heroicon-o-clipboard-document-check')->color('gray')
@@ -204,12 +264,20 @@ final class ManageCurriculum extends Page
                 ])->required()->native(false),
                 Select::make('section_id')->label(__('curriculum.section'))->required()->native(false)
                     ->options(fn (): array => CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->orderBy('sort')->get()->mapWithKeys(fn (CourseSection $s): array => [$s->getKey() => (string) $s->title])->all()),
+                Select::make('association')->label(__('curriculum.association'))->options([
+                    'course' => __('curriculum.association_course'), 'section' => __('curriculum.section'), 'lesson' => __('curriculum.association_lesson'),
+                ])->default('section')->required()->native(false)->live(),
+                Select::make('associated_lesson_item_id')->label(__('curriculum.association_lesson'))->native(false)
+                    ->visible(fn (Get $get): bool => $get('association') === 'lesson')
+                    ->required()
+                    ->options(fn (): array => CurriculumOutline::forManager($this->course())->flatMap(fn (CourseSection $section) => $section->items)
+                        ->where('itemable_type', 'lesson')->mapWithKeys(fn (CurriculumItem $item): array => [$item->getKey() => $item->itemable instanceof Lesson ? (string) $item->itemable->title : ''])->all()),
                 TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
                 TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             ])
             ->action(function (array $data, Action $action): void {
                 $section = CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->findOrFail($data['section_id']);
-                if (! $this->attempt($action, fn () => app(ManageAssessmentItems::class)->add($this->actor(), $section, (string) $data['kind'], ['title' => $data['title'] ?? []]))) {
+                if (! $this->attempt($action, fn () => app(ManageAssessmentItems::class)->add($this->actor(), $section, (string) $data['kind'], $data))) {
                     return;
                 }
                 Notification::make()->title(__('curriculum.saved'))->success()->send();
@@ -425,7 +493,8 @@ final class ManageCurriculum extends Page
             Textarea::make('description.ar')->label(__('curriculum.description').' (AR)')->rows(2)->maxLength(5000)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
             Textarea::make('description.en')->label(__('curriculum.description').' (EN)')->rows(2)->maxLength(5000)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             RichEditor::make('content')->label(__('curriculum.rich_content'))->helperText(__('curriculum.rich_content_help'))->json()
-                ->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3', 'h4'], ['bulletList', 'orderedList', 'blockquote', 'horizontalRule', 'table'], ['undo', 'redo']])
+                ->customBlocks([CalloutBlock::class, EmbedBlock::class, LibraryImageBlock::class])
+                ->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3', 'h4'], ['bulletList', 'orderedList', 'blockquote', 'horizontalRule', 'table'], ['customBlocks'], ['undo', 'redo']])
                 ->visible(static fn (Get $get): bool => $get('type') === 'text'),
             Toggle::make('is_preview')->label(__('curriculum.is_preview')),
             Select::make('media_provider')->label(__('curriculum.media_source'))->live()->placeholder(__('curriculum.media_keep'))

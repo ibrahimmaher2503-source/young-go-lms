@@ -6,10 +6,13 @@ use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Media\Actions\ManageLessonResources;
+use App\Domain\Media\SignedFileUrl;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
 use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LessonResource;
 use App\Models\MediaAsset;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -19,6 +22,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -144,13 +148,15 @@ it('refuses page actions for a different course', function (): void {
 })->group('T-P3-04', 'A3', 'I02');
 
 it('shows each lesson’s protection tier in the manager', function (): void {
+    Storage::fake('local');
+    Storage::disk('local')->put('media/tier1.mp4', 'v');
     [$course, $instructor, , $items] = cpBuilt();
-    app(AttachLessonMedia::class)($instructor, $items[0]->itemable, ['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ']);
+    app(AttachLessonMedia::class)($instructor, $items[0]->itemable, ['provider' => 'signed_storage', 'path' => 'media/tier1.mp4']);
     app(AttachLessonMedia::class)($instructor, $items[1]->itemable, ['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789']);
     $this->actingAs($instructor);
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
-        ->assertSee(__('media.tiers.T3'))->assertSee(__('media.tiers.T2'));
+        ->assertSee(__('media.tiers.T1'))->assertSee(__('media.tiers.T3'));
 })->group('T-P3-05', 'A1', 'YG-GAP-VID-001');
 
 it('saves a lesson with a private upload from the lesson editor and shows it in the manager', function (): void {
@@ -204,7 +210,7 @@ it('saves a curriculum PDF and lesson material from the lesson editor and shows 
     Storage::fake('local');
     [$course, $instructor, , $items] = cpBuilt();
     $this->actingAs($instructor);
-    $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 2>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\n4 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+    $pdf = PdfFixture::bytes(2);
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
         ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
@@ -223,7 +229,7 @@ it('refuses an encrypted curriculum PDF from the editor and keeps nothing', func
     Storage::fake('local');
     [$course, $instructor, , $items] = cpBuilt();
     $this->actingAs($instructor);
-    $bad = "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\ntrailer<</Root 1 0 R/Encrypt 9 0 R>>\n%%EOF\n";
+    $bad = PdfFixture::encryptedBytes();
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
         ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
@@ -233,3 +239,36 @@ it('refuses an encrypted curriculum PDF from the editor and keeps nothing', func
     expect($items[0]->itemable->refresh()->curriculumDocuments)->toHaveCount(0)->and($items[0]->itemable->getTranslation('title', 'en'))->toBe('Tools')
         ->and(Storage::disk('local')->allFiles())->toBe([]);
 })->group('T-P3-08', 'A3');
+
+it('previews, edits and removes an existing lesson resource from the curriculum manager', function (): void {
+    [$course, $instructor, , $items] = cpBuilt();
+    $lesson = $items[0]->itemable;
+    $resource = app(ManageLessonResources::class)->addLink($instructor, $lesson, [
+        'title' => ['en' => 'Original material'], 'url' => 'https://example.com/original',
+    ]);
+    $this->actingAs($instructor);
+    $arguments = ['lesson' => $lesson->id, 'resource' => $resource->id];
+    $page = Livewire::test(ManageCurriculum::class, ['record' => $course->id]);
+    $page->mountAction(TestAction::make('manageResources')->arguments(['lesson' => $lesson->id]))
+        ->assertActionMounted('manageResources');
+    expect($page->instance()->getMountedAction()->getModalContent()->render())->toContain('Original material', 'https://example.com/original');
+    $page->unmountAction();
+    Storage::fake('local');
+    config(['media.disk' => 'local']);
+    Storage::disk('local')->put('resources/note.txt', 'Staff note');
+    $attachment = LessonResource::query()->create([
+        'lesson_id' => $lesson->id, 'type' => 'file', 'title' => ['en' => 'Staff note'], 'path' => 'resources/note.txt',
+        'mime' => 'text/plain', 'downloadable' => false, 'visibility' => 'enrolled',
+    ]);
+    $preview = app(SignedFileUrl::class)->for($instructor, $attachment, staffPreview: true);
+    $this->get($preview)->assertOk()->assertHeader('Content-Disposition', 'inline; filename=note.txt');
+    $course->instructors()->updateExistingPivot($instructor->id, ['scope' => 'view']);
+    $this->get($preview)->assertForbidden();
+    $course->instructors()->updateExistingPivot($instructor->id, ['scope' => 'manage']);
+
+    $page->callAction(TestAction::make('editResource')->arguments($arguments), ['title' => ['en' => 'Updated material'], 'url' => 'https://example.com/updated'])
+        ->assertHasNoActionErrors();
+    expect($resource->refresh()->title)->toBe('Updated material')->and($resource->url)->toBe('https://example.com/updated');
+    $page->callAction(TestAction::make('removeResource')->arguments($arguments))->assertHasNoActionErrors();
+    expect($resource->fresh())->toBeNull();
+})->group('T-P3-08', 'T-P3-13');

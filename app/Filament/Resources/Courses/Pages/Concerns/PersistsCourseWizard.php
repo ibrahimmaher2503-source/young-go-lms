@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Pages\Concerns;
 
+use App\Domain\Catalog\Actions\PublishReadyCourse;
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Catalog\Actions\SubmitCourseForReview;
+use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\CoursePrice;
+use App\Filament\Resources\Courses\CourseResource;
 use App\Models\Course;
 use App\Models\User;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /** Shared save/resume behaviour for the create and edit wizard pages. */
@@ -36,8 +41,46 @@ trait PersistsCourseWizard
         }
 
         $this->record = $course;
+        // The stored cover replaces the temporary upload so the next step does not store it again.
+        $this->data['cover_image'] = $course->cover_image === null ? [] : [(string) Str::uuid() => $course->cover_image];
 
         return $course;
+    }
+
+    /** @return list<Action> Finish-step buttons (T-P3-03). Each runs a Courses domain action and reports its refusal inline. */
+    protected function finishActions(): array
+    {
+        $course = fn (): ?Course => $this->currentCourse();
+
+        return [
+            Action::make('submitForReview')->label(__('course_wizard.submit_review'))->icon('heroicon-o-paper-airplane')->color('primary')
+                ->requiresConfirmation()->modalDescription(__('course_wizard.submit_review_confirm'))
+                ->visible(static fn (): bool => $course() !== null && $course()->status === CourseStatus::Draft && Gate::allows('update', $course()))
+                ->action(fn () => $this->finishWith(static fn (User $actor, Course $record) => app(SubmitCourseForReview::class)($actor, $record), 'submitted')),
+            Action::make('publishNow')->label(__('course_wizard.publish'))->icon('heroicon-o-globe-alt')->color('success')
+                ->requiresConfirmation()->modalDescription(__('course_wizard.publish_confirm'))
+                ->visible(static fn (): bool => $course() !== null && in_array($course()->status, [CourseStatus::Draft, CourseStatus::PendingReview, CourseStatus::Private, CourseStatus::Upcoming], true) && Gate::allows('publish', $course()))
+                ->action(fn () => $this->finishWith(static fn (User $actor, Course $record) => app(PublishReadyCourse::class)($actor, $record), 'published')),
+        ];
+    }
+
+    /** @param Closure(User, Course): mixed $run */
+    private function finishWith(Closure $run, string $done): void
+    {
+        $user = Auth::user();
+        $record = $this->currentCourse();
+        abort_unless($user instanceof User && $record !== null, 403);
+
+        try {
+            $this->record = $run($user, $record) instanceof Course ? Course::query()->findOrFail($record->getKey()) : $record;
+        } catch (ValidationException $exception) {
+            Notification::make()->danger()->title((string) collect($exception->errors())->flatten()->first())->send();
+
+            return;
+        }
+
+        Notification::make()->success()->title(__('course_wizard.'.$done))->send();
+        $this->redirect(CourseResource::getUrl('index'));
     }
 
     abstract protected function currentCourse(): ?Course;
@@ -45,7 +88,7 @@ trait PersistsCourseWizard
     /** @return array<string, mixed> */
     protected static function courseFormData(Course $course): array
     {
-        return [
+        $data = [
             ...$course->attributesToArray(),
             'title' => $course->getTranslations('title'),
             'short_description' => $course->getTranslations('short_description'),
@@ -55,16 +98,30 @@ trait PersistsCourseWizard
             'requirements' => $course->requirements ?? [],
             'outcomes' => $course->outcomes ?? [],
         ];
+        $user = Auth::user();
+        if ($user instanceof User && SaveCourseWizard::canSetPricing($user)) {
+            $data['market_prices'] = CoursePrice::query()->where('course_id', $course->getKey())->get()
+                ->mapWithKeys(static fn (CoursePrice $price): array => [$price->market => (string) $price->money()->value->getAmount()])
+                ->all();
+        } else {
+            unset($data['access_mode'], $data['access_duration_days'], $data['bundle_eligible'], $data['manual_access_allowed']);
+        }
+        // T-P3-03: custom values, promo video (provider and the link as entered) and the stored cover path.
+        $data['custom'] = $course->custom_values ?? [];
+        $data['promo_video'] = ['provider' => $course->promo_video['provider'] ?? null, 'url' => $course->promo_video['source_url'] ?? null];
+        $data['cover_image'] = $course->cover_image === null ? [] : [(string) Str::uuid() => $course->cover_image];
+        $data['seo_title'] = $course->getTranslations('seo_title');
+        $data['seo_description'] = $course->getTranslations('seo_description');
+        $data['seo_keywords'] = $course->getTranslations('seo_keywords');
+        unset($data['custom_values']);
+
+        return $data;
     }
 
-    /** Wizard on the left, setup progress on the right (wide screens). */
     protected function courseWizardForm(Schema $schema): Schema
     {
-        return parent::form($schema)->columns(['default' => 1, 'xl' => 3])->components([
-            Group::make([$this->getWizardComponent()])->columnSpan(['xl' => 2]),
-            Section::make(__('courses.setup_progress'))->icon('heroicon-o-squares-2x2')->columnSpan(['xl' => 1])->schema([
-                View::make('filament.courses.wizard-progress')->viewData(fn ($livewire): array => ['course' => $livewire->record ?? null]),
-            ]),
+        return parent::form($schema)->columns(null)->components([
+            $this->getWizardComponent()->extraAttributes(['class' => 'yg-course-wizard']),
         ]);
     }
 
