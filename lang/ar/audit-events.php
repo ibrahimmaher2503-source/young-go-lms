@@ -200,4 +200,9 @@ return [
     'settlement.paid' => 'تم تسجيل دفع تسوية مدرّب',
     'settlement.cancelled' => 'تم إلغاء دفعة تسوية',
     'report.exported' => 'تم تصدير تقرير إلى CSV',
+    'support.learner_360_viewed' => 'فتح ملف المتعلم الشامل',
+    'support.view_as_started' => 'بدء العرض كمتعلم',
+    'support.view_as_page_viewed' => 'عرض صفحة أثناء العرض كمتعلم',
+    'support.view_as_stopped' => 'انتهاء العرض كمتعلم',
+    'support.view_as_refused' => 'رفض العرض كمتعلم',
 ];

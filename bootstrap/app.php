@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnforceSessionLimits;
+use App\Http\Middleware\EnforceViewAsReadOnly;
 use App\Http\Middleware\ResolveActingLearner;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -22,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [SetLocale::class, ResolveActingLearner::class, EnforceSessionLimits::class]);
+        $middleware->web(append: [SetLocale::class, ResolveActingLearner::class, EnforceSessionLimits::class, EnforceViewAsReadOnly::class]);
         $middleware->api(append: [SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

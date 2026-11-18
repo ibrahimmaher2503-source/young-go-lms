@@ -11,6 +11,7 @@ use App\Filament\Pages\AssistantInsights;
 use App\Filament\Pages\AssistantTestConsole;
 use App\Filament\Pages\AssistantUsageReport;
 use App\Filament\Pages\InstructorAgreementPage;
+use App\Filament\Pages\LearnerThreeSixtyPage;
 use App\Filament\Pages\MarketingTags;
 use App\Filament\Pages\MyPayoutProfile;
 use App\Filament\Pages\PaymentReconciliationPage;
@@ -95,10 +96,11 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->brandName(static fn (): string => (string) __('app.name'))
                 ->userMenuItems([Action::make('security')->label(static fn (): string => (string) __('pages.tf_title'))->url('/security/two-factor')->icon('heroicon-o-shield-check')])
                 ->viteTheme('resources/css/filament-theme.css')
+                ->renderHook(PanelsRenderHook::CONTENT_START, static fn () => view('filament.staff.view-as-banner'))
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages(match ($id) {
                     'finance' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class],
-                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, RetentionSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
+                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, LearnerThreeSixtyPage::class, RetentionSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
                     default => [WorkspaceDashboard::class, ReportsPage::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, InstructorAgreementPage::class, MyPayoutProfile::class],
                 })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])

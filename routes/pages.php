@@ -20,6 +20,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\SupportViewAsController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -35,6 +36,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my', [LearnerHomeController::class, 'dashboard'])->name('learner.dashboard');
     Route::get('/parent', ParentDashboardController::class)->name('parent.dashboard');
     Route::get('/my/courses', [LearnerHomeController::class, 'courses'])->name('learner.courses');
+    // T-P9-10: support view-as (read-only, audited, time-limited). The session itself is checked in the controller and by EnforceViewAsReadOnly.
+    Route::prefix('support/view-as')->name('support.view-as.')->group(function (): void {
+        Route::get('/', [SupportViewAsController::class, 'home'])->name('home');
+        Route::get('/courses/{course}', [SupportViewAsController::class, 'course'])->whereNumber('course')->name('course');
+        Route::post('/stop', [SupportViewAsController::class, 'stop'])->name('stop');
+    });
     Route::get('/preview/{course}/{item}', PreviewController::class)->whereNumber(['course', 'item'])->name('learn.preview');
     Route::get('/learn/{course}', [LearnController::class, 'course'])->whereNumber('course')->name('learn.course');
     Route::get('/learn/{course}/{item}', [LearnController::class, 'show'])->whereNumber(['course', 'item'])->name('learn.show');

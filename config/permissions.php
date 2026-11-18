@@ -39,6 +39,8 @@ return [
         ['name' => 'help_request.reply'],
         ['name' => 'instructor.manage'],
         ['name' => 'instructor.view'],
+        ['name' => 'learner.360.sensitive'],
+        ['name' => 'learner.360.view'],
         ['name' => 'learner.profile.view'],
         ['name' => 'learner.progress.view'],
         ['name' => 'ledger.view'],
@@ -68,6 +70,7 @@ return [
         ['name' => 'submission.grade'],
         ['name' => 'system.integrations.manage'],
         ['name' => 'system.security.manage'],
+        ['name' => 'support.view_as'],
         ['name' => 'system.settings.manage'],
         ['name' => 'user.export'],
         ['name' => 'user.manage'],
@@ -88,6 +91,7 @@ return [
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
             'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage', 'privacy.manage',
+            'learner.360.sensitive', 'learner.360.view', 'support.view_as',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',
@@ -117,7 +121,7 @@ return [
             'payment.view', 'panel.finance.access', 'payout_profile.reveal', 'payout_profile.view', 'report.finance.view', 'settlement.manage',
         ],
         'support' => [
-            'dashboard.view', 'help_request.manage', 'help_request.reply', 'learner.profile.view', 'learner.progress.view', 'panel.admin.access', 'user.view',
+            'dashboard.view', 'help_request.manage', 'help_request.reply', 'learner.360.view', 'learner.profile.view', 'learner.progress.view', 'panel.admin.access', 'support.view_as', 'user.view',
         ],
         'marketing' => [
             'content.blog.manage', 'content.page.manage', 'content.seo.manage', 'dashboard.view', 'marketing.lead.view', 'panel.admin.access',

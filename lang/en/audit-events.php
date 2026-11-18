@@ -200,4 +200,9 @@ return [
     'settlement.paid' => 'Instructor settlement payout recorded',
     'settlement.cancelled' => 'Instructor settlement batch cancelled',
     'report.exported' => 'Report exported to CSV',
+    'support.learner_360_viewed' => 'Learner 360 opened',
+    'support.view_as_started' => 'View as learner started',
+    'support.view_as_page_viewed' => 'Page viewed while viewing as learner',
+    'support.view_as_stopped' => 'View as learner ended',
+    'support.view_as_refused' => 'View as learner refused',
 ];
