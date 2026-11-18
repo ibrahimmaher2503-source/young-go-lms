@@ -40,7 +40,9 @@ final class CourseWizardSteps
             Step::make('information')->label(__('courses.step_information'))
                 ->afterValidation(static fn () => $persist(2))->schema([self::withProgress(self::information())]),
             Step::make('pricing')->label(__('courses.step_pricing'))
-                ->afterValidation(static fn () => $persist(3))->schema([self::withProgress([self::pricing()])]),
+                ->afterValidation(static fn () => $persist(SaveCourseWizard::PRICING_STEP))->schema([self::withProgress([self::pricing()])]),
+            Step::make('media')->label(__('courses.step_media'))
+                ->afterValidation(static fn () => $persist(SaveCourseWizard::MEDIA_STEP))->schema([self::withProgress(self::media())]),
         ];
     }
 
@@ -81,6 +83,25 @@ final class CourseWizardSteps
                 Market::cases(),
             ))->visible(static fn (Get $get): bool => in_array($get('access_mode'), Course::INDIVIDUAL_ACCESS_MODES, true)),
         ]);
+    }
+
+    /** @return list<Section> */
+    private static function media(): array
+    {
+        $providers = array_combine(
+            SaveCourseWizard::VIDEO_LINK_PROVIDERS,
+            array_map(static fn (string $provider): string => __('courses.video_providers.'.$provider), SaveCourseWizard::VIDEO_LINK_PROVIDERS),
+        );
+
+        return array_map(
+            static fn (string $video): Section => Section::make(__('courses.'.$video))
+                ->icon('heroicon-o-video-camera')->columns(['default' => 1, 'md' => 2])->schema([
+                    Select::make($video.'_provider')->label(__('courses.'.$video.'_provider'))->options($providers),
+                    TextInput::make($video.'_url')->label(__('courses.'.$video.'_url'))
+                        ->url()->maxLength(2048)->extraInputAttributes(['dir' => 'ltr']),
+                ]),
+            ['overview_video', 'preview_video'],
+        );
     }
 
     /** @return list<mixed> */

@@ -180,6 +180,110 @@ it('resumes legacy paid courses and preserves a saved amount in an incomplete dr
         ->and($price->refresh()->amount_minor)->toBe(1250);
 })->group('T-P3-03', 'T-P3-03:A2', 'PRD-09-2');
 
+it('saves validated overview and preview links and resumes with both canonical URLs', function (): void {
+    $this->actingAs(wizardPageUser('admin'));
+    $course = Course::query()->create([
+        'title' => ['en' => 'Course with video'], 'slug_ar' => 'media-ar', 'slug_en' => 'media-en',
+        'access_mode' => 'free', 'wizard_step' => 3, 'wizard_completed' => ['1' => true, '2' => true],
+    ]);
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->goToNextWizardStep()
+        ->assertHasNoFormErrors();
+    expect($course->refresh()->wizard_step)->toBe(4);
+
+    $media = [
+        'overview_video_provider' => 'youtube', 'overview_video_url' => 'https://youtu.be/dQw4w9WgXcQ?t=7',
+        'preview_video_provider' => 'vimeo', 'preview_video_url' => 'https://vimeo.com/123456789/a1b2c3d4e5',
+    ];
+    $canonical = [
+        ...$media,
+        'overview_video_url' => 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',
+        'preview_video_url' => 'https://player.vimeo.com/video/123456789?dnt=1&h=a1b2c3d4e5',
+    ];
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm($media)
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($course->refresh()->only(array_keys($canonical)))->toBe($canonical)
+        ->and($course->wizard_completed)->toBe(['1' => true, '2' => true, '3' => true, '4' => true]);
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->assertFormSet($canonical)
+        ->call('save')
+        ->assertHasNoFormErrors();
+})->group('T-P3-03', 'PRD-09-2');
+
+it('rejects invalid course video inputs without changing either video or the title', function (array $invalid, string $field): void {
+    $actor = wizardPageUser('admin');
+    $course = Course::query()->create([
+        'title' => ['en' => 'Original'], 'slug_ar' => 'invalid-media-ar', 'slug_en' => 'invalid-media-en',
+        'overview_video_provider' => 'youtube', 'overview_video_url' => 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',
+        'wizard_step' => 4,
+    ]);
+
+    expect(fn () => app(SaveCourseWizard::class)($actor, [
+        'title' => ['en' => 'Must not save'],
+        'preview_video_provider' => 'vimeo', 'preview_video_url' => 'https://vimeo.com/123456789',
+        ...$invalid,
+    ], $course, 4))->toThrow(function (ValidationException $error) use ($field): void {
+        expect($error->errors())->toHaveKey($field);
+    });
+
+    expect($course->refresh()->getTranslation('title', 'en'))->toBe('Original')
+        ->and($course->overview_video_provider)->toBe('youtube')
+        ->and($course->overview_video_url)->toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0')
+        ->and($course->preview_video_url)->toBeNull();
+})->with([
+    'unknown provider' => [['overview_video_provider' => 'iframe', 'overview_video_url' => 'https://vimeo.com/123456789'], 'overview_video_provider'],
+    'mismatched host' => [['overview_video_provider' => 'vimeo'], 'overview_video_url'],
+    'unsafe URL' => [['overview_video_url' => 'https://username@www.youtube.com/watch?v=dQw4w9WgXcQ'], 'overview_video_url'],
+    'preview URL without provider' => [['preview_video_provider' => null], 'preview_video_provider'],
+])->group('T-P3-03', 'PRD-09-2');
+
+it('lets an assigned instructor resume incomplete draft media and clear links from the media step', function (): void {
+    $instructor = wizardPageUser('instructor_academy');
+    $course = wizardPageInstructorCourse($instructor);
+    $course->update(['wizard_step' => 4]);
+    $this->actingAs($instructor);
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['preview_video_provider' => 'youtube'])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+    expect($course->refresh()->preview_video_provider)->toBe('youtube')
+        ->and($course->preview_video_url)->toBeNull();
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->assertFormSet(['preview_video_provider' => 'youtube'])
+        ->call('save')
+        ->assertHasFormErrors(['preview_video_url']);
+
+    $save = app(SaveCourseWizard::class);
+    $save($instructor, ['preview_video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'], $course, 4);
+    $save($instructor, ['preview_video_provider' => null, 'preview_video_url' => null], $course, 2, true);
+    expect($course->refresh()->preview_video_url)->toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0');
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['preview_video_provider' => null, 'preview_video_url' => null])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+    expect($course->refresh()->preview_video_provider)->toBeNull()
+        ->and($course->preview_video_url)->toBeNull();
+})->group('T-P3-03', 'PRD-09-2');
+
+it('authorizes media changes before validating courses outside the instructor edit scope', function (): void {
+    $instructor = wizardPageUser('instructor_academy');
+    $viewOnly = wizardPageInstructorCourse($instructor, 'view');
+    $unassigned = wizardPageInstructorCourse(wizardPageUser('instructor_academy'));
+    $save = app(SaveCourseWizard::class);
+
+    foreach ([$viewOnly, $unassigned] as $course) {
+        expect(fn () => $save($instructor, ['overview_video_provider' => 'unknown'], $course, 4))
+            ->toThrow(AuthorizationException::class);
+    }
+})->group('T-P3-03', 'PRD-09-2');
+
 it('hides ownership, status and featured from instructors and keeps their values', function (): void {
     $instructor = wizardPageUser('instructor_academy');
     $course = wizardPageInstructorCourse($instructor);

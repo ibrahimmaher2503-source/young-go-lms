@@ -20,6 +20,10 @@ use Spatie\Translatable\HasTranslations;
  * @property list<array<string, mixed>>|null $faqs
  * @property list<array<string, mixed>>|null $requirements
  * @property list<array<string, mixed>>|null $outcomes
+ * @property string|null $overview_video_provider
+ * @property string|null $overview_video_url
+ * @property string|null $preview_video_provider
+ * @property string|null $preview_video_url
  */
 final class Course extends Model
 {
@@ -56,6 +60,7 @@ final class Course extends Model
         'slug_ar', 'slug_en', 'level', 'content_language', 'min_age', 'max_age',
         'format', 'owner_type', 'status', 'access_mode', 'sequence_mode', 'featured', 'ai_enabled',
         'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
+        'overview_video_provider', 'overview_video_url', 'preview_video_provider', 'preview_video_url',
         'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
     ];
 

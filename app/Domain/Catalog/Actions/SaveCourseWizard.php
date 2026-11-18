@@ -8,9 +8,11 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Media\LessonPublishRule;
+use App\Domain\Media\MediaProviders;
 use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
 use App\Models\CurriculumItem;
+use App\Models\MediaAsset;
 use App\Models\User;
 use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,13 +31,19 @@ use RuntimeException;
  */
 final class SaveCourseWizard
 {
-    public const int LAST_STEP = 3;
+    public const int PRICING_STEP = 3;
+
+    public const int MEDIA_STEP = 4;
+
+    public const int LAST_STEP = self::MEDIA_STEP;
 
     public const array LEVELS = ['beginner', 'intermediate', 'advanced', 'all'];
 
     public const array FORMATS = ['recorded', 'live', 'hybrid'];
 
     public const array CONTENT_LANGUAGES = ['ar', 'en', 'both'];
+
+    public const array VIDEO_LINK_PROVIDERS = ['youtube', 'vimeo'];
 
     /** Statuses the wizard may set; publishing and review go through their own actions. */
     public const array WIZARD_STATUSES = ['draft', 'private', 'upcoming', 'suspended', 'archived'];
@@ -62,9 +70,10 @@ final class SaveCourseWizard
 
         return DB::transaction(function () use ($actor, $clean, $course, $step, $complete, $data): Course {
             $record = $course === null ? new Course : Course::query()->lockForUpdate()->findOrFail($course->getKey());
-            $pricing = $this->validatePricing($actor, $record, $data, $step === self::LAST_STEP && $complete);
+            $pricing = $this->validatePricing($actor, $record, $data, $step >= self::PRICING_STEP && $complete);
+            $videos = $step >= self::MEDIA_STEP ? $this->validateVideos($record, $data, $complete) : [];
             $before = $record->exists ? Arr::only($record->getAttributes(), ['owner_type', 'owner_instructor_id', 'status', 'featured']) : null;
-            $record->fill($clean['attributes']);
+            $record->fill([...$clean['attributes'], ...$videos]);
             $record->slug_ar = $clean['slugs']['slug_ar'] ?? $record->slug_ar ?? $this->uniqueSlug('slug_ar', $record, $record->getTranslation('title', 'ar', false) ?: $record->getTranslation('title', 'en', false), 'ar');
             $record->slug_en = $clean['slugs']['slug_en'] ?? $record->slug_en ?? $this->uniqueSlug('slug_en', $record, $record->getTranslation('title', 'en', false) ?: $record->getTranslation('title', 'ar', false), 'en');
 
@@ -89,6 +98,49 @@ final class SaveCourseWizard
     public static function canSetPricing(User $actor): bool
     {
         return $actor->can('panel.admin.access') && $actor->can('course.publish') && ! $actor->hasRole('instructor_independent');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, string|null>
+     */
+    private function validateVideos(Course $course, array $data, bool $complete): array
+    {
+        $attributes = [];
+        foreach (['overview_video', 'preview_video'] as $video) {
+            $provider = $video.'_provider';
+            $url = $video.'_url';
+            $submitted = Arr::only($data, [$provider, $url]);
+            if ($submitted === [] && ! $complete) {
+                continue;
+            }
+
+            $values = array_map(
+                static fn (mixed $value): mixed => is_string($value) && trim($value) === '' ? null : $value,
+                array_replace($course->only([$provider, $url]), $submitted),
+            );
+            $validated = Validator::make($values, [
+                $provider => ['nullable', 'required_with:'.$url, 'string', Rule::in(self::VIDEO_LINK_PROVIDERS)],
+                $url => ['nullable', ...($complete ? ['required_with:'.$provider] : []), 'string', 'max:2048'],
+            ], [], [$provider => __('courses.'.$provider), $url => __('courses.'.$url)])->validate();
+
+            if ($validated[$url] !== null) {
+                $driver = MediaProviders::for($validated[$provider]);
+                try {
+                    $source = $driver->validate(['url' => $validated[$url]]);
+                } catch (ValidationException $error) {
+                    throw ValidationException::withMessages([$url => $error->errors()['url'] ?? [__('media.invalid_url')]]);
+                }
+
+                $validated[$url] = $driver->descriptor(new MediaAsset($source))->embedUrl
+                    ?? throw ValidationException::withMessages([$url => __('media.invalid_url')]);
+            }
+            if ($submitted !== []) {
+                $attributes += $validated;
+            }
+        }
+
+        return $attributes;
     }
 
     /**

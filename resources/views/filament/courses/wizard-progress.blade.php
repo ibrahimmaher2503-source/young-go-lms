@@ -1,6 +1,6 @@
 @php
     $completed = is_array($course?->wizard_completed ?? null) ? $course->wizard_completed : [];
-    $steps = [1 => __('courses.step_basic'), 2 => __('courses.step_information'), 3 => __('courses.step_pricing')];
+    $steps = [1 => __('courses.step_basic'), 2 => __('courses.step_information'), 3 => __('courses.step_pricing'), 4 => __('courses.step_media')];
     $done = count(array_filter($steps, fn ($label, $number) => ! empty($completed[(string) $number]), ARRAY_FILTER_USE_BOTH));
 @endphp
 {{-- The Filament theme does not scan this folder, so the few rules needed live here and use the shared tokens. --}}

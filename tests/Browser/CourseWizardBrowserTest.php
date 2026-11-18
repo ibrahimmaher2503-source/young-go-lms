@@ -81,3 +81,34 @@ it('renders the pricing step with market amounts, localized labels and no overfl
     ['ar', 1440, 900, 'light'], ['ar', 1440, 900, 'dark'], ['en', 1440, 900, 'light'], ['en', 1440, 900, 'dark'],
     ['ar', 1568, 1003, 'light'],
 ])->group('browser', 'T-P3-03', 'PRD-09-2');
+
+it('renders saved overview and preview links on the localized media step', function (string $locale, int $width, int $height, string $theme): void {
+    $this->actingAs(User::factory()->create(['locale' => $locale, 'name' => 'Admin'])->assignRole('admin'));
+    $course = Course::query()->create([
+        'title' => ['ar' => 'أساسيات الرسم الرقمي', 'en' => 'Digital drawing basics'],
+        'slug_ar' => 'wizard-media-ar', 'slug_en' => 'wizard-media',
+        'access_mode' => Course::ACCESS_FREE, 'wizard_step' => 4, 'wizard_completed' => ['1' => true, '2' => true, '3' => true],
+        'overview_video_provider' => 'youtube', 'overview_video_url' => 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',
+        'preview_video_provider' => 'vimeo', 'preview_video_url' => 'https://player.vimeo.com/video/123456789?dnt=1',
+    ]);
+
+    $page = $this->visit("/admin/courses/{$course->id}/edit")->resize($width, $height);
+    $page->script("async () => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); await document.fonts.ready; }");
+    $page->assertSee(__('courses.overview_video', [], $locale))->assertSee(__('courses.preview_video', [], $locale))
+        ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->value('input[id$=".overview_video_url"]'))->toBe($course->overview_video_url)
+        ->and($page->value('input[id$=".preview_video_url"]'))->toBe($course->preview_video_url)
+        ->and($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
+        ->and($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark')
+        ->and($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
+
+    $directory = base_path('tests/Browser/screenshots/T-P3-03');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: $width === 390, filename: "T-P3-03/media-{$locale}-{$theme}-{$width}");
+})->with([
+    ['ar', 390, 844, 'light'], ['ar', 390, 844, 'dark'], ['en', 390, 844, 'light'], ['en', 390, 844, 'dark'],
+    ['ar', 1440, 900, 'light'], ['ar', 1440, 900, 'dark'], ['en', 1440, 900, 'light'], ['en', 1440, 900, 'dark'],
+    ['ar', 1568, 1003, 'light'],
+])->group('browser', 'T-P3-03', 'PRD-09-2');
