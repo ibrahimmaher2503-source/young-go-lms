@@ -21,7 +21,7 @@ it('uses the shared branded login layout on every panel', function (string $pane
 it('shows only the current panels available resources in its welcome workspace', function () {
     $actor = User::factory()->create(['locale' => 'en'])->assignRole('super_admin');
     $this->actingAs($actor)->get('/admin')->assertOk()
-        ->assertSee('yg-dashboard-intro', false)
+        ->assertSee('yg-summary-strip', false)
         ->assertSee('href="'.route('filament.admin.resources.staff-users.index').'"', false);
 });
 

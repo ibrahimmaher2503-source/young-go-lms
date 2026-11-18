@@ -15,6 +15,7 @@ use App\Domain\AI\Help\Notifications\HelpRequestNotice;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Identity\Models\GuardianChildLink;
+use App\Domain\Notifications\GuardianCopyNotification;
 use App\Domain\Notifications\NotificationDispatch;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
@@ -81,7 +82,7 @@ function hrlCreateRequest(
     User $student,
     ?User $assignedInstructor = null,
     HelpRequestStatus $status = HelpRequestStatus::New,
-    ?\DateTimeInterface $dueAt = null,
+    ?DateTimeInterface $dueAt = null,
 ): HelpRequest {
     $conv = AiConversation::query()->create([
         'student_id' => $student->id,
@@ -218,14 +219,14 @@ it('delivers in-app notice to child without email and guardian receives email co
     $replyAction($instructor, $request, 'Private explanation for child.');
 
     // Child gets in-app database notice
-    NotificationFacade::assertSentTo($child, HelpRequestNotice::class, function (HelpRequestNotice $n, array $channels) use ($lesson): bool {
+    NotificationFacade::assertSentTo($child, HelpRequestNotice::class, function (HelpRequestNotice $n, array $channels): bool {
         expect($channels)->toBe(['database']);
 
         return true;
     });
 
     // Guardian gets notification copy with NO question or reply text
-    NotificationFacade::assertSentTo($guardian, \App\Domain\Notifications\GuardianCopyNotification::class, function (\App\Domain\Notifications\GuardianCopyNotification $n, array $channels) use ($guardian, $lesson): bool {
+    NotificationFacade::assertSentTo($guardian, GuardianCopyNotification::class, function (GuardianCopyNotification $n, array $channels) use ($guardian, $lesson): bool {
         $mail = $n->toMail($guardian);
         $body = implode(' ', $mail->introLines);
 

@@ -11,6 +11,7 @@ use App\Domain\Entitlements\EntitlementSource;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonResource;
+use App\Models\LibraryItem;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -126,7 +127,11 @@ it('shows rich lessons to entitled learners with images only from the lesson mat
     $item = app(ManageLessons::class)->add($instructor, $section, ['title' => ['en' => 'Mixed text'], 'type' => 'text']);
     /** @var Lesson $lesson */
     $lesson = $item->itemable;
-    $own = LessonResource::query()->create(['lesson_id' => $lesson->id, 'type' => 'image', 'title' => ['en' => 'Pic'], 'path' => 'resources/pic.png', 'mime' => 'image/png', 'downloadable' => true, 'visibility' => 'enrolled']);
+    $image = LibraryItem::query()->create([
+        'owner_type' => 'academy', 'kind' => 'image', 'title' => ['en' => 'Pic'], 'path' => 'resources/pic.png',
+        'mime' => 'image/png', 'size' => 42, 'sha256' => str_repeat('a', 64), 'created_by' => $instructor->id,
+    ]);
+    $own = LessonResource::query()->create(['lesson_id' => $lesson->id, 'library_item_id' => $image->id, 'type' => 'image', 'title' => ['en' => 'Pic'], 'path' => 'resources/pic.png', 'mime' => 'image/png', 'downloadable' => true, 'visibility' => 'enrolled']);
     $foreign = LessonResource::query()->create(['lesson_id' => Lesson::query()->create(['title' => ['en' => 'Other'], 'type' => 'text'])->id, 'type' => 'image', 'title' => ['en' => 'Theirs'], 'path' => 'resources/theirs.png', 'mime' => 'image/png', 'downloadable' => true, 'visibility' => 'enrolled']);
     app(ManageLessons::class)->update($instructor, $lesson, ['title' => ['en' => 'Mixed text'], 'type' => 'text', 'content' => rcDoc(
         ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [rcText('مقدمة Intro')]],
@@ -143,3 +148,32 @@ it('shows rich lessons to entitled learners with images only from the lesson mat
 
     $this->actingAs(User::factory()->create()->assignRole('student'))->get("/learn/{$course->id}/{$item->id}")->assertNotFound();
 })->group('T-P3-15', 'A2', 'ED-003');
+
+it('preserves and renders the three restricted editor blocks with an approved image', function (): void {
+    config(['media.iframe_allowlist' => ['slides.example.edu']]);
+    $actor = User::factory()->create()->assignRole('admin');
+    $course = Course::query()->create(['title' => ['en' => 'Blocks'], 'slug_ar' => 'blocks-ar', 'slug_en' => 'blocks-en']);
+    $section = app(ManageSections::class)->add($actor, $course, ['title' => ['en' => 'S']]);
+    $image = LibraryItem::query()->create([
+        'owner_type' => 'academy', 'kind' => 'image', 'title' => ['en' => 'Illustration'], 'path' => 'library/image.png',
+        'mime' => 'image/png', 'size' => 42, 'sha256' => str_repeat('a', 64), 'created_by' => $actor->id,
+    ]);
+    $block = static fn (string $id, array $config): array => ['type' => 'customBlock', 'attrs' => ['id' => $id, 'config' => $config, 'preview' => '<img src=x onerror=alert(1)>']];
+    $content = rcDoc(
+        $block('lesson-callout', ['tone' => 'tip', 'text' => 'Draw lightly']),
+        $block('lesson-embed', ['url' => 'https://slides.example.edu/deck']),
+        $block('lesson-library-image', ['library_item_id' => $image->id, 'alt' => 'A drawing']),
+        $block('lesson-embed', ['url' => 'https://unapproved.example/deck']),
+    );
+    $item = app(ManageLessons::class)->add($actor, $section, ['title' => ['en' => 'Text'], 'type' => 'text', 'content' => $content]);
+    $lesson = $item->itemable;
+    expect($lesson->resources()->sole()->library_item_id)->toBe($image->id)
+        ->and(json_encode($lesson->content))->not->toContain('onerror', 'unapproved.example')
+        ->and((string) RichContent::html($lesson->content, $lesson, $actor))->toContain('rc-callout-tip', 'slides.example.edu', 'alt="A drawing"');
+
+    $image->update(['owner_type' => 'instructor', 'owner_id' => $actor->id]);
+    $outsider = User::factory()->create()->assignRole('instructor_academy');
+    $course->instructors()->attach($outsider, ['role' => 'instructor', 'scope' => 'manage']);
+    expect(fn () => app(ManageLessons::class)->add($outsider, $section, ['title' => ['en' => 'Forged'], 'type' => 'text', 'content' => $content]))
+        ->toThrow(ValidationException::class);
+})->group('T-P3-15', 'A1', 'A2', 'ED-003');

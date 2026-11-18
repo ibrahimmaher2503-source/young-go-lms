@@ -10,7 +10,6 @@ use App\Domain\AI\Help\HelpRequestStatus;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Filament\Resources\HelpRequests\Pages\ListHelpRequests;
-use App\Filament\Resources\HelpRequests\Pages\ViewHelpRequest;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\AiSafeguardingFlag;
@@ -25,7 +24,6 @@ use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -77,7 +75,7 @@ function hrqCreateRequest(
     User $student,
     ?User $assignedInstructor = null,
     HelpRequestStatus $status = HelpRequestStatus::New,
-    ?\DateTimeInterface $dueAt = null,
+    ?DateTimeInterface $dueAt = null,
 ): HelpRequest {
     $conv = AiConversation::query()->create([
         'student_id' => $student->id,

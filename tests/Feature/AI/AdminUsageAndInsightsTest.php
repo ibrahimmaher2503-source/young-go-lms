@@ -4,14 +4,13 @@
 
 declare(strict_types=1);
 
-use App\Domain\AI\Assistant\AssistantMode;
-use App\Domain\AI\Assistant\AssistantOutcome;
 use App\Domain\AI\Assistant\StudentHash;
 use App\Domain\AI\Assistant\StyleTier;
 use App\Domain\AI\Console\Actions\AskInTestConsole;
 use App\Domain\AI\Guards\GuardKind;
 use App\Domain\AI\Queries\LessonInsights;
 use App\Domain\AI\Queries\UsageReport;
+use App\Domain\AI\Sandbox\SandboxResult;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
@@ -350,7 +349,7 @@ it('ensures console traffic through AskInTestConsole does not affect report tota
     $console = app(AskInTestConsole::class);
     $result = $console($instructor, $lesson, 'How does Pythagoras apply?', 'en', StyleTier::Adults);
 
-    expect($result)->toBeInstanceOf(\App\Domain\AI\Sandbox\SandboxResult::class);
+    expect($result)->toBeInstanceOf(SandboxResult::class);
 
     $reportAfter = app(UsageReport::class)->for(now()->subDays(7), now());
     expect($reportAfter['totals']['requests'])->toBe($requestsBefore);

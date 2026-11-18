@@ -4,6 +4,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Help\HelpRequestStatus;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
@@ -23,7 +24,6 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Pennant\Feature;
 use Spatie\Activitylog\Models\Activity;
-use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -216,7 +216,7 @@ it('creates exactly one help request on not_understood feedback and returns 201 
     expect($request->assigned_instructor_id)->toBe($instructor->id);
     expect($request->conversation_id)->toBe($conversation->id);
     expect($request->ai_message_id)->toBe($assistantMsg->id);
-    expect($request->status)->toBe(\App\Domain\AI\Help\HelpRequestStatus::New);
+    expect($request->status)->toBe(HelpRequestStatus::New);
     expect($request->locale)->toBe('en');
     expect($request->video_position)->toBe(135);
     expect($request->document_version)->toBe(1);
@@ -389,7 +389,7 @@ it('enforces open requests limit per learner and lesson, freeing a slot when res
     expect(HelpRequest::count())->toBe(4);
 
     // Resolving one request on $lesson frees a slot
-    $requests[0]->forceFill(['status' => \App\Domain\AI\Help\HelpRequestStatus::Resolved])->save();
+    $requests[0]->forceFill(['status' => HelpRequestStatus::Resolved])->save();
 
     // Now 4th request on $lesson succeeds
     $res4Retry = $this->actingAs($student)->postJson($endpoint, [

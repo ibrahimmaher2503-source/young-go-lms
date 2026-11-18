@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 use App\Domain\AI\AssistantEligibility;
 use App\Domain\AI\UnavailableReason;
+use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
@@ -165,6 +166,15 @@ it('requires replay publication, entitlement, and its own active ready PDF', fun
     expect($checker->check($learner, $lesson->fresh())->reason)->toBe(UnavailableReason::NoEntitlement);
 
     app(SetCurriculumStatus::class)($admin, $course, [$item->id], CurriculumItem::STATUS_PUBLISHED);
+
+    // Another lesson in the same course has a READY PDF, which must never make the replay AI-eligible
+    $siblingItem = app(ManageLessons::class)->add($admin, $section, ['type' => 'video', 'title' => ['en' => 'Sibling']]);
+    app(SetCurriculumStatus::class)($admin, $course, [$siblingItem->id], CurriculumItem::STATUS_PUBLISHED);
+    LessonCurriculumDocument::query()->create([
+        'lesson_id' => $siblingItem->itemable_id, 'version' => 1, 'path' => 'curriculum/sibling.pdf', 'sha256' => str_repeat('b', 64), 'size' => 1,
+        'pages' => 1, 'status' => LessonCurriculumDocument::STATUS_READY, 'active' => true,
+    ]);
+
     $doc = LessonCurriculumDocument::query()->create([
         'lesson_id' => $lesson->id, 'version' => 1, 'path' => 'curriculum/replay.pdf', 'sha256' => str_repeat('a', 64), 'size' => 1,
         'pages' => 1, 'status' => LessonCurriculumDocument::STATUS_AWAITING_APPROVAL, 'active' => true,

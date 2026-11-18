@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Actions\IngestCurriculumDocument;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Ingestion\ArabicTextRepair;
 use App\Domain\AI\Ingestion\Contracts\PageRenderer;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
 use App\Domain\AI\Ingestion\DocumentReadiness;
-use App\Domain\AI\Ingestion\IngestCurriculumDocument;
 use App\Domain\AI\Ingestion\IngestionFailure;
 use App\Domain\AI\Ingestion\QualityScorer;
 use App\Domain\AI\PromptRenderer;
@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -171,6 +172,24 @@ it('sends pages without a text layer to OCR and flags them', function (): void {
         ->and(app(AiProviderInterface::class)->health()->healthy)->toBeTrue();
 })->group('T-P3-09', 'A2');
 
+it('uses OCR for a long text layer without readable words', function (): void {
+    [, , $document] = ingDocument(1);
+    ingExtractor([str_repeat('... ', 30)]);
+    ingRenderer(true);
+
+    $result = app(IngestCurriculumDocument::class)($document);
+
+    expect($result->status)->toBe(LessonCurriculumDocument::STATUS_AWAITING_APPROVAL)
+        ->and($result->documentPages->sole()->ocr_used)->toBeTrue();
+})->group('T-P3-09', 'A2');
+
+it('marks the document failed when the uploaded file is missing', function (): void {
+    [, , $document] = ingDocument(1);
+    Storage::disk('local')->delete($document->path);
+
+    expect(app(IngestCurriculumDocument::class)($document)->status)->toBe(LessonCurriculumDocument::STATUS_FAILED);
+})->group('T-P3-09', 'A2');
+
 it('fails with a readable reason when pages stay unreadable', function (): void {
     [, $lesson, $document] = ingDocument(4);
     ingExtractor([ingGoodPage('colours'), '', '', ingGoodPage('shading')]);
@@ -265,6 +284,62 @@ it('rejects empty or oversized page edits', function (): void {
         ->and(fn () => app(EditExtractedPage::class)($admin, $document->refresh(), 9, 'valid text'))->toThrow(ModelNotFoundException::class);
 })->group('T-P3-09', 'A3');
 
+it('preserves each page correction with its author and previous text', function (): void {
+    [, , $document] = ingDocument(1);
+    $admin = User::factory()->create()->assignRole('admin');
+    $original = ingGoodPage('colours');
+    ingExtractor([$original]);
+    app(IngestCurriculumDocument::class)($document);
+
+    app(EditExtractedPage::class)($admin, $document, 1, 'First correction.');
+    app(EditExtractedPage::class)($admin, $document, 1, 'Second correction.');
+
+    $page = $document->documentPages()->sole();
+    $this->assertDatabaseHas('lesson_document_page_revisions', [
+        'page_id' => $page->getKey(), 'edited_by' => $admin->id,
+        'previous_text' => $original, 'text' => 'First correction.',
+    ]);
+    $this->assertDatabaseHas('lesson_document_page_revisions', [
+        'page_id' => $page->getKey(), 'edited_by' => $admin->id,
+        'previous_text' => 'First correction.', 'text' => 'Second correction.',
+    ]);
+})->group('T-P3-09', 'A3');
+
+it('keeps the newer approved source active when an older version is still awaiting review', function (): void {
+    [, $lesson, $older] = ingDocument(1);
+    $admin = User::factory()->create()->assignRole('admin');
+    $newer = $older->replicate()->fill(['version' => 2, 'sha256' => hash('sha256', 'replacement')]);
+    $newer->save();
+    ingExtractor([ingGoodPage('colours')]);
+    app(IngestCurriculumDocument::class)($older);
+    app(IngestCurriculumDocument::class)($newer);
+    app(ApproveCurriculumDocument::class)($admin, $newer);
+
+    expect(fn () => app(ApproveCurriculumDocument::class)($admin, $older))->toThrow(ValidationException::class)
+        ->and($lesson->activeCurriculumDocument()->getKey())->toBe($newer->getKey());
+})->group('T-P3-09', 'A3');
+
+it('preserves an edit saved while embeddings are being prepared', function (): void {
+    config(['ai.full_context_max_tokens' => 1]);
+    [, , $document] = ingDocument(1);
+    $admin = User::factory()->create()->assignRole('admin');
+    ingExtractor([ingGoodPage('colours')]);
+    app(IngestCurriculumDocument::class)($document);
+
+    $provider = Mockery::mock(AiProviderInterface::class);
+    $provider->shouldReceive('embed')->once()->andReturnUsing(function () use ($admin, $document): array {
+        app(EditExtractedPage::class)($admin, $document, 1, 'A newer review edit.');
+
+        return [[0.1, 0.2]];
+    });
+    App::instance(AiProviderInterface::class, $provider);
+
+    expect(fn () => app(ApproveCurriculumDocument::class)($admin, $document))->toThrow(ValidationException::class)
+        ->and($document->refresh()->status)->toBe(LessonCurriculumDocument::STATUS_AWAITING_APPROVAL)
+        ->and($document->documentPages()->sole()->approved_text)->toBe('A newer review edit.')
+        ->and(LessonDocumentChunk::query()->count())->toBe(0);
+})->group('T-P3-09', 'A3');
+
 it('builds chunks and embeddings only above the full-context size', function (): void {
     config(['ai.full_context_max_tokens' => 20, 'ai.ingestion.chunk_tokens' => 30]);
     [, , $document] = ingDocument(3);
@@ -342,7 +417,7 @@ it('queues ingestion on upload and the job runs the pipeline', function (): void
     config(['ai.ingestion.dispatch_on_upload' => true]);
     Queue::fake();
     [$instructor, $lesson] = ingDocument(1);
-    $bytes = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF";
+    $bytes = PdfFixture::bytes();
     $file = UploadedFile::fake()->createWithContent('lesson.pdf', $bytes);
 
     $document = app(UploadCurriculumDocument::class)($instructor, $lesson, $file);

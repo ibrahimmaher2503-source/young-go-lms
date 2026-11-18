@@ -2,14 +2,37 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Assistant\StyleTier;
 use App\Domain\Catalog\AgeBandResolver;
 use App\Domain\Catalog\AgeRange;
 use App\Domain\Catalog\Models\AgeBand;
 use App\Domain\Catalog\Rules\AgeRangeRule;
+use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
 
 uses(RefreshDatabase::class);
+
+it('seeds editable catalog defaults and resolves each wording tier from the stored bands', function (): void {
+    $this->travelTo(now()->setDate(2026, 11, 18));
+    $this->seed(DatabaseSeeder::class);
+
+    $resolver = app(AgeBandResolver::class);
+    expect($resolver->resolve(2017, 11)?->style_tier)->toBe('kids')
+        ->and($resolver->resolve(2016, 11)?->style_tier)->toBe('teens')
+        ->and($resolver->resolve(2009, 11)?->style_tier)->toBe('teens')
+        ->and($resolver->resolve(2008, 11)?->style_tier)->toBe('adults');
+
+    $resolver->resolve(2017, 11)->update(['max' => 8]);
+    $resolver->resolve(2016, 11)->update(['min' => 9]);
+    $this->seed(DatabaseSeeder::class);
+
+    $learner = (new User)->forceFill(['birth_year' => 2017, 'birth_month' => 11]);
+    expect($resolver->resolve(2017, 11)?->style_tier)->toBe('teens')
+        ->and(StyleTier::forLearner($learner))->toBe(StyleTier::Teens);
+    $this->assertDatabaseCount('age_bands', 3);
+})->group('T-P1-07', 'A1', 'A2', 'D-005', 'PRD-05');
 
 it('resolves configured age bands using birth month boundaries', function (int $birthYear, int $birthMonth, string $expectedLabel) {
     $this->travelTo(now()->setDate(2026, 11, 16));

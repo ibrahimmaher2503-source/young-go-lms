@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Actions\IngestCurriculumDocument;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
-use App\Domain\AI\Ingestion\IngestCurriculumDocument;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;

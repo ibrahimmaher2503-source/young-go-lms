@@ -9,11 +9,17 @@ use App\Domain\Cohorts\Actions\ReserveCohortSeat;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
+use App\Domain\Entitlements\Entitlement;
+use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Live\Actions\CancelLiveSession;
 use App\Domain\Live\Actions\RescheduleLiveSession;
 use App\Domain\Live\Actions\ScheduleLiveSession;
 use App\Domain\Live\Actions\SendLiveReminders;
+use App\Domain\Live\LiveSessionNotices;
+use App\Domain\Live\Notifications\LiveSessionNotice;
+use App\Domain\Notifications\Actions\SetPhoneReminderOptIn;
+use App\Domain\Notifications\FakeNotificationChannel;
 use App\Domain\Notifications\LocalizedNotification;
 use App\Domain\Notifications\NotificationDispatch;
 use App\Domain\Notifications\NotificationDispatcher;
@@ -24,6 +30,9 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
 
@@ -127,6 +136,32 @@ it('skips a reminder offset that had already passed when the session was created
     expect(app(SendLiveReminders::class)())->toBe(0);
 });
 
+it('sends phone reminders only for an enabled channel and opt-in to the current number', function (): void {
+    config(['live.phone_reminders' => ['whatsapp' => null, 'sms' => null]]);
+    $fake = app(FakeNotificationChannel::class);
+    [, , $arabic, $english] = lnBuild();
+    $arabic->forceFill(['phone' => '+201001234567'])->save();
+    $english->forceFill(['phone' => '+201001234568'])->save();
+    $consent = app(SetPhoneReminderOptIn::class);
+    $consent($arabic, 'whatsapp', true);
+    $consent($english, 'whatsapp', true);
+
+    $this->travelTo(CarbonImmutable::parse('2027-03-11 18:00:00', 'UTC'));
+    expect(app(SendLiveReminders::class)())->toBe(2)->and($fake->messages)->toBeEmpty();
+
+    config(['live.phone_reminders' => ['whatsapp' => 'fake', 'sms' => 'fake']]);
+    $english->forceFill(['phone' => '+201001234569'])->save();
+    $this->travelTo(CarbonImmutable::parse('2027-03-12 17:00:00', 'UTC'));
+    expect(app(SendLiveReminders::class)())->toBe(2)
+        ->and(app(SendLiveReminders::class)())->toBe(0)
+        ->and($fake->messages)->toHaveCount(1);
+
+    $message = array_values($fake->messages)[0];
+    expect($message)->toMatchArray([
+        'channel' => 'whatsapp', 'phone' => '+201001234567', 'locale' => 'ar', 'template' => 'live_session_reminder',
+    ])->and($message['message'])->toContain('الانطلاق', '21:00');
+})->group('T-P9-04', 'T-P9-04:A1', 'YG-GAP-NTF-001', 'O-021');
+
 it('does not remind people outside the cohort or without current access, nor for a cancelled session', function (): void {
     [$course, $item, $arabic, $english, $admin] = lnBuild(withCohort: true);
     $cohort = $item->itemable->cohort;
@@ -183,3 +218,41 @@ it('sends one dedupe key to one recipient once, and lets a failed send be retrie
     $other = User::factory()->create();
     expect($dispatcher->send($other, $notice))->toBeTrue(); // same key, another person: still sent
 });
+
+it('retries failed mail without duplicating the delivered inbox notice', function (): void {
+    [, $item, $recipient] = lnBuild(publish: false);
+    $notice = new LiveSessionNotice(
+        $item->itemable, (int) $item->course_id, (int) $item->getKey(),
+        LiveSessionNotice::SCHEDULED,
+    );
+    $mailAttempts = 0;
+    Event::listen(MessageSending::class, function () use (&$mailAttempts): void {
+        if (++$mailAttempts === 1) {
+            throw new RuntimeException('Mail transport unavailable');
+        }
+    });
+    $dispatcher = app(NotificationDispatcher::class);
+
+    expect(fn () => $dispatcher->send($recipient, $notice))->toThrow(RuntimeException::class, 'Mail transport unavailable');
+    expect($recipient->notifications()->count())->toBe(1)
+        ->and(NotificationDispatch::query()->count())->toBe(0);
+    $inboxId = $recipient->notifications()->sole()->getKey();
+
+    expect($dispatcher->send($recipient, clone $notice))->toBeTrue()
+        ->and($recipient->notifications()->count())->toBe(1)
+        ->and($recipient->notifications()->sole()->getKey())->toBe($inboxId)
+        ->and($mailAttempts)->toBe(2)
+        ->and(Mail::getSymfonyTransport()->messages())->toHaveCount(1)
+        ->and($dispatcher->send($recipient, $notice))->toBeFalse()
+        ->and($mailAttempts)->toBe(2);
+})->group('T-P5-04', 'A1', 'PRD-A20');
+
+it('filters out suspended accounts and expired entitlements for live notices', function (): void {
+    [$course, $item, $suspended, $expired] = lnBuild();
+    $suspended->forceFill(['status' => 'suspended'])->save();
+    Entitlement::query()->where('learner_id', $expired->id)
+        ->where('course_id', $course->id)->update(['ends_at' => now()]);
+
+    app(EntitlementService::class)->flush();
+    expect(app(LiveSessionNotices::class)->audience($item->itemable))->toBeEmpty();
+})->group('T-P5-04');

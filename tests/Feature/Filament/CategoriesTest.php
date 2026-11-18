@@ -67,6 +67,25 @@ it('persists and lists categories in tree order through the admin workspace', fu
     expect($earlier->fresh()->getTranslations('name'))->toBe(categoryData()['name']);
 })->group('T-P2-01', 'A1', 'YG-WEB-003');
 
+it('publishes only re-encoded category image bytes', function (): void {
+    $this->actingAs(User::factory()->create()->assignRole('admin'));
+    $disk = Storage::fake('public');
+    $original = UploadedFile::fake()->image('cover.jpg');
+    $marker = 'category-upload-test-metadata';
+    $upload = UploadedFile::fake()->createWithContent('cover.jpg', file_get_contents($original->getPathname()).$marker);
+
+    Livewire::test(ListCategories::class)
+        ->callAction('create', [...categoryData('illustrated'), 'image' => [$upload]])
+        ->assertHasNoActionErrors();
+
+    $category = Category::query()->where('slug_en', 'illustrated')->sole();
+    $stored = $disk->get($category->image);
+
+    expect($disk->allFiles())->toBe([$category->image])
+        ->and($stored)->not->toContain($marker)
+        ->and(getimagesizefromstring($stored)['mime'])->toBe('image/jpeg');
+})->group('T-P2-01', 'ED-031', 'YG-GAP-SEC-004');
+
 it('enforces slug uniqueness independently for each locale', function (string $column) {
     $this->actingAs(User::factory()->create()->assignRole('admin'));
     $first = Category::query()->create(categoryData());

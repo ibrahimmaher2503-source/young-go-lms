@@ -5,17 +5,22 @@
 declare(strict_types=1);
 
 use App\Domain\AI\Actions\AskLessonAssistant;
+use App\Domain\AI\Assistant\AssistantContext;
 use App\Domain\AI\Assistant\AssistantMode;
 use App\Domain\AI\Assistant\AssistantOutcome;
 use App\Domain\AI\Assistant\AssistantQuestion;
+use App\Domain\AI\Assistant\ContextBuilder;
+use App\Domain\AI\Assistant\OutputGuard;
 use App\Domain\AI\Assistant\StudentHash;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Contracts\ModerationClassifier;
+use App\Domain\AI\Dto\AiCompletionResult;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\KeywordModerationClassifier;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
+use App\Domain\Identity\ActingLearner;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\AiConversation;
@@ -26,6 +31,7 @@ use App\Models\AiUsage;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
+use App\Models\LessonDocumentChunk;
 use App\Models\LessonDocumentPage;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -330,3 +336,104 @@ it('verifies engine request parameters: maxTokens 220, JSON schema, and userHash
         ->and($schema['additionalProperties'])->toBeFalse()
         ->and(array_keys($schema['properties']))->toContain('status', 'answer', 'source_pages', 'support_quote', 'language');
 })->group('T-P7-05', 'T-P7-01', 'A1');
+
+it('requires complete schema for non-answer replies', function (): void {
+    $context = new AssistantContext('full', 1, [1 => 'Lesson text'], [1 => 'Lesson text']);
+    $guard = new OutputGuard;
+    foreach (['not_in_source', 'out_of_scope'] as $status) {
+        expect($guard->inspect(json_encode(['status' => $status], JSON_THROW_ON_ERROR), $context, '')->passed())->toBeFalse();
+        expect($guard->inspect(json_encode([
+            'status' => $status, 'answer' => '', 'source_pages' => [], 'support_quote' => '', 'language' => 'en',
+        ], JSON_THROW_ON_ERROR), $context, '')->passed())->toBeTrue();
+    }
+});
+
+it('uses only selected approved excerpts in a chunked prompt', function (): void {
+    $data = aepReady();
+    config(['ai.full_context_max_tokens' => 1]);
+    LessonDocumentChunk::query()->create([
+        'document_id' => $data['document']->id, 'page_from' => 1, 'page_to' => 1, 'text' => 'Red, blue, and yellow are primary colors.',
+    ]);
+
+    $context = (new ContextBuilder(new FakeAiProvider))->build($data['document'], 'primary colors');
+
+    expect($context->promptPages)->toBe([1 => 'Red, blue, and yellow are primary colors.']);
+});
+
+it('refuses assistant requests in a parent child session before creating any conversation', function (): void {
+    $data = aepReady();
+    $parent = User::query()->findOrFail(GuardianChildLink::query()->where('child_id', $data['student']->id)->value('guardian_id'));
+
+    $this->actingAs($parent)->withSession([ActingLearner::SESSION_KEY => $data['student']->id])
+        ->postJson(route('assistant.ask', $data['lesson']), [])->assertForbidden();
+
+    expect(AiConversation::query()->count())->toBe(0);
+});
+
+it('discards provider replies if the approved document was retired during the request', function (): void {
+    $data = aepReady();
+    $fake = new FakeAiProvider;
+    app()->instance(AiProviderInterface::class, $fake);
+    $fake->respondWith(function () use ($data): string {
+        $data['document']->update(['active' => false]);
+
+        return json_encode([
+            'status' => 'answered', 'answer' => 'Red, blue, and yellow are primary colors.',
+            'source_pages' => [1], 'support_quote' => 'Red, blue, and yellow are primary colors', 'language' => 'en',
+        ], JSON_THROW_ON_ERROR);
+    });
+
+    $this->actingAs($data['student'])->postJson(route('assistant.ask', $data['lesson']), ['question' => 'What are primary colors?'])
+        ->assertConflict()->assertJsonPath('state', 'no_approved_document');
+    expect(AiConversation::query()->count())->toBe(0);
+    expect(AiUsage::query()->sole()->result)->toBe('source_unavailable');
+});
+
+it('withholds response tokens when the document is retired before stream emission', function (): void {
+    $data = aepReady();
+    $provider = new FakeAiProvider;
+    $provider->respondWith([
+        'status' => 'answered', 'answer' => 'Red, blue, and yellow are primary colors.',
+        'source_pages' => [1], 'support_quote' => 'Red, blue, and yellow are primary colors', 'language' => 'en',
+    ]);
+    app()->instance(AiProviderInterface::class, $provider);
+
+    $pending = $this->actingAs($data['student'])->postJson(route('assistant.ask', $data['lesson']), ['question' => 'Which are the primary colors?']);
+    $data['document']->update(['active' => false]);
+
+    expect($pending->streamedContent())->not->toContain('event: token')->toContain('"state":"no_approved_document"');
+});
+
+it('records the combined charge of both provider calls after a guard retry', function (): void {
+    $data = aepReady();
+    $provider = Mockery::mock(AiProviderInterface::class);
+    $usage = new App\Domain\AI\Dto\AiUsage(10, 3, 5);
+    $provider->shouldReceive('complete')->twice()->andReturn(
+        new AiCompletionResult('unavailable', $usage, 4, 10, 'first', 'stop', 'fixture'),
+        new AiCompletionResult(FakeAiProvider::DEFAULT_ANSWER, $usage, 9, 12, 'second', 'stop', 'fixture'),
+    );
+    app()->instance(AiProviderInterface::class, $provider);
+
+    app(AskLessonAssistant::class)($data['student'], $data['lesson'], new AssistantQuestion('What are primary colors?', 'en'));
+
+    $row = AiUsage::query()->sole();
+    expect($row->cost_minor)->toBe(13)->and($row->input_tokens)->toBe(20);
+});
+
+it('rejects a provider response that exceeded the measured deadline despite its reported latency', function (): void {
+    $data = aepReady();
+    config(['ai.assistant.timeout_seconds' => 1]);
+    $provider = new FakeAiProvider;
+    $provider->respondWith(static function (): string {
+        usleep(1_050_000);
+
+        return FakeAiProvider::DEFAULT_ANSWER;
+    });
+    app()->instance(AiProviderInterface::class, $provider);
+
+    $reply = app(AskLessonAssistant::class)($data['student'], $data['lesson'], new AssistantQuestion('What are primary colors?', 'en'));
+
+    expect($reply->outcome)->toBe(AssistantOutcome::Fallback)
+        ->and(AiUsage::query()->sole()->result)->toBe('timeout')
+        ->and($provider->requests())->toHaveCount(1);
+});

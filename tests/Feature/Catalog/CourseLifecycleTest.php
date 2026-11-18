@@ -24,6 +24,7 @@ use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
 use App\Models\MediaAsset;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\SubtitleTrack;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -139,6 +140,37 @@ it('makes unique slugs for repeated copies and skips archived lessons', function
 
     expect($one->slug_en)->toBe('drawing-copy')->and($two->slug_en)->toBe('drawing-copy-2')->and(CurriculumItem::query()->where('course_id', $one->id)->count())->toBe(2);
 })->group('T-P3-12', 'A1');
+
+it('rewrites nested rich lesson image blocks to use the copied lesson resource', function (): void {
+    [$course, $admin] = clBuilt();
+    $reading = CurriculumItem::query()->where('course_id', $course->id)->where('itemable_type', 'lesson')->orderByDesc('id')->firstOrFail()->itemable;
+    Storage::disk('local')->put('resources/example.png', 'image bytes');
+    $image = LessonResource::query()->create(['lesson_id' => $reading->id, 'type' => 'image', 'title' => ['en' => 'Example'], 'path' => 'resources/example.png', 'visibility' => 'enrolled', 'sort' => 1]);
+    $reading->update(['content' => ['type' => 'doc', 'content' => [
+        ['type' => 'blockquote', 'content' => [['type' => 'image', 'attrs' => ['resource_id' => $image->id, 'alt' => 'Example']]]],
+    ]]]);
+
+    $copy = app(DuplicateCourse::class)($admin, $course);
+    $newReading = CurriculumItem::query()->where('course_id', $copy->id)->where('itemable_type', 'lesson')->orderByDesc('id')->firstOrFail()->itemable;
+    $newImage = $newReading->resources()->firstOrFail();
+
+    expect($newImage->id)->not->toBe($image->id)
+        ->and($newImage->path)->not->toBe($image->path)
+        ->and($newReading->content['content'][0]['content'][0]['attrs']['resource_id'])->toBe($newImage->id);
+})->group('T-P3-12', 'A1', 'PRD-09.5');
+
+it('blocks deleting a course that has quiz attempts even without access or progress history', function (): void {
+    [$course, $admin] = clBuilt();
+    $quiz = CurriculumItem::query()->where('course_id', $course->id)->where('itemable_type', 'quiz')->firstOrFail()->itemable;
+    QuizAttempt::query()->create([
+        'quiz_id' => $quiz->id, 'learner_id' => User::factory()->create()->id, 'attempt_no' => 1,
+        'started_at' => now(), 'snapshot' => [], 'settings' => [],
+    ]);
+
+    expect(DeleteCourse::blockers($course))->toContain('attempts')
+        ->and(fn () => app(DeleteCourse::class)($admin, $course))->toThrow(ValidationException::class);
+    expect($course->fresh())->not->toBeNull();
+})->group('T-P3-12', 'A2', 'PRD-09.5');
 
 it('only lets people with create rights duplicate', function (): void {
     [$course, , $instructor] = clBuilt();

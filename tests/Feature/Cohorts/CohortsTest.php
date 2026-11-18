@@ -63,7 +63,7 @@ it('never seats more learners than the capacity, whoever asks and however often'
     expect($cohort->refresh()->seatedCount())->toBe(3)
         ->and(CohortMember::query()->where('cohort_id', $cohort->id)->count())->toBe(3)
         ->and($refused)->toBeGreaterThanOrEqual(3);
-});
+})->group('T-P5-01', 'A1', 'YG-GAP-COH-001', 'YG-GAP-COH-002', 'ED-013');
 
 it('is idempotent for a learner who already has the seat', function (): void {
     [$course, $admin] = chCourse();
@@ -102,7 +102,7 @@ it('seats the learner who waited longest first and only when a seat is free', fu
     app(RemoveFromCohort::class)($admin, $promoted);
 
     expect(app(PromoteFromWaitlist::class)($admin, $cohort)->learner_id)->toBe($second->id);
-});
+})->group('T-P5-01', 'A2', 'YG-GAP-COH-002', 'ED-013');
 
 it('keeps the waitlist for full cohorts and refuses it while seats are free', function (): void {
     [$course, $admin] = chCourse();
@@ -155,7 +155,7 @@ it('lets recorded courses run without cohorts and refuses to create one for them
 
     expect(Cohort::query()->count())->toBe(0)
         ->and(fn () => app(ManageCohorts::class)->create($admin, $course, ['name' => 'X', 'capacity' => 5]))->toThrow(ValidationException::class);
-});
+})->group('T-P5-01', 'A3', 'YG-GAP-COH-003');
 
 it('is run by staff of the course only, and instructors must belong to it', function (): void {
     [$course, $admin] = chCourse('hybrid');

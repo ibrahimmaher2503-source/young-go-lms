@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 use App\Domain\Shared\Observability\ErrorReporter;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Laravel\Pulse\Pulse;
+
+uses(RefreshDatabase::class);
 
 it('reports application errors once as local JSON without sensitive exception text', function () {
     $path = tempnam(sys_get_temp_dir(), 'young-go-log-');

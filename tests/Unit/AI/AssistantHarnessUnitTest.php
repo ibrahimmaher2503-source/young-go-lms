@@ -320,3 +320,21 @@ it('rejects invalid dataset configurations in EvalDataset::load with InvalidArgu
     expect(fn () => EvalDataset::load($ds9['dir']))->toThrow(InvalidArgumentException::class);
     File::deleteDirectory($ds9['dir']);
 })->group('T-P7-05', 'unit');
+
+it('protects prompts in older live attempts and their saved snapshots', function (): void {
+    $learner = User::factory()->create();
+    $older = Quiz::query()->create(['title' => ['en' => 'Older quiz']]);
+    $newer = Quiz::query()->create(['title' => ['en' => 'Newer quiz']]);
+    QuizAttempt::query()->create([
+        'quiz_id' => $older->id, 'learner_id' => $learner->id, 'status' => QuizAttempt::IN_PROGRESS,
+        'started_at' => now()->subMinute(), 'attempt_no' => 1, 'total' => 1,
+        'snapshot' => ['questions' => [['prompt' => ['en' => 'Which paint works best on wet paper?']]]], 'settings' => [],
+    ]);
+    QuizAttempt::query()->create([
+        'quiz_id' => $newer->id, 'learner_id' => $learner->id, 'status' => QuizAttempt::IN_PROGRESS,
+        'started_at' => now(), 'attempt_no' => 1, 'total' => 1,
+        'snapshot' => ['questions' => []], 'settings' => [],
+    ]);
+
+    expect((new QuizQuestionMatcher)->matches($learner, 'Which paint works best on wet paper?'))->toBeTrue();
+});
