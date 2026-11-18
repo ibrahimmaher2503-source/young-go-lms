@@ -7,6 +7,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\HelpRequestController;
+use App\Http\Controllers\InstructorStatementController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
 use App\Http\Controllers\LegacyRedirectController;
@@ -14,11 +15,11 @@ use App\Http\Controllers\LiveJoinController;
 use App\Http\Controllers\ManualPaymentProofController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
-use App\Http\Controllers\InstructorStatementController;
 use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizAttemptController;
+use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -67,7 +68,9 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my/payments/{order}/refunds/{refund}/receipt', [PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');
     // T-P8-10: instructor statement PDF (own statements; finance with ledger.view).
     Route::get('/my/statements/{statement}/pdf', [InstructorStatementController::class, 'pdf'])->whereNumber('statement')->middleware('throttle:certificate-download')->name('statements.pdf');
-    Route::get('/my/wishlist',[WishlistController::class, 'index'])->name('wishlist.index');
+    // T-P9-06: staff report CSV export (scoped and audited in the action; unreadable report = 403).
+    Route::get('/reports/{report}/export', ReportExportController::class)->middleware('throttle:20,1')->name('reports.export');
+    Route::get('/my/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/my/wishlist/{course}', [WishlistController::class, 'toggle'])->whereNumber('course')->middleware('throttle:30,1')->name('wishlist.toggle');
     Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store'])->whereNumber('course')->middleware('throttle:6,1')->name('reviews.store');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');

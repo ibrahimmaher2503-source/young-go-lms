@@ -14,6 +14,7 @@ use App\Filament\Pages\InstructorAgreementPage;
 use App\Filament\Pages\MarketingTags;
 use App\Filament\Pages\MyPayoutProfile;
 use App\Filament\Pages\PaymentReconciliationPage;
+use App\Filament\Pages\ReportsPage;
 use App\Filament\Pages\RetentionSettings;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Announcements\AnnouncementResource;
@@ -42,8 +43,6 @@ use App\Filament\Resources\ManualGrants\ManualGrantResource;
 use App\Filament\Resources\ManualPayments\ManualPaymentProofResource;
 use App\Filament\Resources\MyEarnings\MyEarningsResource;
 use App\Filament\Resources\MyStatements\MyStatementsResource;
-use App\Filament\Resources\Settlements\SettlementResource;
-use App\Filament\Resources\Statements\StatementResource;
 use App\Filament\Resources\NewsletterSubscribers\NewsletterSubscriberResource;
 use App\Filament\Resources\NotificationTemplates\NotificationTemplateResource;
 use App\Filament\Resources\PayoutProfiles\PayoutProfileResource;
@@ -51,8 +50,10 @@ use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Resources\Reviews\CourseReviewResource;
 use App\Filament\Resources\RolePermissions\RolePermissionResource;
+use App\Filament\Resources\Settlements\SettlementResource;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
+use App\Filament\Resources\Statements\StatementResource;
 use App\Filament\Resources\SubmissionReview\SubmissionReviewResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Shared\WorkspaceAvatarProvider;
@@ -96,9 +97,9 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->viteTheme('resources/css/filament-theme.css')
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages(match ($id) {
-                    'finance' => [WorkspaceDashboard::class, PaymentReconciliationPage::class],
-                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, MarketingTags::class, RetentionSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
-                    default => [WorkspaceDashboard::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, InstructorAgreementPage::class, MyPayoutProfile::class],
+                    'finance' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class],
+                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, RetentionSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
+                    default => [WorkspaceDashboard::class, ReportsPage::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, InstructorAgreementPage::class, MyPayoutProfile::class],
                 })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
                 ->renderHook(TablesRenderHook::CONTENT_BEFORE, static fn () => view('filament.shared.table-scroll-hint'))

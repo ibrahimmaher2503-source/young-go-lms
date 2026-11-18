@@ -199,4 +199,5 @@ return [
     'settlement.approved' => 'تم اعتماد دفعة تسوية',
     'settlement.paid' => 'تم تسجيل دفع تسوية مدرّب',
     'settlement.cancelled' => 'تم إلغاء دفعة تسوية',
+    'report.exported' => 'تم تصدير تقرير إلى CSV',
 ];

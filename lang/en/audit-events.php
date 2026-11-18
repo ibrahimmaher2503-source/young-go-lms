@@ -199,4 +199,5 @@ return [
     'settlement.approved' => 'Instructor settlement batch approved',
     'settlement.paid' => 'Instructor settlement payout recorded',
     'settlement.cancelled' => 'Instructor settlement batch cancelled',
+    'report.exported' => 'Report exported to CSV',
 ];
