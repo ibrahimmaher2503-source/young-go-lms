@@ -51,6 +51,9 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'create'])->whereNumber('order')->name('manual-payments.create');
     Route::post('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'store'])->whereNumber('order')->middleware('throttle:progress')->name('manual-payments.store');
     Route::get('/payments/proofs/{proof}/file', [ManualPaymentProofController::class, 'file'])->whereNumber('proof')->middleware('throttle:certificate-download')->name('manual-payments.file');
+    Route::get('/my/payments', [\App\Http\Controllers\PaymentHistoryController::class, 'index'])->name('payments.history');
+    Route::get('/my/payments/{order}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'receipt'])->whereNumber('order')->middleware('throttle:certificate-download')->name('payments.receipt');
+    Route::get('/my/payments/{order}/refunds/{refund}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');
     Route::get('/my/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/my/wishlist/{course}', [WishlistController::class, 'toggle'])->whereNumber('course')->middleware('throttle:30,1')->name('wishlist.toggle');
     Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store'])->whereNumber('course')->middleware('throttle:6,1')->name('reviews.store');

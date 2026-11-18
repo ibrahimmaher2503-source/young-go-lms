@@ -49,7 +49,9 @@ final class Order extends Model
     protected static function booted(): void
     {
         self::updating(static function (self $order): void {
-            $original = OrderStatus::tryFrom((string) $order->getOriginal('status'));
+            // getOriginal applies the enum cast; casting the enum to string was BUG-007 and broke every status change.
+            $raw = $order->getOriginal('status');
+            $original = $raw instanceof OrderStatus ? $raw : OrderStatus::tryFrom((string) $raw);
             if (! $order->totalsUnlocked && $original?->locksTotals() === true && $order->isDirty(self::MONEY_COLUMNS)) {
                 throw new LogicException('Order totals are frozen once the order is paid.');
             }
@@ -94,6 +96,12 @@ final class Order extends Model
     public function payer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'payer_id');
+    }
+
+    /** @return HasMany<Refund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 
     /** @return HasMany<OrderItem, $this> */
