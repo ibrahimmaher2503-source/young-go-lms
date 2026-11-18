@@ -107,4 +107,6 @@ return [
         'in_progress' => 'قيد التقدم',
         'completed' => 'مكتمل',
     ],
+    'access_free' => 'مجانية',
+    'access_paid' => 'شراء الدورة',
 ];

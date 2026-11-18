@@ -107,4 +107,6 @@ return [
         'in_progress' => 'In progress',
         'completed' => 'Completed',
     ],
+    'access_free' => 'Free',
+    'access_paid' => 'Individual purchase',
 ];

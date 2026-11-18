@@ -2,6 +2,7 @@
 @props(['name'])
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" {{ $attributes->class(['size-5 shrink-0', 'rtl:rotate-180' => in_array($name, ['chevron', 'arrow', 'back', 'send'], true)]) }}>
     @switch($name)
+        @case('filter') <path d="M3 5h18l-7 8v6l-4 2v-8z"/> @break
         @case('check') <path d="m5 12 4 4L19 6"/> @break
         @case('close') <path d="m6 6 12 12M18 6 6 18"/> @break
         @case('download') <path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/> @break

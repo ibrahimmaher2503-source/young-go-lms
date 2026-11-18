@@ -32,6 +32,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -63,6 +64,7 @@ final class CheckoutController
 
         return view('checkout.product', $product + [
             'type' => $type, 'id' => $id, 'market' => $market, 'learners' => $options, 'owned' => $owned,
+            'cover' => $product['course'] instanceof Course ? $this->coverUrl($product['course']) : null,
             'selected' => (int) old('learner_id', $default instanceof User ? $default->getKey() : $payer->getKey()),
             'key' => 'co-'.bin2hex(random_bytes(12)),
         ]);
@@ -100,6 +102,8 @@ final class CheckoutController
 
         return view('checkout.order', [
             'order' => $order,
+            'payer' => $this->payer($request),
+            'covers' => $this->covers($order),
             'market' => Market::tryFrom($order->market) ?? Market::Egypt,
             'methods' => ($methods)(),
             'coupon' => $redemption?->coupon,
@@ -192,6 +196,32 @@ final class CheckoutController
         abort_if($price === null, 404);
 
         return ['course' => $course, 'bundle' => null, 'plan' => null, 'title' => (string) $course->title, 'price' => $price, 'back' => PublicUrl::course($course, app()->getLocale())];
+    }
+
+    /**
+     * The cover of each course line, keyed by order item id; bundles and plans have no cover and fall back to the placeholder.
+     *
+     * @return array<int, string|null>
+     */
+    private function covers(Order $order): array
+    {
+        $courseIds = $order->items->filter(static fn ($item): bool => $item->product_type === ProductType::Course)->pluck('product_id')->all();
+        $courses = Course::query()->with('category')->whereIn('id', $courseIds)->get()->keyBy('id');
+        $covers = [];
+        foreach ($order->items as $item) {
+            $course = $item->product_type === ProductType::Course ? $courses->get($item->product_id) : null;
+            $covers[$item->getKey()] = $course instanceof Course ? $this->coverUrl($course) : null;
+        }
+
+        return $covers;
+    }
+
+    private function coverUrl(Course $course): ?string
+    {
+        $path = filled($course->cover_image) ? $course->cover_image
+            : ($course->category?->status === 'active' && filled($course->category->image) ? $course->category->image : null);
+
+        return $path === null ? null : Storage::disk('public')->url($path);
     }
 
     private function payer(Request $request): User

@@ -24,8 +24,20 @@
     } elseif ($course->max_age !== null) {
         $ages = __('course_page.ages_to', ['max' => $course->max_age]);
     }
-    $accessLabel = $course->access_mode === App\Models\Course::ACCESS_FREE ? __('courses.free') : __('course_page.paid');
-    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $purchasable ?? false];
+    $accessLabel = __(match ($course->access_mode) {
+        App\Models\Course::ACCESS_FREE => 'courses.access_free',
+        App\Models\Course::ACCESS_PAID => 'courses.access_paid',
+        App\Models\Course::ACCESS_SUBSCRIPTION => 'courses.access_subscription',
+        App\Models\Course::ACCESS_BOTH => 'courses.access_both',
+        default => 'courses.unconfigured',
+    });
+    $tabItems = array_filter([
+        'overview' => __('course_page.overview'),
+        'curriculum' => __('course_page.curriculum'),
+        'instructor' => $instructors->isNotEmpty() ? __('course_page.instructor') : null,
+        'faq' => $faqs->isNotEmpty() ? __('course_page.faq') : null,
+    ]);
+    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $price !== null];
     $linkClass = 'rounded-md font-semibold text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 @endphp
 <x-layouts.base :title="$seo['title']" variant="public" full indexable>
@@ -39,37 +51,30 @@
 
     <div class="grid gap-4 pb-24 lg:grid-cols-[minmax(0,1fr)_20rem] lg:pb-0 xl:grid-cols-[minmax(0,1fr)_22rem]" data-course-page>
         <div class="min-w-0 space-y-4">
-            <section class="grid gap-5 rounded-card border border-border bg-surface p-4 shadow-card sm:p-6 {{ $cover || $previewUrl ? 'md:grid-cols-2' : '' }}" aria-labelledby="course-title" data-section="hero">
+            <section class="grid gap-5 rounded-card border border-border bg-surface p-4 shadow-card sm:p-6 md:grid-cols-2" aria-labelledby="course-title" data-section="hero">
                 <div class="min-w-0 space-y-4">
                     <h1 id="course-title" class="break-words text-3xl font-extrabold" data-course-title>{{ $course->title }}</h1>
                     @if(filled($course->short_description))<p class="break-words text-muted">{{ $course->short_description }}</p>@endif
                     <ul class="flex flex-wrap items-center gap-2" aria-label="{{ __('course_page.facts') }}">
-                        @if($instructors->isNotEmpty())<li><x-ui.badge tone="info" data-fact="instructor">{{ __('course_page.instructor_name', ['name' => $instructors->implode(', ')]) }}</x-ui.badge></li>@endif
+                        @if($instructors->isNotEmpty())<li><x-ui.badge tone="info" data-fact="instructor">{{ __('course_page.instructor') }}:&nbsp;<bdi>{{ $instructors->implode(', ') }}</bdi></x-ui.badge></li>@endif
                         @if($levelLabel)<li><x-ui.badge data-fact="level">{{ $levelLabel }}</x-ui.badge></li>@endif
                         @if($languageLabel)<li><x-ui.badge data-fact="language">{{ $languageLabel }}</x-ui.badge></li>@endif
                         <li><x-ui.badge data-fact="format">{{ __('courses.'.$course->format) }}</x-ui.badge></li>
                         @if($ages)<li><x-ui.badge data-fact="age">{{ $ages }}</x-ui.badge></li>@endif
                     </ul>
                 </div>
-                @if($cover || $previewUrl)
-                    <div class="relative self-start overflow-hidden rounded-lg bg-assistant md:order-first" data-hero-media>
-                        @if($cover)<img src="{{ $cover }}" alt="" class="aspect-video w-full object-cover">@else<div class="aspect-video w-full"></div>@endif
+                <div class="relative self-start overflow-hidden rounded-lg bg-assistant md:order-first" data-hero-media>
+                        @if($cover)<img src="{{ $cover }}" alt="" class="aspect-video w-full object-cover">@else<div class="grid aspect-video w-full place-items-center text-primary" data-cover-placeholder><x-ui.icon name="book" class="size-14"/></div>@endif
                         @if($previewUrl)
                             <a href="{{ $previewUrl }}" class="absolute inset-0 grid place-items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label="{{ __('course_page.watch_preview') }}" data-preview-link>
                                 <span class="grid size-14 place-items-center rounded-full bg-surface text-primary shadow-card"><x-ui.icon name="play" class="size-6"/></span>
                             </a>
                         @endif
                     </div>
-                @endif
             </section>
 
-            <nav aria-label="{{ __('course_page.sections') }}" class="flex flex-wrap gap-2 rounded-card border border-border bg-surface p-2 md:justify-around">
-                <x-ui.link href="#overview" class="px-3">{{ __('course_page.overview') }}</x-ui.link>
-                <x-ui.link href="#curriculum" class="px-3">{{ __('course_page.curriculum') }}</x-ui.link>
-                @if($instructors->isNotEmpty())<x-ui.link href="#instructor" class="px-3">{{ __('course_page.instructor') }}</x-ui.link>@endif
-                @if($faqs->isNotEmpty())<x-ui.link href="#faq" class="px-3">{{ __('course_page.faq') }}</x-ui.link>@endif
-            </nav>
-
+            <x-ui.tabs id="course-tabs" variant="underline" :label="__('course_page.sections')" :items="$tabItems" class="rounded-card border border-border bg-surface px-3 pb-3 sm:px-4" data-course-tabs>
+                <x-slot:overview>
             <section id="overview" class="space-y-4" aria-label="{{ __('course_page.overview') }}" data-section="overview">
                 @if(filled($course->description))
                     <x-ui.card :title="__('course_page.about')"><div class="break-words whitespace-pre-line" dir="auto">{!! \App\Domain\Catalog\CourseDescription::clean($course->description) !!}</div></x-ui.card>
@@ -86,8 +91,21 @@
                         </ul>
                     </x-ui.card>
                 @endif
+ 
+            @if($customRows !== [])
+                <x-ui.card :title="__('course_wizard.custom_extra')" data-section="custom-fields">
+                    <dl class="grid gap-3 sm:grid-cols-2">@foreach($customRows as $row)<div><dt class="text-muted">{{ $row['label'] }}</dt><dd class="break-words font-semibold">{{ $row['value'] }}</dd></div>@endforeach</dl>
+                </x-ui.card>
+            @endif
+            @if($requirements->isNotEmpty())
+                <x-ui.card :title="__('course_page.requirements')" data-section="requirements">
+                    <ul class="list-disc space-y-2 ps-5">@foreach($requirements as $requirement)<li class="break-words">{{ $requirement }}</li>@endforeach</ul>
+                </x-ui.card>
+            @endif
             </section>
+                </x-slot:overview>
 
+                <x-slot:curriculum>
             <x-ui.card id="curriculum" :title="__('course_page.curriculum')" data-section="curriculum">
                 @if($curriculum['sections'] === [])
                     <p class="text-muted" data-curriculum-empty>{{ __('course_page.curriculum_empty') }}</p>
@@ -123,32 +141,26 @@
                 @endif
             </x-ui.card>
 
-            @if($instructors->isNotEmpty())
+                </x-slot:curriculum>
+
+                @if($instructors->isNotEmpty())
+                <x-slot:instructor>
                 <x-ui.card id="instructor" :title="__('course_page.instructor')" data-section="instructor">
                     <ul class="space-y-2">
                         @foreach($instructorRows as $row)<li class="flex items-center gap-2"><x-ui.icon name="user" class="size-5 text-muted"/>@if($row['url'])<a href="{{ $row['url'] }}" class="{{ $linkClass }} break-words" data-instructor-link>{{ $row['name'] }}</a>@else<span class="break-words">{{ $row['name'] }}</span>@endif</li>@endforeach
                     </ul>
                 </x-ui.card>
-            @endif
-
-            @if($customRows !== [])
-                <x-ui.card :title="__('course_wizard.custom_extra')" data-section="custom-fields">
-                    <dl class="grid gap-3 sm:grid-cols-2">@foreach($customRows as $row)<div><dt class="text-muted">{{ $row['label'] }}</dt><dd class="break-words font-semibold">{{ $row['value'] }}</dd></div>@endforeach</dl>
-                </x-ui.card>
-            @endif
-
-            <div class="grid gap-6 md:grid-cols-2">
-                @if($requirements->isNotEmpty())
-                    <x-ui.card :title="__('course_page.requirements')" data-section="requirements">
-                        <ul class="list-disc space-y-2 ps-5">@foreach($requirements as $requirement)<li class="break-words">{{ $requirement }}</li>@endforeach</ul>
-                    </x-ui.card>
+                </x-slot:instructor>
                 @endif
+
                 @if($faqs->isNotEmpty())
+                <x-slot:faq>
                     <x-ui.card id="faq" :title="__('course_page.faq')" data-section="faq">
                         <div class="space-y-2">@foreach($faqs as $faq)<x-ui.accordion :label="$faq['q']"><p class="break-words">{{ $faq['a'] }}</p></x-ui.accordion>@endforeach</div>
                     </x-ui.card>
+                </x-slot:faq>
                 @endif
-            </div>
+            </x-ui.tabs>
 
             {{-- Reviews slot (T-P9-02): published reviews and the entitled learner's form; stays hidden until there is something to show. --}}
             <x-engagement.reviews :course="$course"/>
@@ -157,7 +169,12 @@
         <aside class="lg:sticky lg:top-4 lg:self-start" aria-label="{{ __('course_page.access') }}" data-access-card>
             <x-ui.card class="space-y-4">
                 @if($cover)<img src="{{ $cover }}" alt="" class="aspect-video w-full rounded-lg object-cover">@endif
-                <p class="text-xl font-bold" data-access-mode>{{ $accessLabel }}</p>
+                <div class="text-center">
+                    @if($price !== null)
+                        <p class="text-3xl font-extrabold"><x-ui.price :money="$price" :market="$market" data-course-price /></p>
+                    @endif
+                    <p @class(['text-sm text-muted' => $price !== null, 'text-xl font-bold' => $price === null]) data-access-mode>{{ $accessLabel }}</p>
+                </div>
                 @include('catalog._cta', $cta)
                 <x-engagement.wishlist-toggle :course="$course" class="flex justify-center"/>
                 @if($previewUrl)
@@ -180,7 +197,11 @@
 
     <div class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface p-3 shadow-card lg:hidden" data-mobile-cta>
         <div class="mx-auto flex max-w-md items-center gap-3">
-            <p class="shrink-0 font-bold">{{ $accessLabel }}</p>
+            @if($price !== null)
+                <p class="shrink-0 font-bold"><x-ui.price :money="$price" :market="$market" data-course-price /></p>
+            @else
+                <p class="max-w-1/2 font-bold">{{ $accessLabel }}</p>
+            @endif
             <div class="min-w-0 flex-1">@include('catalog._cta', $cta)</div>
         </div>
     </div>

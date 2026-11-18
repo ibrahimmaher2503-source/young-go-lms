@@ -1,10 +1,19 @@
-{{-- Props: lines (list of [title, learner|null, kind]), subtotal, discount (Money|null), total (Money), market. Read-only order summary shared by both checkout steps. --}}
-<x-ui.card :title="__('checkout.summary')" class="space-y-4" data-checkout-summary>
+{{-- Props: lines (list of [title, learner|null, kind, cover (url|null, optional)]), subtotal, discount (Money|null), total (Money), market. Read-only order summary shared by both checkout steps. --}}
+<x-ui.card :title="__('checkout.summary')" class="space-y-4 lg:sticky lg:top-4 lg:self-start" data-checkout-summary>
     <ul class="space-y-3">
         @foreach($lines as $line)
-            <li class="min-w-0">
-                <p class="break-words font-semibold" dir="auto">{{ $line['title'] }}</p>
-                <p class="text-sm text-muted">{{ __('checkout.kind_'.$line['kind']) }}@if($line['learner']) · {{ __('checkout.for_learner', ['name' => $line['learner']]) }}@endif</p>
+            <li class="flex min-w-0 items-start gap-3" data-summary-line>
+                <div class="size-16 shrink-0 overflow-hidden rounded-lg bg-assistant text-primary" data-summary-cover>
+                    @if(! empty($line['cover']))
+                        <img src="{{ $line['cover'] }}" alt="" loading="lazy" class="size-full object-cover">
+                    @else
+                        <span class="grid size-full place-items-center"><x-ui.icon :name="$line['kind'] === 'plan' ? 'award' : ($line['kind'] === 'bundle' ? 'layers' : 'book')" class="size-7"/></span>
+                    @endif
+                </div>
+                <div class="min-w-0">
+                    <p class="break-words font-semibold" dir="auto">{{ $line['title'] }}</p>
+                    <p class="text-sm text-muted">{{ __('checkout.kind_'.$line['kind']) }}@if($line['learner']) · {{ __('checkout.for_learner', ['name' => $line['learner']]) }}@endif</p>
+                </div>
             </li>
         @endforeach
     </ul>

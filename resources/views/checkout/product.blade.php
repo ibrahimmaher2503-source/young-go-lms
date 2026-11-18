@@ -1,8 +1,8 @@
-{{-- Props: type (course|bundle|plan), id, title, price (Money), market, learners, owned (id => bool), selected, key, back, course|bundle. Step 1: choose who the purchase is for. --}}
+{{-- Props: cover (url|null), type (course|bundle|plan), id, title, price (Money), market, learners, owned (id => bool), selected, key, back, course|bundle. Step 1: choose who the purchase is for. --}}
 @php
     $allOwned = $learners->isNotEmpty() && $learners->every(fn ($l) => ($owned[$l->getKey()] ?? false));
     $nameOf = fn ($u) => $u->display_name ?: $u->name;
-    $lines = [['title' => $title, 'learner' => null, 'kind' => $type]];
+    $lines = [['title' => $title, 'learner' => null, 'kind' => $type, 'cover' => $cover ?? null]];
 @endphp
 <x-layouts.learner :title="__('checkout.title')">
     <div class="mx-auto max-w-5xl space-y-4">

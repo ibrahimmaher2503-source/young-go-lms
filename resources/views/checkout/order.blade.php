@@ -1,4 +1,4 @@
-{{-- Props: order (items.learner loaded), market, methods, coupon, proof, attempt, termsUrl, payee. Step 2/3: coupon, method, terms, then the status of the order. Every state comes from the stored order. --}}
+{{-- Props: order (items.learner loaded), payer, covers (item id => url|null), market, methods, coupon, proof, attempt, termsUrl, payee. Step 2/3 in the reference order: payer, payment method, coupon, terms, pay, then the status of the order. Every state comes from the stored order. --}}
 @php
     use App\Domain\Commerce\ManualPaymentStatus;
     use App\Domain\Commerce\OrderStatus;
@@ -11,6 +11,7 @@
         'title' => $i->{$titleKey} ?? $i->title_en ?? $i->title_ar,
         'learner' => $i->learner ? ($i->learner->display_name ?: $i->learner->name) : null,
         'kind' => $i->product_type->value,
+        'cover' => $covers[$i->getKey()] ?? null,
     ])->all();
     $pending = $order->status === OrderStatus::Pending;
     $proofPending = $proof?->status === ManualPaymentStatus::Pending;
@@ -18,13 +19,18 @@
     $step = $pending ? 2 : 3;
     $manualOnly = $methods === [];
     $chosen = old('method', $methods[0]['key'] ?? 'manual');
+    $learnerNames = collect($lines)->pluck('learner')->filter()->unique()->values();
+    $transferTone = match ($proof?->status) {
+        ManualPaymentStatus::Pending => 'info', ManualPaymentStatus::Approved => 'success', ManualPaymentStatus::Rejected => 'danger', default => 'neutral',
+    };
+    $transferKey = $proof === null ? 'none' : $proof->status->value;
     $tones = ['pending' => 'info', 'paid' => 'success', 'failed' => 'danger', 'cancelled' => 'neutral', 'refunded' => 'warning', 'partially_refunded' => 'warning', 'disputed' => 'danger'];
 @endphp
 <x-layouts.learner :title="__('checkout.title')">
     <div class="mx-auto max-w-5xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h1 class="text-2xl font-bold">{{ __('checkout.title') }}</h1>
-            <p class="text-sm text-muted">{{ __('checkout.order_ref') }}: <bdi dir="ltr">{{ $order->reference }}</bdi></p>
+            <p class="text-sm text-muted">{{ __('checkout.order_ref') }}: <x-ui.ltr>{{ $order->reference }}</x-ui.ltr></p>
         </div>
         <x-ui.stepper :steps="[__('checkout.step_learner'), __('checkout.step_pay'), __('checkout.step_done')]" :current="$step" />
 
@@ -48,6 +54,14 @@
                     </x-ui.alert>
                     <x-ui.link :href="route('catalog.index')">{{ __('checkout.browse') }}</x-ui.link>
                 @else
+                    <x-ui.card :title="__('checkout.payer_title')" data-payer-details>
+                        <dl class="grid gap-4 sm:grid-cols-2">
+                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_name') }}</dt><dd class="mt-1 min-h-11 break-words rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="auto">{{ $payer->name }}</dd></div>
+                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_email') }}</dt><dd class="mt-1 min-h-11 break-all rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="ltr">{{ $payer->email }}</dd></div>
+                            @if($learnerNames->isNotEmpty())<div class="min-w-0 sm:col-span-2"><dt class="text-sm text-muted">{{ __('checkout.learner_for') }}</dt><dd class="mt-1 break-words font-semibold" dir="auto">{{ $learnerNames->implode(', ') }}</dd></div>@endif
+                        </dl>
+                        <p class="mt-3 text-sm text-muted">{{ __('checkout.payer_help') }}</p>
+                    </x-ui.card>
                     @if($proofPending)
                         <x-ui.alert tone="info" role="status" data-status="proof-pending">
                             <p class="font-semibold">{{ __('checkout.status_proof_pending') }}</p>
@@ -67,6 +81,35 @@
                         @if($proof?->status === ManualPaymentStatus::Rejected)
                             <x-ui.alert tone="warning" data-status="proof-rejected">{{ __('manual_payment.status_rejected') }}</x-ui.alert>
                         @endif
+
+                        <form id="checkout-pay-form" method="post" action="{{ route('checkout.pay', $order) }}" novalidate data-checkout-pay>@csrf</form>
+
+                        <x-ui.card :title="__('checkout.method_title')">
+                            <fieldset class="space-y-3">
+                                <legend class="sr-only">{{ __('checkout.method_title') }}</legend>
+                                @foreach($methods as $method)
+                                    <div class="rounded-lg border border-border p-2 has-[:checked]:border-primary has-[:checked]:bg-page">
+                                        <x-ui.radio form="checkout-pay-form" :id="'method-'.$method['key']" name="method" :value="$method['key']" :label="$method['label']" :checked="$chosen === $method['key']" />
+                                    </div>
+                                @endforeach
+                                <div class="rounded-lg border border-border p-2 has-[:checked]:border-primary has-[:checked]:bg-page">
+                                    <x-ui.radio form="checkout-pay-form" id="method-manual" name="method" value="manual" :label="__('checkout.method_manual')" :checked="$chosen === 'manual'" />
+                                </div>
+                            </fieldset>
+                            @if($manualOnly)<x-ui.alert tone="info" class="mt-3" data-online-unavailable>{{ __('payments.gateway_unavailable') }}</x-ui.alert>@endif
+                            <p class="mt-3 flex items-start gap-2 text-sm text-muted"><x-ui.icon name="help" class="mt-0.5" />{{ __('checkout.method_online_help') }}</p>
+                            @if($errors->has('method'))<p class="mt-2 border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('method') }}</p>@endif
+                        </x-ui.card>
+
+                        <x-ui.card :title="__('checkout.manual_title')" data-checkout-manual>
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-muted">{{ __('checkout.manual_help') }}</p>
+                                <span class="inline-flex items-center gap-2 text-sm text-muted">{{ __('checkout.transfer_status') }}: <x-ui.badge :tone="$transferTone" data-transfer-status="{{ $transferKey }}">{{ __('checkout.transfer_status_'.$transferKey) }}</x-ui.badge></span>
+                            </div>
+                            <p class="mt-2" dir="auto">{{ $payee ?? __('checkout.manual_payee_pending') }}</p>
+                            <p class="mt-3 text-sm text-muted">{{ __('checkout.transfer_reference') }}: <bdi dir="ltr" class="font-semibold text-body">{{ $order->reference }}</bdi></p>
+                            <a href="{{ route('manual-payments.create', $order) }}" class="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 font-semibold text-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" data-transfer-upload><x-ui.icon name="download" class="rotate-180" />{{ __('checkout.transfer_upload') }}</a>
+                        </x-ui.card>
 
                         <x-ui.card :title="__('checkout.coupon_title')" data-checkout-coupon>
                             @if($coupon)
@@ -90,42 +133,17 @@
                             @endif
                         </x-ui.card>
 
-                        <form method="post" action="{{ route('checkout.pay', $order) }}" class="space-y-4" novalidate data-checkout-pay>
-                            @csrf
-                            <x-ui.card :title="__('checkout.method_title')">
-                                <fieldset class="space-y-3">
-                                    <legend class="sr-only">{{ __('checkout.method_title') }}</legend>
-                                    @foreach($methods as $method)
-                                        <div class="rounded-lg border border-border p-2 has-[:checked]:border-primary has-[:checked]:bg-page">
-                                            <x-ui.radio :id="'method-'.$method['key']" name="method" :value="$method['key']" :label="$method['label']" :checked="$chosen === $method['key']" />
-                                        </div>
-                                    @endforeach
-                                    <div class="rounded-lg border border-border p-2 has-[:checked]:border-primary has-[:checked]:bg-page">
-                                        <x-ui.radio id="method-manual" name="method" value="manual" :label="__('checkout.method_manual')" :checked="$chosen === 'manual'" />
-                                    </div>
-                                </fieldset>
-                                @if($manualOnly)<x-ui.alert tone="info" class="mt-3" data-online-unavailable>{{ __('payments.gateway_unavailable') }}</x-ui.alert>@endif
-                                <p class="mt-3 text-sm text-muted">{{ __('checkout.method_online_help') }}</p>
-                                @if($errors->has('method'))<p class="mt-2 border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('method') }}</p>@endif
-                            </x-ui.card>
-
-                            <x-ui.card :title="__('checkout.manual_title')" data-checkout-manual>
-                                <p class="text-muted">{{ __('checkout.manual_help') }}</p>
-                                <p class="mt-2" dir="auto">{{ $payee ?? __('checkout.manual_payee_pending') }}</p>
-                            </x-ui.card>
-
-                            <div class="space-y-2">
-                                <div class="flex flex-wrap items-center gap-x-2">
-                                    <x-ui.checkbox id="terms" name="terms" value="1" :label="__('checkout.terms_label')" :checked="old('terms') === '1'" aria-describedby="terms-error" />
-                                    @if($termsUrl)<x-ui.link :href="$termsUrl" target="_blank" rel="noopener">{{ __('checkout.terms_link') }}</x-ui.link>@endif
-                                </div>
-                                @if($errors->has('terms'))<p id="terms-error" class="border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('terms') }}</p>@endif
-                                @foreach(['order', 'payment'] as $bag)
-                                    @if($errors->has($bag))<x-ui.alert tone="danger" role="alert">{{ $errors->first($bag) }}</x-ui.alert>@endif
-                                @endforeach
-                                <x-ui.button type="submit" size="lg" class="w-full">{{ __('checkout.pay') }}</x-ui.button>
+                        <div class="space-y-2">
+                            <div class="flex flex-wrap items-center gap-x-2">
+                                <x-ui.checkbox form="checkout-pay-form" id="terms" name="terms" value="1" :label="__('checkout.terms_label')" :checked="old('terms') === '1'" aria-describedby="terms-error" />
+                                @if($termsUrl)<x-ui.link :href="$termsUrl" target="_blank" rel="noopener">{{ __('checkout.terms_link') }}</x-ui.link>@endif
                             </div>
-                        </form>
+                            @if($errors->has('terms'))<p id="terms-error" class="border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('terms') }}</p>@endif
+                            @foreach(['order', 'payment'] as $bag)
+                                @if($errors->has($bag))<x-ui.alert tone="danger" role="alert">{{ $errors->first($bag) }}</x-ui.alert>@endif
+                            @endforeach
+                            <x-ui.button form="checkout-pay-form" type="submit" size="lg" class="w-full">{{ __('checkout.pay') }}</x-ui.button>
+                        </div>
                     @endif
                 @endif
             </div>
