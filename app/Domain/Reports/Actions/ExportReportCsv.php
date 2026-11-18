@@ -14,6 +14,7 @@ use App\Domain\Reports\ReportTooLargeException;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 
 /**
  * Streams a report as CSV (T-P9-06). `prepare()` authorises (`ReportCatalog`), scopes the filters, refuses an export over
@@ -40,6 +41,7 @@ final class ExportReportCsv
     /**
      * @throws AuthorizationException
      * @throws ReportTooLargeException
+     * @throws RuntimeException when the audit row cannot be written
      */
     public function prepare(User $user, ReportKey $key, ReportFilters $requested): PreparedExport
     {
@@ -52,7 +54,9 @@ final class ExportReportCsv
             throw new ReportTooLargeException($rows, $cap);
         }
 
-        $this->audit->record('report.exported', $user, (int) $user->getKey(), null, null, ['report' => $key->value, 'filters' => $filters->toAudit(), 'rows' => $rows]);
+        if ($this->audit->record('report.exported', $user, (int) $user->getKey(), null, null, ['report' => $key->value, 'filters' => $filters->toAudit(), 'rows' => $rows]) === null) {
+            throw new RuntimeException('Unable to record report export audit.');
+        }
 
         return new PreparedExport($key, $definition, $filters, $rows);
     }

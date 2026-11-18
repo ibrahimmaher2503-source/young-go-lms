@@ -69,6 +69,7 @@ return [
     'system.security.manage' => 'إدارة أمان النظام',
     'support.view_as' => 'العرض كمتعلم (للقراءة فقط)',
     'system.settings.manage' => 'إدارة إعدادات النظام',
+    'system.site_settings.manage' => 'إدارة هوية الموقع وبيانات مستلم الدفع',
     'user.export' => 'تصدير المستخدمين',
     'user.manage' => 'إدارة المستخدمين',
     'user.roles.assign' => 'إسناد أدوار المستخدمين',

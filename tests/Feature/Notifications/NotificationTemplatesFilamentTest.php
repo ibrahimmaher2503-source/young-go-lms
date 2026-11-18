@@ -47,7 +47,7 @@ function t905fAnnouncement(Course $course, string $title): Announcement
 }
 
 it('lists every editable matrix event on the admin template page and mounts the row sync', function (): void {
-    // super_admin is the role that holds system.settings.manage; the admin role does not (BUG, see NotificationTemplatesPreferencesTest).
+    // super_admin is the role that holds system.settings.manage; the admin role does not.
     $superAdmin = User::factory()->create(['status' => 'active', 'locale' => 'en'])->assignRole('super_admin');
     $this->actingAs($superAdmin);
     Filament::setCurrentPanel(Filament::getPanel('admin'));

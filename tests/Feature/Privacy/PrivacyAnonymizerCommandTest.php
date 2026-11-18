@@ -124,7 +124,7 @@ function tp908RunStagingScan(array $ignore): void
 // BUG: AnonymizeStagingData::FREE_TEXT (app/Domain/Privacy/Actions/AnonymizeStagingData.php) does not scrub activity_log.description, so an email in that column survives the run. Latent: AuditLogger writes only the event name there.
 it('leaves no real email or phone in any text column after the staging run', function (): void {
     tp908RunStagingScan([]);
-})->skip('BUG: activity_log.description is not in AnonymizeStagingData::FREE_TEXT; see the comment above the helper.')->group('T-P9-08', 'A3');
+})->group('T-P9-08', 'A3');
 
 it('leaves no real email or phone in any other text column, keeps ids and roles, and lets everyone sign in with the given password', function (): void {
     tp908RunStagingScan(['activity_log.description']);

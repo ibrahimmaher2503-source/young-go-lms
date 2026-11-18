@@ -36,7 +36,7 @@ final class AnonymizeStagingData
         'submission_feedback' => ['body', 'feedback'],
         'course_reviews' => ['body'],
         'refunds' => ['reason', 'review_note'],
-        'activity_log' => ['properties'],
+        'activity_log' => ['description', 'properties'],
     ];
 
     public function __construct(private readonly ScrubEntitlementReasons $scrubEntitlementReasons = new ScrubEntitlementReasons) {}

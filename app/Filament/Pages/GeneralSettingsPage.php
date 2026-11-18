@@ -43,7 +43,7 @@ final class GeneralSettingsPage extends Page
     {
         $user = Auth::user();
 
-        return $user instanceof User && $user->getAttribute('status') === 'active' && $user->can('system.settings.manage');
+        return $user instanceof User && $user->getAttribute('status') === 'active' && $user->can('system.site_settings.manage');
     }
 
     public function mount(): void

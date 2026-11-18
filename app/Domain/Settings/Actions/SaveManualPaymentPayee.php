@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use RuntimeException;
 
-/** Saves the manual payment payee details (blank = fall back to the environment value). Needs system.settings.manage. The audit records only whether a value is set, never the details. */
+/** Saves the manual payment payee details (blank = fall back to the environment value). Needs system.site_settings.manage (super_admin only by default). The audit records only whether a value is set, never the details. */
 final class SaveManualPaymentPayee
 {
     public function __construct(private readonly PaymentsSettings $settings, private readonly AuditLogger $audit) {}
@@ -20,7 +20,7 @@ final class SaveManualPaymentPayee
     /** @param  array<string, mixed>  $data */
     public function __invoke(User $actor, array $data): void
     {
-        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('system.settings.manage')) {
+        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('system.site_settings.manage')) {
             throw new AuthorizationException;
         }
 

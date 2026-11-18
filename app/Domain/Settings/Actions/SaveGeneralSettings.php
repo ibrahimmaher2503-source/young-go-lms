@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 
-/** Saves site identity, contact, social links, default locale/market, maintenance banner and mail sender identity. Needs system.settings.manage; audited with before/after values. */
+/** Saves site identity, contact, social links, default locale/market, maintenance banner and mail sender identity. Needs system.site_settings.manage (super_admin only by default); audited with before/after values. */
 final class SaveGeneralSettings
 {
     /** @var list<string> */
@@ -30,7 +30,7 @@ final class SaveGeneralSettings
     /** @param  array<string, mixed>  $data */
     public function __invoke(User $actor, array $data): void
     {
-        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('system.settings.manage')) {
+        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('system.site_settings.manage')) {
             throw new AuthorizationException;
         }
 

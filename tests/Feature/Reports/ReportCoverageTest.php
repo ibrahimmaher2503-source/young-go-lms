@@ -184,7 +184,7 @@ it('caps a range longer than 366 days to at most 366 calendar days', function ()
         ->diffInDays(CarbonImmutable::parse($capped->to->timezone('Africa/Cairo')->toDateString())) + 1;
 
     expect((int) $days)->toBeLessThanOrEqual(366);
-})->group('T-P9-06', 'A1')->skip('BUG: ReportFilters::fromInput() cap yields 367 inclusive calendar days');
+})->group('T-P9-06', 'A1');
 
 it('drops an unknown market and ignores filters a report does not support', function (): void {
     $admin = t906cUser('admin');
@@ -310,7 +310,7 @@ it('stops the export and writes nothing when the audit logger fails', function (
     } finally {
         activity()->enableLogging();
     }
-})->group('T-P9-06', 'A1')->skip('BUG: ExportReportCsv::prepare() ignores a null AuditLogger::record() result, so exports run without an audit row');
+})->group('T-P9-06', 'A1');
 
 // ---------------------------------------------------------------- page
 

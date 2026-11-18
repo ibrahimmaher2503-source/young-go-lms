@@ -291,7 +291,7 @@ it('lets the admin role save a notification template', function (): void {
     $saved = t905SetTemplate($admin, 'live.reminder', ['title_en' => 'Admin saved :title']);
 
     expect($saved->title_en)->toBe('Admin saved :title');
-})->group('T-P9-05', 'A1')->skip('BUG: config/permissions.php admin role lacks system.settings.manage required by SaveNotificationTemplate');
+})->group('T-P9-05', 'A1');
 
 it('restores the default when a template is saved blank and refuses non-admin and inactive actors', function (): void {
     $admin = t905SuperAdmin();

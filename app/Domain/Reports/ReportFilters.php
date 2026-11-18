@@ -59,8 +59,8 @@ final class ReportFilters
             [$from, $to] = [$to->startOfDay(), $from->endOfDay()];
         }
 
-        if ($from->diffInDays($to, true) > $max) {
-            $from = $to->subDays($max)->startOfDay();
+        if ((int) $from->startOfDay()->diffInDays($to->startOfDay(), true) + 1 > $max) {
+            $from = $to->startOfDay()->subDays($max - 1);
         }
 
         return new self($from, $to, self::id($input['course'] ?? null), self::id($input['instructor'] ?? null), $market);

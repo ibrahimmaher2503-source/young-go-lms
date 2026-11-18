@@ -15,7 +15,7 @@ use RuntimeException;
 
 /**
  * Saves a user's choices for optional notices. Mandatory (transactional) notices cannot be switched off: asking to do so
- * is refused and nothing is saved. Phone reminder consent still goes through SetPhoneReminderOptIn. Changes are audited.
+ * is refused and nothing is saved. Phone reminder consent still goes through SetPhoneReminderOptIn. Changes are audited. Atomic: a refused phone consent rolls back the switch changes.
  */
 final class UpdateNotificationPreferences
 {
@@ -34,7 +34,7 @@ final class UpdateNotificationPreferences
             }
         }
 
-        DB::transaction(function () use ($user, $enabled): void {
+        DB::transaction(function () use ($user, $enabled, $phoneChannels): void {
             foreach ($enabled as $key => $wants) {
                 $existing = NotificationOptOut::query()->where('user_id', $user->getKey())->where('event_key', $key)->first();
                 if ($wants && $existing !== null) {
@@ -49,14 +49,14 @@ final class UpdateNotificationPreferences
                     throw new RuntimeException('Unable to record notification preference audit.');
                 }
             }
-        });
 
-        foreach ($phoneChannels as $channel => $consent) {
-            try {
-                ($this->phone)($user, (string) $channel, $consent);
-            } catch (InvalidArgumentException) {
-                throw ValidationException::withMessages(['phone' => __('notification_events.phone_unavailable')]);
+            foreach ($phoneChannels as $channel => $consent) {
+                try {
+                    ($this->phone)($user, (string) $channel, $consent);
+                } catch (InvalidArgumentException) {
+                    throw ValidationException::withMessages(['phone' => __('notification_events.phone_unavailable')]);
+                }
             }
-        }
+        });
     }
 }

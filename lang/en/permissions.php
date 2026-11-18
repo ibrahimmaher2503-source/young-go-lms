@@ -69,6 +69,7 @@ return [
     'system.security.manage' => 'Manage system security',
     'support.view_as' => 'View as learner (read-only)',
     'system.settings.manage' => 'Manage system settings',
+    'system.site_settings.manage' => 'Manage site identity and payment payee settings',
     'user.export' => 'Export users',
     'user.manage' => 'Manage users',
     'user.roles.assign' => 'Assign user roles',

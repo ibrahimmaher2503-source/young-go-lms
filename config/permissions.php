@@ -72,6 +72,7 @@ return [
         ['name' => 'system.security.manage'],
         ['name' => 'support.view_as'],
         ['name' => 'system.settings.manage'],
+        ['name' => 'system.site_settings.manage'],
         ['name' => 'user.export'],
         ['name' => 'user.manage'],
         ['name' => 'user.roles.assign'],
@@ -91,7 +92,7 @@ return [
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
             'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage', 'privacy.manage',
-            'learner.360.sensitive', 'learner.360.view', 'support.view_as',
+            'learner.360.sensitive', 'learner.360.view', 'support.view_as', 'system.settings.manage',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',
