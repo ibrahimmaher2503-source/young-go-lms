@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Cohorts\Cohort;
 use App\Domain\Settings\PlatformFlag;
 use App\Domain\Shared\Search\HasSearchText;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Pennant\Feature;
 use Spatie\Translatable\HasTranslations;
 
@@ -113,6 +115,12 @@ final class Course extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /** @return HasMany<Cohort, $this> */
+    public function cohorts(): HasMany
+    {
+        return $this->hasMany(Cohort::class);
     }
 
     /** @return BelongsToMany<User, $this> */

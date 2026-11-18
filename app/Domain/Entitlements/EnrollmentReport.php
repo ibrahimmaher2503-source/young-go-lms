@@ -33,6 +33,28 @@ final class EnrollmentReport
     }
 
     /**
+     * Active learners per course, most popular first (public catalog popularity sort, T-P2-04). Courses nobody can open now are
+     * left out, so a sort of the catalog ranks them after the listed ones.
+     *
+     * @return array<int, int> course id => distinct learners with access right now
+     */
+    public static function activeCountsByCourse(int $limit = 200): array
+    {
+        $now = now()->utc()->format('Y-m-d H:i:s');
+        $out = [];
+
+        foreach (Entitlement::query()->where('status', Entitlement::ACTIVE)->where('starts_at', '<=', $now)
+            ->where(static fn ($open) => $open->whereNull('ends_at')->orWhere('ends_at', '>', $now))
+            ->whereNotNull('course_id')->groupBy('course_id')
+            ->selectRaw('course_id, count(distinct learner_id) as learners')
+            ->orderByDesc('learners')->orderBy('course_id')->limit($limit)->get() as $row) {
+            $out[(int) $row->getAttribute('course_id')] = (int) $row->getAttribute('learners');
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<int>  $courseIds
      * @return array<int, array{new: int, active: int, total: int}> total = learners who ever had access, new = learners whose first access started in the range, active = learners with access now
      */

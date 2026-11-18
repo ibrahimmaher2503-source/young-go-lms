@@ -31,6 +31,34 @@ final class CheckoutOffers
         return $price instanceof CoursePrice && $price->forMarket($market) && $price->amount_minor > 0 ? $price->money() : null;
     }
 
+    /**
+     * List prices of many courses with one query (public catalog cards, T-P2-04), same rules as coursePrice().
+     *
+     * @param  iterable<Course>  $courses
+     * @return array<int, Money> course id => price; courses that cannot be bought on their own are absent
+     */
+    public function coursePrices(iterable $courses, Market $market): array
+    {
+        $sellable = [];
+        foreach ($courses as $course) {
+            if ($market->isActive() && $course->status === CourseStatus::Published && in_array($course->access_mode, Course::INDIVIDUAL_ACCESS_MODES, true)) {
+                $sellable[] = $course->getKey();
+            }
+        }
+        if ($sellable === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach (CoursePrice::query()->whereIn('course_id', $sellable)->where('market', $market->value)->get() as $price) {
+            if ($price->forMarket($market) && $price->amount_minor > 0) {
+                $out[$price->course_id] = $price->money();
+            }
+        }
+
+        return $out;
+    }
+
     /** A sellable bundle (see PublicBundles) with prices and member courses loaded, or null. */
     public function bundle(int $id, Market $market): ?Bundle
     {

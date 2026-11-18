@@ -296,8 +296,8 @@ it('outputs escaped SEO meta tags, Course JSON-LD, bilingual content blocks, and
         ->assertDontSee('<img src=x>', false)
         ->assertDontSee('alert(1)</script>', false);
 
-    // Non-course-detail pages stay noindex
-    $this->get('/courses')->assertOk()->assertSee('<meta name="robots" content="noindex, nofollow">', false);
+    // The plain catalog is indexable now (T-P2-04); filtered/sorted/paged views stay noindex, follow
+    $this->get('/courses')->assertOk()->assertSee('<meta name="robots" content="index, follow">', false);
 
     // JSON-LD decodes cleanly to Course + BreadcrumbList
     preg_match_all('/<script type="application\/ld\+json">(.*?)<\/script>/s', $html, $matches);
