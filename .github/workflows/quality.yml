@@ -101,6 +101,7 @@ jobs:
       - run: php artisan app:req-coverage --task=T-P0-07
       - run: php artisan app:check-translations
       - run: php artisan app:check-rtl
+      - run: php artisan app:check-brand-tokens
       - run: composer audit --locked
       - run: npm run build
       - name: Browser acceptance

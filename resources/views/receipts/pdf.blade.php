@@ -5,19 +5,10 @@
 <meta charset="utf-8">
 <title>{{ $number }}</title>
 <style>
-    @font-face { font-family: "Noto Sans Arabic"; src: url("{{ $font }}") format("truetype"); font-weight: 100 900; font-style: normal; }
+    @include('partials.brand-pdf-css')
     @page { size: A4; margin: 0; }
-    :root {
-        --brand: oklch(0.484010 0.082313 193.660745);
-        --brand-dark: oklch(0.32 0.048 185);
-        --brand-soft: oklch(0.97 0.0093 185);
-        --accent: oklch(0.61 0.065 40);
-        --body: oklch(0.24 0.013 250);
-        --muted: oklch(0.41 0.02 250);
-        --line: oklch(0.86 0.01 250);
-    }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; font-family: "Noto Sans Arabic", sans-serif; color: var(--body); background: #fff; }
+    html, body { margin: 0; padding: 0; font-family: var(--font); color: var(--body); background: var(--paper); }
     .page { padding: 16mm; }
     .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; border-block-end: 1.2mm solid var(--accent); padding-block-end: 6mm; }
     .brand { font-size: 20pt; font-weight: 800; color: var(--brand); }

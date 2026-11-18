@@ -1,3 +1,9 @@
+/*
+ * SINGLE SOURCE OF TRUTH for the Young Go brand: colors, radii, shadows and fonts.
+ * Change the brand here only (see docs/brand/CHANGING_THE_BRAND.md). config/brand.php mirrors the literal
+ * values that PDFs and SVG avatars need; `php artisan app:check-brand-tokens` fails when the two drift.
+ * An @font-face family name cannot use var(), so the literal name below must equal --yg-font-family-brand.
+ */
 @font-face {
     font-family: "Noto Sans Arabic";
     src: url("../fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf") format("truetype");
@@ -101,6 +107,13 @@
     --yg-color-on-ai-failed: var(--yg-danger-700);
     --yg-color-ai-ready: var(--yg-success-100);
     --yg-color-on-ai-ready: var(--yg-success-700);
+    --yg-font-family-brand: "Noto Sans Arabic";
+    --yg-font-stack-sans: var(--yg-font-family-brand), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    --yg-font-stack-sans-ar: var(--yg-font-family-brand), "Segoe UI", Tahoma, Arial, sans-serif;
+    --yg-font-stack-latin: system-ui, sans-serif;
+    --yg-color-media: oklch(0 0 0);
+    --yg-color-on-media: var(--yg-neutral-0);
+    --yg-color-qr: var(--yg-neutral-0);
     --yg-font-page-heading: 2.25rem;
     --yg-font-body: 1.125rem;
     --yg-line-height-body: 1.6;
@@ -206,7 +219,10 @@
     --color-on-ai-failed: var(--yg-color-on-ai-failed);
     --color-ai-ready: var(--yg-color-ai-ready);
     --color-on-ai-ready: var(--yg-color-on-ai-ready);
-    --font-sans: "Noto Sans Arabic", system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    --color-media: var(--yg-color-media);
+    --color-on-media: var(--yg-color-on-media);
+    --color-qr: var(--yg-color-qr);
+    --font-sans: var(--yg-font-stack-sans);
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
     --radius-lg: 1rem;
@@ -216,6 +232,6 @@
 }
 
 :lang(ar) {
-    --font-sans: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+    --font-sans: var(--yg-font-stack-sans-ar);
     --yg-line-height-body: 1.8;
 }

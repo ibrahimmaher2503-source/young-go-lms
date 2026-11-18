@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Certificates;
 
 use App\Domain\Settings\CertificateSettings;
+use App\Support\Brand;
 use BaconQrCode\Encoder\Encoder;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -15,7 +16,7 @@ use Spatie\LaravelPdf\PdfBuilder;
 
 /**
  * Builds the branded certificate PDF (R-030: headless Chromium through spatie/laravel-pdf, so Arabic shapes correctly).
- * The view is standalone: tokens inlined, Noto Sans Arabic embedded, the QR drawn as inline SVG that points to the verify URL.
+ * The view is standalone: tokens from config/brand.php, Noto Sans Arabic embedded, the QR drawn as inline SVG that points to the verify URL.
  */
 final class CertificatePdf
 {
@@ -57,7 +58,7 @@ final class CertificatePdf
             'issuer' => filled($issuer) ? $issuer : __('certificates.pdf.issuer_placeholder', [], $locale),
             'verifyUrl' => $certificate->verifyUrl(),
             'qr' => $this->verificationQr($certificate),
-            'font' => 'data:font/ttf;base64,'.base64_encode((string) file_get_contents(resource_path('fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf'))),
+            'font' => Brand::fontDataUri(),
         ];
     }
 

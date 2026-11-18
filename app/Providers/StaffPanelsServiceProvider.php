@@ -65,6 +65,7 @@ use App\Filament\Shared\StaffNavigation;
 use App\Filament\Shared\WorkspaceAvatarProvider;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
+use App\Support\Brand;
 use Filament\Actions\Action;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
@@ -96,7 +97,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->brandLogo(static fn () => view('filament.shared.brand'))
                 ->brandLogoHeight('2.5rem')
                 ->defaultThemeMode(ThemeMode::Light)
-                ->font('Noto Sans Arabic', provider: LocalFontProvider::class)
+                ->font(Brand::fontFamily(), provider: LocalFontProvider::class)
                 ->maxContentWidth(Width::Full)
                 ->navigation(static fn (NavigationBuilder $builder): NavigationBuilder => StaffNavigation::build($builder))
                 ->authGuard('web')

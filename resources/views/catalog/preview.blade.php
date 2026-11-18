@@ -5,7 +5,7 @@
             <h1 class="break-words text-2xl font-extrabold" data-lesson-title>{{ $lesson->title }}</h1>
             <x-ui.badge tone="info">{{ __('course_page.free_preview') }}</x-ui.badge>
         </div>
-        <div class="overflow-hidden rounded-card border border-border bg-black shadow-card" data-player-stage>
+        <div class="overflow-hidden rounded-card border border-border bg-media shadow-card" data-player-stage>
             @if($descriptor === null)
                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
             @else

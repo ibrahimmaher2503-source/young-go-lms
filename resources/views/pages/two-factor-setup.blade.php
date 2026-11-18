@@ -15,7 +15,7 @@
                     <li>{{ __('pages.tf_step_scan') }}</li>
                     <li>{{ __('pages.tf_step_code') }}</li>
                 </ol>
-                <div class="my-4 inline-block rounded-lg bg-white p-2" role="img" aria-label="{{ __('pages.tf_qr_label') }}">{!! $qr !!}</div>
+                <div class="my-4 inline-block rounded-lg bg-qr p-2" role="img" aria-label="{{ __('pages.tf_qr_label') }}">{!! $qr !!}</div>
                 <p class="text-sm text-muted">{{ __('pages.tf_manual') }}</p>
                 <p><code dir="ltr" class="break-all font-semibold" data-two-factor-secret>{{ $secret }}</code></p>
             </x-ui.card>

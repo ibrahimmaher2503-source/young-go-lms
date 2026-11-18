@@ -1,25 +1,16 @@
-{{-- Standalone certificate page for the headless-Chromium renderer (no Vite). Tokens are inlined from resources/css/tokens.css (brand teal, terracotta accent, warm neutrals); the wordmark is text until official logo assets exist (O-027). --}}
+{{-- Standalone certificate page for the headless-Chromium renderer (no Vite). Tokens come from config/brand.php, which mirrors resources/css/tokens.css (see docs/brand/CHANGING_THE_BRAND.md); the wordmark is text until official logo assets exist (O-027). --}}
 <!doctype html>
 <html lang="{{ $locale }}" dir="{{ $dir }}">
 <head>
 <meta charset="utf-8">
 <title>{{ $number }}</title>
 <style>
-    @font-face { font-family: "Noto Sans Arabic"; src: url("{{ $font }}") format("truetype"); font-weight: 100 900; font-style: normal; }
+    @include('partials.brand-pdf-css')
     @page { size: A4 landscape; margin: 0; }
-    :root {
-        --brand: oklch(0.484010 0.082313 193.660745);
-        --brand-dark: oklch(0.32 0.048 185);
-        --brand-soft: oklch(0.97 0.0093 185);
-        --accent: oklch(0.61 0.065 40);
-        --body: oklch(0.24 0.013 250);
-        --muted: oklch(0.41 0.02 250);
-        --line: oklch(0.86 0.01 250);
-    }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 297mm; height: 210mm; font-family: "Noto Sans Arabic", sans-serif; color: var(--body); background: #fff; }
+    html, body { margin: 0; padding: 0; width: 297mm; height: 210mm; font-family: var(--font); color: var(--body); background: var(--paper); }
     .page { position: relative; width: 297mm; height: 210mm; padding: 12mm; background: var(--brand-soft); }
-    .frame { height: 100%; border: 2mm solid var(--brand); background: #fff; padding: 10mm 16mm; display: flex; flex-direction: column; text-align: center; }
+    .frame { height: 100%; border: 2mm solid var(--brand); background: var(--paper); padding: 10mm 16mm; display: flex; flex-direction: column; text-align: center; }
     .brand { font-size: 22pt; font-weight: 800; color: var(--brand); letter-spacing: 0.02em; }
     .rule { width: 40mm; height: 1.2mm; margin: 4mm auto; background: var(--accent); }
     h1 { margin: 0; font-size: 30pt; font-weight: 800; color: var(--brand-dark); }

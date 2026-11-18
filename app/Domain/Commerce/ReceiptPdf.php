@@ -7,12 +7,13 @@ namespace App\Domain\Commerce;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
+use App\Support\Brand;
 use Spatie\LaravelPdf\Facades\Pdf;
 use Spatie\LaravelPdf\PdfBuilder;
 
 /**
  * Builds the receipt PDF (sale receipt or refund credit note) with headless Chromium through spatie/laravel-pdf (R-030), so
- * Arabic shapes correctly. The view is standalone (tokens inlined, Noto Sans Arabic embedded). Amounts come from the frozen
+ * Arabic shapes correctly. The view is standalone (tokens from config/brand.php, Noto Sans Arabic embedded). Amounts come from the frozen
  * e-receipt snapshot; seller tax data that is still UNKNOWN is simply not printed.
  */
 final class ReceiptPdf
@@ -65,7 +66,7 @@ final class ReceiptPdf
             'subtotal' => $format($receipt->subtotal_minor),
             'discount' => $receipt->discount_minor > 0 ? $format($receipt->discount_minor) : null,
             'total' => $format($receipt->total_minor),
-            'font' => 'data:font/ttf;base64,'.base64_encode((string) file_get_contents(resource_path('fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf'))),
+            'font' => Brand::fontDataUri(),
         ];
     }
 }

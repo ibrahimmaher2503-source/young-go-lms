@@ -3,7 +3,7 @@
 @php($stageFullscreen = $managedStage && ($descriptor->provider === 'vimeo' || \App\Domain\Media\Watermark::applies($descriptor->tier)))
 @switch($descriptor->type)
     @case('video')
-        <video class="block aspect-video w-full bg-black object-contain" controls preload="metadata" playsinline src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media controlslist="{{ $stageFullscreen ? 'nodownload nofullscreen' : 'nodownload' }}" @if($stageFullscreen) data-stage-fullscreen-only @endif>
+        <video class="block aspect-video w-full bg-media object-contain" controls preload="metadata" playsinline src="{{ $descriptor->url }}" aria-label="{{ $title }}" data-player-media controlslist="{{ $stageFullscreen ? 'nodownload nofullscreen' : 'nodownload' }}" @if($stageFullscreen) data-stage-fullscreen-only @endif>
             @foreach($descriptor->tracks as $track)
                 <track kind="captions" src="{{ $track['url'] }}" srclang="{{ $track['locale'] }}" label="{{ $track['label'] }}" @if($track['default']) default @endif>
             @endforeach

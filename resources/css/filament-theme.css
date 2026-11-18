@@ -486,7 +486,7 @@
 .fi-dropdown-list-item { min-block-size: 2.75rem; }
 .fi-avatar { background-color: var(--yg-brand-100); border: 1px solid var(--yg-brand-200); }
 
-.yg-brand-lockup { display: inline-flex; align-items: center; gap: 0.625rem; color: var(--yg-color-body); font-family: system-ui, sans-serif; font-size: 1.75rem; font-weight: 750; letter-spacing: -0.045em; line-height: 1; white-space: nowrap; }
+.yg-brand-lockup { display: inline-flex; align-items: center; gap: 0.625rem; color: var(--yg-color-body); font-family: var(--yg-font-stack-latin); font-size: 1.75rem; font-weight: 750; letter-spacing: -0.045em; line-height: 1; white-space: nowrap; }
 .yg-brand-lockup > svg { inline-size: 2.5rem; block-size: 2.5rem; color: var(--yg-color-primary); stroke-width: 1.8; }
 .yg-topbar-tools { display: inline-flex; align-items: center; gap: 1.25rem; }
 .yg-locale-button.fi-btn { border: 0; background: transparent; box-shadow: none; color: var(--yg-color-body); padding-inline: 0.5rem; }
@@ -511,7 +511,7 @@
 .yg-person-cell { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; min-inline-size: 10rem; }
 .yg-person-avatar { inline-size: 2.5rem; block-size: 2.5rem; font-size: var(--yg-font-small); background-color: var(--yg-brand-100); color: var(--yg-brand-800); }
 .yg-person-name { font-size: var(--yg-font-body); font-weight: 600; white-space: nowrap; }
-.yg-email { font-family: system-ui, sans-serif; font-size: var(--yg-font-label); }
+.yg-email { font-family: var(--yg-font-stack-latin); font-size: var(--yg-font-label); }
 .yg-activity-row { font-size: var(--yg-font-label); }
 .yg-activity-row > div > p:first-child { font-weight: 600; }
 .yg-workspace-note { font-size: var(--yg-font-small); }

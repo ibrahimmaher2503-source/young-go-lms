@@ -32,7 +32,7 @@
             </div>
             @if($qr)
                 <figure class="grid justify-items-center gap-2 text-center text-sm text-muted">
-                    <img class="size-28 bg-white p-1" src="{{ $qr }}" alt="{{ __('certificates.pdf.qr_alt') }}">
+                    <img class="size-28 bg-qr p-1" src="{{ $qr }}" alt="{{ __('certificates.pdf.qr_alt') }}">
                     <figcaption>{{ __('certificates.verify.scan') }}</figcaption>
                 </figure>
             @else

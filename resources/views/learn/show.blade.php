@@ -84,14 +84,14 @@
                                 <x-learning.rich-content :content="$lesson->content" :lesson="$lesson" :viewer="$learner" />
                             </article>
                         @else
-                        <div class="relative overflow-hidden rounded-card border border-border bg-black shadow-card" data-player-stage>
+                        <div class="relative overflow-hidden rounded-card border border-border bg-media shadow-card" data-player-stage>
                             @if($descriptor === null)
                                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
                             @else
                                 <div class="relative" data-player-surface>
                                     <x-learning.lesson-media :descriptor="$descriptor" :title="$title" managed-stage />
                                     @if(in_array($descriptor->type, ['video', 'audio', 'embed'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
-                                        <span class="pointer-events-none absolute z-10 select-none rounded bg-black/40 px-2 py-0.5 text-sm text-white/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
+                                        <span class="pointer-events-none absolute z-10 select-none rounded bg-media/40 px-2 py-0.5 text-sm text-on-media/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
                                     @endif
                                 </div>
                             @endif
