@@ -14,6 +14,25 @@ use Illuminate\Support\Facades\DB;
 final class EnrollmentReport
 {
     /**
+     * Distinct learners with access right now (T-P9-07 dashboards). A learner in two courses counts once.
+     *
+     * @param  list<int>|null  $courseIds  null = every course, an empty list = none
+     */
+    public static function activeLearners(?array $courseIds): int
+    {
+        if ($courseIds === []) {
+            return 0;
+        }
+
+        $now = now()->utc()->format('Y-m-d H:i:s');
+
+        return (int) Entitlement::query()->where('status', Entitlement::ACTIVE)->where('starts_at', '<=', $now)
+            ->where(static fn ($open) => $open->whereNull('ends_at')->orWhere('ends_at', '>', $now))
+            ->when($courseIds !== null, static fn ($query) => $query->whereIn('course_id', $courseIds ?? []))
+            ->distinct()->count('learner_id');
+    }
+
+    /**
      * @param  list<int>  $courseIds
      * @return array<int, array{new: int, active: int, total: int}> total = learners who ever had access, new = learners whose first access started in the range, active = learners with access now
      */

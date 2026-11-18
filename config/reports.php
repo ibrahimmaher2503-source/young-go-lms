@@ -12,4 +12,7 @@ return [
     'preview_rows' => 50,
     'chunk' => 500,
     'max_range_days' => 366,
+    // T-P9-07: role dashboards cache the report-backed KPIs this many seconds (0 = no cache); queues are always live.
+    'dashboard_cache_seconds' => (int) env('DASHBOARD_CACHE_SECONDS', 60),
+    'dashboard_days' => 30,
 ];

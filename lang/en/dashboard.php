@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+// T-P9-07: role dashboards (admin, finance, instructor).
+return [
+    'kpis_title' => 'Key figures',
+    'kpis_period' => 'Last :days days, from the same data as the reports.',
+    'queues_title' => 'Needs your attention',
+    'queues_description' => 'Live counts of work waiting in your queues.',
+    'empty_period' => 'Nothing recorded in this period yet.',
+    'queue_clear' => 'All clear',
+    'empty_title' => 'No figures for your role yet',
+    'empty_description' => 'Key figures and queues appear here when your role can see them.',
+    'kpi' => [
+        'revenue' => 'Net revenue',
+        'orders' => 'Paid orders',
+        'refunds' => 'Refunds',
+        'refunds_secondary' => 'Refunds executed',
+        'active_learners' => 'Active learners',
+        'my_learners' => 'My active learners',
+        'completions' => 'Course completions',
+        'completion_rate' => 'Completion rate',
+        'ai_requests' => 'AI assistant requests',
+        'ai_requests_secondary' => 'Failed requests',
+        'ai_cost' => 'AI cost',
+        'earnings' => 'My net earnings',
+        'instructor_balances' => 'Instructor balances owed',
+        'instructor_held' => 'Instructor balances on hold',
+        'manual_payments' => 'Manual payments to review',
+        'manual_payments_secondary' => 'Past deadline',
+        'refunds_requested' => 'Refund requests to approve',
+        'instructor_applications' => 'Instructor applications',
+        'reviews_pending' => 'Reviews to moderate',
+        'help_awaiting' => 'Help requests awaiting a reply',
+        'help_awaiting_secondary' => 'Overdue',
+        'payment_mismatches' => 'Open payment mismatches',
+        'settlements_pending' => 'Settlements not yet paid',
+        'settlements_pending_secondary' => 'Batches',
+        'submissions_awaiting' => 'Submissions to review',
+        'submissions_awaiting_secondary' => 'Overdue',
+        'essays_awaiting' => 'Essay answers to grade',
+    ],
+];
