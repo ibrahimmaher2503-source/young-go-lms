@@ -51,12 +51,13 @@ function browserLearner(string $locale): array
     return [$learner, $courses];
 }
 
-it('renders the learner dashboard and my courses accessibly in both directions and sizes', function (string $locale, int $width, int $height): void {
+it('renders the learner dashboard and my courses accessibly in both directions and sizes', function (string $locale, int $width, int $height, string $theme): void {
     [$learner] = browserLearner($locale);
     $this->withSession(['locale' => $locale]);
     $this->actingAs($learner);
 
     $page = $this->visit('/my')->resize($width, $height);
+    $page->script("() => { document.documentElement.dataset.theme = '{$theme}'; }");
     $page->assertSee($locale === 'ar' ? 'جاهز نكمل' : 'Ready to continue');
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
@@ -65,12 +66,15 @@ it('renders the learner dashboard and my courses accessibly in both directions a
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P4-05/dashboard-{$locale}-{$width}");
+    $suffix = $theme === 'light' ? '' : "-{$theme}";
+    $page->screenshot(fullPage: true, filename: "T-P4-05/dashboard-{$locale}{$suffix}-{$width}");
 
     $courses = $this->visit('/my/courses')->resize($width, $height);
+    $courses->script("() => { document.documentElement.dataset.theme = '{$theme}'; }");
     $courses->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
-    $courses->screenshot(fullPage: true, filename: "T-P4-05/courses-{$locale}-{$width}");
-})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P4-05', 'A2');
+    $courses->screenshot(fullPage: true, filename: "T-P4-05/courses-{$locale}{$suffix}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
+    ->with(['light', 'dark'])->group('browser', 'T-P4-05', 'A2');
 
 it('shows the empty states for a learner with no courses', function (string $locale, int $width, int $height): void {
     $learner = User::factory()->create(['locale' => $locale, 'name' => $locale === 'ar' ? 'سارة أحمد' : 'Sara Ahmed'])->assignRole('student');

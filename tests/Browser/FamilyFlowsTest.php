@@ -40,14 +40,14 @@ it('registers, verifies and signs in through the browser forms', function (): vo
     expect($user->hasRole('student'))->toBeTrue();
 
     $link = URL::temporarySignedRoute('verification.verify', now()->addMinute(), ['id' => $user->id, 'hash' => sha1('browser@example.test')]);
-    $page = $this->visit($link)->assertPathIs('/profile');
+    $page = $this->visit($link)->assertPathIs('/my')->assertSee(__('learner.my_enrolled'));
     expect($user->refresh()->hasVerifiedEmail())->toBeTrue();
 
     $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
-    $page->click('#account-menu button[type="submit"]')->waitForText(__('pages.login_title'))->assertPathIs('/login');
+    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'))->assertPathIs('/login');
 
     $page->type('#login', 'browser@example.test')->type('#password', 'BrowserPass1!')
-        ->click('main form button[type="submit"]')->waitForText(__('pages.profile_title'))->assertPathIs('/profile')
+        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
         ->assertNoJavaScriptErrors();
 })->group('browser', 'T-P1-10', 'A1', 'J01');
 
@@ -73,9 +73,10 @@ it('lets a parent create a child who then signs in with the username', function 
     expect($child->email)->toBeNull()->and($child->hasRole('student'))->toBeTrue();
 
     $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
-    $page->click('#account-menu button[type="submit"]')->waitForText(__('pages.login_title'));
+    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'));
     $page->type('#login', 'little-browser')->type('#password', 'ChildBrowser1!')
-        ->click('main form button[type="submit"]')->waitForText(__('pages.profile_title'))->assertPathIs('/profile');
+        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
+        ->assertSee('Little Browser');
 })->group('browser', 'T-P1-10', 'A1', 'J02', 'YG-GAP-FAM-001');
 
 it('switches into a child context with the password and exits again', function (): void {
@@ -124,7 +125,7 @@ dataset('family-screens', [
     'not-found' => ['/missing-page-for-screenshot', null],
 ]);
 
-it('renders every screen accessibly in both directions and sizes', function (string $path, ?string $as, string $locale, int $width, int $height) {
+it('renders every screen accessibly in both directions, themes and sizes', function (string $path, ?string $as, string $locale, int $width, int $height, string $theme) {
     $this->withSession(['locale' => $locale]);
     if ($as === 'parent') {
         $parent = browserUser('parent', ['name_en' => 'Mona', 'display_name' => 'Mona']);
@@ -136,48 +137,50 @@ it('renders every screen accessibly in both directions and sizes', function (str
         $this->actingAs(browserUser('student', ['email' => 'unverified@example.test', 'email_verified_at' => null]));
     }
 
-    $page = $this->visit($path)->resize($width, $height);
+    $page = $this->visit($path);
+    if ($theme === 'dark') {
+        $page = $page->inDarkMode();
+    }
+    $page->resize($width, $height);
     $page->script('async () => { await document.fonts.ready; }');
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('() => [document.documentElement.lang, document.documentElement.dir]'))->toBe([$locale, $locale === 'ar' ? 'rtl' : 'ltr']);
+    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= window.innerWidth'))->toBeTrue();
+    if ($path === '/family' && $width === 1440) {
+        expect($page->script('() => { const card = document.querySelector("#add-child"); return card.nextElementSibling.getBoundingClientRect().height < card.getBoundingClientRect().height; }'))->toBeTrue();
+    }
 
     $name = trim(str_replace(['/', '?', '=', '%'], '-', explode('?', $path)[0]), '-');
     $directory = base_path('tests/Browser/screenshots/T-P1-10');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-10/{$name}-{$locale}-{$width}");
-})->with('family-screens')->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
+    $page->screenshot(fullPage: true, filename: "T-P1-10/{$name}-{$locale}-{$theme}-{$width}");
+})->with('family-screens')->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->with(['light', 'dark'])
     ->group('browser', 'T-P1-10', 'A2', 'A3', 'YG-GAP-A11Y-001');
 
-it('renders the child-context strip accessibly', function (string $locale): void {
+it('renders the child-context strip accessibly', function (string $locale, int $width, int $height, string $theme): void {
     $this->withSession(['locale' => $locale]);
     $parent = browserUser('parent');
     $child = app(CreateChildAccount::class)->handle($parent, ['username' => 'strip-kid', 'password' => 'ChildPassword1!', 'name_en' => 'Sara', 'name_ar' => 'سارة', 'birth_year' => 2016, 'birth_month' => 2]);
     $this->actingAs($parent)->withSession(['acting_child_id' => $child->id, 'locale' => $locale]);
 
-    $page = $this->visit('/family')->resize(390, 844);
+    $page = $this->visit('/family');
+    if ($theme === 'dark') {
+        $page = $page->inDarkMode();
+    }
+    $page->resize($width, $height);
     $page->assertPresent('[data-child-context]')->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     $directory = base_path('tests/Browser/screenshots/T-P1-10');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-10/child-context-{$locale}-390");
-})->with(['ar', 'en'])->group('browser', 'T-P1-10', 'A2', 'YG-GAP-FAM-004');
-
-it('renders the main screens in dark mode', function (string $path, string $locale): void {
-    $this->withSession(['locale' => $locale]);
-    $page = $this->visit($path)->inDarkMode()->resize(390, 844);
-    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
-    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBeTrue();
-    $name = trim($path, '/');
-    $directory = base_path('tests/Browser/screenshots/T-P1-10');
-    if (! is_dir($directory)) {
-        mkdir($directory, 0755, true);
-    }
-    $page->screenshot(fullPage: true, filename: "T-P1-10/{$name}-{$locale}-dark-390");
-})->with(['/login', '/register'])->with(['ar', 'en'])->group('browser', 'T-P1-10', 'A2', 'A3');
+    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
+    expect($page->script('() => document.documentElement.scrollWidth <= window.innerWidth'))->toBeTrue();
+    $page->screenshot(fullPage: true, filename: "T-P1-10/child-context-{$locale}-{$theme}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->with(['light', 'dark'])
+    ->group('browser', 'T-P1-10', 'A2', 'YG-GAP-FAM-004');
 
 it('shows live password strength and a copyable sign-in detail on the family page', function (): void {
     $this->withSession(['locale' => 'en']);

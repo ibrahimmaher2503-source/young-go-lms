@@ -81,6 +81,7 @@ it('renders staff users and roles in both directions and themes', function (stri
         $page->keys('.yg-locale-button', 'Tab');
         expect($page->script('() => document.activeElement !== document.body'))->toBeTrue();
         if ($width === 1568 && $screen === 'staff-users') {
+            expect($page->script('() => [...document.querySelectorAll(".fi-sidebar-item-label")].filter(label => label.clientWidth > 0).every(label => label.scrollWidth <= label.clientWidth + 1)'))->toBeTrue();
             expect($page->script('() => [...document.querySelectorAll(".yg-email > span")].every(email => email.scrollWidth <= email.clientWidth + 1)'))->toBeTrue();
             $metrics = $page->script("() => ({sidebar: document.querySelector('.fi-sidebar').getBoundingClientRect().width, topbar: document.querySelector('.fi-topbar').getBoundingClientRect().height, heading: getComputedStyle(document.querySelector('.fi-header-heading')).fontSize, summary: document.querySelector('.yg-summary-strip').getBoundingClientRect().height, main: document.querySelector('.yg-workspace-main').getBoundingClientRect().width, aside: document.querySelector('.yg-workspace-sidebar').getBoundingClientRect().width, tableFits: document.querySelector('.fi-ta-content-ctn').scrollWidth <= document.querySelector('.fi-ta-content-ctn').clientWidth + 1})");
             $contract = json_decode(file_get_contents(base_path('docs/design-system/visual-contract.json')), true, flags: JSON_THROW_ON_ERROR);

@@ -4,7 +4,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\AI\Help\Actions\ReplyToHelpRequest;
 use App\Domain\AI\Help\HelpRequestStatus;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
@@ -75,7 +74,7 @@ function hrbBuild(string $locale): array
     ]);
     $section->update(['published' => true]);
 
-    Storage::disk('local')->put('media/clip.mp4', 'dummy-video');
+    Storage::disk('local')->put('media/clip.mp4', file_get_contents(base_path('tests/Fixtures/lesson-player.mp4')));
     $item = app(ManageLessons::class)->add($instructor, $section, [
         'title' => ['ar' => 'رسم الأشكال الأساسية والظل', 'en' => 'Basic Shapes and Shading'],
         'type' => 'video',
@@ -450,3 +449,55 @@ it('renders assistant panel in request_created state with thread link and verifi
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
     ->group('T-P7-04', 'A4')
     ->group('browser');
+
+it('shows the quiz page hint and human help after an assistant refusal or exhausted quota', function (string $locale, string $theme, int $width, int $height): void {
+    $data = hrbBuild($locale);
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($data['student']);
+    $page = $this->visit("/learn/{$data['course']->id}/{$data['item']->id}")->resize($width, $height);
+    $page->script("() => localStorage.setItem('theme', '{$theme}')");
+    $page->refresh();
+
+    $message = __('ai.guards.quiz_guard_page', ['page' => 3], $locale);
+    $payload = json_encode(['state' => 'out_of_scope', 'guard' => 'quiz_guard', 'message' => $message, 'source_pages' => [3]], JSON_THROW_ON_ERROR);
+    $page->script(<<<JS
+    () => {
+        const original = window.fetch.bind(window);
+        window.fetch = (url, options) => {
+            if (url !== document.querySelector('[data-ai-panel]').dataset.askUrl) return original(url, options);
+            return Promise.resolve(Response.json({$payload}));
+        };
+    }
+    JS);
+    $page->script("() => document.querySelector('[data-ai-open]')?.click()");
+    $page->fill('[data-ai-input]', 'How do I mix colors?')->click('[data-ai-send]')
+        ->waitForText($message)->assertVisible('[data-ai-contact-help]')
+        ->assertVisible('[data-ai-pages] > *')->assertNoJavaScriptErrors();
+    $page->screenshot(fullPage: true, filename: "T-P7-04/assistant-quiz-hint-{$locale}-{$theme}-{$width}");
+
+    $page->script(<<<'JS'
+    () => {
+        const original = window.fetch.bind(window);
+        window.fetch = (url, options) => {
+            if (url !== document.querySelector('[data-ai-panel]').dataset.askUrl) return original(url, options);
+            return Promise.resolve(Response.json({state: 'quota_exhausted'}, {status: 429}));
+        };
+    }
+    JS);
+    $page->fill('[data-ai-input]', 'What is a primary color?')->click('[data-ai-send]')
+        ->assertVisible('[data-ai-panel][data-state="quota"] [data-ai-contact-help]')
+        ->assertNoJavaScriptErrors();
+})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1568, 1003]])
+    ->group('T-P7-03', 'T-P7-04')->group('browser');
+
+it('shows staff the assistant readiness without exposing an interactive assistant', function (string $locale, string $theme, int $width, int $height): void {
+    $data = hrbBuild($locale);
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs($data['instructor']);
+    $page = $this->visit("/preview/{$data['course']->id}/{$data['item']->id}")->resize($width, $height);
+    $page->script("() => localStorage.setItem('theme', '{$theme}')");
+    $page->refresh()->assertVisible('[data-preview-assistant="available"]')
+        ->assertNotPresent('[data-ai-panel]')->assertNotPresent('[data-ai-open]')->assertNoJavaScriptErrors();
+    $page->screenshot(fullPage: true, filename: "T-P7-04/staff-preview-{$locale}-{$theme}-{$width}");
+})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1568, 1003]])
+    ->group('T-P4-10', 'A3')->group('browser');

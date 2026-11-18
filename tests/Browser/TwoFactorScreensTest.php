@@ -46,6 +46,10 @@ it('enrolls in two-factor authentication through the browser and shows recovery 
         ->waitForText(__('pages.tf_recovery_title'))
         ->assertNoJavaScriptErrors();
     expect($page->script('() => document.querySelectorAll("[data-result-list] li").length'))->toBe(8);
+
+    $page->refresh()->assertSee(__('pages.tf_enabled'))->assertNotPresent('[data-two-factor-secret]')
+        ->assertNotPresent('#recovery-codes:not([hidden])');
+    expect($page->script('() => document.querySelectorAll("[data-result-list] li").length'))->toBe(0);
 })->group('browser', 'T-P1-11', 'A1', 'YG-GAP-SEC-003');
 
 it('completes the two-step challenge with a code', function (): void {
@@ -54,7 +58,8 @@ it('completes the two-step challenge with a code', function (): void {
     $this->actingAs($user);
 
     $this->visit('/two-factor-challenge')->type('#code', app(Google2FA::class)->getCurrentOtp('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'))
-        ->click('main form[action$="/two-factor-challenge"] button[type="submit"]')->waitForText(__('pages.profile_title'))->assertPathIs('/profile');
+        ->click('main form[action$="/two-factor-challenge"] button[type="submit"]')
+        ->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')->assertNoJavaScriptErrors();
 })->group('browser', 'T-P1-11', 'A1');
 
 it('lets a parent reset the child password in the browser and the child signs in with it', function (): void {
@@ -73,9 +78,18 @@ it('lets a parent reset the child password in the browser and the child signs in
         ->waitForText(__('pages.reset_child_done'))->assertNoJavaScriptErrors();
 
     $this->postJson('/login', ['login' => 'reset-kid', 'password' => 'OldChildPass1!'])->assertUnprocessable();
+
+    $page->refresh()->click('#account-menu-trigger, [popovertarget="account-menu"]');
+    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'))->assertPathIs('/login');
+    $page->type('#login', 'reset-kid')->type('#password', 'NewChildPass1!')
+        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
+        ->assertSee('Reset Kid')->assertNoJavaScriptErrors();
+    $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
+    $page->click('#account-menu a[href$="/profile"]')->waitForText(__('pages.profile_title'))->assertPathIs('/profile')
+        ->assertValue('#name_en', 'Reset Kid');
 })->group('browser', 'T-P1-11', 'A3', 'YG-GAP-FAM-007');
 
-it('renders the two-factor and child-reset screens accessibly in both directions', function (string $screen, string $locale, int $width, int $height) {
+it('renders the two-factor and child-reset screens accessibly in both directions and themes', function (string $screen, string $locale, int $width, int $height, string $theme) {
     $this->withSession(['locale' => $locale]);
     $enrolled = ['two_factor_secret' => 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()];
 
@@ -93,14 +107,21 @@ it('renders the two-factor and child-reset screens accessibly in both directions
         $parent = tfBrowserUser('parent', ['name_en' => 'Mona', 'display_name' => 'Mona']);
         $child = app(CreateChildAccount::class)->handle($parent, ['username' => 'shot-kid', 'password' => 'ChildPassword1!', 'name_en' => 'Sara', 'name_ar' => 'سارة', 'birth_year' => 2016, 'birth_month' => 2]);
         $this->actingAs($parent);
-        $page = $this->visit('/family')->resize($width, $height)->click("[commandfor=\"reset-{$child->id}\"]");
+        $page = $this->visit('/family');
     }
 
+    if ($theme === 'dark') {
+        $page = $page->inDarkMode();
+    }
     $page->resize($width, $height);
+    if ($screen === 'child-reset') {
+        $page->click("[commandfor=\"reset-{$child->id}\"]");
+    }
     $page->script('async () => { await document.fonts.ready; }');
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
+    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= window.innerWidth'))->toBeTrue();
-    tfShot($page, "{$screen}-{$locale}-{$width}");
-})->with(['setup', 'enabled', 'challenge', 'child-reset'])->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
+    tfShot($page, "{$screen}-{$locale}-{$theme}-{$width}");
+})->with(['setup', 'enabled', 'challenge', 'child-reset'])->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->with(['light', 'dark'])
     ->group('browser', 'T-P1-11', 'A5', 'YG-GAP-A11Y-001');

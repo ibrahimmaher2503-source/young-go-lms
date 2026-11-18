@@ -43,17 +43,26 @@ it('renders every panel welcome screen without fabricated module data', function
     $page->script("() => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); }");
     $page->refresh();
     $page->script('async () => { await document.fonts.ready; }');
-    $page->assertVisible('.yg-dashboard-intro')->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
-    expect($page->script('() => getComputedStyle(document.querySelector(".yg-dashboard-intro")).display'))->toBe('flex');
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    if ($panel === 'admin') {
+        $page->assertVisible('[data-dashboard-manage-courses]');
+        $page->assertSee(__('staff.overview', [], $locale));
+    } else {
+        $page->assertVisible('.yg-dashboard-intro');
+        expect($page->script('() => getComputedStyle(document.querySelector(".yg-dashboard-intro")).display'))->toBe('flex');
+    }
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
     expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
     if ($panel !== 'admin') {
         $page->assertNotPresent('.yg-summary-strip');
     }
-    $directory = base_path('tests/Browser/Screenshots/T-P1-08/reference-pass/surfaces');
+    $directory = base_path('tests/Browser/screenshots/T-P1-08/audit-overview');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-08/reference-pass/surfaces/{$panel}-dashboard-{$locale}-{$theme}-{$width}");
+    $page->screenshot(fullPage: true, filename: "../screenshots/T-P1-08/audit-overview/{$panel}-dashboard-{$locale}-{$theme}-{$width}");
+    if ($panel === 'admin' && $locale === 'ar' && $theme === 'light' && $width === 1440) {
+        $page->resize(1568, 1003)->screenshot(fullPage: false, filename: '../screenshots/T-P1-08/audit-overview/admin-dashboard-ar-light-1568');
+    }
 })->with(['admin', 'instructor', 'finance'])->with($workspaceViewports)->group('browser', 'T-P1-08', 'A4', 'D-026');

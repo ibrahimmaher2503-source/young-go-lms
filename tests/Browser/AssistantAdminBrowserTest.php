@@ -284,7 +284,7 @@ it('captures screenshots and verifies a11y for assistant controls page', functio
 
     $page->screenshot(fullPage: true, filename: "T-P7-06/controls-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');
 
 it('captures screenshots and verifies a11y for assistant usage report page with data and empty', function (
     string $locale,
@@ -334,7 +334,7 @@ it('captures screenshots and verifies a11y for assistant usage report page with 
 
     $page->screenshot(fullPage: true, filename: "T-P7-06/usage-report-empty-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');
 
 it('captures screenshots and verifies a11y for assistant insights page with data and empty', function (
     string $locale,
@@ -384,7 +384,7 @@ it('captures screenshots and verifies a11y for assistant insights page with data
 
     $page->screenshot(fullPage: true, filename: "T-P7-06/insights-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');
 
 it('captures screenshots and verifies layout for assistant availability page', function (
     string $locale,
@@ -421,7 +421,7 @@ it('captures screenshots and verifies layout for assistant availability page', f
 
     $page->screenshot(fullPage: true, filename: "T-P7-06/availability-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');
 
 it('verifies accessibility for assistant availability page', function (
     string $locale,
@@ -443,8 +443,7 @@ it('verifies accessibility for assistant availability page', function (
 
     $page->assertNoAccessibilityIssues();
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->skip('BUG: resources/views/filament/ai/availability.blade.php uses aria-pressed instead of aria-checked on role="switch", violating aria-allowed-attr and aria-required-attr')
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');
 
 it('opens, validates, and closes modal forms on assistant controls page', function (string $locale): void {
     $data = aabFixture($locale);
@@ -478,4 +477,4 @@ it('opens, validates, and closes modal forms on assistant controls page', functi
     $page->keys('.fi-modal-window:visible', 'Escape')->wait(0.5);
     $page->assertNotPresent('.fi-modal-window:visible');
 })->with(['ar', 'en'])
-    ->group('T-P7-06', 'A3', 'browser');
+    ->group('T-P7-06', 'A3')->group('browser');

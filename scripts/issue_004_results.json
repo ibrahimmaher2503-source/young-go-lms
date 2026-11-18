@@ -1,0 +1,58 @@
+{
+    "5_learners": {
+        "median_latency_ms": 135.16,
+        "median_sql_time_ms": 4.86,
+        "median_subquery_time_ms": 0.59,
+        "query_count": 9,
+        "slowest_query": {
+            "query": "select \"users\".*, (select case when sum(case when status = 'active' and starts_at <= ? and (ends_at is null or ends_at > ?) then 1 else 0 end) > 0 then 'active' else 'ended' end from \"entitlements\" where \"entitlements\".\"learner_id\" = \"users\".\"id\" and \"entitlements\".\"course_id\" = ?) as \"access_status\", (select min(starts_at) from \"entitlements\" where \"entitlements\".\"learner_id\" = \"users\".\"id\" and \"entitlements\".\"course_id\" = ?) as \"enrolled_at\" from \"users\" where \"users\".\"id\" in (select \"learner_id\" from \"entitlements\" where \"course_id\" = ?) order by \"users\".\"name\" asc limit 15 offset 0",
+            "bindings": [
+                "2026-11-17T21:49:40.430751Z",
+                "2026-11-17T21:49:40.430760Z",
+                1,
+                1,
+                1
+            ],
+            "time": 0.56,
+            "readWriteType": "write"
+        },
+        "total_db_records": 5,
+        "displayed_records": 5
+    },
+    "50_learners": {
+        "median_latency_ms": 182.7,
+        "median_sql_time_ms": 4.21,
+        "median_subquery_time_ms": 0.75,
+        "query_count": 7,
+        "slowest_query": {
+            "query": "select count(*) as \"aggregate\" from \"users\" where \"users\".\"id\" in (select \"learner_id\" from \"entitlements\" where \"course_id\" = ?)",
+            "bindings": [
+                1
+            ],
+            "time": 7.32,
+            "readWriteType": "write"
+        },
+        "total_db_records": 50,
+        "displayed_records": 15
+    },
+    "200_learners": {
+        "median_latency_ms": 86.83,
+        "median_sql_time_ms": 2.85,
+        "median_subquery_time_ms": 0.71,
+        "query_count": 7,
+        "slowest_query": {
+            "query": "select \"users\".*, (select case when sum(case when status = 'active' and starts_at <= ? and (ends_at is null or ends_at > ?) then 1 else 0 end) > 0 then 'active' else 'ended' end from \"entitlements\" where \"entitlements\".\"learner_id\" = \"users\".\"id\" and \"entitlements\".\"course_id\" = ?) as \"access_status\", (select min(starts_at) from \"entitlements\" where \"entitlements\".\"learner_id\" = \"users\".\"id\" and \"entitlements\".\"course_id\" = ?) as \"enrolled_at\" from \"users\" where \"users\".\"id\" in (select \"learner_id\" from \"entitlements\" where \"course_id\" = ?) order by \"users\".\"name\" asc limit 15 offset 0",
+            "bindings": [
+                "2026-11-17T21:51:16.010872Z",
+                "2026-11-17T21:51:16.010881Z",
+                1,
+                1,
+                1
+            ],
+            "time": 0.68,
+            "readWriteType": "write"
+        },
+        "total_db_records": 200,
+        "displayed_records": 15
+    }
+}

@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Actions\IngestCurriculumDocument;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
-use App\Domain\AI\Ingestion\IngestCurriculumDocument;
+use App\Domain\Cohorts\Actions\ManageCohorts;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
+use App\Domain\Media\Actions\ManageLessonResources;
 use App\Domain\Media\Actions\UploadCurriculumDocument;
 use App\Models\Course;
 use App\Models\LessonCurriculumDocument;
@@ -17,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\File\File;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -103,7 +106,7 @@ it('renders the lesson editor with the upload field accessibly in both direction
 
 it('shows the curriculum PDF and material fields and the PDF badge accessibly', function (string $locale, int $width, int $height): void {
     [$course, $instructor, , $items] = browserCurriculum($locale);
-    $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+    $pdf = PdfFixture::bytes();
     $path = tempnam(sys_get_temp_dir(), 'ygp');
     file_put_contents($path, $pdf);
     app(UploadCurriculumDocument::class)($instructor, $items[0]->itemable, new File($path));
@@ -160,3 +163,56 @@ it('shows the PDF text approval screen accessibly in both directions and sizes',
     }
     $page->screenshot(fullPage: true, filename: "T-P3-09/approval-{$locale}-{$width}");
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-09', 'A5', 'PRD-09.7');
+
+it('shows lesson resources, rich editor, live scheduling and enrollment dates in both languages and themes', function (string $locale, string $theme, int $width, int $height): void {
+    [$course, $instructor, , $items] = browserCurriculum($locale);
+    $course->update(['format' => 'hybrid']);
+    $lesson = $items[0]->itemable;
+    $lesson->update(['type' => 'text']);
+    app(ManageLessonResources::class)->addLink($instructor, $lesson, [
+        'title' => ['ar' => 'مرجع الأدوات', 'en' => 'Tool reference'], 'url' => 'https://example.com/tool-reference',
+    ]);
+    app(ManageCohorts::class)->create($instructor, $course, [
+        'name' => 'Evening group', 'name_translations' => ['ar' => 'المجموعة المسائية'], 'capacity' => 12,
+        'enrollment_opens_on' => now()->subDay()->toDateString(), 'enrollment_closes_on' => now()->addDays(3)->toDateString(),
+    ]);
+    $this->withSession(['locale' => $locale])->actingAs($instructor);
+    $base = "/instructor/courses/{$course->id}";
+    $page = $this->visit($base.'/curriculum')->resize($width, $height);
+    $page->script("() => localStorage.setItem('theme', '{$theme}')");
+    $page->refresh();
+    $page->script('async () => { await document.fonts.ready; }');
+    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
+        ->and($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
+    $directory = base_path('tests/Browser/screenshots/audit-curriculum-live');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $suffix = "{$locale}-{$theme}-{$width}";
+    $row = "[data-item=\"{$items[0]->id}\"]";
+    $modal = '.fi-modal-window:visible';
+    $page->click($row.' summary')->click($row.' button[wire\\:click*="manageResources"]')->assertVisible($modal)
+        ->assertSee(__('curriculum.preview_resource', [], $locale))->assertSee($locale === 'ar' ? 'مرجع الأدوات' : 'Tool reference');
+    $page->screenshot(fullPage: false, filename: "audit-curriculum-live/resources-{$suffix}");
+    $page->keys($modal, 'Escape')->assertNotPresent($modal);
+    $page->script('() => document.querySelectorAll("details[open]").forEach(menu => { menu.open = false; })');
+    $page->click($row.' summary')->click($row.' button[wire\\:click*="editLesson"]')->assertVisible($modal)
+        ->assertSee(__('curriculum.rich_content', [], $locale));
+    $page->script('() => document.querySelector(".fi-fo-rich-editor")?.scrollIntoView({block: "center"})');
+    $page->screenshot(fullPage: false, filename: "audit-curriculum-live/rich-editor-{$suffix}");
+    $page->keys($modal, 'Escape')->assertNotPresent($modal);
+    $page->click(__('live.schedule', [], $locale))->assertVisible($modal)
+        ->assertVisible('textarea[lang="ar"]')->assertVisible('textarea[lang="en"]');
+    $page->screenshot(fullPage: false, filename: "audit-curriculum-live/live-schedule-{$suffix}");
+    $page->assertNoJavaScriptErrors();
+
+    $cohorts = $this->visit($base.'/cohorts')->resize($width, $height);
+    $cohorts->assertSee($locale === 'ar' ? 'المجموعة المسائية' : 'Evening group')
+        ->assertSee(__('cohorts.enrollment_opens_on', [], $locale))
+        ->assertSee(__('cohorts.enrollment_closes_on', [], $locale));
+    $cohorts->click('button[wire\\:click*="editCohort"]')->assertVisible($modal)
+        ->assertVisible('input[lang="ar"]')->assertVisible('input[lang="en"]');
+    $cohorts->screenshot(fullPage: false, filename: "audit-curriculum-live/cohort-enrollment-{$suffix}");
+    $cohorts->assertNoJavaScriptErrors();
+})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
+    ->group('browser', 'T-P3-08', 'T-P3-15', 'T-P5-01', 'T-P5-02');

@@ -20,8 +20,8 @@ beforeEach(function (): void {
     $this->seed(RolePermissionSeeder::class);
 });
 
-it('shows the parent dashboard accessibly in both directions and sizes, with and without children', function (string $locale, int $width, int $height): void {
-    $parent = User::factory()->create(['locale' => $locale, 'name' => $locale === 'ar' ? 'منى سعيد' : 'Mona Saeed'])->assignRole('parent');
+it('shows the parent dashboard accessibly in both directions and sizes, with and without children', function (string $locale, int $width, int $height, string $theme): void {
+    $parent = User::factory()->create(['locale' => $locale, 'name' => $locale === 'ar' ? 'منى سعيد' : 'Mona Saeed', 'password' => 'ParentBrowser1!'])->assignRole('parent');
     $instructor = User::factory()->create(['name' => $locale === 'ar' ? 'سارة أحمد' : 'Sara Ahmed'])->assignRole('instructor_academy');
     foreach ([['أحمد', 'Ahmed'], ['ليلى', 'Layla']] as $index => [$ar, $en]) {
         $child = User::factory()->create(['name' => $locale === 'ar' ? $ar : $en])->assignRole('student');
@@ -48,6 +48,7 @@ it('shows the parent dashboard accessibly in both directions and sizes, with and
     $this->actingAs($parent);
 
     $page = $this->visit('/parent')->resize($width, $height);
+    $page->script("() => { document.documentElement.dataset.theme = '{$theme}'; }");
     $page->assertSee($locale === 'ar' ? 'تعرض الآن تقدم' : 'progress now');
     $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
@@ -56,11 +57,21 @@ it('shows the parent dashboard accessibly in both directions and sizes, with and
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P4-08/parent-{$locale}-{$width}");
+    $suffix = $theme === 'light' ? '' : "-{$theme}";
+    $page->screenshot(fullPage: true, filename: "T-P4-08/parent-{$locale}{$suffix}-{$width}");
+    if ($locale === 'en' && $width === 1440 && $theme === 'light') {
+        $childId = GuardianChildLink::query()->where('guardian_id', $parent->id)->orderBy('id')->firstOrFail()->child_id;
+        $page->click(__('pages.switch_child', [], $locale))
+            ->type("#switch-password-{$childId}", 'ParentBrowser1!')
+            ->click("#switch-{$childId} form[data-ajax] button[type=\"submit\"]")
+            ->assertPathIs('/my')->assertPresent('[data-child-context]');
+    }
 
     $lonely = User::factory()->create(['locale' => $locale])->assignRole('parent');
     $this->actingAs($lonely);
     $empty = $this->visit('/parent')->resize($width, $height);
+    $empty->script("() => { document.documentElement.dataset.theme = '{$theme}'; }");
     $empty->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
-    $empty->screenshot(fullPage: true, filename: "T-P4-08/parent-empty-{$locale}-{$width}");
-})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P4-08', 'A3');
+    $empty->screenshot(fullPage: true, filename: "T-P4-08/parent-empty-{$locale}{$suffix}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])
+    ->with(['light', 'dark'])->group('browser', 'T-P4-08', 'A3');

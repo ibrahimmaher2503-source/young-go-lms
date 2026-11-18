@@ -200,5 +200,5 @@ it('captures screenshots and verifies a11y across empty, form, and result states
         ->assertNoAccessibilityIssues();
     $pageForm->screenshot(fullPage: true, filename: "T-P7-05/not-in-source-result-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-05', 'A2', 'browser')
+    ->group('T-P7-05', 'A2')
     ->group('browser');

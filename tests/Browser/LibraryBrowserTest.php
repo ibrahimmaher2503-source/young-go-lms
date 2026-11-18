@@ -8,6 +8,7 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\File\File;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -20,7 +21,7 @@ it('shows the content library accessibly in both directions and sizes', function
     $admin = User::factory()->create(['locale' => $locale])->assignRole('admin');
     foreach ([['ورقة عمل الضوء والظل', 'Light and shadow worksheet', ['light', 'shadow']], ['دليل الألوان', 'Colour guide', ['colour']], ['مرجع الأدوات', 'Tools reference', []]] as $index => [$ar, $en, $tags]) {
         $path = tempnam(sys_get_temp_dir(), 'lb');
-        file_put_contents($path, "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n% {$index}");
+        file_put_contents($path, PdfFixture::bytes(marker: (string) $index));
         app(AddLibraryItem::class)($admin, new File($path), ['title' => ['ar' => $ar, 'en' => $en], 'tags' => $tags, 'scope' => $index === 0 ? 'academy' : 'mine']);
     }
     $this->withSession(['locale' => $locale]);
