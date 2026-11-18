@@ -29,3 +29,10 @@ Gate criteria (ORCHESTRATOR.md section 8.3): every task of the phase done, demo 
 - Measure the performance budget on the catalog and checkout pages.
 - Write the demo script (`docs/DEMO.md` has the dataset; the walk-through is missing).
 - Update PROJECT_STATE.md and HANDOFF.md with the continuity record.
+
+## Continuity record
+
+- Demo walk-through written: `docs/DEMO_SCRIPT.md` (19 steps plus a PO checklist). Steps are tagged SHOW, PARTIAL or GAP; GAP items are not claimed as working.
+- Demo accounts and setup stay in `docs/DEMO.md`. It lists no finance user, so the finance-only steps need one created by the PO before the demo.
+- Not verified by running the app: the script was written from code and PROGRESS notes. Expected values marked "verify on first run" are unconfirmed.
+- The gate stays `todo` until the G7 screenshot review and the owner decisions in the list above are done.
