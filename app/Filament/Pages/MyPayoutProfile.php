@@ -68,7 +68,7 @@ final class MyPayoutProfile extends Page
             ->modalDescription(__('instructor_onboarding.payout.write_only_note'))
             ->schema([
                 Select::make('method')->label(__('instructor_onboarding.payout.method'))->required()->live()
-                    ->options([PayoutProfile::BANK => __('instructor_onboarding.payout.method_bank'), PayoutProfile::WALLET => __('instructor_onboarding.payout.method_wallet')]),
+                    ->options([PayoutProfile::BANK => __('instructor_onboarding.payout.method_bank'), PayoutProfile::WALLET => __('instructor_onboarding.payout.method_wallet'), PayoutProfile::INSTAPAY => __('instructor_onboarding.payout.method_instapay')]),
                 TextInput::make('holder_name')->label(__('instructor_onboarding.payout.field_holder_name'))->required()->maxLength(120),
                 TextInput::make('bank_name')->label(__('instructor_onboarding.payout.field_bank_name'))->maxLength(120)
                     ->visible(static fn ($get): bool => $get('method') === PayoutProfile::BANK)->required(static fn ($get): bool => $get('method') === PayoutProfile::BANK),
@@ -76,6 +76,8 @@ final class MyPayoutProfile extends Page
                     ->visible(static fn ($get): bool => $get('method') === PayoutProfile::BANK)->required(static fn ($get): bool => $get('method') === PayoutProfile::BANK),
                 TextInput::make('wallet_number')->label(__('instructor_onboarding.payout.field_wallet_number'))->maxLength(24)->extraInputAttributes(['dir' => 'ltr', 'autocomplete' => 'off'])
                     ->visible(static fn ($get): bool => $get('method') === PayoutProfile::WALLET)->required(static fn ($get): bool => $get('method') === PayoutProfile::WALLET),
+                TextInput::make('instapay_address')->label(__('instructor_onboarding.payout.field_instapay_address'))->maxLength(80)->extraInputAttributes(['dir' => 'ltr', 'autocomplete' => 'off'])
+                    ->visible(static fn ($get): bool => $get('method') === PayoutProfile::INSTAPAY)->required(static fn ($get): bool => $get('method') === PayoutProfile::INSTAPAY),
             ])
             ->action(function (array $data, Action $action): void {
                 $user = Auth::user();

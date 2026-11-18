@@ -42,6 +42,28 @@
             @endif
         </x-ui.card>
 
+        <x-ui.card :title="__('guardian.verification.title')" id="guardian-verification">
+            <p class="mb-4 text-muted">{{ __('guardian.verification.intro') }}</p>
+            @if($guardianVerified)
+                <x-ui.badge tone="success">{{ __('guardian.verification.verified') }}</x-ui.badge>
+                <p class="mt-3" role="status">{{ __('guardian.verification.done') }}</p>
+            @elseunless($verified)
+                <x-ui.alert tone="warning" role="status">{{ __('pages.verify_before_child') }}</x-ui.alert>
+                <x-ui.link class="mt-3" :href="url('/email/verify')">{{ __('pages.verify_title') }}</x-ui.link>
+            @else
+                <x-ui.badge tone="warning">{{ __('guardian.verification.not_verified') }}</x-ui.badge>
+                <x-ui.ajax-form class="mt-4" :action="url('/guardian/verification/code')" :success="url('/family')">
+                    <x-ui.button type="submit" variant="{{ $otpPending ? 'ghost' : 'primary' }}">{{ $otpPending ? __('guardian.verification.resend') : __('guardian.verification.send') }}</x-ui.button>
+                </x-ui.ajax-form>
+                @if($otpPending)
+                    <x-ui.ajax-form class="mt-4" :action="url('/guardian/verification')" :success="url('/family')">
+                        <x-ui.form-field for="guardian_code" :label="__('guardian.verification.code')" :help="__('guardian.verification.code_help', ['minutes' => config('guardians.otp.expires_minutes')])" data-field><x-ui.input id="guardian_code" name="code" dir="ltr" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-describedby="guardian_code-help" required /></x-ui.form-field>
+                        <x-ui.button type="submit">{{ __('guardian.verification.confirm') }}</x-ui.button>
+                    </x-ui.ajax-form>
+                @endif
+            @endif
+        </x-ui.card>
+
         <x-ui.card :title="__('pages.add_child')" id="add-child">
             @unless($verified)
                 <x-ui.alert tone="warning" role="status">{{ __('pages.verify_before_child') }}</x-ui.alert>

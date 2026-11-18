@@ -6,6 +6,7 @@ namespace App\Domain\AI;
 
 use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
+use App\Domain\Guardians\Queries\GuardianVerified;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Settings\AiSettings;
 use App\Domain\Settings\PlatformFlag;
@@ -114,6 +115,11 @@ final class AssistantEligibility
         // O-014/O-015: the OpenAI route never serves a minor until legal approval flips `ai.openai.allow_minors`.
         if (ProviderRegistry::currentKey() === ProviderRegistry::OPENAI && ! (bool) config('ai.openai.allow_minors', false)) {
             return AssistantAvailability::unavailable(UnavailableReason::MinorsOff);
+        }
+
+        // O-015: a verified guardian (parent email verified + 6-digit code confirmed) is a precondition for any protected feature of a minor.
+        if ((bool) config('guardians.require_verification_for_ai', true) && ! GuardianVerified::forChild($student)) {
+            return AssistantAvailability::unavailable(UnavailableReason::GuardianUnverified);
         }
 
         $consented = GuardianChildLink::query()

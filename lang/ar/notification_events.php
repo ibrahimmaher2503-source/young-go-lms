@@ -42,6 +42,7 @@ return [
         'course_revision_submitted' => 'مراجعة دورة بانتظار الاعتماد',
         'course_revision_approved' => 'اعتماد مراجعة دورة',
         'course_revision_rejected' => 'رفض مراجعة دورة',
+        'safeguarding_alert' => 'تنبيه حماية',
     ],
     'groups' => [
         'account' => 'الحساب',
@@ -55,6 +56,7 @@ return [
         'help' => 'طلبات المساعدة',
         'settlement' => 'تسويات المدربين',
         'course_review' => 'مراجعة الدورات',
+        'safeguarding' => 'الحماية',
     ],
     'templates' => [
         'access_granted' => [
@@ -144,6 +146,11 @@ return [
         'course_revision_rejected' => [
             'title' => 'المراجعة رقم :revision للدورة ":course" تحتاج إلى تعديلات',
             'body' => 'لم يتم اعتماد تعديلات ":course". الدورة المنشورة كما هي. السبب: :reason',
+        ],
+        // مسودة بانتظار المراجعة القانونية (O-028). لا يوضع نص المتعلم في هذا الإشعار: رابط الحالة فقط.
+        'safeguarding_alert' => [
+            'title' => 'حالة حماية تحتاج إلى انتباهك',
+            'body' => 'تم رفع حالة حماية تخص متعلمًا صغيرًا. افتح الحالة واتبع إجراءات الحماية. لا يمكن إيقاف هذا الإشعار.',
         ],
     ],
     'template' => 'قالب الإشعار',

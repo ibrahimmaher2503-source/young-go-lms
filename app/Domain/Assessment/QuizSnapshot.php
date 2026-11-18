@@ -50,7 +50,7 @@ final class QuizSnapshot
     public static function settings(Quiz $quiz): array
     {
         return [
-            'time_limit_minutes' => $quiz->time_limit_minutes, 'pass_mark_percent' => $quiz->pass_mark_percent, 'max_attempts' => $quiz->max_attempts,
+            'time_limit_minutes' => $quiz->time_limit_minutes, 'pass_mark_percent' => QuizPassMark::effective($quiz->pass_mark_percent), 'max_attempts' => $quiz->max_attempts,
             'result_visibility' => $quiz->result_visibility, 'randomize' => $quiz->randomize, 'progression' => $quiz->progression,
         ];
     }

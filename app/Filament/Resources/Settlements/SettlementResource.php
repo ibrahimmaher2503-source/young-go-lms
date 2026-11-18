@@ -113,13 +113,14 @@ final class SettlementResource extends Resource
                         Select::make('item_id')->label(__('ledger.instructor'))->required()->native(false)
                             ->options($s->items()->whereNull('paid_at')->with('instructor')->get()->mapWithKeys(static fn (SettlementItem $i): array => [$i->getKey() => $i->instructor?->getAttribute('name').' - '.RefundResource::money($i->amount_minor, $s->currency)])->all()),
                         Select::make('method')->label(__('settlements.method'))->required()->native(false)
-                            ->options(collect(PayoutMethod::cases())->mapWithKeys(static fn (PayoutMethod $m): array => [$m->value => __('settlements.method_'.$m->value)])->all()),
-                        TextInput::make('reference')->label(__('settlements.payout_reference'))->required()->minLength(3)->maxLength(64),
+                            ->options(collect(PayoutMethod::allowedFor($s->currency))->mapWithKeys(static fn (PayoutMethod $m): array => [$m->value => __('settlements.method_'.$m->value)])->all())
+                            ->helperText(__('settlements.method_help_'.strtolower($s->currency))),
+                        TextInput::make('reference')->label(__('settlements.payout_reference'))->required()->minLength(3)->maxLength(64)->helperText(__('settlements.reference_help')),
                         DatePicker::make('paid_on')->label(__('settlements.paid_on'))->required()->maxDate(now())->default(now()),
                     ])
                     ->action(static function (Settlement $s, array $data): void {
                         $item = SettlementItem::query()->where('settlement_id', $s->getKey())->findOrFail((int) $data['item_id']);
-                        self::guarded(static fn (User $u) => app(RecordSettlementPayout::class)($u, $item, PayoutMethod::from((string) $data['method']), (string) $data['reference'], (string) $data['paid_on']), 'payout_ok');
+                        self::guarded(static fn (User $u) => app(RecordSettlementPayout::class)($u, $item, PayoutMethod::tryFrom((string) $data['method']) ?? throw ValidationException::withMessages(['method' => __('settlements.method_not_allowed')]), (string) $data['reference'], (string) $data['paid_on']), 'payout_ok');
                     }),
                 Action::make('cancel')->label(__('settlements.cancel'))->icon('heroicon-o-x-circle')->color('danger')
                     ->visible(static fn (Settlement $s): bool => in_array($s->status, [SettlementStatus::Draft, SettlementStatus::Approved], true) && $manage())

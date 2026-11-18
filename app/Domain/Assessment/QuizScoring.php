@@ -40,10 +40,10 @@ final class QuizScoring
 
         $pending = self::pendingEssays($attempt) > 0;
         $percent = $total > 0 ? round($score / $total * 100, 2) : 0.0;
-        $mark = $attempt->settings['pass_mark_percent'] ?? null;
+        $mark = QuizPassMark::effective(is_numeric($attempt->settings['pass_mark_percent'] ?? null) ? (int) $attempt->settings['pass_mark_percent'] : null); // O-020
         $attempt->forceFill([
             'score' => round($score, 2), 'total' => round($total, 2), 'percent' => $percent, 'needs_review' => $pending,
-            'passed' => ($mark === null || $pending) ? null : $percent >= (float) $mark,
+            'passed' => $pending ? null : $percent >= (float) $mark,
         ])->save();
 
         return $attempt;

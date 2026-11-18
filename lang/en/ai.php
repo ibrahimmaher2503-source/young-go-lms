@@ -37,11 +37,12 @@ return [
         'no_approved_document' => 'The lesson notes are not ready yet, so the assistant cannot answer here.',
         'quota_exhausted' => 'You have used all your questions for today. Come back tomorrow.',
         'consent_required' => 'A parent or guardian needs to allow the lesson assistant first.',
+        'guardian_unverified' => 'A parent or guardian needs to verify their account with a code first.',
         'minors_off' => 'The lesson assistant is not available for young learners right now.',
     ],
     'guards' => [
         'moderation' => 'Let’s keep it kind and focused. Ask a question about this lesson and I’ll help.',
-        // Provisional wording: the approved safeguarding text and recipients are OPEN (O-028).
+        // DRAFT pending legal review: recipients are decided (O-028: admin + support), the final wording is not.
         'safeguarding' => 'It sounds like you may be going through something hard. Please talk to a parent or a trusted adult about it. You are not alone.',
         'injection' => 'I can only answer questions about this lesson, using the lesson notes. Ask me something about the lesson.',
         'quiz_guard' => 'I can’t help with a question from a quiz you are taking now. Review the lesson file, then try the quiz yourself.',

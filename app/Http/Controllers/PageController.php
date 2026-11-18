@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Guardians\Models\GuardianVerification;
+use App\Domain\Guardians\Queries\GuardianVerified;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Models\User;
 use DateTimeZone;
@@ -98,6 +100,8 @@ final class PageController
 
         return view('pages.family', [
             'verified' => $parent->hasVerifiedEmail(),
+            'guardianVerified' => GuardianVerified::forGuardian($parent),
+            'otpPending' => GuardianVerification::query()->where('user_id', $parent->getKey())->first()?->hasPendingCode() ?? false,
             'children' => $links->where('status', GuardianChildLink::STATUS_VERIFIED)->values(),
             'pending' => $links->where('status', GuardianChildLink::STATUS_PENDING)->values(),
         ]);

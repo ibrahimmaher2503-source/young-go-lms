@@ -11,7 +11,9 @@ use App\Domain\AI\Help\HelpRequestNotices;
 use App\Domain\AI\Help\HelpRequestStatus;
 use App\Domain\AI\Help\HelpRequestTrail;
 use App\Domain\AI\Help\HelpRouting;
+use App\Domain\AI\Safeguarding\SafeguardingNotifier;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Identity\GuardianAccess;
 use App\Models\AiConversation;
 use App\Models\AiFeedback;
 use App\Models\AiMessage;
@@ -70,6 +72,10 @@ final class RecordAssistantFeedback
 
         if ($request->wasRecentlyCreated) {
             $this->notices->created($request->loadMissing(['lesson', 'instructor']));
+            // O-028: a minor's help request also reaches the safeguarding group (case link only).
+            if (GuardianAccess::isMinor($learner)) {
+                app(SafeguardingNotifier::class)->minorHelpRequest($request);
+            }
         }
 
         return new FeedbackOutcome($type, $request, $request->wasRecentlyCreated);

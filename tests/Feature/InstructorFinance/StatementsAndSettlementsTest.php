@@ -561,7 +561,7 @@ it('A4 cancel from draft returns entries to accrued, keeps links and the row; re
     $paidEntry = t810_entry($instructor, LedgerEntryType::Earning, 2000, '2026-10-07 10:00:00');
     $paidBatch = app(CreateSettlementBatch::class)($finance, 'EGP', [$paidEntry->id]);
     app(ApproveSettlement::class)($finance, $paidBatch);
-    app(RecordSettlementPayout::class)($finance, SettlementItem::query()->where('settlement_id', $paidBatch->id)->sole(), PayoutMethod::Cash, 'CASH-001', '2026-11-10');
+    app(RecordSettlementPayout::class)($finance, SettlementItem::query()->where('settlement_id', $paidBatch->id)->sole(), PayoutMethod::Bank, 'BANK-001', '2026-11-10');
     expect(t810_refusal(fn () => app(CancelSettlement::class)($finance, $paidBatch->fresh(), 'Too late to cancel now')))
         ->toBe(__('settlements.state_invalid'));
 })->group('T-P8-10', 'A4');
@@ -573,7 +573,7 @@ it('A4 history is write-once: settlement delete, link edit, second payout write 
     $batch = app(CreateSettlementBatch::class)($finance, 'EGP', [$entry->id]);
     app(ApproveSettlement::class)($finance, $batch);
     $item = SettlementItem::query()->where('settlement_id', $batch->id)->sole();
-    app(RecordSettlementPayout::class)($finance, $item, PayoutMethod::Other, 'OTH-0001', '2026-11-10');
+    app(RecordSettlementPayout::class)($finance, $item, PayoutMethod::Wallet, 'WAL-0001', '2026-11-10');
 
     expect(fn () => $batch->fresh()->delete())->toThrow(LogicException::class)
         ->and(fn () => $batch->fresh()->update(['total_minor' => 1]))->toThrow(LogicException::class);
@@ -584,9 +584,9 @@ it('A4 history is write-once: settlement delete, link edit, second payout write 
         ->and(fn () => SettlementEntry::query()->sole()->delete())->toThrow(LogicException::class);
 
     $paidItem = $item->fresh();
-    $paidItem->payout_reference = 'OTH-9999';
+    $paidItem->payout_reference = 'WAL-9999';
     expect(fn () => $paidItem->save())->toThrow(LogicException::class)
-        ->and($item->fresh()->payout_reference)->toBe('OTH-0001');
+        ->and($item->fresh()->payout_reference)->toBe('WAL-0001');
 
     $ledger = $entry->fresh();
     $ledger->amount_minor = 999;

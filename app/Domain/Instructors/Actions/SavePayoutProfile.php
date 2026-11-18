@@ -22,7 +22,7 @@ final class SavePayoutProfile
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    /** @param  array<string, mixed>  $data  method (bank|wallet), holder_name, bank_name?, account_number?, wallet_number? */
+    /** @param  array<string, mixed>  $data  method (bank|wallet|instapay), holder_name, bank_name?, account_number?, wallet_number?, instapay_address? */
     public function __invoke(User $instructor, array $data): PayoutProfile
     {
         if ($instructor->getAttribute('status') !== 'active' || ! $instructor->hasAnyRole(PublicInstructors::ROLES)) {
@@ -76,6 +76,16 @@ final class SavePayoutProfile
             }
 
             return ['holder_name' => $holder, 'wallet_number' => $wallet];
+        }
+
+        if ($method === PayoutProfile::INSTAPAY) {
+            // An Instapay address (IPA, `name@bank`) or the mobile number linked to it; stored lower-cased, never audited.
+            $address = strtolower((string) preg_replace('/\s+/', '', (string) ($data['instapay_address'] ?? '')));
+            if (preg_match('/^[a-z0-9._-]{3,64}@[a-z]{2,32}$/', $address) !== 1 && preg_match('/^\+?[0-9]{8,15}$/', $address) !== 1) {
+                $this->refuse('instapay_address', 'instapay_invalid');
+            }
+
+            return ['holder_name' => $holder, 'instapay_address' => $address];
         }
 
         $this->refuse('method', 'method_invalid');

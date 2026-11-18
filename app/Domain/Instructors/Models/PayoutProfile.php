@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * An instructor's payout destination (YG-GAP-INS-003). `details` is one encrypted payload (holder, bank/wallet identifiers):
+ * An instructor's payout destination (YG-GAP-INS-003). `details` is one encrypted payload (holder, bank/wallet/Instapay identifiers):
  * unreadable in a database dump and hidden from serialization. Read it only through PayoutMask (masked) or
  * RevealPayoutProfile (finance, audited). Never log or audit its values.
  *
@@ -23,6 +23,8 @@ final class PayoutProfile extends Model
     public const string BANK = 'bank';
 
     public const string WALLET = 'wallet';
+
+    public const string INSTAPAY = 'instapay';
 
     protected $table = 'instructor_payout_profiles';
 

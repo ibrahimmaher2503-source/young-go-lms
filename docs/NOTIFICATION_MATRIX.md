@@ -41,6 +41,7 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `help.student_replied` | help | mandatory | wired | `:lesson` | `help.notice.student_replied.title` |  |
 | `help.overdue` | help | mandatory | wired | `:lesson` | `help.notice.overdue.title` |  |
 | `help.reply` | help | mandatory | wired | `:lesson` | `help.notice.reply.title` |  |
+| `safeguarding.alert` | safeguarding | mandatory | wired | none | `notification_events.templates.safeguarding_alert.title` | DRAFT wording pending legal review (O-028); admin + support; case link only |
 | `settlement.statement` | settlement | mandatory | wired | `:period` | `notification_events.templates.settlement_statement.title` |  |
 | `settlement.status` | settlement | mandatory | wired | `:period` `:status` | `notification_events.templates.settlement_status.title` |  |
 | `course.revision_submitted` | course_review | mandatory | wired | `:course` `:revision` | `notification_events.templates.course_revision_submitted.title` |  |

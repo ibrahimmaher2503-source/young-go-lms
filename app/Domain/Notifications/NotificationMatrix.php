@@ -95,6 +95,9 @@ final class NotificationMatrix
             self::existing('help.overdue', 'help', true, ['lesson'], 'help.notice.overdue'),
             self::existing('help.reply', 'help', true, ['lesson'], 'help.notice.reply'),
 
+            // O-028: mandatory (never opt-out), wording is DRAFT pending legal review.
+            self::fresh('safeguarding.alert', 'safeguarding', true, []),
+
             self::fresh('settlement.statement', 'settlement', true, ['period']),
             self::fresh('settlement.status', 'settlement', true, ['period', 'status']),
 

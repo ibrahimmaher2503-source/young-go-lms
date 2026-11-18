@@ -62,6 +62,8 @@ final class StatementPdf
             'settled' => $format($statement->settled_minor),
             'forward' => $format($statement->balance_forward_minor),
             'closing' => $format($statement->closing_balance_minor),
+            'payoutMethods' => implode(' / ', array_map(static fn (PayoutMethod $m): string => (string) __('settlements.method_'.$m->value, [], $locale), PayoutMethod::allowedFor($statement->currency))),
+            'currency' => $statement->currency,
             'closingNegative' => $statement->closing_balance_minor < 0,
             'font' => 'data:font/ttf;base64,'.base64_encode((string) file_get_contents(resource_path('fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf'))),
         ];

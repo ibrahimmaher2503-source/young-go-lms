@@ -19,9 +19,10 @@ return [
         // Per-learner, per-lesson heartbeat limit per minute.
         'heartbeats_per_minute' => 30,
     ],
-    // T-P6-05 working defaults (O-020 stays open). A course without saved rules completes when every required lesson is done.
+    // O-020 (PO decision 2026-11-18): a course without saved rules completes when every lesson is done and every required quiz is passed
+    // (default pass mark 60%, config/assessment.php). A course may save its own rules. Unsaved defaults treat "no required quiz" as met.
     'completion' => [
-        'defaults' => ['lesson_percent' => 100, 'require_quizzes' => false, 'require_assignments' => false, 'attendance_percent' => null, 'manual_approval' => false],
+        'defaults' => ['lesson_percent' => 100, 'require_quizzes' => true, 'require_assignments' => false, 'attendance_percent' => null, 'manual_approval' => false],
         // PRD §14 requires assignment acceptance; a grade alone does not satisfy that rule.
         'graded_counts_as_accepted' => false,
     ],

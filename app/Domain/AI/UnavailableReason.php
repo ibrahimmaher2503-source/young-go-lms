@@ -16,4 +16,5 @@ enum UnavailableReason: string
     case QuotaExhausted = 'quota_exhausted';
     case ConsentRequired = 'consent_required';
     case MinorsOff = 'minors_off';
+    case GuardianUnverified = 'guardian_unverified';
 }

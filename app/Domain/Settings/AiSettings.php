@@ -49,6 +49,9 @@ final class AiSettings extends Settings
 
     public int $usage_retention_months;
 
+    /** O-028: comma-separated user ids or emails told about safeguarding cases besides the configured roles; null for none. */
+    public ?string $safeguarding_extra_recipients;
+
     public static function group(): string
     {
         return 'ai';

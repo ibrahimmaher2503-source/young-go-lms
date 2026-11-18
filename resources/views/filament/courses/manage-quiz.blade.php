@@ -3,7 +3,7 @@
         <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div><dt class="text-sm text-muted">{{ __('quiz.questions_count') }}</dt><dd class="text-xl font-bold" data-question-count>{{ $questions->where('active', true)->count() }}</dd></div>
             <div><dt class="text-sm text-muted">{{ __('quiz.total_marks') }}</dt><dd class="text-xl font-bold" data-total-marks>{{ rtrim(rtrim(number_format($totalMarks, 2), '0'), '.') }}</dd></div>
-            <div><dt class="text-sm text-muted">{{ __('quiz.pass_mark') }}</dt><dd class="text-xl font-bold">{{ $quiz->pass_mark_percent ? $quiz->pass_mark_percent.'% ('.rtrim(rtrim(number_format($totalMarks * $quiz->pass_mark_percent / 100, 2), '0'), '.').')' : __('quiz.none') }}</dd></div>
+            <div><dt class="text-sm text-muted">{{ __('quiz.pass_mark') }}</dt><dd class="text-xl font-bold">@php($passMark = \App\Domain\Assessment\QuizPassMark::effective($quiz->pass_mark_percent)){{ $passMark.'% ('.rtrim(rtrim(number_format($totalMarks * $passMark / 100, 2), '0'), '.').')' }}{{ $quiz->pass_mark_percent === null ? ' '.__('quiz.pass_mark_default_note') : '' }}</dd></div>
             <div><dt class="text-sm text-muted">{{ __('quiz.time_limit') }}</dt><dd class="text-xl font-bold">{{ $quiz->time_limit_minutes ? __('curriculum.minutes', ['count' => $quiz->time_limit_minutes]) : __('quiz.none') }}</dd></div>
             <div><dt class="text-sm text-muted">{{ __('quiz.max_attempts') }}</dt><dd class="text-xl font-bold">{{ $quiz->max_attempts ?? __('quiz.unlimited') }}</dd></div>
             <div><dt class="text-sm text-muted">{{ __('quiz.result_visibility') }}</dt><dd class="font-semibold">{{ __('quiz.visibility.'.$quiz->result_visibility) }}</dd></div>

@@ -27,6 +27,7 @@ use App\Domain\AI\Quota\BudgetGate;
 use App\Domain\AI\Quota\QuotaLedger;
 use App\Domain\AI\Quota\QuotaReservation;
 use App\Domain\AI\Resilience\ProviderRegistry;
+use App\Domain\AI\Safeguarding\SafeguardingNotifier;
 use App\Domain\AI\UnavailableReason;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Entitlements\EntitlementService;
@@ -393,7 +394,8 @@ final class AskLessonAssistant
         $flag = $kind === GuardKind::Safeguarding && ! $this->eligibility->isAdult($learner);
         $pages = $checked->page === null ? [] : [$checked->page];
 
-        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $checked, $tier, $kind, $course, $flag, $pages): AssistantReply {
+        $raised = null;
+        $reply = DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $checked, $tier, $kind, $course, $flag, $pages, &$raised): AssistantReply {
             $conversation ??= AiConversation::query()->create([
                 'student_id' => $learner->getKey(), 'course_id' => $course->getKey(), 'lesson_id' => $lesson->getKey(),
                 'document_version' => $document->version, 'locale' => $input->locale, 'style_tier' => $tier->value,
@@ -419,7 +421,7 @@ final class AskLessonAssistant
             ]);
 
             if ($flag) {
-                AiSafeguardingFlag::query()->create([
+                $raised = AiSafeguardingFlag::query()->create([
                     'student_id' => $learner->getKey(), 'conversation_id' => $conversation->getKey(),
                     'category' => $checked->category->value ?? 'self_harm', 'status' => 'open',
                 ]);
@@ -439,6 +441,13 @@ final class AskLessonAssistant
 
             return new AssistantReply(AssistantOutcome::OutOfScope, $checked->message, $pages, $input->locale, false, (int) $message->getKey(), (int) $conversation->getKey(), (int) $document->getKey(), $kind->value);
         });
+
+        // O-028: after the commit, the safeguarding group hears about the flag (no text from the child; a failure never undoes the flag).
+        if ($raised instanceof AiSafeguardingFlag) {
+            app(SafeguardingNotifier::class)->flagRaised($raised);
+        }
+
+        return $reply;
     }
 
     /**

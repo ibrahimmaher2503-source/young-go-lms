@@ -79,6 +79,8 @@
     </div>
     @if($closingNegative)<div class="note">{{ __('settlements.pdf.negative_note', [], $locale) }}</div>@endif
 
+    @if($payoutMethods !== '')<div class="note">{{ __('settlements.pdf.methods', ['currency' => $currency], $locale) }}: {{ $payoutMethods }}</div>@endif
+
     <div class="foot">{{ __('settlements.pdf.footer', [], $locale) }}</div>
 </div>
 </body>

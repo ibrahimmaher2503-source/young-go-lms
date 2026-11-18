@@ -20,11 +20,15 @@ final class PayoutMask
         return str_repeat('*', max(4, $length - 4)).mb_substr($value, -min(4, $length));
     }
 
-    /** The one identifier that says where money goes (account/IBAN or wallet number), masked. */
+    /** The one identifier that says where money goes (account/IBAN, wallet number or Instapay address), masked. */
     public static function identifier(PayoutProfile $profile): string
     {
         $details = $profile->details;
 
-        return self::value($profile->method === PayoutProfile::WALLET ? ($details['wallet_number'] ?? '') : ($details['account_number'] ?? ''));
+        return self::value(match ($profile->method) {
+            PayoutProfile::WALLET => $details['wallet_number'] ?? '',
+            PayoutProfile::INSTAPAY => $details['instapay_address'] ?? '',
+            default => $details['account_number'] ?? '',
+        });
     }
 }

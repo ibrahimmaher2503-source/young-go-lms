@@ -42,6 +42,7 @@ return [
         'course_revision_submitted' => 'Course revision awaiting review',
         'course_revision_approved' => 'Course revision approved',
         'course_revision_rejected' => 'Course revision rejected',
+        'safeguarding_alert' => 'Safeguarding alert',
     ],
     'groups' => [
         'account' => 'Account',
@@ -55,6 +56,7 @@ return [
         'help' => 'Help requests',
         'settlement' => 'Instructor settlements',
         'course_review' => 'Course review',
+        'safeguarding' => 'Safeguarding',
     ],
     'templates' => [
         'access_granted' => [
@@ -144,6 +146,11 @@ return [
         'course_revision_rejected' => [
             'title' => 'Revision #:revision of ":course" needs changes',
             'body' => 'The changes to ":course" were not approved. The published course is unchanged. Reason: :reason',
+        ],
+        // DRAFT pending legal review (O-028). Never put the learner's own text in this notice: link to the case only.
+        'safeguarding_alert' => [
+            'title' => 'Safeguarding case needs your attention',
+            'body' => 'A safeguarding case involving a young learner was raised. Open the case and follow the safeguarding procedure. This notice cannot be turned off.',
         ],
     ],
     'template' => 'Notification template',

@@ -47,7 +47,7 @@ final class CompletionReport
             $criteria[self::LESSONS] = ['met' => $total > 0 && $done * 100 >= $rules->lesson_percent * $total, 'have' => $total === 0 ? 0 : intdiv($done * 100, $total), 'need' => $rules->lesson_percent];
         }
         if ($rules->require_quizzes) {
-            $criteria[self::QUIZZES] = self::quizzes($learner, $course);
+            $criteria[self::QUIZZES] = self::quizzes($learner, $course, $rules);
         }
         if ($rules->require_assignments) {
             $criteria[self::ASSIGNMENTS] = self::assignments($learner, $course);
@@ -72,7 +72,7 @@ final class CompletionReport
     }
 
     /** @return array{met: bool, have: int, need: int} */
-    private static function quizzes(User $learner, Course $course): array
+    private static function quizzes(User $learner, Course $course, CourseCompletionRule $rules): array
     {
         $required = self::requiredItems($course, Quiz::class);
         $passed = 0;
@@ -84,7 +84,10 @@ final class CompletionReport
             $passed += $ok ? 1 : 0;
         }
 
-        return ['met' => $required !== [] && $passed === count($required), 'have' => $passed, 'need' => count($required)];
+        // O-020: the unsaved default rules ask for required quizzes only when the course has some; a saved rule stays strict.
+        $nothingToPass = $required === [] && ! $rules->exists;
+
+        return ['met' => $nothingToPass || ($required !== [] && $passed === count($required)), 'have' => $passed, 'need' => count($required)];
     }
 
     /** @return array{met: bool, have: int, need: int} */

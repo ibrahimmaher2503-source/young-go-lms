@@ -287,21 +287,16 @@ it('configures quiz settings with pass-mark guard and exposes only open prompts 
     $configure = app(ConfigureQuiz::class);
     $manage = app(ManageQuestions::class);
 
-    // require_pass without pass_mark_percent fails
-    $caught = null;
-    try {
-        $configure($instructor, $quiz, [
-            'time_limit_minutes' => 30,
-            'pass_mark_percent' => null,
-            'max_attempts' => 2,
-            'result_visibility' => 'full',
-            'randomize' => true,
-            'progression' => 'require_pass',
-        ]);
-    } catch (ValidationException $e) {
-        $caught = $e;
-    }
-    expect($caught?->errors()['pass_mark_percent'][0] ?? null)->toBe(__('quiz.errors.pass_mark_needed'));
+    // O-020: require_pass without an explicit pass mark is accepted; the platform default (60%) then applies.
+    $noMark = $configure($instructor, $quiz, [
+        'time_limit_minutes' => 30,
+        'pass_mark_percent' => null,
+        'max_attempts' => 2,
+        'result_visibility' => 'full',
+        'randomize' => true,
+        'progression' => 'require_pass',
+    ]);
+    expect($noMark->pass_mark_percent)->toBeNull();
 
     // Valid configuration saves and audits
     $saved = $configure($instructor, $quiz, [
@@ -313,7 +308,7 @@ it('configures quiz settings with pass-mark guard and exposes only open prompts 
         'progression' => 'require_pass',
     ]);
     expect($saved->pass_mark_percent)->toBe(60)->and($saved->randomize)->toBeTrue();
-    expect(Activity::query()->where('event', 'quiz.settings_changed')->count())->toBe(1);
+    expect(Activity::query()->where('event', 'quiz.settings_changed')->count())->toBe(2); // O-020: the no-mark save above is audited too
 
     // Guard query exposes only active short_answer & essay prompts without options/keys/explanations
     $manage->add($instructor, $quiz, [

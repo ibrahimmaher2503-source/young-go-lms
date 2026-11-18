@@ -22,7 +22,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Records that finance PAID one instructor line of an approved batch outside the system (method, reference 3..64 chars, date not
+ * Records that finance PAID one instructor line of an approved batch outside the system (method allowed for the batch currency per O-012: EGP bank/wallet/Instapay, SAR bank only; reference valid for the method; date not
  * in the future). The line's entries move `approved` -> `paid`; when every line is paid the batch becomes `paid`. This never moves
  * money. Idempotent: repeating the call with the same reference returns the paid line; a different reference is refused.
  * Needs `settlement.manage`. Audited as `settlement.paid`.
@@ -40,6 +40,9 @@ final class RecordSettlementPayout
         $reference = trim($reference);
         if (mb_strlen($reference) < 3 || mb_strlen($reference) > 64) {
             $this->refuse('reference', 'reference_invalid');
+        }
+        if (! $method->acceptsReference($reference)) {
+            $this->refuse('reference', $method->referenceErrorKey());
         }
         try {
             $date = Carbon::createFromFormat('!Y-m-d', substr(trim($paidOn), 0, 10));
@@ -63,6 +66,9 @@ final class RecordSettlementPayout
             }
             if ($settlement->status !== SettlementStatus::Approved) {
                 $this->refuse('settlement', 'state_invalid');
+            }
+            if (! $method->isAllowedFor($settlement->currency)) {
+                $this->refuse('method', 'method_not_allowed');
             }
 
             $ids = SettlementEntry::query()->where('item_id', $line->getKey())->pluck('ledger_entry_id')->all();

@@ -10,7 +10,6 @@ use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 /**
@@ -36,10 +35,7 @@ final class ConfigureQuiz
             'progression' => ['required', 'in:'.implode(',', Quiz::PROGRESSION)],
         ])->validate();
 
-        // "Require a pass" has no meaning without a pass mark; refuse instead of saving a quiz nobody can pass or everybody passes.
-        if ($clean['progression'] === 'require_pass' && ($clean['pass_mark_percent'] ?? null) === null) {
-            throw ValidationException::withMessages(['pass_mark_percent' => __('quiz.errors.pass_mark_needed')]);
-        }
+        // O-020: an empty pass mark is allowed; the platform default (config assessment.default_pass_mark_percent) then applies.
 
         return DB::transaction(function () use ($actor, $quiz, $clean): Quiz {
             $quiz = Quiz::query()->lockForUpdate()->findOrFail($quiz->getKey());
