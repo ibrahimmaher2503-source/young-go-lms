@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:31:56+00:00",
+    "screen": "instructor-learners",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/1\/learners",
+    "initial_path": "\/instructor\/courses\/1\/learners",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/learners",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "المتعلمون"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

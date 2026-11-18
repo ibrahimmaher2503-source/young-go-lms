@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:32:56+00:00",
+    "screen": "gallery-components",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/_design\/components",
+    "initial_path": "\/_design\/components",
+    "metrics": {
+        "url": "\/_design\/components",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Component gallery"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:03:51+00:00",
+    "screen": "error-503",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/_ui-review-error\/503",
+    "initial_path": "\/_ui-review-error\/503",
+    "metrics": {
+        "url": "\/_ui-review-error\/503",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "سنعود قريباً"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

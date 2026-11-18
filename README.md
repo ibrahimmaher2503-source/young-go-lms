@@ -28,6 +28,14 @@ to local Composer installation only. SQLite, file cache and sync queues are
 the local bootstrap defaults. Use Linux with Redis for Horizon and MySQL for
 integration validation. Keep external service credentials outside the repository.
 
+PDF upload validation requires QPDF 11 or later on the PHP service and test
+runner PATH. Install `qpdf` and `poppler-utils` on Debian or Ubuntu. On Windows,
+install QPDF with `winget install --id QPDF.QPDF` and make its `bin` directory
+available on PATH. PDF text extraction and OCR page rendering also use Poppler's
+`pdftotext` and `pdftoppm` on the queue worker.
+Set `MEDIA_QPDF_BINARY` to the absolute executable path when QPDF is installed
+outside the PHP process's PATH.
+
 
 To rerun the design preview browser checks after building assets:
 

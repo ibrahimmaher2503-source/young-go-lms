@@ -127,8 +127,7 @@ The UI never decides availability on its own; it renders the result.
 - Terms that appear in English in the PDF may be kept in English with a short
   Arabic explanation.
 
-**Age bands [RECOMMENDED; values OPEN per O-015]:** style tier derived from
-the learner's age (never sent to the provider as a birth date):
+**Age bands [RECOMMENDED]** The server resolves a wording tier from the learner's age using the editable catalog bands documented in the Decision Register. The provider receives the tier. AI eligibility and guardian policy remain under O-015.
 
 | Tier | Style |
 |---|---|

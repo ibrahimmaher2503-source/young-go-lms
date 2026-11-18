@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:36+00:00",
+    "screen": "admin-wizard-create",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/admin\/courses\/create",
+    "initial_path": "\/admin\/courses\/create",
+    "metrics": {
+        "url": "\/admin\/courses\/create",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "إضافة دورة"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

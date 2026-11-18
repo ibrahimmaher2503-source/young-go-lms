@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:48+00:00",
+    "screen": "learn-video",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/learn\/1\/2",
+    "initial_path": "\/learn\/1\/2",
+    "metrics": {
+        "url": "\/learn\/1\/2",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Drawing and creative expression basics"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:31:31+00:00",
+    "screen": "admin-cohorts",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/admin\/courses\/1\/cohorts",
+    "initial_path": "\/admin\/courses\/1\/cohorts",
+    "metrics": {
+        "url": "\/admin\/courses\/1\/cohorts",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Cohorts"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

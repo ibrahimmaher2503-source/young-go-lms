@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:17+00:00",
+    "screen": "family",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/family",
+    "initial_path": "\/family",
+    "metrics": {
+        "url": "\/family",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "My family"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

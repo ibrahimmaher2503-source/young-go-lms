@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:15:41+00:00",
+    "screen": "error-500",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/_ui-review-error\/500",
+    "initial_path": "\/_ui-review-error\/500",
+    "metrics": {
+        "url": "\/_ui-review-error\/500",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Something went wrong"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:02+00:00",
+    "screen": "verify-email",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/email\/verify",
+    "initial_path": "\/email\/verify",
+    "metrics": {
+        "url": "\/email\/verify",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "تحقق من بريدك الإلكتروني"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:46+00:00",
+    "screen": "error-404",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/missing-page-ui-review",
+    "initial_path": "\/missing-page-ui-review",
+    "metrics": {
+        "url": "\/missing-page-ui-review",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "الصفحة غير موجودة"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

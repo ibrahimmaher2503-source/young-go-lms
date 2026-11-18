@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:29:12+00:00",
+    "screen": "learner-link",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/link",
+    "initial_path": "\/link",
+    "metrics": {
+        "url": "\/link",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "الربط بولي أمر"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

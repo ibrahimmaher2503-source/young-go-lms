@@ -22,7 +22,16 @@
 | 17-mobile-lesson-assistant | مساعد الدرس على الموبايل | mobile | PRD §10.2, PRD §15, AI spec §15 | C01, C03, C06, C14, C16, C17, C24 | [17-mobile-lesson-assistant.png](17-mobile-lesson-assistant.png) |
 | 18-shared-component-library | مكتبة العناصر المشتركة | components | PRD §29.13, Design system §2/4/6, UX §3/5 | C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C20, C21, C22, C23, C24 | [18-shared-component-library-v2.png](18-shared-component-library-v2.png) |
 | 19-course-directory-en | إدارة الدورات — English LTR | staff | PRD §4.3, PRD §19.1, Design system §4 | C01, C02, C04, C05, C06, C07, C08, C09, C10 | [19-course-directory-en-v2.png](19-course-directory-en-v2.png) |
+| 20-live-classroom-session | مشغل البث الحي والورش التفاعلية | learner | PRD §10.3, PRD §10.4, UX J05 | C01, C03, C06, C13, C16, C23 | [20-live-classroom-session.png](20-live-classroom-session.png) |
+| 21-assignment-submission-feedback | تسليم الواجبات الفنية وتصحيحها | learner | PRD §11, UX J08 | C01, C03, C04, C06, C10, C11, C13, C23 | [21-assignment-submission-feedback.png](21-assignment-submission-feedback.png) |
+| 22-certificate-verification | استعراض الشهادة والتحقق منها | public | PRD §14, UX J12 | C01, C03, C04, C06, C10, C23 | [22-certificate-verification.png](22-certificate-verification.png) |
+| 23-child-profile-management | ربط وإدارة حسابات الأبناء | learner | PRD §5.2, PRD §29.1, UX J03 | C01, C03, C04, C06, C10, C11, C13, C22, C23 | [23-child-profile-management.png](23-child-profile-management.png) |
+| 24-help-thread-detail | تفاصيل تذكرة الدعم وسؤال الدرس | learner | PRD §16, UX J11 | C01, C03, C04, C06, C10, C11, C14, C18, C23 | [24-help-thread-detail.png](24-help-thread-detail.png) |
+| 25-admin-coupons-directory | إدارة الكوبونات والخصومات | staff | PRD §17.2, PRD §19.1 | C01, C02, C04, C05, C06, C07, C08, C09, C10 | [25-admin-coupons-directory.png](25-admin-coupons-directory.png) |
+| 26-auth-login | تسجيل الدخول والتحقق | public | PRD §5.1, PRD §20, UX J01 | C01, C06, C11, C23 | [26-auth-login.png](26-auth-login.png) |
+| 27-learner-schedule-calendar | جدول الورش والمواعيد | learner | PRD §10.1, UX J04 | C01, C03, C04, C06, C10, C12, C13, C23 | [27-learner-schedule-calendar.png](27-learner-schedule-calendar.png) |
+| 28-instructor-submission-review | تصحيح وتقييم الواجبات للمدرب | staff | PRD §11, PRD §16, UX J08 | C01, C02, C04, C06, C10, C11, C18, C23 | [28-instructor-submission-review.png](28-instructor-submission-review.png) |
 
 These are visual master references, not proof of implementation or exhaustive acceptance coverage. See COMMON_COMPONENTS.md for actual/planned code boundaries.
 
-Related screens reuse these masters: categories/coupons/enrollments/contact/newsletter/audit/report lists use00/02/10/19 with their own PRD fields and permissions; generic staff forms/settings use13 and shared native fields; live pages reuse the learning shell/player layout with AI absent; assignments/certificates/help-thread screens reuse learner cards, scoped detail panels and the corresponding PRD flow. Create a specific reference before claiming those new journeys visually accepted.
+Related screens reuse these masters: categories/enrollments/contact/newsletter/audit/report lists use 00/02/10/19/25 with their own PRD fields and permissions; generic staff forms/settings use 13 and shared native fields; live pages reuse 20 with AI absent; assignments/certificates/help-thread screens reuse 21/22/24 with their corresponding PRD flow.

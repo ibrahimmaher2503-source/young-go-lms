@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:15:45+00:00",
+    "screen": "error-403",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/_ui-review-error\/403",
+    "initial_path": "\/_ui-review-error\/403",
+    "metrics": {
+        "url": "\/_ui-review-error\/403",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "You do not have access"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

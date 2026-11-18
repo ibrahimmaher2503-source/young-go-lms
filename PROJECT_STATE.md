@@ -1,7 +1,9 @@
 # Young Go LMS --- PROJECT STATE
 
-**Updated:** 2026-11-16 (pack v3.2)\
-**Stage:** Prior P0/P1 implementation is under closure review. P0 milestone evidence consolidation has been reopened; no new task starts per owner direction.
+**Updated:** 2026-11-17 (pack v3.2)\
+**Stage:** P0/P1 closure review continues. The latest P1 verification and open items are recorded in [milestone evidence](docs/evidence/p1-milestone/README.md#closure-follow-up-2026-11-17). See [the task board](agents/PROGRESS.md) for all task statuses.
+
+The [P0 continuity record](docs/evidence/p0-closure/README.md#2026-11-18-clean-clone-recheck) identifies the locally verified revision, demo results and open release inputs.
 
 ## Confirmed owner direction
 

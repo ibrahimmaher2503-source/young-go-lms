@@ -1,0 +1,67 @@
+{
+    "captured_at": "2026-11-17T19:31:56+00:00",
+    "screen": "instructor-learners",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/1\/learners",
+    "initial_path": "\/instructor\/courses\/1\/learners",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/learners",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Learners"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "w-full text-start text-sm",
+                "text": "Learner\n                        Access mode\n                        Enrolled\n   "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "Learner\n                        Access mode\n                        Enrolled\n   "
+            },
+            {
+                "tag": "TR",
+                "classes": "border-y border-gray-200 dark:border-white\/10",
+                "text": "Learner\n                        Access mode\n                        Enrolled\n   "
+            },
+            {
+                "tag": "TH",
+                "classes": "px-4 py-3",
+                "text": "Details"
+            },
+            {
+                "tag": "SPAN",
+                "classes": "sr-only",
+                "text": "Details"
+            },
+            {
+                "tag": "TBODY",
+                "classes": "",
+                "text": "Sara Abdelrahman\n                            Active\n                            "
+            },
+            {
+                "tag": "TR",
+                "classes": "border-b border-gray-100 dark:border-white\/5",
+                "text": "Sara Abdelrahman\n                            Active\n                            "
+            },
+            {
+                "tag": "TD",
+                "classes": "px-4 py-3",
+                "text": "Details"
+            },
+            {
+                "tag": "BUTTON",
+                "classes": "min-h-11 rounded-lg border border-gray-300 px-3 font-semibold dark:border-white\/20",
+                "text": "Details"
+            }
+        ]
+    },
+    "failures": []
+}

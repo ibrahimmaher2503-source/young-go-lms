@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:28:45+00:00",
+    "screen": "error-404",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/missing-page-ui-review",
+    "initial_path": "\/missing-page-ui-review",
+    "metrics": {
+        "url": "\/missing-page-ui-review",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Page not found"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

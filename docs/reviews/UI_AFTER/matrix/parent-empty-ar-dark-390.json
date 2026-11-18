@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:37+00:00",
+    "screen": "parent-empty",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/parent",
+    "initial_path": "\/parent",
+    "metrics": {
+        "url": "\/parent",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "تعلّم أبنائك، في مكان واحد"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

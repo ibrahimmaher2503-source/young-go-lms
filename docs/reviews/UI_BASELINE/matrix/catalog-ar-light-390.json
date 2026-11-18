@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:34+00:00",
+    "screen": "catalog",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/courses",
+    "initial_path": "\/courses",
+    "metrics": {
+        "url": "\/courses",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "دليل الدورات"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

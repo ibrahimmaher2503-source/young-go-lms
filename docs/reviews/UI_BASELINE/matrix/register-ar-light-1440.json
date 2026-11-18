@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:59+00:00",
+    "screen": "register",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/register",
+    "initial_path": "\/register",
+    "metrics": {
+        "url": "\/register",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "أنشئ حسابك"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

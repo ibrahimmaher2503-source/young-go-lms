@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:00:47+00:00",
+    "screen": "my-courses",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/my\/courses",
+    "initial_path": "\/my\/courses",
+    "metrics": {
+        "url": "\/my\/courses",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "دوراتي"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

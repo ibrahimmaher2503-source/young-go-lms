@@ -1,0 +1,98 @@
+[
+  {
+    "screen": "learn-cancelled",
+    "locale": "en",
+    "theme": "dark",
+    "width": 1440,
+    "check": "learn-cancelled-en-dark-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"status\" data-live-cancelled=\"\">This session was cancelled.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.09 (foreground color: #713632, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"cancelled\" data-opens-at=\"2026-11-19T18:46:00+00:00\" data-ends-at=\"2026-11-19T20:01:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-cancelled",
+    "locale": "en",
+    "theme": "dark",
+    "width": 390,
+    "check": "learn-cancelled-en-dark-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"status\" data-live-cancelled=\"\">This session was cancelled.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.09 (foreground color: #713632, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"cancelled\" data-opens-at=\"2026-11-19T18:45:00+00:00\" data-ends-at=\"2026-11-19T20:00:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-cancelled",
+    "locale": "en",
+    "theme": "light",
+    "width": 1440,
+    "check": "learn-cancelled-en-light-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"status\" data-live-cancelled=\"\">This session was cancelled.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.23 (foreground color: #f3e4e2, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"cancelled\" data-opens-at=\"2026-11-19T18:46:00+00:00\" data-ends-at=\"2026-11-19T20:01:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-cancelled",
+    "locale": "en",
+    "theme": "light",
+    "width": 390,
+    "check": "learn-cancelled-en-light-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"status\" data-live-cancelled=\"\">This session was cancelled.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.23 (foreground color: #f3e4e2, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"cancelled\" data-opens-at=\"2026-11-19T18:45:00+00:00\" data-ends-at=\"2026-11-19T20:00:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-joinable",
+    "locale": "en",
+    "theme": "dark",
+    "width": 1440,
+    "check": "learn-joinable-en-dark-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-success\r\n  HTML: <p class=\"font-semibold text-success\" role=\"status\">The session is open. You can join now.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.28 (foreground color: #285637, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"joinable\" data-opens-at=\"2026-11-17T18:41:00+00:00\" data-ends-at=\"2026-11-17T19:56:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-joinable",
+    "locale": "en",
+    "theme": "dark",
+    "width": 390,
+    "check": "learn-joinable-en-dark-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-success\r\n  HTML: <p class=\"font-semibold text-success\" role=\"status\">The session is open. You can join now.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.28 (foreground color: #285637, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"joinable\" data-opens-at=\"2026-11-17T18:40:00+00:00\" data-ends-at=\"2026-11-17T19:55:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-joinable",
+    "locale": "en",
+    "theme": "light",
+    "width": 1440,
+    "check": "learn-joinable-en-light-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-success\r\n  HTML: <p class=\"font-semibold text-success\" role=\"status\">The session is open. You can join now.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.22 (foreground color: #e1ebe3, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"joinable\" data-opens-at=\"2026-11-17T18:41:00+00:00\" data-ends-at=\"2026-11-17T19:56:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-joinable",
+    "locale": "en",
+    "theme": "light",
+    "width": 390,
+    "check": "learn-joinable-en-light-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-success\r\n  HTML: <p class=\"font-semibold text-success\" role=\"status\">The session is open. You can join now.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.22 (foreground color: #e1ebe3, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"joinable\" data-opens-at=\"2026-11-17T18:40:00+00:00\" data-ends-at=\"2026-11-17T19:55:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-live-error",
+    "locale": "en",
+    "theme": "dark",
+    "width": 1440,
+    "check": "learn-live-error-en-dark-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"alert\" data-join-error=\"\">This session has ended.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.09 (foreground color: #713632, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"ended\" data-opens-at=\"2026-11-17T16:46:00+00:00\" data-ends-at=\"2026-11-17T18:01:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-live-error",
+    "locale": "en",
+    "theme": "dark",
+    "width": 390,
+    "check": "learn-live-error-en-dark-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"alert\" data-join-error=\"\">This session has ended.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 2.09 (foreground color: #713632, background color: #0a0e11, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"ended\" data-opens-at=\"2026-11-17T16:45:00+00:00\" data-ends-at=\"2026-11-17T18:00:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-live-error",
+    "locale": "en",
+    "theme": "light",
+    "width": 1440,
+    "check": "learn-live-error-en-light-1440:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"alert\" data-join-error=\"\">This session has ended.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.23 (foreground color: #f3e4e2, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"ended\" data-opens-at=\"2026-11-17T16:46:00+00:00\" data-ends-at=\"2026-11-17T18:01:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  },
+  {
+    "screen": "learn-live-error",
+    "locale": "en",
+    "theme": "light",
+    "width": 390,
+    "check": "learn-live-error-en-light-390:accessibility",
+    "detail": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"alert\" data-join-error=\"\">This session has ended.</p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.23 (foreground color: #f3e4e2, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"ended\" data-opens-at=\"2026-11-17T16:45:00+00:00\" data-ends-at=\"2026-11-17T18:00:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests/Browser/Screenshots/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+  }
+]

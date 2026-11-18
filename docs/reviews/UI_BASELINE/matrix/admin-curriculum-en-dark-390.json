@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:24+00:00",
+    "screen": "admin-curriculum",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/admin\/courses\/1\/curriculum",
+    "initial_path": "\/admin\/courses\/1\/curriculum",
+    "metrics": {
+        "url": "\/admin\/courses\/1\/curriculum",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Course curriculum"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

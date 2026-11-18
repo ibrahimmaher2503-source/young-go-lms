@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:31:52+00:00",
+    "screen": "instructor-curriculum",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/1\/curriculum",
+    "initial_path": "\/instructor\/courses\/1\/curriculum",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/curriculum",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Course curriculum"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

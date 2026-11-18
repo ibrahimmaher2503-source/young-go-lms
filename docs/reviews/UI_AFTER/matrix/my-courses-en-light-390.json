@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:08+00:00",
+    "screen": "my-courses",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/my\/courses",
+    "initial_path": "\/my\/courses",
+    "metrics": {
+        "url": "\/my\/courses",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "My courses"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

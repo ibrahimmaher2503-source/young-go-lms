@@ -18,8 +18,8 @@ without a working backend outcome is not acceptance.
 -   [ ] Repository URL, default branch, feature branch convention and
     release tags are recorded.
 -   [ ] CodeGraph/repository inspection completed where available.
--   [ ] Development, staging and production environments are
-    distinguished.
+-   [x] Development, staging and production environments are
+    distinguished. See the [P0 continuity record](evidence/p0-closure/README.md#2026-11-18-clean-clone-recheck).
 -   [x] No development changes are made directly on legacy production.
 -   [ ] Current domain, DNS, TLS and brand assets are verified from the
     live environment.
@@ -52,14 +52,14 @@ owner brand confirmation, and release tag remain open.
 -   [x] Registration, login, logout, password reset and verification
     work.
 -   [ ] Deactivated/suspended users cannot access protected routes.
--   [ ] Roles and granular permissions are manageable.
+-   [x] Roles and granular permissions are manageable. See the [P1 evidence](evidence/p1-milestone/README.md#checklist-docs04-3-and-14a--items-a-test-proves).
 -   [ ] Backend policies enforce permissions on direct URL/API access.
 -   [ ] Instructor can access assigned courses only.
 -   [ ] Independent instructor cannot publish without approval.
 -   [x] Finance role cannot alter curriculum/security unless explicitly
     granted.
--   [ ] Parent account can link multiple verified child accounts.
--   [ ] Parent cannot access unlinked children.
+-   [x] Parent account can link multiple verified child accounts. See the [P1 demo](evidence/p1-milestone/README.md#demo-script-executed).
+-   [x] Parent cannot access unlinked children. See `ChildAccountsTest`, `GuardianLinkingTest` and `ChildRecoveryTest`.
 -   [ ] Each child has a separate learner profile and progress.
 -   [ ] Guardian consent and minor privacy policy are approved before
     minor launch.

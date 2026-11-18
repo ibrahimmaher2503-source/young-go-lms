@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:33+00:00",
+    "screen": "instructor-learners",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/1\/learners",
+    "initial_path": "\/instructor\/courses\/1\/learners",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/learners",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Learners"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

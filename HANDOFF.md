@@ -3,6 +3,8 @@
 **Prepared:** 2026-11-16 (pack v3.1)\
 **Current stage:** P0/P1 implementation exists; prior-work closure audit is active. Do not start new tasks until its recorded gaps are resolved.
 
+The [P0 clean-clone continuity record](docs/evidence/p0-closure/README.md#2026-11-18-clean-clone-recheck) records the tested revision, demo, gate results and open deployment, domain and recovery facts.
+
 ## Read order
 
 1.  `README_AR.md`
@@ -54,4 +56,4 @@ Owner requires full reference matching across every current/future page. D-026 r
 
 ## P1 handoff — 2026-11-17
 
-Resume at agents/PROGRESS.md. Identity, RBAC, audit, age model, staff panels, UI primitives, family accounts, 2FA and the AR/EN account screens exist locally. Read docs/evidence/p1-milestone/README.md for gate results and the open items list. Next buildable tasks without external inputs: T-P2-01 (categories) and the independent verification waves for T-P1-03..11. Do not enable live payments, Saudi checkout, AI for minors or a domain switch.
+Resume P1 closure from [the task board](agents/PROGRESS.md), [workspace visual review](docs/reviews/WORKSPACE_VISUAL_REVIEW_2026-11-17.md) and [milestone evidence](docs/evidence/p1-milestone/README.md#closure-follow-up-2026-11-17). The identity, role-management, family and 2FA journeys have fresh local test evidence. The review still needs the remaining D-026 comparisons and independent verdicts, the O-015 age defaults and the G5 I02 coverage item. The primary checkout is on `feat/lms-build`.

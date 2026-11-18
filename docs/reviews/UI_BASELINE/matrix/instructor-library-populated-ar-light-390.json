@@ -1,0 +1,97 @@
+{
+    "captured_at": "2026-11-17T19:07:54+00:00",
+    "screen": "instructor-library-populated",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/instructor\/library",
+    "initial_path": "\/instructor\/library",
+    "metrics": {
+        "url": "\/instructor\/library",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "مكتبة المحتوى"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "fi-ta-table",
+                "text": "الاسم\n                                                                          "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "الاسم\n                                                                          "
+            },
+            {
+                "tag": "TR",
+                "classes": "",
+                "text": "الاسم\n                                                                          "
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-size",
+                "text": "الحجم"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-tags",
+                "text": "الوسوم"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-uses",
+                "text": "مستخدم في"
+            },
+            {
+                "tag": "TBODY",
+                "classes": "fi-ta-records",
+                "text": "مرجع أدوات الرسم\n                                                        \n      "
+            },
+            {
+                "tag": "TR",
+                "classes": "fi-ta-row",
+                "text": "مرجع أدوات الرسم\n                                                        \n      "
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-size",
+                "text": "2.1 KB"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-col",
+                "text": "2.1 KB"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-text fi-ta-text-item fi-size-sm",
+                "text": "2.1 KB"
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-tags",
+                "text": "drawing"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-col",
+                "text": "drawing"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-text fi-ta-text-item fi-size-sm",
+                "text": "drawing"
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-uses",
+                "text": "0"
+            }
+        ]
+    },
+    "failures": []
+}

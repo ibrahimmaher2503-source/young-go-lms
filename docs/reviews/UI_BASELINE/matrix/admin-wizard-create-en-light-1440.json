@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:25+00:00",
+    "screen": "admin-wizard-create",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/admin\/courses\/create",
+    "initial_path": "\/admin\/courses\/create",
+    "metrics": {
+        "url": "\/admin\/courses\/create",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Create Course"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

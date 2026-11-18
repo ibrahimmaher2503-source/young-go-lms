@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:32+00:00",
+    "screen": "instructor-cohorts",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/instructor\/courses\/1\/cohorts",
+    "initial_path": "\/instructor\/courses\/1\/cohorts",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/cohorts",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "الدفعات"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

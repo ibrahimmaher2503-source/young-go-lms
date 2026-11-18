@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:06:58+00:00",
+    "screen": "profile",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/profile",
+    "initial_path": "\/profile",
+    "metrics": {
+        "url": "\/profile",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "الملف الشخصي"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

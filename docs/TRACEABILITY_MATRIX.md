@@ -86,51 +86,51 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-CHG-001 |  | T-P3-07 | |
 | YG-GAP-CHG-002 |  | T-P3-07 | |
 | YG-GAP-CHG-003 |  | T-P3-07 | |
-| YG-GAP-CMS-001 |  | T-P2-09 | |
-| YG-GAP-CMS-002 |  | T-P2-09 | |
+| YG-GAP-CMS-001 |  | T-P2-09 | `tests/Browser/BlogAndPublicPagesBrowserTest.php`, `tests/Feature/Pages/InstructorAndCategoryPagesTest.php` |
+| YG-GAP-CMS-002 |  | T-P2-09 | `tests/Browser/BlogAndPublicPagesBrowserTest.php`, `tests/Feature/Pages/InstructorAndCategoryPagesTest.php` |
 | YG-GAP-CNT-001 |  | T-P3-04, T-P3-11 | |
 | YG-GAP-CNT-002 |  | T-P3-15 | |
 | YG-GAP-CNT-003 |  | T-P3-13 | |
 | YG-GAP-CODE-001 |  | T-P0-03, T-P0-06 | |
-| YG-GAP-COH-001 |  | T-P5-01 | |
-| YG-GAP-COH-002 |  | T-P5-01 | |
-| YG-GAP-COH-003 |  | T-P5-01 | |
+| YG-GAP-COH-001 |  | T-P5-01 | `tests/Feature/Cohorts/CohortEdgeCasesTest.php`, `tests/Feature/Cohorts/CohortsTest.php` |
+| YG-GAP-COH-002 |  | T-P5-01 | `tests/Feature/Cohorts/CohortEdgeCasesTest.php`, `tests/Feature/Cohorts/CohortsTest.php` |
+| YG-GAP-COH-003 |  | T-P5-01 | `tests/Feature/Cohorts/CohortsTest.php` |
 | YG-GAP-DR-001 |  | T-P11-03 | |
-| YG-GAP-ENG-001 |  | T-P9-02 | |
-| YG-GAP-ENG-002 |  | T-P9-02 | |
+| YG-GAP-ENG-001 |  | T-P9-02 | `tests/Browser/Batch3DScreensBrowserTest.php`, `tests/Feature/Engagement/WishlistAndReviewsTest.php` |
+| YG-GAP-ENG-002 |  | T-P9-02 | `tests/Browser/Batch3DScreensBrowserTest.php`, `tests/Feature/Engagement/WishlistAndReviewsTest.php` |
 | YG-GAP-ENG-003 |  | T-P9-02 | |
 | YG-GAP-FAM-001 |  | T-P1-05 | |
 | YG-GAP-FAM-002 |  | T-P1-06 | |
 | YG-GAP-FAM-003 |  | T-P1-02, T-P1-05 | |
 | YG-GAP-FAM-004 |  | T-P1-06 | |
-| YG-GAP-FAM-005 |  | T-P1-05, T-P8-01 | |
+| YG-GAP-FAM-005 |  | T-P1-05, T-P8-01 | `tests/Feature/Commerce/OrderEngineTest.php`, `tests/Feature/Identity/ChildAccountsTest.php` |
 | YG-GAP-FAM-006 |  | T-P1-05, T-P7-07 | |
 | YG-GAP-FAM-007 |  | T-P1-11 | |
 | YG-GAP-FAM-008 |  | T-P1-11 | |
-| YG-GAP-ID-001 |  | T-P1-02, T-P6-06 | |
+| YG-GAP-ID-001 |  | T-P1-02, T-P6-06 | `tests/Browser/CertificateVerificationBrowserTest.php`, `tests/Feature/AuthenticationTest.php`, `tests/Feature/Learning/CertificateVerifyAndPdfTest.php`, `tests/Feature/ProfileTest.php` |
 | YG-GAP-ID-002 |  | T-P1-02 | |
-| YG-GAP-INS-001 |  | T-P9-01 | |
-| YG-GAP-INS-002 |  | T-P9-01 | |
-| YG-GAP-INS-003 |  | T-P9-01 | |
-| YG-GAP-INS-004 |  | T-P4-10 | |
+| YG-GAP-INS-001 |  | T-P9-01 | `tests/Browser/Batch3DScreensBrowserTest.php`, `tests/Feature/Instructors/InstructorOnboardingTest.php` |
+| YG-GAP-INS-002 |  | T-P9-01 | `tests/Feature/Instructors/InstructorOnboardingTest.php` |
+| YG-GAP-INS-003 |  | T-P9-01 | `tests/Feature/Instructors/InstructorOnboardingTest.php` |
+| YG-GAP-INS-004 |  | T-P4-10 | `tests/Feature/Learning/InstructorInsightsTest.php` |
 | YG-GAP-LRN-001 |  | T-P4-09 | |
 | YG-GAP-LRN-002 |  | T-P4-09 | |
 | YG-GAP-LRN-003 |  | T-P3-14 | |
 | YG-GAP-LRN-004 |  | T-P4-03 | |
-| YG-GAP-LRN-005 |  | T-P4-10 | |
+| YG-GAP-LRN-005 |  | T-P4-10 | `tests/Feature/Learning/InstructorInsightsTest.php` |
 | YG-GAP-LRN-006 |  | T-P4-04 | |
-| YG-GAP-MKT-001 |  | T-P9-03 | |
-| YG-GAP-NTF-001 |  | T-P9-04 | |
+| YG-GAP-MKT-001 |  | T-P9-03 | `tests/Browser/Batch3DScreensBrowserTest.php`, `tests/Feature/Privacy/ConsentAndMarketingTagsTest.php` |
+| YG-GAP-NTF-001 |  | T-P9-04 | `tests/Feature/Notifications/LiveNoticesTest.php`, `tests/Feature/Notifications/PhoneChannelTest.php` |
 | YG-GAP-NTF-002 |  | T-P11-04 | |
 | YG-GAP-OPS-001 |  | T-P9-10 | |
 | YG-GAP-OPS-002 |  | T-P9-10 | |
 | YG-GAP-OPS-003 |  | T-P0-07, T-P9-11 | |
 | YG-GAP-OPS-004 |  | T-P1-10 | |
 | YG-GAP-OPS-005 |  | T-P0-07 | |
-| YG-GAP-PAY-001 |  | T-P8-02 | |
-| YG-GAP-PAY-002 |  | T-P8-03 | |
+| YG-GAP-PAY-001 |  | T-P8-02 | `tests/Feature/Commerce/PaymentGatewayCheckoutTest.php` |
+| YG-GAP-PAY-002 |  | T-P8-03 | `tests/Feature/Commerce/PaymobWebhookFulfillmentTest.php` |
 | YG-GAP-PAY-003 |  | T-P8-11 | |
-| YG-GAP-PAY-004 |  | T-P8-04 | |
+| YG-GAP-PAY-004 |  | T-P8-04 | `tests/Feature/Commerce/CommerceEdgeCasesTest.php`, `tests/Feature/Commerce/ManualPaymentProofsTest.php` |
 | YG-GAP-PAY-005 |  | T-P8-06 | |
 | YG-GAP-PERF-001 |  | T-P2-03, T-P11-02 | |
 | YG-GAP-PRV-001 |  | T-P9-08 | |
@@ -150,70 +150,70 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-GAP-SUB-003 |  | T-P8-08 | |
 | YG-GAP-SUB-004 |  | T-P8-08 | |
 | YG-GAP-UI-001 |  | T-P0-04, T-P1-09 | |
-| YG-GAP-UX-001 |  | T-P1-10, T-P2-03, T-P4-03 | |
+| YG-GAP-UX-001 |  | T-P1-10, T-P2-03, T-P4-03 | `tests/Feature/Pages/FamilyPagesTest.php` |
 | YG-GAP-VID-001 |  | T-P3-05 | |
 | YG-GAP-VID-002 |  | T-P3-05, T-P10-05 | |
 | YG-GAP-VID-003 |  | T-P4-07 | |
 | YG-GAP-VID-004 |  | T-P3-05 | |
-| YG-WEB-001 |  | T-P2-03 | |
+| YG-WEB-001 |  | T-P2-03 | `tests/Feature/Pages/PublicHomeTest.php` |
 | YG-WEB-002 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (block order and visibility) |
 | YG-WEB-003 |  | T-P2-01, T-P2-04 | `tests/Feature/Filament/CategoriesTest.php` (taxonomy); `tests/Feature/Pages/PublicCatalogTest.php` (published scope and available filters); full availability and sort coverage pending |
-| YG-WEB-004 |  | T-P2-05 | |
+| YG-WEB-004 |  | T-P2-05 | `tests/Browser/PublicCatalogBrowserTest.php`, `tests/Feature/Catalog/CatalogEdgeCasesTest.php`, `tests/Feature/Pages/PublicCatalogTest.php`, `tests/Feature/Pages/PublicCourseDetailTest.php` |
 | YG-WEB-005 |  | T-P2-02 | `tests/Feature/Pages/CmsPagesTest.php` (publication, editor preview and draft seeds) |
-| YG-WEB-006 |  | T-P2-07 | |
-| YG-WEB-007 |  | T-P2-08 | |
-| YG-WEB-008 |  | T-P2-08 | |
-| YG-WEB-009 |  | T-P2-06 | |
-| YG-WEB-010 |  | T-P2-03 | |
+| YG-WEB-006 |  | T-P2-07 | `tests/Browser/BlogAndPublicPagesBrowserTest.php`, `tests/Feature/Pages/BlogTest.php` |
+| YG-WEB-007 |  | T-P2-08 | `tests/Feature/Pages/ContactAndNewsletterTest.php` |
+| YG-WEB-008 |  | T-P2-08 | `tests/Feature/Pages/ContactAndNewsletterTest.php` |
+| YG-WEB-009 |  | T-P2-06 | `tests/Feature/Seo/SeoInfrastructureTest.php` |
+| YG-WEB-010 |  | T-P2-03 | `tests/Feature/Pages/PublicHomeTest.php` |
 | D-001 | Owner decision | T-P0-02, T-P0-03, T-P0-05 | |
-| D-002 | Owner decision | T-P0-04, T-P2-03 | |
+| D-002 | Owner decision | T-P0-04, T-P2-03 | `tests/Feature/Pages/PublicHomeTest.php` |
 | D-003 | Owner decision | T-P0-01, T-P11-06, T-P11-07 | |
 | D-004 | Owner decision | T-P10-01, T-P10-04, T-P10-05 | |
 | D-005 | Owner decision | T-P1-07 | |
 | D-006 | Owner decision | T-P1-05, T-P1-06, T-P4-08 | |
-| D-007 | Owner decision | T-P3-01, T-P3-03, T-P9-01 | `tests/Feature/Invariants/I02_CourseScopeTest.php` (course ownership) |
-| D-008 | Owner decision | T-P8-01, T-P8-07, T-P8-08 | |
-| D-009 | Owner decision | T-P0-06, T-P8-13 | |
-| D-010 | Owner decision | T-P8-13, T-P12-01 | |
+| D-007 | Owner decision | T-P3-01, T-P3-03, T-P9-01 | `tests/Feature/Invariants/I02_CourseScopeTest.php` |
+| D-008 | Owner decision | T-P8-01, T-P8-07, T-P8-08 | `tests/Feature/Commerce/OrderEngineTest.php` |
+| D-009 | Owner decision | T-P0-06, T-P8-13 | `tests/Feature/Commerce/DisabledSaudiMarketTest.php`, `tests/Feature/Invariants/I15SaudiMarketTest.php`, `tests/Unit/SharedPrimitivesTest.php` |
+| D-010 | Owner decision | T-P8-13, T-P12-01 | `tests/Feature/Commerce/DisabledSaudiMarketTest.php` |
 | D-011 | Owner decision | T-P1-01, T-P1-09 | |
-| D-012 | Owner decision | T-P8-01, T-P8-09, T-P8-10 | |
+| D-012 | Owner decision | T-P8-01, T-P8-09, T-P8-10 | `tests/Feature/Commerce/OrderEngineTest.php` |
 | D-013 | Owner decision | T-P8-09 | |
 | D-014 | Owner decision | T-P8-09 | |
 | D-015 | Owner decision | T-P8-07, T-P8-09 | |
 | D-016 | Owner decision | T-P8-08, T-P8-09 | |
-| D-017 | Owner decision | T-P3-10, T-P7-01, T-P7-03 | |
+| D-017 | Owner decision | T-P3-10, T-P7-01, T-P7-03 | `tests/Browser/AssistantPanelBrowserTest.php`, `tests/Feature/AI/AssistantPanelTest.php` |
 | D-018 | Owner decision | T-P3-08, T-P3-09, T-P7-01 | |
-| D-019 | Owner decision | T-P7-04 | |
+| D-019 | Owner decision | T-P7-04 | `tests/Feature/AI/AssistantFeedbackTest.php` |
 | D-020 | Owner decision | T-P7-04 | |
-| D-021 | Owner decision | T-P7-04 | |
+| D-021 | Owner decision | T-P7-04 | `tests/Feature/AI/LearnerHelpThreadTest.php` |
 | D-022 | Owner decision | T-P1-08 | |
 | D-023 | Owner decision | AGENTS.md separation rule; T-P0-01 | |
 | D-024 | Owner decision | T-P0-03, T-P11-01, T-P11-03; orchestrator workflow | |
-| D-025 | Owner decision | T-P8-02, T-P8-03 | |
+| D-025 | Owner decision | T-P8-02, T-P8-03 | `tests/Feature/Commerce/PaymentGatewayCheckoutTest.php`, `tests/Feature/Commerce/PaymobWebhookFulfillmentTest.php` |
 | ED-001 |  | conventions (T-P0-02/03) | |
-| ED-002 |  | T-P3-11, T-P5-02 | |
+| ED-002 |  | T-P3-11, T-P5-02 | `tests/Feature/Curriculum/AssessmentItemsTest.php` |
 | ED-003 |  | T-P3-15 | |
 | ED-004 |  | T-P4-04 | |
 | ED-005 |  | T-P4-09 | |
 | ED-006 |  | T-P1-01 | |
 | ED-007 |  | T-P3-05 | |
 | ED-008 |  | T-P3-14 | |
-| ED-009 |  | T-P7-01, T-P7-03 | |
-| ED-010 |  | T-P7-02 | |
+| ED-009 |  | T-P7-01, T-P7-03 | `tests/Browser/AssistantPanelBrowserTest.php`, `tests/Feature/AI/AssistantCoreGuardTest.php`, `tests/Feature/AI/AssistantPanelTest.php` |
+| ED-010 |  | T-P7-02 | `tests/Feature/AI/AssistantInputGuardsCacheQuotasTest.php` |
 | ED-011 |  | T-P3-09 | |
-| ED-012 |  | T-P8-01 | |
-| ED-013 |  | T-P5-01 | |
+| ED-012 |  | T-P8-01 | `tests/Feature/Commerce/OrderEngineTest.php` |
+| ED-013 |  | T-P5-01 | `tests/Feature/Cohorts/CohortsTest.php` |
 | ED-014 |  | out-of-scope (prd-auditor) | |
 | ED-015 |  | T-P0-07 | |
 | ED-016 |  | T-P1-11 | |
 | ED-017 |  | T-P1-11 | |
-| ED-018 |  | T-P1-01, T-P2-06 | |
+| ED-018 |  | T-P1-01, T-P2-06 | `tests/Feature/LocalizationTest.php`, `tests/Feature/Seo/SeoInfrastructureTest.php` |
 | ED-019 |  | T-P0-07 | |
 | ED-020 |  | T-P0-07 | |
 | ED-021 |  | T-P0-07 | |
 | ED-022 |  | T-P0-07, T-P9-11 | |
 | ED-023 |  | 15_UX + ux-reviewer | |
-| ED-024 |  | T-P3-04, T-P4-10 | |
+| ED-024 |  | T-P3-04, T-P4-10 | `tests/Feature/Curriculum/CurriculumManagerTest.php`, `tests/Feature/Filament/CurriculumPageTest.php`, `tests/Feature/Learning/InstructorInsightsTest.php` |
 | ED-025 |  | T-P4-09 | |
 | ED-026 |  | T-P3-13 | |
 | ED-027 |  | T-P9-10 | |
@@ -221,7 +221,7 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | ED-029 |  | ORCHESTRATOR §7 | |
 | ED-030 |  | T-P2-03, T-P11-02 | |
 | ED-031 |  | T-P3-08, T-P3-15 | |
-| ED-032 |  | T-P0-06, T-P5-02 | |
+| ED-032 |  | T-P0-06, T-P5-02 | `tests/Feature/Invariants/I14UtcStorageTest.php`, `tests/Feature/Live/LiveSessionsTest.php` |
 | PRD §29.15 | Review corrections | See YG-REV owners below | |
 | YG-REV-ACC-001 | Review requirement (PRD §29.15) | T-P4-01 | |
 | YG-REV-ACC-002 | Review requirement (PRD §29.15) | T-P4-09 | |
@@ -233,14 +233,14 @@ Planning map reviewed against `docs/01_MASTER_PRD_YOUNG_GO_LMS.md`, `docs/07_DEC
 | YG-REV-LRN-003 | Review requirement (PRD §29.15) | T-P5-02 | |
 | YG-REV-MIG-001 | Review requirement (PRD §29.15) | T-P10-03 | |
 | YG-REV-MIG-002 | Review requirement (PRD §29.15) | T-P11-06 | |
-| YG-REV-PAY-001 | Review requirement (PRD §29.15) | T-P8-01 | |
-| YG-REV-PAY-002 | Review requirement (PRD §29.15) | T-P8-03 | |
+| YG-REV-PAY-001 | Review requirement (PRD §29.15) | T-P8-01 | `tests/Feature/Commerce/OrderEngineTest.php` |
+| YG-REV-PAY-002 | Review requirement (PRD §29.15) | T-P8-03 | `tests/Feature/Commerce/PaymobWebhookFulfillmentTest.php` |
 | YG-REV-PAY-003 | Review requirement (PRD §29.15) | T-P5-01 | |
 | YG-REV-PAY-004 | Review requirement (PRD §29.15) | T-P8-06 | |
 | YG-REV-PRV-001 | Review requirement (PRD §29.15) | T-P9-08 | |
 | YG-REV-SUB-001 | Review requirement (PRD §29.15) | T-P8-08 | |
 | ED-033 | Review engineering decision | T-P0-05 | |
-| ED-034 | Review engineering decision | T-P8-01, T-P8-03, T-P8-06, T-P8-09 | |
+| ED-034 | Review engineering decision | T-P8-01, T-P8-03, T-P8-06, T-P8-09 | `tests/Feature/Commerce/OrderEngineTest.php`, `tests/Feature/Commerce/PaymobWebhookFulfillmentTest.php` |
 | ED-035 | Review engineering decision | T-P4-01, T-P4-09 | |
-| ED-036 | Review engineering decision | T-P7-01, T-P7-02 | |
+| ED-036 | Review engineering decision | T-P7-01, T-P7-02 | `tests/Feature/AI/AssistantInputGuardsCacheQuotasTest.php` |
 | ED-037 | Review engineering decision | T-P3-09 | |

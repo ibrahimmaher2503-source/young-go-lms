@@ -1,0 +1,77 @@
+{
+    "captured_at": "2026-11-17T19:33:30+00:00",
+    "screen": "finance-grants-populated",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/finance\/manual-grants",
+    "initial_path": "\/finance\/manual-grants",
+    "metrics": {
+        "url": "\/finance\/manual-grants",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "المنح اليدوية"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "fi-ta-table",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "TR",
+                "classes": "",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-actions-header-cell fi-ta-empty-header-cell",
+                "text": ""
+            },
+            {
+                "tag": "TBODY",
+                "classes": "fi-ta-records",
+                "text": "سارة عبد الرحمن\n                                                        \n       "
+            },
+            {
+                "tag": "TR",
+                "classes": "fi-ta-row",
+                "text": "سارة عبد الرحمن\n                                                        \n       "
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell",
+                "text": "سحب الوصول"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-actions ",
+                "text": "سحب الوصول"
+            },
+            {
+                "tag": "BUTTON",
+                "classes": "fi-ac-link-action fi-link fi-size-sm fi-color fi-color-danger fi-text-color-600 dark:fi-text-color-300",
+                "text": "سحب الوصول"
+            },
+            {
+                "tag": "svg",
+                "classes": [],
+                "text": ""
+            },
+            {
+                "tag": "SPAN",
+                "classes": "fi-link-label",
+                "text": "سحب الوصول"
+            }
+        ]
+    },
+    "failures": []
+}

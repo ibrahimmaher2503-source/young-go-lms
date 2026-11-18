@@ -1,0 +1,97 @@
+{
+    "captured_at": "2026-11-17T19:32:15+00:00",
+    "screen": "admin-grants-populated",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/admin\/manual-grants",
+    "initial_path": "\/admin\/manual-grants",
+    "metrics": {
+        "url": "\/admin\/manual-grants",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Manual Grants"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "fi-ta-table",
+                "text": "Learner\n                                                                        "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "Learner\n                                                                        "
+            },
+            {
+                "tag": "TR",
+                "classes": "",
+                "text": "Learner\n                                                                        "
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-learner.email",
+                "text": "Email"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-course.title",
+                "text": "Course"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-source-type",
+                "text": "Source"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-status",
+                "text": "Status"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-starts-at",
+                "text": "Starts"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-ends-at",
+                "text": "Ends"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-reason",
+                "text": "Reason"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-actions-header-cell fi-ta-empty-header-cell",
+                "text": ""
+            },
+            {
+                "tag": "TBODY",
+                "classes": "fi-ta-records",
+                "text": "Sara Abdelrahman\n                                                        \n      "
+            },
+            {
+                "tag": "TR",
+                "classes": "fi-ta-row",
+                "text": "Sara Abdelrahman\n                                                        \n      "
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-learner.email",
+                "text": "raleigh46@example.org"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-col",
+                "text": "raleigh46@example.org"
+            }
+        ]
+    },
+    "failures": []
+}

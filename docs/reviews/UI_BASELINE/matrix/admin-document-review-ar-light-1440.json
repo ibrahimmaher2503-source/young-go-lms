@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:09:00+00:00",
+    "screen": "admin-document-review",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/admin\/courses\/1\/curriculum\/documents\/1",
+    "initial_path": "\/admin\/courses\/1\/curriculum\/documents\/1",
+    "metrics": {
+        "url": "\/admin\/courses\/1\/curriculum\/documents\/1",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "مراجعة نص ملف PDF للدرس"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

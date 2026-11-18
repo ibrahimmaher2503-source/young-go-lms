@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:53+00:00",
+    "screen": "home",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/",
+    "initial_path": "\/",
+    "metrics": {
+        "url": "\/",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Young Go"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

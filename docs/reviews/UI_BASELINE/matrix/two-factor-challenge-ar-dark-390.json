@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:03+00:00",
+    "screen": "two-factor-challenge",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/two-factor-challenge",
+    "initial_path": "\/two-factor-challenge",
+    "metrics": {
+        "url": "\/two-factor-challenge",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "التحقق بخطوتين"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,97 @@
+diff --git a/resources/css/app.css b/resources/css/app.css
+index 7b506a6..06ae083 100644
+--- a/resources/css/app.css
++++ b/resources/css/app.css
+@@ -4,6 +4,11 @@
+ @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+ @source '../../storage/framework/views/*.php';
+ 
++body {
++    font-size: var(--yg-font-body);
++    line-height: var(--yg-line-height-body);
++}
++
+ .lesson-materials [role="tablist"] {
+     border-block-end: 1px solid var(--yg-color-border);
+ }
+diff --git a/resources/css/tokens.css b/resources/css/tokens.css
+index 03ebcd3..36c7d8a 100644
+--- a/resources/css/tokens.css
++++ b/resources/css/tokens.css
+@@ -103,6 +103,7 @@ :root {
+     --yg-color-on-ai-ready: var(--yg-success-700);
+     --yg-font-page-heading: 2.25rem;
+     --yg-font-body: 1.125rem;
++    --yg-line-height-body: 1.6;
+     --yg-font-small: 0.9375rem;
+     --yg-font-label: 1rem;
+     --yg-font-sidebar: 1.25rem;
+@@ -216,4 +217,5 @@ @theme inline {
+ 
+ :lang(ar) {
+     --font-sans: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
++    --yg-line-height-body: 1.8;
+ }
+diff --git a/resources/views/components/layouts/learner.blade.php b/resources/views/components/layouts/learner.blade.php
+index 2149fbb..ceb3edf 100644
+--- a/resources/views/components/layouts/learner.blade.php
++++ b/resources/views/components/layouts/learner.blade.php
+@@ -46,9 +46,9 @@
+ @endif
+ <header class="border-b border-border bg-surface/95 shadow-card backdrop-blur">
+     <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8">
+-        <div class="flex items-center gap-6">
+-            <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
+-                <x-ui.icon name="book" class="size-8 text-primary" />
++        <div class="flex shrink-0 items-center gap-6">
++            <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
++                <x-ui.icon name="book" class="size-8 shrink-0 text-primary" />
+                 <span dir="ltr">Young Go</span>
+             </a>
+             <nav aria-label="{{ __('pages.main_nav') }}" class="hidden items-center gap-1 lg:flex">
+@@ -60,9 +60,9 @@ class="inline-flex min-h-11 items-center gap-2 rounded-lg px-4 font-semibold {{
+                 @endforeach
+             </nav>
+         </div>
+-        <div class="flex items-center gap-2">
++        <div class="flex min-w-0 items-center gap-2">
+             <x-ui.locale-switcher :locale="$locale" class="hidden sm:block" />
+-            <span class="relative inline-grid size-11 place-items-center text-body" title="{{ __('learner.notifications') }}">
++            <span class="relative inline-grid size-11 shrink-0 place-items-center text-body" title="{{ __('learner.notifications') }}">
+                 <x-ui.icon name="bell" class="size-6" />
+                 @if($unread)<span class="absolute end-2 top-2 size-2.5 rounded-full bg-primary" data-unread-dot></span>@endif
+                 <span class="sr-only">{{ __('learner.notifications') }}@if($unread): {{ __('learner.has_unread') }}@endif</span>
+diff --git a/resources/views/components/learning/live-session-card.blade.php b/resources/views/components/learning/live-session-card.blade.php
+index c6eed11..ade5e74 100644
+--- a/resources/views/components/learning/live-session-card.blade.php
++++ b/resources/views/components/learning/live-session-card.blade.php
+@@ -26,16 +26,16 @@
+             <button type="submit" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary"><x-ui.icon name="video" class="size-5" /> {{ __('live.join') }}</button>
+         </form>
+     @elseif($state === 'joinable')
+-        <p class="font-semibold text-success" role="status">{{ __('live.join_now_hint') }}</p>
++        <p class="font-semibold text-on-success" role="status">{{ __('live.join_now_hint') }}</p>
+         <form method="POST" action="{{ $joinUrl }}" data-join-form>
+             @csrf
+             <button type="submit" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary"><x-ui.icon name="video" class="size-5" /> {{ __('live.join') }}</button>
+         </form>
+     @elseif($state === 'cancelled')
+-        <p class="font-semibold text-danger" role="status" data-live-cancelled>{{ __('live.cancelled_notice') }}</p>
++        <p class="font-semibold text-on-danger" role="status" data-live-cancelled>{{ __('live.cancelled_notice') }}</p>
+     @else
+         <p class="text-muted" role="status" data-live-ended>{{ __('live.ended_notice') }}</p>
+         @if($replayUrl)<a href="{{ $replayUrl }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-on-primary" data-replay-link><x-ui.icon name="play" class="size-5" /> {{ __('live.replay.watch') }}</a>@endif
+     @endif
+-    @if(session('join_error'))<p class="font-semibold text-danger" role="alert" data-join-error>{{ session('join_error') }}</p>@endif
++    @if(session('join_error'))<p class="font-semibold text-on-danger" role="alert" data-join-error>{{ session('join_error') }}</p>@endif
+ </section>
+diff --git a/resources/views/components/ui/dropdown.blade.php b/resources/views/components/ui/dropdown.blade.php
+index 288eeb9..89e1ebc 100644
+--- a/resources/views/components/ui/dropdown.blade.php
++++ b/resources/views/components/ui/dropdown.blade.php
+@@ -1,4 +1,4 @@
+ {{-- Props: id, label. Put links or buttons in the native popover. --}}
+ @props(['id', 'label'])
+-<x-ui.button variant="secondary" :popovertarget="$id">{{ $label }}</x-ui.button>
++<x-ui.button variant="secondary" :popovertarget="$id" class="max-w-full"><span class="min-w-0 truncate">{{ $label }}</span></x-ui.button>
+ <div id="{{ $id }}" popover aria-label="{{ $label }}" {{ $attributes->class('m-auto max-w-[calc(100%-2rem)] rounded-lg border border-border bg-surface p-3 text-body shadow-lg') }}>{{ $slot }}</div>

@@ -119,7 +119,11 @@ recommendations and open dependencies.
                                       mandatory before acceptance.
   -----------------------------------------------------------------------------------------------
 
+**D-027 · 2026-11-18 · Public-site brand kit.** The owner approved the current Young Go wordmark, semantic palette and bundled typography for T-P2-03. Legacy artwork and hostname remain unverified. This approval supplies the public implementation input under O-027.
+
 ## B. Technical recommendations (not owner-locked)
+
+**O-015 · Educational catalog defaults (2026-11-18).** The owner asked for research-based defaults. Seed 0–9, 10–17 and 18+ as editable educational bands for Egypt. WHO defines adolescence as 10–19. CRC Article 1 defines childhood as under 18, subject to its stated exception. The LMS split is an educational grouping. Guardian verification, privacy, consent and AI eligibility still require the applicable reviewed policy. [WHO adolescent health](https://www.who.int/health-topics/adolescent-health) · [CRC Article 1](https://www.unicef.org/child-rights-convention/convention-text)
 
   ---------------------------------------------------------------------------------------------
   ID                      Recommendation                  Notes

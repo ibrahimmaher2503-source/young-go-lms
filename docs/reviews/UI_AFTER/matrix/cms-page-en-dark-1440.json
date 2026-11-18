@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:29:01+00:00",
+    "screen": "cms-page",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/pages\/ui-workshops",
+    "initial_path": "\/pages\/ui-workshops",
+    "metrics": {
+        "url": "\/pages\/ui-workshops",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Creative workshops"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

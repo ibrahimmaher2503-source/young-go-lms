@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:01:06+00:00",
+    "screen": "parent-dashboard",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/parent",
+    "initial_path": "\/parent",
+    "metrics": {
+        "url": "\/parent",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Your children's learning, in one place"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

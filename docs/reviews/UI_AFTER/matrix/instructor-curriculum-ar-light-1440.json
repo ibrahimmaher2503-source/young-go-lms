@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:14:42+00:00",
+    "screen": "instructor-curriculum",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/instructor\/courses\/1\/curriculum",
+    "initial_path": "\/instructor\/courses\/1\/curriculum",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/curriculum",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "منهج الدورة"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

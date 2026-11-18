@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:43+00:00",
+    "screen": "dashboard",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/my",
+    "initial_path": "\/my",
+    "metrics": {
+        "url": "\/my",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Welcome, Sara. Ready to continue?"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

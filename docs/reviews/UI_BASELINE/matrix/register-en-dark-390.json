@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:41+00:00",
+    "screen": "register",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/register",
+    "initial_path": "\/register",
+    "metrics": {
+        "url": "\/register",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Create your account"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

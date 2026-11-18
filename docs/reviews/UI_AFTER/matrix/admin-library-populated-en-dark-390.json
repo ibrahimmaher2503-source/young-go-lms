@@ -1,0 +1,97 @@
+{
+    "captured_at": "2026-11-17T19:32:12+00:00",
+    "screen": "admin-library-populated",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/admin\/library",
+    "initial_path": "\/admin\/library",
+    "metrics": {
+        "url": "\/admin\/library",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Content Library"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "fi-ta-table",
+                "text": "Name\n                                                                           "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "Name\n                                                                           "
+            },
+            {
+                "tag": "TR",
+                "classes": "",
+                "text": "Name\n                                                                           "
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-owner-type",
+                "text": "Shared with"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-size",
+                "text": "Size"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-tags",
+                "text": "Tags"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-uses",
+                "text": "Used in"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-actions-header-cell fi-ta-empty-header-cell",
+                "text": ""
+            },
+            {
+                "tag": "TBODY",
+                "classes": "fi-ta-records",
+                "text": "Drawing tools reference\n                                                        "
+            },
+            {
+                "tag": "TR",
+                "classes": "fi-ta-row",
+                "text": "Drawing tools reference\n                                                        "
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-owner-type",
+                "text": "Whole academy"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-col",
+                "text": "Whole academy"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-text fi-ta-text-item fi-ta-text-has-badges",
+                "text": "Whole academy"
+            },
+            {
+                "tag": "SPAN",
+                "classes": "fi-badge fi-size-sm fi-color fi-color-primary fi-text-color-700 dark:fi-text-color-400",
+                "text": "Whole academy"
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-size",
+                "text": "2.1 KB"
+            }
+        ]
+    },
+    "failures": []
+}

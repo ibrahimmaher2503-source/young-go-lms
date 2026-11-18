@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:29:56+00:00",
+    "screen": "two-factor-enabled",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/security\/two-factor",
+    "initial_path": "\/security\/two-factor",
+    "metrics": {
+        "url": "\/security\/two-factor",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "المصادقة الثنائية"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -278,6 +278,109 @@
       "previousSource": "C:\\Users\\N\\.codex\\generated_images\\01a1e182-a88b-7ea3-b52a-8fd706a841eb\\exec-3df10978-e5b9-4a5b-834a-ad847a03415d.png",
       "revision": 2,
       "file": "19-course-directory-en-v2.png"
+    },
+    {
+      "id": "20-live-classroom-session",
+      "title": "مشغل البث الحي والورش التفاعلية",
+      "prd": [
+        "PRD §10.3",
+        "PRD §10.4",
+        "UX J05"
+      ],
+      "body": "Dedicated LEARNER live classroom and interactive workshop player. Horizontal learner shell, large live video stream with drawing canvas and instructor inset, red LIVE badge, elapsed timer 42:15, interactive live chat on the left side with student questions, session notes and downloadable exercise PDF below. Zero AI features on live broadcasts.",
+      "prompt": "UI mockup for Young Go LMS live classroom session. Dedicated learner shell with horizontal topbar, Young Go branding, course title 'أساسيات الرسم الرقمي - ورشة تفاعلية مباشرة', large live video player showing digital art sketch, instructor inset camera, red LIVE indicator, timer 42:15, left-side live chat panel with attendee questions and input box, workshop notes and agenda below with exercise-live-01.pdf download link. Zero AI assistant.",
+      "file": "20-live-classroom-session.png"
+    },
+    {
+      "id": "21-assignment-submission-feedback",
+      "title": "تسليم الواجبات الفنية وتصحيحها",
+      "prd": [
+        "PRD §11",
+        "UX J08"
+      ],
+      "body": "Dedicated LEARNER assignment submission and grading feedback page. Assignment brief for light and shadow drawing exercise, uploaded 3D shaded sphere artwork preview, file metadata, reflection note, rubric breakdown criteria (100 total points across 4 criteria), and instructor feedback review placeholder.",
+      "prompt": "UI mockup for Young Go LMS assignment submission and rubric evaluation. Learner header, title 'تسليم الواجب: تمرين رسم الإضاءة والظل', status 'تم التسليم - بانتظار التقييم', right column with assignment requirement, artwork preview (shaded 3D sphere sketch), file details, student comment, left column with 4-item rubric (معايير التقييم) totalling 100 points and instructor feedback card.",
+      "file": "21-assignment-submission-feedback.png"
+    },
+    {
+      "id": "22-certificate-verification",
+      "title": "استعراض الشهادة والتحقق منها",
+      "prd": [
+        "PRD §14",
+        "UX J12"
+      ],
+      "body": "Official certificate display and QR verification portal. High-fidelity certificate card on the right with golden-teal academy seal, student name, course details, completion date, and signatures. Verification sidebar on the left with verified badge, scannable QR code, license serial code, and PDF download action.",
+      "prompt": "UI mockup for Young Go LMS certificate view and instant QR verification. Elegant parchment certificate card with official Young Go seal, awarded to 'نور محمد سعيد' for Digital Drawing Basics, 18 accredited hours, instructor and platform director signatures. Left panel with green verified badge, QR code scanner card, serial YG-CERT-2026-8842, and download high-resolution PDF button.",
+      "file": "22-certificate-verification.png"
+    },
+    {
+      "id": "23-child-profile-management",
+      "title": "ربط وإدارة حسابات الأبناء",
+      "prd": [
+        "PRD §5.2",
+        "PRD §29.1",
+        "UX J03"
+      ],
+      "body": "Parent portal child account linking and management screen. Child account switcher, active child creative profile, privacy notice, parental safety permission toggles (live session access, progress notifications), and rapid 6-digit link code generator card for connecting new child accounts.",
+      "prompt": "UI mockup for Young Go LMS parent child management. Parent topbar navigation ('أبنائي' active), child switcher tabs ('أحمد' selected), profile card showing creative path, parental controls toggles, child privacy compliance note, course progress bars, left card for fast 6-digit linking code (YG-849-210) with copy button and instructions.",
+      "file": "23-child-profile-management.png"
+    },
+    {
+      "id": "24-help-thread-detail",
+      "title": "تفاصيل تذكرة الدعم وسؤال الدرس",
+      "prd": [
+        "PRD §16",
+        "UX J11"
+      ],
+      "body": "Dedicated lesson inquiry and teacher-student help thread screen. Shows specific lesson timestamp context (08:24), lesson PDF citation quote, student question with artwork sketch attachment, detailed pedagogical response from instructor Sara Ahmed, reply composer, inquiry ticket status, and direct return link to the lesson player.",
+      "prompt": "UI mockup for Young Go LMS help thread detail. Learner shell, header for 'استفسار درس: الضوء والظل', context chip for minute 08:24, lesson PDF excerpt, student question card with practice thumbnail, instructor Sara Ahmed reply bubble explaining manual blending techniques, composer box at bottom, sidebar ticket status #HELP-4082, and quick lesson launcher card.",
+      "file": "24-help-thread-detail.png"
+    },
+    {
+      "id": "25-admin-coupons-directory",
+      "title": "إدارة الكوبونات والخصومات",
+      "prd": [
+        "PRD §17.2",
+        "PRD §19.1"
+      ],
+      "body": "Staff administration coupons and promotions directory. Filament WorkspaceListRecords layout with 268px right sidebar (الكوبونات active), 3-cell metric summary strip, table with filter tabs and search, 5 coupon rows showing codes, discount types, usage counts, expiry dates, and semantic status badges, paired with left support cards for top-performing coupons and currency rules in EGP.",
+      "prompt": "UI mockup for Young Go LMS staff coupons directory. Full Filament admin shell with right sidebar, active 'الكوبونات' tab, 3-metric strip (Active coupons: 8, Total uses: 342, Total discount: 24,800 ج.م), table card with search and status filters, 5 rows of coupons (CREATIVE20, START2026, ARTIST15, WELCOME50, VOICE10) with prices in EGP, status badges, and left support metrics.",
+      "file": "25-admin-coupons-directory.png"
+    },
+    {
+      "id": "26-auth-login",
+      "title": "تسجيل الدخول والتحقق",
+      "prd": [
+        "PRD §5.1",
+        "PRD §20",
+        "UX J01"
+      ],
+      "body": "Dedicated authentication and login interface. Centered white card on pale cool grey canvas with delicate artistic watermark, Young Go brand wordmark, role toggle tabs (Learner/Parent vs Coach/Staff), phone/email and password inputs, 2FA security badge, deep teal primary action, and new parent account registration trigger.",
+      "prompt": "UI mockup for Young Go LMS authentication. Centered card layout on pale slate canvas, Young Go branding top, role tabs (طالب/ولي أمر vs مدرب/إدارة), email/phone and password fields with visibility toggle, 2FA security reassurance note, full-width deep teal login button, divider, registration action card, and Arabic/English language toggle.",
+      "file": "26-auth-login.png"
+    },
+    {
+      "id": "27-learner-schedule-calendar",
+      "title": "جدول الورش والمواعيد",
+      "prd": [
+        "PRD §10.1",
+        "UX J04"
+      ],
+      "body": "Learner weekly schedule and interactive workshop calendar. Dedicated learner horizontal header, Cairo timezone indicator (GMT+2), timeline event cards for upcoming live drawing workshop with countdown timer and join button, assignment submission deadline, and scheduled live voice coaching session, accompanied by attendance guidelines and weekly summary metrics.",
+      "prompt": "UI mockup for Young Go LMS learner schedule calendar. Learner header with 'الجدول' selected, week view filter, 3 timeline events (live workshop today with countdown 'تبدأ بعد 35 دقيقة' and join button, assignment deadline Thursday, vocal session Saturday), and left support cards for weekly summary and live participation instructions.",
+      "file": "27-learner-schedule-calendar.png"
+    },
+    {
+      "id": "28-instructor-submission-review",
+      "title": "تصحيح وتقييم الواجبات للمدرب",
+      "prd": [
+        "PRD §11",
+        "PRD §16",
+        "UX J08"
+      ],
+      "body": "Instructor assignment grading and evaluation workspace. Staff administration layout with right sidebar ('الواجبات' active), student metadata, high-resolution inspection viewport showing student's digital shaded sphere artwork with zoom controls, 4-criteria rubric grading form (total 95/100 ممتاز), instructor constructive feedback textarea, and grading submission actions.",
+      "prompt": "UI mockup for Young Go LMS instructor submission review. Staff shell with right sidebar, active 'الواجبات' tab, student Nour Mohamed assignment inspection card showing shaded 3D sphere artwork, left panel with 4-item rubric grading inputs (Light direction 25/25, Shading 22/25, Balance 23/25, Cleanliness 25/25), total score 95/100, instructor feedback box, and confirm grade button.",
+      "file": "28-instructor-submission-review.png"
     }
   ]
 }

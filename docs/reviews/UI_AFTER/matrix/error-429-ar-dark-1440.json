@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:15:48+00:00",
+    "screen": "error-429",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/_ui-review-error\/429",
+    "initial_path": "\/_ui-review-error\/429",
+    "metrics": {
+        "url": "\/_ui-review-error\/429",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "طلبات كثيرة"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

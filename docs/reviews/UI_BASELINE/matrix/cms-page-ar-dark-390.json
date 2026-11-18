@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:37+00:00",
+    "screen": "cms-page",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/pages\/ui-workshops",
+    "initial_path": "\/pages\/ui-workshops",
+    "metrics": {
+        "url": "\/pages\/ui-workshops",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "ورش إبداعية"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

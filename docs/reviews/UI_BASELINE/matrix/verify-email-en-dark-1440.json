@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:14+00:00",
+    "screen": "verify-email",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/email\/verify",
+    "initial_path": "\/email\/verify",
+    "metrics": {
+        "url": "\/email\/verify",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Check your email"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

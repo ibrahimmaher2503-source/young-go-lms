@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:09:11+00:00",
+    "screen": "gallery-tokens",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/_design\/tokens",
+    "initial_path": "\/_design\/tokens",
+    "metrics": {
+        "url": "\/_design\/tokens",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Brand tokens"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

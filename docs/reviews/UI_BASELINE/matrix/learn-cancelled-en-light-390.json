@@ -1,0 +1,23 @@
+{
+    "captured_at": "2026-11-17T19:01:00+00:00",
+    "screen": "learn-cancelled",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/learn\/1\/7",
+    "initial_path": "\/learn\/1\/7",
+    "metrics": {
+        "url": "\/learn\/1\/7",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Drawing and creative expression basics"
+        ],
+        "overflowing": []
+    },
+    "failures": {
+        "learn-cancelled-en-light-390:accessibility": "1 Accessibility issues found\r\n- [serious] Elements must meet minimum color contrast ratio thresholds https:\/\/dequeuniversity.com\/rules\/axe\/4.10\/color-contrast?application=axeAPI\r\n  Selector: .text-danger\r\n  HTML: <p class=\"font-semibold text-danger\" role=\"status\" data-live-cancelled=\"\">This session was cancelled.<\/p>\r\n  any:\r\n    - Element has insufficient color contrast of 1.23 (foreground color: #f3e4e2, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1\r\n  Related nodes:\r\n    Selector: section\r\n    HTML: <section class=\"space-y-4 rounded-card border border-border bg-surface p-5 shadow-card sm:p-8\" aria-label=\"Live session\" data-live-card=\"\" data-live-state=\"cancelled\" data-opens-at=\"2026-11-19T18:45:00+00:00\" data-ends-at=\"2026-11-19T20:00:00+00:00\" data-text-starts-in=\"You can join in\" data-text-joinable=\"The session is open. You can join now.\">\nFailed asserting that an array is empty. A screenshot of the page has been saved to [Tests\/Browser\/Screenshots\/it_captures_learning__locks_and_existing_live_states_in_the_complete_UI_matrix]."
+    }
+}

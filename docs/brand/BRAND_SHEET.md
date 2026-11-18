@@ -1,10 +1,10 @@
 # Young Go brand sheet
 
-**O-027 · Provisional · Pending owner sign-off**
+**D-027 · Approved for the Young Go public site on 2026-11-18**
 
-The legacy hostname is unconfirmed. The palette, typography and wordmark on
-the preview are provisional. Official artwork, colors, typefaces, licensing
-details, minimum logo dimensions and clear space remain UNKNOWN.
+The owner approved the existing preview palette, bundled typography and
+localized wordmark for the public site. The legacy hostname and original
+legacy artwork, typefaces and usage rules remain UNKNOWN.
 
 | Role | Proposed value |
 |---|---|

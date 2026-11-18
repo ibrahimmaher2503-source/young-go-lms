@@ -542,6 +542,239 @@
       "width": 1568,
       "height": 1003,
       "sha256": "952f31bb852cf8025ef19ca70f3736e627b8da38eb6d07d9d9424e1024c7514a"
+    },
+    {
+      "id": "20-live-classroom-session",
+      "title": "مشغل البث الحي والورش التفاعلية",
+      "file": "20-live-classroom-session.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.3",
+        "PRD §10.4",
+        "UX J05"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C06",
+        "C13",
+        "C16",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "7eec577fc47c6b766463814943030b017b62ab83a1fe0e8f7453092834ec114f"
+    },
+    {
+      "id": "21-assignment-submission-feedback",
+      "title": "تسليم الواجبات الفنية وتصحيحها",
+      "file": "21-assignment-submission-feedback.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §11",
+        "UX J08"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C11",
+        "C13",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "942f564cba07404063bbc19bb8d37c68b90841f7ed7f381d11032916e80e8748"
+    },
+    {
+      "id": "22-certificate-verification",
+      "title": "استعراض الشهادة والتحقق منها",
+      "file": "22-certificate-verification.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §14",
+        "UX J12"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "0c1afbc22fca05f4c62baef44bc77ba89e5a2e55fe930780d544bf9c708d3a45"
+    },
+    {
+      "id": "23-child-profile-management",
+      "title": "ربط وإدارة حسابات الأبناء",
+      "file": "23-child-profile-management.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §5.2",
+        "PRD §29.1",
+        "UX J03"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C11",
+        "C13",
+        "C22",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "f90f37b96ab992edca73c21e806be37bff69de314dcd64b0f8b1deef0201b4eb"
+    },
+    {
+      "id": "24-help-thread-detail",
+      "title": "تفاصيل تذكرة الدعم وسؤال الدرس",
+      "file": "24-help-thread-detail.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §16",
+        "UX J11"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C11",
+        "C14",
+        "C18",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "30dd2f9bd97cee8bfe02ddc955ea006ad6dcdfd4308fc9cd176d9bb9c5d2221e"
+    },
+    {
+      "id": "25-admin-coupons-directory",
+      "title": "إدارة الكوبونات والخصومات",
+      "file": "25-admin-coupons-directory.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §17.2",
+        "PRD §19.1"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "baed92168637d4d8276dd09a93015405223c4a43475e2c81219c7124f95878bd"
+    },
+    {
+      "id": "26-auth-login",
+      "title": "تسجيل الدخول والتحقق",
+      "file": "26-auth-login.png",
+      "family": "public",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §5.1",
+        "PRD §20",
+        "UX J01"
+      ],
+      "components": [
+        "C01",
+        "C06",
+        "C11",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "c0be7f593df104451a3e8151c71a5fd71f2cac18b27a1aa44bc6382c03d7e46d"
+    },
+    {
+      "id": "27-learner-schedule-calendar",
+      "title": "جدول الورش والمواعيد",
+      "file": "27-learner-schedule-calendar.png",
+      "family": "learner",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §10.1",
+        "UX J04"
+      ],
+      "components": [
+        "C01",
+        "C03",
+        "C04",
+        "C06",
+        "C10",
+        "C12",
+        "C13",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "1d6ad39ad7ec2bb6219c205b6210aba77a38a37c033fa1aa3999460fef76ecd9"
+    },
+    {
+      "id": "28-instructor-submission-review",
+      "title": "تصحيح وتقييم الواجبات للمدرب",
+      "file": "28-instructor-submission-review.png",
+      "family": "staff",
+      "locale": "ar",
+      "direction": "rtl",
+      "status": "derived-visual-reference-not-implementation",
+      "prd": [
+        "PRD §11",
+        "PRD §16",
+        "UX J08"
+      ],
+      "components": [
+        "C01",
+        "C02",
+        "C04",
+        "C06",
+        "C10",
+        "C11",
+        "C18",
+        "C23"
+      ],
+      "width": 1376,
+      "height": 768,
+      "sha256": "7610038ea41b99269af2bf6ab00bb316013f610479cb913d03b91bb8c547376e"
     }
   ]
 }

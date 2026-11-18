@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:27+00:00",
+    "screen": "admin-cohorts",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/admin\/courses\/1\/cohorts",
+    "initial_path": "\/admin\/courses\/1\/cohorts",
+    "metrics": {
+        "url": "\/admin\/courses\/1\/cohorts",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "الدفعات"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

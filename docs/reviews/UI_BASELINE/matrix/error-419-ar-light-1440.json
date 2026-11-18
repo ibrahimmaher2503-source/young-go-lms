@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:03:47+00:00",
+    "screen": "error-419",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/_ui-review-error\/419",
+    "initial_path": "\/_ui-review-error\/419",
+    "metrics": {
+        "url": "\/_ui-review-error\/419",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "انتهت صلاحية جلستك"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

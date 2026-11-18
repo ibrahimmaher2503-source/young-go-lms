@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:44+00:00",
+    "screen": "instructor-library-populated",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/instructor\/library",
+    "initial_path": "\/instructor\/library",
+    "metrics": {
+        "url": "\/instructor\/library",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "مكتبة المحتوى"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

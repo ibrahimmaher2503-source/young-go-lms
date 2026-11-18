@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:32:08+00:00",
+    "screen": "instructor-wizard-create",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/create",
+    "initial_path": "\/instructor\/courses\/create",
+    "metrics": {
+        "url": "\/instructor\/courses\/create",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "You do not have access"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

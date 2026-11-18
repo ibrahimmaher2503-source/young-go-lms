@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T18:59:39+00:00",
+    "screen": "login",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/login",
+    "initial_path": "\/login",
+    "metrics": {
+        "url": "\/login",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Welcome back"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

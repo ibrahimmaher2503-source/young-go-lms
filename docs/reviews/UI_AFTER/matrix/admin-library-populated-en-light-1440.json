@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:15:01+00:00",
+    "screen": "admin-library-populated",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/admin\/library",
+    "initial_path": "\/admin\/library",
+    "metrics": {
+        "url": "\/admin\/library",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Content Library"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

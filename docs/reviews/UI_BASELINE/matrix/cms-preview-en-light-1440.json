@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:57+00:00",
+    "screen": "cms-preview",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/admin\/cms-preview\/1",
+    "initial_path": "\/admin\/cms-preview\/1",
+    "metrics": {
+        "url": "\/admin\/cms-preview\/1",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "You do not have access"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

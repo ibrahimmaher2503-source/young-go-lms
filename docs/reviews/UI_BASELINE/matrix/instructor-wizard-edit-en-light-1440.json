@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:36+00:00",
+    "screen": "instructor-wizard-edit",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/instructor\/courses\/1\/edit",
+    "initial_path": "\/instructor\/courses\/1\/edit",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/edit",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Edit Drawing and creative expression basics"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

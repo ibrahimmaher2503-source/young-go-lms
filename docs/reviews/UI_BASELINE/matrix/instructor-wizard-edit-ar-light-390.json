@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:07:45+00:00",
+    "screen": "instructor-wizard-edit",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/instructor\/courses\/1\/edit",
+    "initial_path": "\/instructor\/courses\/1\/edit",
+    "metrics": {
+        "url": "\/instructor\/courses\/1\/edit",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "تعديل أساسيات الرسم والتعبير الإبداعي"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

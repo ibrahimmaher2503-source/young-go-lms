@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:02+00:00",
+    "screen": "dashboard",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/my",
+    "initial_path": "\/my",
+    "metrics": {
+        "url": "\/my",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "أهلًا سارة، جاهز نكمل؟"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

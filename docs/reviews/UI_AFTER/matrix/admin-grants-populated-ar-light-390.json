@@ -1,0 +1,97 @@
+{
+    "captured_at": "2026-11-17T19:32:16+00:00",
+    "screen": "admin-grants-populated",
+    "locale": "ar",
+    "theme": "light",
+    "expected_path": "\/admin\/manual-grants",
+    "initial_path": "\/admin\/manual-grants",
+    "metrics": {
+        "url": "\/admin\/manual-grants",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "المنح اليدوية"
+        ],
+        "overflowing": [
+            {
+                "tag": "TABLE",
+                "classes": "fi-ta-table",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "THEAD",
+                "classes": "",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "TR",
+                "classes": "",
+                "text": "المتعلم\n                                                                        "
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-course.title",
+                "text": "الدورة"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-source-type",
+                "text": "المصدر"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-status",
+                "text": "الحالة"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-starts-at",
+                "text": "البداية"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-ends-at",
+                "text": "النهاية"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-header-cell fi-ta-header-cell-reason",
+                "text": "السبب"
+            },
+            {
+                "tag": "TH",
+                "classes": "fi-ta-actions-header-cell fi-ta-empty-header-cell",
+                "text": ""
+            },
+            {
+                "tag": "TBODY",
+                "classes": "fi-ta-records",
+                "text": "سارة عبد الرحمن\n                                                        \n       "
+            },
+            {
+                "tag": "TR",
+                "classes": "fi-ta-row",
+                "text": "سارة عبد الرحمن\n                                                        \n       "
+            },
+            {
+                "tag": "TD",
+                "classes": "fi-ta-cell fi-ta-cell-course.title",
+                "text": "أساسيات الرسم والتعبير الإبداعي"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-col",
+                "text": "أساسيات الرسم والتعبير الإبداعي"
+            },
+            {
+                "tag": "DIV",
+                "classes": "fi-ta-text fi-ta-text-item fi-size-sm",
+                "text": "أساسيات الرسم والتعبير الإبداعي"
+            }
+        ]
+    },
+    "failures": []
+}

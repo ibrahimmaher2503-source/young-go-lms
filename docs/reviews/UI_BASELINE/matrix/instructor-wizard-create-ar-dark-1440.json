@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:08:41+00:00",
+    "screen": "instructor-wizard-create",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/instructor\/courses\/create",
+    "initial_path": "\/instructor\/courses\/create",
+    "metrics": {
+        "url": "\/instructor\/courses\/create",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "لا تملك صلاحية الوصول"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

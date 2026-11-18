@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:30:19+00:00",
+    "screen": "learn-upcoming",
+    "locale": "ar",
+    "theme": "dark",
+    "expected_path": "\/learn\/1\/5",
+    "initial_path": "\/learn\/1\/5",
+    "metrics": {
+        "url": "\/learn\/1\/5",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "أساسيات الرسم والتعبير الإبداعي"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:29:23+00:00",
+    "screen": "two-factor-setup",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/security\/two-factor",
+    "initial_path": "\/security\/two-factor",
+    "metrics": {
+        "url": "\/security\/two-factor",
+        "viewport": {
+            "width": 390,
+            "height": 844
+        },
+        "width": 390,
+        "headings": [
+            "Two-factor authentication"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

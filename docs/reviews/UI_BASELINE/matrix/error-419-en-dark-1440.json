@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:04:06+00:00",
+    "screen": "error-419",
+    "locale": "en",
+    "theme": "dark",
+    "expected_path": "\/_ui-review-error\/419",
+    "initial_path": "\/_ui-review-error\/419",
+    "metrics": {
+        "url": "\/_ui-review-error\/419",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Your session expired"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}

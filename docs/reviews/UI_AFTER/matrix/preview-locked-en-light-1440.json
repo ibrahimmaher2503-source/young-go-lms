@@ -1,0 +1,21 @@
+{
+    "captured_at": "2026-11-17T19:15:18+00:00",
+    "screen": "preview-locked",
+    "locale": "en",
+    "theme": "light",
+    "expected_path": "\/preview\/1\/3",
+    "initial_path": "\/preview\/1\/3",
+    "metrics": {
+        "url": "\/preview\/1\/3",
+        "viewport": {
+            "width": 1440,
+            "height": 900
+        },
+        "width": 1440,
+        "headings": [
+            "Drawing and creative expression basics"
+        ],
+        "overflowing": []
+    },
+    "failures": []
+}
