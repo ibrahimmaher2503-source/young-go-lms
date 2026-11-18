@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Seo\Queries;
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Catalog\Queries\PublicCategory;
+use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Domain\Seo\PublicUrl;
 use App\Models\BlogPost;
 use App\Models\CmsPage;
@@ -14,7 +16,7 @@ use Generator;
 /**
  * Every public, indexable page and its language versions. Only approved public content is listed: published courses and
  * published CMS pages plus the home page. Drafts, private, suspended, archived or upcoming courses, learner and staff areas never
- * appear. The catalog listing is noindex, so it is not listed. The blog index and live blog posts (not draft, publish time reached) are listed; categories join with T-P2-09.
+ * appear. The catalog listing is noindex, so it is not listed. The blog index and live blog posts (not draft, publish time reached) are listed; active categories with a published course and public (approved) instructor profiles are listed too (T-P2-09).
  */
 final class SitemapEntries
 {
@@ -53,6 +55,22 @@ final class SitemapEntries
             if ($urls !== []) {
                 yield ['lastmod' => $post->updated_at?->toAtomString(), 'urls' => $urls];
             }
+        }
+
+        foreach ((new PublicCategory)->listed() as $category) {
+            $urls = [];
+            foreach (PublicUrl::locales() as $locale) {
+                $urls[$locale] = PublicUrl::category($category, $locale);
+            }
+            yield ['lastmod' => $category->updated_at?->toAtomString(), 'urls' => $urls];
+        }
+
+        foreach ((new PublicInstructors)->query()->orderBy('instructor_profiles.id')->cursor() as $profile) {
+            $urls = [];
+            foreach (PublicUrl::locales() as $locale) {
+                $urls[$locale] = PublicUrl::instructor($profile, $locale);
+            }
+            yield ['lastmod' => $profile->updated_at?->toAtomString(), 'urls' => $urls];
         }
     }
 }

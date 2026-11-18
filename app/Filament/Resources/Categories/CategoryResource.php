@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Categories;
 
 use App\Domain\Shared\Search\ArabicNormalizer;
 use App\Filament\Resources\Categories\Pages\ListCategories;
+use App\Filament\Shared\Forms\SeoFieldsGroup;
 use App\Filament\Shared\Forms\TranslatableTabs;
 use App\Models\Category;
 use Filament\Actions\EditAction;
@@ -78,7 +79,8 @@ final class CategoryResource extends Resource
             TextInput::make('icon')->label(__('categories.icon'))->maxLength(255),
             FileUpload::make('image')->label(__('categories.image'))->disk('public')->directory('categories')
                 ->visibility('public')->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                ->maxSize(4096)->preventFilePathTampering(),
+                ->maxSize(4096)->storeFiles(false)->preventFilePathTampering(),
+            SeoFieldsGroup::make(canonical: false)->columnSpanFull(),
         ]);
     }
 
@@ -111,6 +113,9 @@ final class CategoryResource extends Resource
                         ...$data,
                         'name' => $record->getTranslations('name'),
                         'description' => $record->getTranslations('description'),
+                        'seo_title' => $record->getTranslations('seo_title'),
+                        'seo_description' => $record->getTranslations('seo_description'),
+                        'seo_keywords' => $record->getTranslations('seo_keywords'),
                     ])
                     ->using(static fn (ListCategories $livewire, Category $record, array $data): Category => $livewire->saveCategory($data, $record)),
             ]);

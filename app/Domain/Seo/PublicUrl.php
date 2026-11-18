@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\Seo;
 
+use App\Domain\Catalog\Queries\PublicCategory;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Content\Queries\PublicBlog;
+use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Models\BlogPost;
+use App\Models\Category;
 use App\Models\CmsPage;
 use App\Models\Course;
+use App\Models\InstructorProfile;
 use Illuminate\Support\Facades\Config;
 
 /** The one place that builds locale-prefixed public URLs (ED-018): /ar/..., /en/... Used by meta, hreflang and the sitemap. */
@@ -55,6 +59,16 @@ final class PublicUrl
         return url('/'.$locale.'/blog/'.rawurlencode(PublicBlog::keyFor($post, $locale)));
     }
 
+    public static function category(Category $category, string $locale): string
+    {
+        return url('/'.$locale.'/categories/'.rawurlencode(PublicCategory::keyFor($category, $locale)));
+    }
+
+    public static function instructor(InstructorProfile $profile, string $locale): string
+    {
+        return url('/'.$locale.'/instructors/'.rawurlencode(PublicInstructors::keyFor($profile, $locale)));
+    }
+
     /**
      * Locales in which the model has its own (non-fallback) title, so hreflang never points at a copy of another language.
      *
@@ -62,9 +76,19 @@ final class PublicUrl
      */
     public static function localesWithTitle(BlogPost|CmsPage|Course $model): array
     {
+        return self::localesWith($model, 'title');
+    }
+
+    /**
+     * Locales in which the model has its own (non-fallback) value for a translatable field.
+     *
+     * @return list<string>
+     */
+    public static function localesWith(BlogPost|Category|CmsPage|Course|InstructorProfile $model, string $field): array
+    {
         return array_values(array_filter(
             self::locales(),
-            static fn (string $locale): bool => filled($model->getTranslation('title', $locale, false)),
+            static fn (string $locale): bool => filled($model->getTranslation($field, $locale, false)),
         ));
     }
 

@@ -1,7 +1,7 @@
 <x-layouts.base :title="__('catalog.title')" variant="public">
     <div class="space-y-6">
         <h1 class="text-3xl font-bold">{{ __('catalog.title') }}</h1>
-        <form method="get" action="{{ route('catalog.index') }}" class="flex flex-wrap items-end gap-3" role="search">
+        <form id="catalog-filters" method="get" action="{{ route('catalog.index') }}" class="flex flex-wrap items-end gap-3" role="search">
             @foreach($filters as $name => $value)
                 @if($name !== 'q')<input type="hidden" name="{{ $name }}" value="{{ $value }}">@endif
             @endforeach
@@ -34,7 +34,7 @@
                 @else
                     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach($courses as $course)
-                            <x-learning.course-card :course="$course"><x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" data-course-link>{{ __('catalog.view_course') }}</x-ui.link></x-learning.course-card>
+                            <x-learning.course-card :course="$course" :wishlist="true"><x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" data-course-link>{{ __('catalog.view_course') }}</x-ui.link></x-learning.course-card>
                         @endforeach
                     </div>
                     @if($courses->hasPages())<x-ui.pagination :paginator="$courses"/>@endif

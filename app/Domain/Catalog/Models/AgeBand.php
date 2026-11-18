@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
-/** @property array<string, string>|string $label */
-#[Fillable(['label', 'min', 'max', 'sort'])]
+/**
+ * @property array<string, string>|string $label
+ * @property string|null $style_tier
+ */
+#[Fillable(['label', 'min', 'max', 'sort', 'style_tier'])]
 class AgeBand extends Model
 {
     use HasTranslations;

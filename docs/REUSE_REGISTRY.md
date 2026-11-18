@@ -17,6 +17,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | CatalogQuery | `app/Domain/Catalog/Queries/CatalogQuery.php` | Public-only course scope, normalized text search and combinable catalog filters | built | T-P2-04 |
 | PublishCourse / FeatureCourse | `app/Domain/Catalog/Actions/` | Explicit course status and featured mutations with execution-time policy checks | built | T-P3-01 |
 | CmsPage / HomepageBlock / SaveCmsContent | `app/Models/CmsPage.php`, `app/Models/HomepageBlock.php`, `app/Domain/Content/Actions/SaveCmsContent.php` | Bilingual pages and ordered homepage blocks with permission-gated editor writes | built | T-P2-02 |
+| PublicSitePages | `app/Domain/Content/Queries/PublicSitePages.php` | Published CMS pages for public navigation and footer links | built | T-P2-03 |
 | Money / PriceFormatter | `app/Domain/Shared/Money/` | Integer-minor money + locale formatting | built | T-P0-06 |
 | Market / MarketResolver | `app/Domain/Shared/Markets/` | EG active / SA disabled | built | T-P0-06 |
 | CreateOrder / TransitionOrder / AdjustOrderTotal / Order / OrderItem / CoursePrice | `app/Domain/Commerce/` | Server-priced orders, state machine, audited post-paid adjustment, per-market course prices | built | T-P8-01 |
@@ -26,12 +27,8 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | AgeRange / AgeRangeRule | `app/Domain/Catalog/AgeRange.php`, `app/Domain/Catalog/Rules/AgeRangeRule.php` | Inclusive, nullable age bounds and validation for course and band ranges | built | T-P1-07 |
 | RBAC catalog and BasePolicy | `config/permissions.php`, `app/Policies/BasePolicy.php` | Initial role defaults and reusable policy permission check | built | T-P1-03 |
 | AuditLogger | `app/Domain/Audit/AuditLogger.php` | Audit sensitive actions | built | T-P1-04 |
-| EntitlementService | `app/Domain/Entitlements/EntitlementService.php` | Single access decision | planned | T-P4-01 |
-| PrivateFileController + SignedFileUrl | `app/Domain/Media/` | Authorized private downloads | planned | T-P3-08 |
-| LocalizedNotification | `app/Domain/Notifications/` | Base notification with dedupe | planned | T-P5-04 |
 | ManualPaymentProof / SubmitManualPaymentProof / ApproveManualPaymentProof / RejectManualPaymentProof / GrantOrderEntitlements / ManualPaymentProofFiles / ManualPaymentProofAccess / ManualPaymentQueue + ManualPaymentProofResource + ManualPaymentProofController | `app/Domain/Commerce/`, `app/Filament/Resources/ManualPayments/`, `app/Http/Controllers/` | Instapay/manual transfer proofs: private content-validated file, unique reference, finance approve/reject (ApproveRejectAction), order paid via TransitionOrder, manual_payment entitlements (GrantOrderEntitlements is reusable by T-P8-03 with source purchase) | built | T-P8-04 |
-| PaymentGateway (contract) | `app/Domain/Commerce/Contracts/` | Gateway abstraction | planned | T-P8-02 |
-| AiProviderInterface + FakeAiProvider | `app/Domain/AI/Contracts/` | AI abstraction | planned | T-P3-10 |
+| PaymentGateway (contract) + FakePaymentGateway / NullPaymentGateway / PaymobGateway / PaymobCredentials / PaymentGatewayResolver / SecretRedactor / CheckoutIntent / CheckoutSession / VerifiedPaymentEvent / PaymentAttempt / StartCheckout / EnabledPaymentMethods / CheckoutReturnStatus | `app/Domain/Commerce/Contracts/`, `app/Domain/Commerce/Payments/`, `app/Domain/Commerce/` | Gateway abstraction: idempotent server-priced checkout, config method list, Paymob adapter inert until credentials (B-07), Fake local/testing, Null otherwise; `verifyCallback` ready for T-P8-03 | built (blocked for real use by B-07) | T-P8-02 |
 | Feature flags + EnableGatedFlag | `app/Domain/Settings/` | Pennant flags with approval reference | built | T-P0-07 |
 | app:check-translations / app:check-rtl | `app/Console/Commands/` | AR/EN key parity and logical direction utility enforcement | built | T-P0-03 |
 | PhoneNumbers | `app/Domain/Shared/Phone/PhoneNumbers.php` | EG/SA phone validation, E.164 storage format, national display | built | T-P0-07 |
@@ -45,11 +42,11 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | LearnerNotificationRouter + GuardianCopyNotification | `app/Domain/Notifications/` | Every learner notification goes through here; email-less child -> in-app plus guardian email copies | built | T-P1-11 |
 | ErrorReporter | `app/Domain/Shared/Observability/` | Local exception reporting adapter | built | T-P0-07 |
 | app:doctor / app:req-coverage | `app/Console/Commands/` | Health check / requirement coverage (G10, G11) | built | T-P0-07 |
-| AccessDecision + canAccessItem() | `app/Domain/Entitlements/` | Layered access with reason codes | planned | T-P4-09 |
 | ReserveCohortSeat / JoinWaitlist / PromoteFromWaitlist | `app/Domain/Cohorts/Actions/` | Seat, waitlist and promotion hooks for checkout and manual grants | built | T-P5-01 |
 | MeetingProvider (Manual driver) + LiveSessionTime | `app/Domain/Live/` | Meeting link validation and viewer-timezone display for live sessions | built | T-P5-02 |
 | GetJoinLink / JoinWindow / UpcomingSessions | `app/Domain/Live/` | Protected meeting link, join window and learner schedule | built | T-P5-03 |
 | LocalizedNotification + NotificationDispatcher | `app/Domain/Notifications/` | Localized, deduplicated notifications for every module (live notices, later help requests) | built | T-P5-04 |
+| NotificationChannel + phone reminder actions | `app/Domain/Notifications/` | Optional WhatsApp/SMS reminder contract, per-channel consent tied to the current E.164 number, and local fake driver. Reuse `SetPhoneReminderOptIn` when wiring notification settings. | built (fake) | T-P9-04 |
 | StartQuizAttempt / SubmitQuizAttempt / QuizAttemptView / QuizGuard | `app/Domain/Assessment/` | Quiz attempts, grading, result visibility and the assistant quiz-guard hook | built | T-P6-02 |
 | SaveSubmissionDraft / SubmitAssignment / SubmissionView / SubmissionRevisions / SubmissionFileAccess | `app/Domain/Assignments/` | Learner assignment work: drafts, submit, late policy, revisions; the one rule for who may open a submission file (reviewer side reuses `SubmissionFileAccess` and `SubmissionRevisions`) | built | T-P6-03 |
 | AssignmentSubmissionController (save, submit, file download, brief attachment) | `app/Http/Controllers/AssignmentSubmissionController.php` | Learner assignment HTTP; owner/parent/staff-only streaming of private submission files, never the storage path | built | T-P6-03 |
@@ -58,10 +55,6 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | GradeEssayAnswer / QuizScoring / EssayReviewedNotice | `app/Domain/Assessment/` | Essay answer grading; QuizScoring is the one place that recomputes attempt score, percent, pass state and needs_review (submit and review share it) | built | T-P6-04 |
 | SubmissionReviewResource / EssayReviewResource | `app/Filament/Resources/SubmissionReview/`, `app/Filament/Resources/EssayReview/`, `resources/views/filament/review/` | Instructor and admin review queues (course, status, overdue filters) and review pages on the shared workspace shell, scoped to reviewable courses | built | T-P6-04 |
 | learning.feedback-thread | `resources/views/components/learning/feedback-thread.blade.php` | Learner-side reviewer feedback thread | built | T-P6-04 |
-| RecordProgress | `app/Domain/Learning/Actions/` | Only writer of progress | planned | T-P4-04 |
-| HtmlSanitizer | `app/Domain/Shared/Security/` | Single sanitizer (rich text, messages) | planned | T-P3-15 |
-| ImageReencoder | `app/Domain/Media/` | Strip EXIF/GPS on upload | planned | T-P3-08 |
-| AssistantEligibility | `app/Domain/AI/` | AI availability decision | planned | T-P3-10 |
 
 ## Filament shared
 
@@ -74,7 +67,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | PublicCourseDetail + CourseSeo + EntitlementService::canPreviewPublicly | `app/Domain/Catalog/Queries/PublicCourseDetail.php`, `app/Domain/Catalog/CourseSeo.php`, `app/Domain/Entitlements/EntitlementService.php` | Published-only course lookup by slug/id, public curriculum preview, meta/OG/Course JSON-LD, guest free-preview decision | built | T-P2-05 |
 | PublicUrl, PageSeo, BuildSitemap, SitemapEntries, ResolveRedirect, x-seo.head, SeoServiceProvider, Robots/Sitemap/LegacyRedirect controllers, routes/seo.php, config/seo.php | `app/Domain/Seo/`, `resources/views/components/seo/head.blade.php`, `app/Http/Controllers/`, `routes/seo.php` | Locale-prefixed public URLs, meta/canonical/hreflang/OG/JSON-LD for public pages, cached sitemap.xml, dynamic robots.txt, legacy redirect table | built | T-P2-06 |
 | SeoFieldsGroup | `app/Filament/Shared/Forms/SeoFieldsGroup.php` | Bilingual SEO title/description/keywords + canonical Filament section (wizard SEO step T-P3-03) | built | T-P2-05 |
-| SaveCourseWizard + CourseWizardSteps | `app/Domain/Catalog/Actions/SaveCourseWizard.php`, `app/Filament/Resources/Courses/Schemas/CourseWizardSteps.php`, `app/Filament/Resources/Courses/Pages/{CreateCourse,EditCourse}.php` | Course wizard steps 1-2, save/resume, field-level permissions (steps 3-7 extend it in T-P3-03) | built | T-P3-02 |
+| SaveCourseWizard + CourseWizardSteps | `app/Domain/Catalog/Actions/SaveCourseWizard.php`, `app/Filament/Resources/Courses/Schemas/CourseWizardSteps.php`, `app/Filament/Resources/Courses/Pages/{CreateCourse,EditCourse}.php` | Basic, Information and Pricing with save/resume and field-level permissions. Pricing reuses CoursePrice and Market for per-market amounts. | built through pricing amounts | T-P3-02, T-P3-03 |
 | CurriculumOutline + curriculum Actions | `app/Domain/Curriculum/` | Section/lesson management, atomic reorder, bulk status, one ordered query for authors and students | built | T-P3-04 |
 | MediaProviders + VideoDeliveryProvider drivers, AttachLessonMedia, GrantMediaException, LessonPublishRule | `app/Domain/Media/` | Provider-neutral lesson media, protection tiers, paid-lesson T3 rule | built | T-P3-05 |
 | AiProviderInterface, FakeAiProvider, NullAiProvider, PromptRenderer, AssistantEligibility | `app/Domain/AI/` | Provider-neutral assistant core: fake for tests, eligibility per AI spec §2 | built | T-P3-10 |
@@ -82,20 +75,19 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ManageAssessmentItems, Quiz, Assignment shells, CurriculumOutline::ITEM_TYPES | `app/Domain/Curriculum/`, `app/Models/` | Quizzes/assignments as curriculum items | built | T-P3-11 |
 | SubtitleTrack, VttValidator, ManageSubtitleTracks, LessonPlayback viewer tracks | `app/Domain/Media/` | AR/EN captions for lessons | built | T-P3-14 |
 | UploadLessonMedia + ImageReencoder | `app/Domain/Media/Actions/UploadLessonMedia.php`, `app/Domain/Media/ImageReencoder.php` | Safe private uploads: content-based type check, random names, EXIF stripping | built | T-P3-06 |
-| SignedFileUrl + PrivateFileAccess + PrivateFileController, LessonAccessChecker | `app/Domain/Media/`, `app/Domain/Entitlements/`, `app/Http/Controllers/PrivateFileController.php` | Signed, account-bound private downloads; entitlement stub that fails closed | built | T-P3-08 |
+| SignedFileUrl + PrivateFileAccess + PrivateFileController + MediaPlaybackController, LessonAccessChecker | `app/Domain/Media/`, `app/Domain/Entitlements/`, `app/Http/Controllers/` | Account/child-bound downloads and protected playback; current access rechecked through EntitlementService | built | T-P3-05, T-P3-08, T-P4-01 |
 | UploadCurriculumDocument + ApproveCurriculumDocument + PdfInspector + ManageLessonResources | `app/Domain/Media/Actions/`, `app/Domain/Media/PdfInspector.php` | Versioned curriculum PDF (AI source foundation) and lesson materials | built | T-P3-08 |
 | LocalizedDateColumn | `app/Filament/Shared/Tables/` | Date in user tz | built | T-P1-08 |
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |
-| SeoFieldsGroup | `app/Filament/Shared/Forms/` | Bilingual SEO fields | planned | T-P2-05 |
 | WorkspaceListRecords | `app/Filament/Shared/Pages/WorkspaceListRecords.php` | Native ListRecords shell with optional summary strip and Section/View schema sidebar; resource keeps ownership of the table | built | T-P1-08 |
-| EntitlementService, AccessDecision, GrantEntitlement, RevokeEntitlement, ExpireEntitlements | `app/Domain/Entitlements/` | The single learner-access authority | built | T-P4-01 |
+| EntitlementService, AccessDecision, GrantEntitlement, RevokeEntitlement, ExpireEntitlements | `app/Domain/Entitlements/` | The single learner-access authority, including the layered canAccessItem decision and reason codes | built | T-P4-01, T-P4-09 |
 | EnrollInFreeCourse, CourseAccessSummary, ManualGrantResource | `app/Domain/Entitlements/` | Free enrollment, manual grants, access summary | built | T-P4-02 |
-| EntitledCurriculumQuery, LearnController, learning.lesson-media / curriculum-list, player.js | `app/Domain/Curriculum/Queries/`, `resources/views/learn/`, `resources/js/` | Course player and learner curriculum | built | T-P4-03 |
+| EntitledCurriculumQuery, LearnController, learning.lesson-media / curriculum-list, player.js | `app/Domain/Curriculum/Queries/`, `app/Http/Controllers/LearnController.php`, `resources/views/learn/show.blade.php`, `resources/views/components/learning/`, `resources/js/player.js` | Course player and learner curriculum | built | T-P4-03 |
 | RecordProgress, RecalculateCourseProgress, ContinueLearning, LessonProgress, CourseProgress | `app/Domain/Progress/` | Server-authoritative lesson/course progress and resume | built | T-P4-04 |
 | layouts.learner, learner.course-row/course-thumb, LearnerCourses, LearnerHomeController | `resources/views/components/`, `app/Domain/Entitlements/` | Learner shell, dashboard and my courses | built | T-P4-05 |
 | RichContent, x-learning.rich-content, lessons.content | `app/Domain/Content/`, `resources/views/components/learning/` | Safe rich lesson content (single sanitizer) | built | T-P3-15 |
 | DuplicateCourse, ArchiveCourse, DeleteCourse, CourseHistoryChecker (tag course.history) | `app/Domain/Catalog/` | Course lifecycle with history guard | built | T-P3-12 |
-| LibraryAccess, AddLibraryItem, AttachLibraryItem, DeleteLibraryItem, LibraryResource | `app/Domain/Library/`, `app/Filament/Resources/Library/` | Reusable content library attached by reference | built | T-P3-13 |
+| LibraryAccess, AddLibraryItem, AttachLibraryItem, DeleteLibraryItem, LibraryResource | `app/Domain/Library/`, `app/Filament/Resources/Library/` | Reusable content library attached by reference through the course curriculum page | built | T-P3-13 |
 | ParentDashboardController, LearnerCourseRows | `app/Http/Controllers/`, `app/Domain/Progress/Queries/` | Parent overview per linked child; shared course rows | built | T-P4-08 |
 | SessionLimiter, EnforceSessionLimits, ResetUserDevices, LearnerDeviceResource, Watermark | `app/Domain/Identity/`, `app/Http/Middleware/`, `app/Filament/Resources/LearnerDevices/` | Session/device limits and playback watermark | built | T-P4-07 |
 | Workspace table scroll region | `resources/views/filament/shared/table-scroll-hint.blade.php` | Labels overflowing table wrappers and makes them reachable by keyboard, including empty tables | built | T-P2-02 |
@@ -110,12 +102,6 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | ui primitives (button, input, card, modal, ...) | `resources/views/components/ui/` | built | T-P1-09 |
 | layouts (public, student, parent, auth) | `resources/views/components/layouts/base.blade.php` (one shell, `variant` prop) | built | T-P1-10 |
 | course-card | `resources/views/components/learning/course-card.blade.php` | built | T-P2-04 |
-| curriculum-list | `resources/views/components/learning/curriculum-list.blade.php` | planned | T-P4-03 |
-| lesson-player | `app/Livewire/Player/LessonPlayer.php` | planned | T-P4-03 |
-| ai-assistant-panel | `app/Livewire/Player/AiAssistantPanel.php` | planned | T-P7-03 |
-| rich-content renderer | `resources/views/components/learning/rich-content.blade.php` | planned | T-P3-15 |
-| library-picker | `app/Filament/Shared/Forms/LibraryPicker.php` | planned | T-P3-13 |
-| locked-state | `resources/views/components/learning/locked-state.blade.php` | planned | T-P4-09 |
 | child-context-strip | inline in `resources/views/components/layouts/base.blade.php` (`data-child-context`) | built | T-P1-10 |
 | error pages | `resources/views/errors/` (403, 404, 419, 429, 500, 503) | built | T-P1-10 |
 
@@ -189,3 +175,6 @@ The20selectedimages and their source/PRD/shared-component mapping are indexed at
 | BlogSeo + `PublicUrl::blog/blogPost` | `app/Domain/Seo/BlogSeo.php`, `PublicUrl.php`, `SitemapEntries.php` | Blog index (Blog JSON-LD, filtered/paged view noindex), article (Article + BreadcrumbList, og:article, hreflang); blog index and live posts in the sitemap; hourly sitemap cache drop so scheduled posts appear | built | T-P2-07 |
 | BlogController + `blog/*` views | `app/Http/Controllers/BlogController.php`, `resources/views/blog/` | Public `/blog` (also `/{ar,en}/blog`) and `/blog/{post}`; 404 for draft or future posts | built | T-P2-07 |
 | BlogPost/BlogCategory/BlogTag Filament resources | `app/Filament/Resources/Blog*/` | Admin panel authoring (workspace list + modal forms, AR/EN tabs, schedule, featured image, tags) | built | T-P2-07 |
+| InstructorProfile + PublicInstructors + SaveInstructorProfile + InstructorProfileResource | `app/Models/InstructorProfile.php`, `app/Domain/Instructors/`, `app/Filament/Resources/InstructorProfiles/` | Public instructor profile (`instructor_profiles` + `instructor_profile_category`); `PublicInstructors::query()` is the one definition of public (approved + active account + instructor role); admin edit/approve under `instructor.manage`, audit `instructor_profile.saved/approved/hidden` | built | T-P2-09 |
+| PublicCategory + CategorySeo + InstructorSeo + Public{Category,Instructor}Controller + `catalog/category`, `instructors/show` views | `app/Domain/Catalog/Queries/PublicCategory.php`, `app/Domain/Seo/`, `app/Http/Controllers/`, `resources/views/` | Category landing (CollectionPage + ItemList) and instructor page (Person) with hreflang, both in the sitemap; `PublicUrl::category/instructor/localesWith`; course page links instructor names to public profiles | built | T-P2-09 |
+| Wishlist / CourseReview / ToggleWishlist / SubmitCourseReview / Approve-Reject-HideCourseReview / ReviewModeration / ReviewSummary / ReviewerName / PublishedReviews / ReviewEligibility / WishlistQuery / ReviewDecisionNotice + CourseReviewResource + WishlistController + CourseReviewController + `x-engagement.*` | `app/Domain/Engagement/`, `app/Filament/Resources/Reviews/`, `app/Http/Controllers/`, `resources/views/components/engagement/`, `config/engagement.php` | Saved courses (heart on card and course page, `/my/wishlist`) and entitled-only, one-per-learner reviews with a moderation queue (permission `review.moderate`), cached rating aggregate (also feeds JSON-LD aggregateRating only when published reviews exist), first-name-plus-initial display snapshot (always for child accounts) | built | T-P9-02 |

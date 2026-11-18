@@ -59,8 +59,8 @@ final class CatalogQuery
         if (isset($filters['access'])) {
             $query->whereIn('access_mode', match ($filters['access']) {
                 'free' => [Course::ACCESS_FREE],
-                'paid' => [Course::ACCESS_PAID, 'both'],
-                'subscription' => ['subscription_only', 'both'],
+                'paid' => Course::INDIVIDUAL_ACCESS_MODES,
+                'subscription' => [Course::ACCESS_SUBSCRIPTION, Course::ACCESS_BOTH],
                 default => [],
             });
         }

@@ -16,9 +16,9 @@ final class Category extends Model
     use HasTranslations;
 
     /** @var list<string> */
-    public array $translatable = ['name', 'description'];
+    public array $translatable = ['name', 'description', 'seo_title', 'seo_description', 'seo_keywords'];
 
-    protected $fillable = ['parent_id', 'name', 'description', 'slug_ar', 'slug_en', 'icon', 'image', 'sort', 'status'];
+    protected $fillable = ['parent_id', 'name', 'description', 'slug_ar', 'slug_en', 'icon', 'image', 'sort', 'status', 'seo_title', 'seo_description', 'seo_keywords'];
 
     protected function casts(): array
     {

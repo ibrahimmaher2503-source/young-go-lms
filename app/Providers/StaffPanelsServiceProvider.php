@@ -16,6 +16,7 @@ use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\BlogCategories\BlogCategoryResource;
 use App\Filament\Resources\BlogPosts\BlogPostResource;
 use App\Filament\Resources\BlogTags\BlogTagResource;
+use App\Filament\Resources\InstructorProfiles\InstructorProfileResource;
 use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\ContactEnquiries\ContactEnquiryResource;
 use App\Filament\Resources\Coupons\CouponResource;
@@ -84,7 +85,8 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                     'admin' => [
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
                         ContactEnquiryResource::class, NewsletterSubscriberResource::class,
-                        CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, ManualPaymentProofResource::class,
+                        CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, ManualPaymentProofResource::class,
+                        \App\Filament\Resources\Reviews\CourseReviewResource::class,
                     ],
                     'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class],
                     default => [ManualGrantResource::class, CouponResource::class, ManualPaymentProofResource::class], // finance
