@@ -6,9 +6,11 @@ namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\Bundle;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderItem;
+use App\Domain\Commerce\OrderItemAllocation;
 use App\Domain\Commerce\OrderLine;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\ProductType;
@@ -27,13 +29,13 @@ use RuntimeException;
  * Creates a pending order priced entirely on the server (PRD 17.3). Callers pass products and learners, never amounts.
  * The payer is the signed-in account; a parent may buy for a verified child (YG-GAP-FAM-005). Only active markets sell
  * (Saudi Arabia is off). The same payer and idempotency key return the same order; a different request under that key
- * is refused. Bundles and plans are not sellable yet.
+ * is refused. Courses and bundles are sellable (a bundle line stores its per-course allocation); plans are not yet.
  */
 final class CreateOrder
 {
     private const int MAX_LINES = 20;
 
-    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $entitlements) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $entitlements, private readonly AllocateBundlePrice $allocate) {}
 
     /** @param  list<OrderLine>  $lines */
     public function __invoke(User $payer, Market $market, array $lines, string $idempotencyKey): Order
@@ -76,17 +78,24 @@ final class CreateOrder
                 ]);
 
                 foreach ($priced as $row) {
-                    OrderItem::query()->create([
+                    $field = $row['type'] === ProductType::Bundle ? 'name' : 'title';
+                    $item = OrderItem::query()->create([
                         'order_id' => $order->getKey(),
-                        'product_type' => ProductType::Course,
-                        'product_id' => $row['course']->getKey(),
+                        'product_type' => $row['type'],
+                        'product_id' => $row['product']->getKey(),
                         'learner_id' => $row['learner']->getKey(),
                         'unit_price_minor' => $row['price'],
                         'currency' => $market->currency(),
                         'allocated_minor' => $row['price'],
-                        'title_ar' => $row['course']->getTranslation('title', 'ar', false) ?: null,
-                        'title_en' => $row['course']->getTranslation('title', 'en', false) ?: null,
+                        'title_ar' => $row['product']->getTranslation($field, 'ar', false) ?: null,
+                        'title_en' => $row['product']->getTranslation($field, 'en', false) ?: null,
                     ]);
+                    foreach ($row['allocations'] as $courseId => $share) {
+                        OrderItemAllocation::query()->create([
+                            'order_item_id' => $item->getKey(), 'course_id' => $courseId,
+                            'weight' => $share['weight'], 'allocated_minor' => $share['allocated_minor'],
+                        ]);
+                    }
                 }
 
                 $recorded = $this->audit->record('order.created', $order, (int) $payer->getKey(), null, [
@@ -112,7 +121,7 @@ final class CreateOrder
 
     /**
      * @param  list<OrderLine>  $lines
-     * @return list<array{course: Course, learner: User, price: int}>
+     * @return list<array{type: ProductType, product: Course|Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>}>
      */
     private function price(User $payer, Market $market, array $lines): array
     {
@@ -132,11 +141,17 @@ final class CreateOrder
                 $this->refuse('learner_inactive');
             }
 
-            $key = $line->productId.':'.$learner->getKey();
+            $key = $line->type->value.':'.$line->productId.':'.$learner->getKey();
             if (isset($seen[$key])) {
                 $this->refuse('duplicate_line');
             }
             $seen[$key] = true;
+
+            if ($line->type === ProductType::Bundle) {
+                $priced[] = $this->priceBundle($market, $line, $learner);
+
+                continue;
+            }
 
             $course = Course::query()->find($line->productId);
             if (! $course instanceof Course || $course->status !== CourseStatus::Published || ! in_array($course->access_mode, Course::INDIVIDUAL_ACCESS_MODES, true)) {
@@ -150,10 +165,34 @@ final class CreateOrder
                 $this->refuse('already_enrolled');
             }
 
-            $priced[] = ['course' => $course, 'learner' => $learner, 'price' => $price->amount_minor];
+            $priced[] = ['type' => ProductType::Course, 'product' => $course, 'learner' => $learner, 'price' => $price->amount_minor, 'allocations' => []];
         }
 
         return $priced;
+    }
+
+    /** @return array{type: ProductType, product: Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>} */
+    private function priceBundle(Market $market, OrderLine $line, User $learner): array
+    {
+        $bundle = Bundle::query()->with(['prices', 'items.course'])->find($line->productId);
+        if (! $bundle instanceof Bundle || ! $bundle->is_active || $bundle->items->isEmpty()
+            || $bundle->items->contains(static fn ($i): bool => $i->course?->status !== CourseStatus::Published)) {
+            $this->refuse('product_unavailable');
+        }
+        $price = $bundle->priceFor($market);
+        if ($price === null || $price->amount_minor <= 0) {
+            $this->refuse('price_unavailable');
+        }
+        // Courses the learner already has are allowed (recorded and skipped at grant); a bundle with nothing new is refused.
+        $owned = $bundle->items->filter(fn ($i): bool => $i->course !== null && $this->entitlements->currentFor($learner, $i->course) !== null);
+        if ($owned->count() === $bundle->items->count()) {
+            $this->refuse('already_enrolled');
+        }
+
+        return [
+            'type' => ProductType::Bundle, 'product' => $bundle, 'learner' => $learner, 'price' => $price->amount_minor,
+            'allocations' => ($this->allocate)($bundle, $market, $price->amount_minor),
+        ];
     }
 
     private function existing(User $payer, string $key, string $hash): ?Order

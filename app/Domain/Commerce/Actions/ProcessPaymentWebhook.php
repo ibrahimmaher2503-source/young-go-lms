@@ -158,7 +158,7 @@ final class ProcessPaymentWebhook
             $order->status !== OrderStatus::Pending => 'order_closed',
             $verified->amountMinor !== $order->total_minor || strtoupper($verified->currency) !== strtoupper($order->currency) => 'amount_mismatch',
             ! $order->isInActiveMarket() => 'market_unavailable',
-            $order->items()->where('product_type', '!=', ProductType::Course->value)->exists() => 'unsupported_lines',
+            $order->items()->where('product_type', ProductType::Plan->value)->exists() => 'unsupported_lines',
             default => null,
         };
         if ($reason !== null) {

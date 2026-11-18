@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'name_invalid' => 'Enter a name of 2 to 120 characters in Arabic and in English.',
+    'courses_invalid' => 'Choose 2 to 20 different courses.',
+    'courses_missing' => 'One of the chosen courses does not exist.',
+    'weight_invalid' => 'A weight must be a whole number from 1 to 1,000,000.',
+    'weights_mixed' => 'Set a weight for every course or for none.',
+    'price_invalid' => 'Enter a valid price greater than zero.',
+    'price_required' => 'An active bundle needs a price in Egypt.',
+    'title' => 'Bundles',
+    'bundle' => 'Bundle',
+    'name' => 'Name',
+    'name_ar' => 'Name (Arabic)',
+    'name_en' => 'Name (English)',
+    'price' => 'Price (:currency)',
+    'price_column' => 'Price',
+    'courses' => 'Courses',
+    'course' => 'Course',
+    'weight' => 'Weight',
+    'weight_help' => 'Optional. Leave empty to split by course price.',
+    'allocated' => 'Allocated',
+    'allocation' => 'Allocation',
+    'no_price' => 'This bundle has no price yet.',
+    'active' => 'Active',
+    'status' => 'Status',
+    'state_active' => 'Active',
+    'state_inactive' => 'Inactive',
+    'create' => 'New bundle',
+    'edit' => 'Edit',
+    'saved' => 'Bundle saved.',
+    'summary_active' => 'Active bundles',
+    'summary_inactive' => 'Inactive bundles',
+];

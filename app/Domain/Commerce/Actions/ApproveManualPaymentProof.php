@@ -56,7 +56,7 @@ final class ApproveManualPaymentProof
             if ($order->status !== OrderStatus::Pending) {
                 $this->refuse('proof', 'order_not_payable');
             }
-            if ($order->items()->where('product_type', '!=', ProductType::Course->value)->exists()) {
+            if ($order->items()->where('product_type', ProductType::Plan->value)->exists()) {
                 $this->refuse('proof', 'order_unsupported');
             }
             $mismatch = $order->total_minor !== $locked->amount_minor || $order->currency !== $locked->currency;
