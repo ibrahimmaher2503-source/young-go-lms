@@ -204,18 +204,29 @@ final class ManageCurriculum extends Page
     public function addAssessmentAction(): Action
     {
         return Action::make('addAssessment')->label(__('curriculum.add_assessment'))->icon('heroicon-o-clipboard-document-check')->color('gray')
+            ->modalSubmitActionLabel(__('curriculum.save'))
             ->schema([
                 Select::make('kind')->label(__('curriculum.assessment_kind'))->options([
                     'quiz' => __('curriculum.types.quiz'), 'assignment' => __('curriculum.types.assignment'),
                 ])->required()->native(false),
                 Select::make('section_id')->label(__('curriculum.section'))->required()->native(false)
                     ->options(fn (): array => CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->orderBy('sort')->get()->mapWithKeys(fn (CourseSection $s): array => [$s->getKey() => (string) $s->title])->all()),
-                TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
-                TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+                Select::make('association')->label(__('curriculum.association'))->options([
+                    'course' => __('curriculum.association_course'),
+                    'section' => __('curriculum.section'),
+                    'lesson' => __('curriculum.association_lesson'),
+                ])->default('section')->required()->native(false)->live(),
+                Select::make('associated_lesson_item_id')->label(__('curriculum.association_lesson'))->native(false)
+                    ->visible(fn (Get $get): bool => $get('association') === 'lesson')
+                    ->required()
+                    ->options(fn (): array => CurriculumOutline::forManager($this->course())->flatMap(fn (CourseSection $section) => $section->items)
+                        ->where('itemable_type', 'lesson')->mapWithKeys(fn (CurriculumItem $item): array => [$item->getKey() => $item->itemable instanceof Lesson ? (string) $item->itemable->title : ''])->all()),
+                TextInput::make('title.ar')->label(__('curriculum.assessment_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                TextInput::make('title.en')->label(__('curriculum.assessment_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             ])
             ->action(function (array $data, Action $action): void {
                 $section = CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->findOrFail($data['section_id']);
-                if (! $this->attempt($action, fn () => app(ManageAssessmentItems::class)->add($this->actor(), $section, (string) $data['kind'], ['title' => $data['title'] ?? []]))) {
+                if (! $this->attempt($action, fn () => app(ManageAssessmentItems::class)->add($this->actor(), $section, (string) $data['kind'], $data))) {
                     return;
                 }
                 Notification::make()->title(__('curriculum.saved'))->success()->send();

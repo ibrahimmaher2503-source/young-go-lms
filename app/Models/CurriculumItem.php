@@ -14,6 +14,8 @@ use Illuminate\Support\Carbon;
  *
  * @property int $course_id
  * @property int $section_id
+ * @property string|null $association
+ * @property int|null $associated_lesson_item_id
  * @property int $sort
  * @property string $status
  * @property bool $required
@@ -30,7 +32,7 @@ final class CurriculumItem extends Model
 
     protected $fillable = [
         'course_id', 'section_id', 'sort', 'itemable_type', 'itemable_id', 'status', 'visibility',
-        'unlock_rule', 'unlock_at', 'unlock_days', 'required', 'ai_enabled',
+        'unlock_rule', 'unlock_at', 'unlock_days', 'required', 'ai_enabled', 'association', 'associated_lesson_item_id',
     ];
 
     protected $attributes = ['status' => self::STATUS_DRAFT, 'visibility' => 'enrolled', 'unlock_rule' => 'none', 'required' => true, 'ai_enabled' => true];
