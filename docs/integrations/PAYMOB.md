@@ -14,6 +14,9 @@ HMAC-SHA512 (hex, key = HMAC secret) over the concatenation of these fields of `
 ## Transaction lookup (fetchTransaction)
 `POST {base}/api/auth/tokens` with the API key to get a short token, then `GET {base}/api/acceptance/transactions/{id}` with `Bearer`. Used by reconciliation (T-P8-11).
 
+## Daily reconciliation (T-P8-11)
+`PaymentGateway::listTransactions(from, to)`: the Paymob adapter authenticates as above, then pages `GET {base}/api/acceptance/transactions?page=N&page_size=100` (newest first, at most 50 pages) and keeps rows whose `created_at` is inside the window; it returns an empty list without credentials. **The endpoint, paging and the `next`/`results` fields are from memory: verify them against the current Paymob docs before the first staging run.** `payments:reconcile [--date=]` (scheduled 04:30, default yesterday) skips when the gateway is not configured. Mismatches (`payment_reconciliation_mismatches`) are report-only and reviewed on the Payment reconciliation page; nothing changes an order.
+
 ## Configuration (`config/payments.php`, env only)
 `PAYMENTS_GATEWAY` (auto|fake|null), `PAYMENTS_LIVE_ENABLED` (false), `PAYMOB_BASE_URL`, `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_API_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_CARD`, `PAYMOB_INTEGRATION_WALLET`. Method list and order: `payments.methods` (cards, wallets first). A key containing `_live_` is ignored (Null gateway) until `PAYMENTS_LIVE_ENABLED=true`, which needs the owner gates in `docs/09_CODEX_START_HERE.md`.
 

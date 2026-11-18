@@ -24,4 +24,6 @@ Schedule::command('help:escalate-overdue')->everyFifteenMinutes()->name('help:es
 Schedule::command('seo:sitemap')->dailyAt('02:30')->name('seo:sitemap')->withoutOverlapping();
 // T-P2-07: a scheduled blog post goes public with no save, so drop the cached sitemap every hour.
 Schedule::call(static fn () => app(BuildSitemap::class)->forget())->hourly()->name('seo:sitemap-scheduled-posts');
+// T-P8-11: reconcile yesterday's payments with the gateway; report only, never changes an order.
+Schedule::command('payments:reconcile')->dailyAt('04:30')->name('payments:reconcile')->withoutOverlapping();
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();
