@@ -13,6 +13,7 @@ return [
     'learner_not_allowed' => 'You can only buy for yourself or a linked child.',
     'learner_inactive' => 'This learner account cannot receive courses.',
     'duplicate_line' => 'The same course is listed twice for the same learner.',
+    'already_subscribed' => 'This subscription is already paid for the coming days. You can renew when it is close to ending.',
     'already_enrolled' => 'This learner already has access to this course.',
     'transition_invalid' => 'The order cannot move to that status.',
     'reason_invalid' => 'Enter a reason of 3 to 500 characters.',

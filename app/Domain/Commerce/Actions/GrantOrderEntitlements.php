@@ -13,6 +13,7 @@ use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\Entitlement;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Entitlements\EntitlementSource;
+use App\Domain\Subscriptions\Actions\StartSubscriptionPeriod;
 use App\Models\Course;
 use App\Models\User;
 use RuntimeException;
@@ -22,7 +23,7 @@ use RuntimeException;
  * learner, course is one row). Used by manual payment approval and the Paymob fulfilment (`EntitlementSource::Purchase`).
  * Course lines are granted first. A bundle line grants each course of its stored allocation once with source `bundle`;
  * a course the learner already holds (another source, or a course line on this order) is not granted again but the
- * allocation row records it as skipped. Plan lines are skipped, so callers refuse them first (T-P8-08).
+ * allocation row records it as skipped. A plan line starts or renews a subscription period (StartSubscriptionPeriod, source `subscription`).
  */
 final class GrantOrderEntitlements
 {
@@ -30,6 +31,7 @@ final class GrantOrderEntitlements
         private readonly GrantEntitlement $grant,
         private readonly EntitlementService $entitlements,
         private readonly AuditLogger $audit,
+        private readonly StartSubscriptionPeriod $startPeriod,
     ) {}
 
     /** @return int number of lines handled */
@@ -50,6 +52,11 @@ final class GrantOrderEntitlements
 
         foreach ($items->where('product_type', ProductType::Bundle) as $item) {
             $this->grantBundle($order, $item, $actor);
+            $handled++;
+        }
+
+        foreach ($items->where('product_type', ProductType::Plan) as $item) {
+            ($this->startPeriod)($order, $item, $actor);
             $handled++;
         }
 

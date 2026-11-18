@@ -69,6 +69,8 @@ final class NotificationMatrix
             self::fresh('payment.failed', 'payment', true, ['order'], 'T-P8-12'),
             self::fresh('payment.refunded', 'payment', true, ['order'], 'T-P8-06'),
 
+            self::fresh('subscription.renewal_due', 'subscription', false, ['plan', 'date', 'days']),
+
             self::existing('live.scheduled', 'live', true, ['title', 'time'], 'live.notice.scheduled'),
             self::existing('live.reminder', 'live', false, ['title', 'time'], 'live.notice.reminder'),
             self::existing('live.rescheduled', 'live', true, ['title', 'time'], 'live.notice.rescheduled'),

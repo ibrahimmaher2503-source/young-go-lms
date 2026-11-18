@@ -14,6 +14,7 @@ return [
         'payment_approved' => 'Payment approved',
         'payment_review_rejected' => 'Transfer proof rejected',
         'payment_failed' => 'Payment failed',
+        'subscription_renewal_due' => 'Subscription renewal reminder',
         'payment_refunded' => 'Payment refunded',
         'live_scheduled' => 'Live session scheduled',
         'live_reminder' => 'Live session reminder',
@@ -40,6 +41,7 @@ return [
     'groups' => [
         'account' => 'Account',
         'access' => 'Course access',
+        'subscription' => 'Subscriptions',
         'payment' => 'Payments',
         'live' => 'Live sessions',
         'assignment' => 'Assignments and quizzes',
@@ -80,6 +82,10 @@ return [
         'payment_failed' => [
             'title' => 'Payment failed for order :order',
             'body' => 'The payment for order :order did not go through. You can try again.',
+        ],
+        'subscription_renewal_due' => [
+            'title' => 'Your :plan subscription ends in :days day(s)',
+            'body' => 'Your :plan subscription ends on :date. Renew before then to keep your access without a break.',
         ],
         'payment_refunded' => [
             'title' => 'Refund issued for order :order',

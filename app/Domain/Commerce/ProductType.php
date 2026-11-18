@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Commerce;
 
-/** What an order line sells (ED-012). Courses and bundles (T-P8-07) can be sold; plans cannot yet. */
+/** What an order line sells (ED-012). Courses, bundles (T-P8-07) and subscription plans (T-P8-08) can be sold. */
 enum ProductType: string
 {
     case Course = 'course';
@@ -13,6 +13,6 @@ enum ProductType: string
 
     public function isSellable(): bool
     {
-        return $this === self::Course || $this === self::Bundle;
+        return true;
     }
 }

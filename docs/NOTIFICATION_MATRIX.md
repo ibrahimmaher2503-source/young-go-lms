@@ -21,6 +21,7 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `payment.review_rejected` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_review_rejected.title` | T-P8-04 |
 | `payment.failed` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_failed.title` | T-P8-12 |
 | `payment.refunded` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_refunded.title` | T-P8-06 |
+| `subscription.renewal_due` | subscription | optional | wired | `:plan` `:date` `:days` | `notification_events.templates.subscription_renewal_due.title` | T-P8-08 (7/3/1 days before period end, sent to the payer) |
 | `live.scheduled` | live | mandatory | wired | `:title` `:time` | `live.notice.scheduled.title` |  |
 | `live.reminder` | live | optional | wired | `:title` `:time` | `live.notice.reminder.title` |  |
 | `live.rescheduled` | live | mandatory | wired | `:title` `:time` | `live.notice.rescheduled.title` |  |

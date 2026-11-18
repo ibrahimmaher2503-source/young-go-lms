@@ -17,6 +17,8 @@ use App\Domain\Commerce\ProductType;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\GuardianAccess;
 use App\Domain\Shared\Markets\Market;
+use App\Domain\Subscriptions\Subscription;
+use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -29,7 +31,7 @@ use RuntimeException;
  * Creates a pending order priced entirely on the server (PRD 17.3). Callers pass products and learners, never amounts.
  * The payer is the signed-in account; a parent may buy for a verified child (YG-GAP-FAM-005). Only active markets sell
  * (Saudi Arabia is off). The same payer and idempotency key return the same order; a different request under that key
- * is refused. Courses and bundles are sellable (a bundle line stores its per-course allocation); plans are not yet.
+ * is refused. Courses, bundles (a bundle line stores its per-course allocation) and subscription plans (one period per line, T-P8-08) are sellable.
  */
 final class CreateOrder
 {
@@ -78,7 +80,7 @@ final class CreateOrder
                 ]);
 
                 foreach ($priced as $row) {
-                    $field = $row['type'] === ProductType::Bundle ? 'name' : 'title';
+                    $field = $row['type'] === ProductType::Course ? 'title' : 'name';
                     $item = OrderItem::query()->create([
                         'order_id' => $order->getKey(),
                         'product_type' => $row['type'],
@@ -121,7 +123,7 @@ final class CreateOrder
 
     /**
      * @param  list<OrderLine>  $lines
-     * @return list<array{type: ProductType, product: Course|Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>}>
+     * @return list<array{type: ProductType, product: Course|Bundle|SubscriptionPlan, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>}>
      */
     private function price(User $payer, Market $market, array $lines): array
     {
@@ -149,6 +151,11 @@ final class CreateOrder
 
             if ($line->type === ProductType::Bundle) {
                 $priced[] = $this->priceBundle($market, $line, $learner);
+
+                continue;
+            }
+            if ($line->type === ProductType::Plan) {
+                $priced[] = $this->pricePlan($market, $line, $learner);
 
                 continue;
             }
@@ -193,6 +200,32 @@ final class CreateOrder
             'type' => ProductType::Bundle, 'product' => $bundle, 'learner' => $learner, 'price' => $price->amount_minor,
             'allocations' => ($this->allocate)($bundle, $market, $price->amount_minor),
         ];
+    }
+
+    /**
+     * A plan line is a first purchase or a renewal. A renewal is accepted once the paid period ends within the renewal
+     * window (or has ended); an earlier one is refused so nobody pays twice for the same days (no proration, R-017).
+     *
+     * @return array{type: ProductType, product: SubscriptionPlan, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>}
+     */
+    private function pricePlan(Market $market, OrderLine $line, User $learner): array
+    {
+        $plan = SubscriptionPlan::query()->with(['prices', 'courses.course'])->find($line->productId);
+        if (! $plan instanceof SubscriptionPlan || ! $plan->is_active || $plan->courses->isEmpty()
+            || ! $plan->courses->contains(static fn ($c): bool => $c->course?->status === CourseStatus::Published)) {
+            $this->refuse('product_unavailable');
+        }
+        $price = $plan->priceFor($market);
+        if ($price === null || $price->amount_minor <= 0) {
+            $this->refuse('price_unavailable');
+        }
+        $subscription = Subscription::query()->where(['plan_id' => $plan->getKey(), 'learner_id' => $learner->getKey()])->first();
+        $latest = $subscription?->latestPeriod();
+        if ($latest !== null && $latest->ends_at->gt(now()->addDays((int) config('subscriptions.renewal_window_days', 7)))) {
+            $this->refuse('already_subscribed');
+        }
+
+        return ['type' => ProductType::Plan, 'product' => $plan, 'learner' => $learner, 'price' => $price->amount_minor, 'allocations' => []];
     }
 
     private function existing(User $payer, string $key, string $hash): ?Order

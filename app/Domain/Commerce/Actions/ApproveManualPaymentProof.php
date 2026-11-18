@@ -10,7 +10,6 @@ use App\Domain\Commerce\ManualPaymentProof;
 use App\Domain\Commerce\ManualPaymentStatus;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderStatus;
-use App\Domain\Commerce\ProductType;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -22,8 +21,8 @@ use RuntimeException;
  * Finance approves a transfer proof: the order moves to paid through TransitionOrder and every course line is granted with
  * source manual_payment, all in one transaction. Approving an approved proof is a no-op (no second audit, grant or event).
  * An amount that differs from the order total needs a written note (the acknowledgement). The approver needs
- * payment.approve_manual and manual_entitlement.grant (GrantEntitlement rule for manual sources). T-P8-03 (Paymob
- * fulfilment) does not exist yet, so this flow grants access itself through GrantOrderEntitlements.
+ * payment.approve_manual and manual_entitlement.grant (GrantEntitlement rule for manual sources). Access (courses, bundles,
+ * subscription periods) is granted through GrantOrderEntitlements, the same call the Paymob fulfilment makes.
  */
 final class ApproveManualPaymentProof
 {
@@ -55,9 +54,6 @@ final class ApproveManualPaymentProof
             $order = Order::query()->lockForUpdate()->findOrFail($locked->order_id);
             if ($order->status !== OrderStatus::Pending) {
                 $this->refuse('proof', 'order_not_payable');
-            }
-            if ($order->items()->where('product_type', ProductType::Plan->value)->exists()) {
-                $this->refuse('proof', 'order_unsupported');
             }
             $mismatch = $order->total_minor !== $locked->amount_minor || $order->currency !== $locked->currency;
             if ($mismatch && $note === null) {

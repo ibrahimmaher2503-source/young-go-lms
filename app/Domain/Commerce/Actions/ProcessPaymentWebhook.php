@@ -18,7 +18,6 @@ use App\Domain\Commerce\Payments\InvalidPaymentSignature;
 use App\Domain\Commerce\Payments\PaymentPayloadScrubber;
 use App\Domain\Commerce\Payments\PaymentWebhookResult;
 use App\Domain\Commerce\Payments\VerifiedPaymentEvent;
-use App\Domain\Commerce\ProductType;
 use App\Domain\Entitlements\EntitlementSource;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +29,9 @@ use RuntimeException;
  * (unique gateway + transaction id + state), so a replay is a no-op. Then, in one transaction with the attempt and order
  * locked:
  *  - success on a pending order whose amount and currency equal the server order: order paid (TransitionOrder), course
- *    lines granted with source purchase (GrantOrderEntitlements), attempt succeeded, `PaymentVerified` after commit;
+ *    lines granted (bundle and plan lines too) through GrantOrderEntitlements, attempt succeeded, `PaymentVerified` after commit;
  *  - success that cannot be applied safely (amount or currency differs, order already paid or closed, refunded first,
- *    unsupported lines, market closed, unknown reference) is stored and flagged for finance, with no state change;
+ *    market closed, unknown reference) is stored and flagged for finance, with no state change;
  *  - failure: the attempt is closed as failed, the order stays pending so the payer can pay again; a later success on that
  *    order is still accepted (a failed attempt is not a closed order);
  *  - pending, out-of-order and already-handled events change nothing; refunds and voids are flagged (refunds: T-P8-06).
@@ -158,7 +157,6 @@ final class ProcessPaymentWebhook
             $order->status !== OrderStatus::Pending => 'order_closed',
             $verified->amountMinor !== $order->total_minor || strtoupper($verified->currency) !== strtoupper($order->currency) => 'amount_mismatch',
             ! $order->isInActiveMarket() => 'market_unavailable',
-            $order->items()->where('product_type', ProductType::Plan->value)->exists() => 'unsupported_lines',
             default => null,
         };
         if ($reason !== null) {

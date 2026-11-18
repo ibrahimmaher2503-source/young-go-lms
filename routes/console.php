@@ -24,6 +24,11 @@ Schedule::command('help:escalate-overdue')->everyFifteenMinutes()->name('help:es
 Schedule::command('seo:sitemap')->dailyAt('02:30')->name('seo:sitemap')->withoutOverlapping();
 // T-P2-07: a scheduled blog post goes public with no save, so drop the cached sitemap every hour.
 Schedule::call(static fn () => app(BuildSitemap::class)->forget())->hourly()->name('seo:sitemap-scheduled-posts');
+// T-P8-12: cancel abandoned pending orders (releases coupon uses); never touches an order with an open payment or proof.
+Schedule::command('orders:expire-abandoned')->hourly()->name('orders:expire-abandoned')->withoutOverlapping();
 // T-P8-11: reconcile yesterday's payments with the gateway; report only, never changes an order.
 Schedule::command('payments:reconcile')->dailyAt('04:30')->name('payments:reconcile')->withoutOverlapping();
+Schedule::command('subscriptions:process')->hourly()->name('subscriptions:process')->withoutOverlapping();
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();
+// T-P9-08: per-class retention pruning (includes the AI class again; both jobs are idempotent). Never touches financial, certificate or audit data.
+Schedule::command('privacy:prune')->dailyAt('03:45')->name('privacy:prune')->withoutOverlapping();

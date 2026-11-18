@@ -14,6 +14,7 @@ return [
         'payment_approved' => 'تأكيد الدفع',
         'payment_review_rejected' => 'رفض إثبات التحويل',
         'payment_failed' => 'فشل الدفع',
+        'subscription_renewal_due' => 'تذكير بتجديد الاشتراك',
         'payment_refunded' => 'استرداد الدفعة',
         'live_scheduled' => 'جدولة حصة مباشرة',
         'live_reminder' => 'تذكير بحصة مباشرة',
@@ -40,6 +41,7 @@ return [
     'groups' => [
         'account' => 'الحساب',
         'access' => 'الوصول إلى الدورات',
+        'subscription' => 'الاشتراكات',
         'payment' => 'المدفوعات',
         'live' => 'الحصص المباشرة',
         'assignment' => 'الواجبات والاختبارات',
@@ -80,6 +82,10 @@ return [
         'payment_failed' => [
             'title' => 'فشل الدفع للطلب :order',
             'body' => 'لم تتم عملية الدفع للطلب :order. يمكنك المحاولة مرة أخرى.',
+        ],
+        'subscription_renewal_due' => [
+            'title' => 'ينتهي اشتراكك في :plan بعد :days يوم',
+            'body' => 'ينتهي اشتراكك في :plan في :date. جدّد قبل ذلك لتحافظ على وصولك دون انقطاع.',
         ],
         'payment_refunded' => [
             'title' => 'تم رد المبلغ للطلب :order',
