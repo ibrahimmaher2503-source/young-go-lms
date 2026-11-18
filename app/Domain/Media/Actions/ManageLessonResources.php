@@ -84,10 +84,37 @@ final class ManageLessonResources
     public function addLink(User $actor, Lesson $lesson, array $meta): LessonResource
     {
         $this->authorize($actor, $lesson);
-        $url = SourceUrl::https($meta['url'] ?? null);
-        $clean = 'https://'.$url['host'].$url['path'].($url['query'] === '' ? '' : '?'.$url['query']);
+        $clean = $this->link($meta['url'] ?? null);
 
         return $this->create($actor, $lesson, [...$this->meta($meta), 'type' => LessonResource::TYPE_LINK, 'url' => $clean, 'downloadable' => false], null);
+    }
+
+    /** @param array<string, mixed> $meta */
+    public function update(User $actor, LessonResource $resource, array $meta): void
+    {
+        $this->authorize($actor, $resource->lesson);
+        $attributes = $this->meta([...$meta, 'is_preview' => $resource->is_preview]);
+        if ($resource->type === LessonResource::TYPE_LINK) {
+            $attributes['url'] = $this->link($meta['url'] ?? null);
+            $attributes['downloadable'] = false;
+        }
+
+        DB::transaction(function () use ($actor, $resource, $attributes): void {
+            $before = $resource->only(['title', 'downloadable']);
+            $resource->update($attributes);
+            if ($this->audit->record('lesson_resource.updated', $resource->lesson, (int) $actor->getKey(), $before, [
+                ...$resource->only(['title', 'downloadable']), 'link_changed' => $resource->wasChanged('url'),
+            ]) === null) {
+                throw new RuntimeException('Unable to record resource audit.');
+            }
+        });
+    }
+
+    private function link(mixed $value): string
+    {
+        $url = SourceUrl::https($value);
+
+        return 'https://'.$url['host'].$url['path'].($url['query'] === '' ? '' : '?'.$url['query']);
     }
 
     public function remove(User $actor, LessonResource $resource): void

@@ -34,6 +34,7 @@ final class UploadCurriculumDocument
         $item = $lesson->item()->with('course')->first();
         abort_if($item === null, 404);
         CurriculumAccess::authorize($actor, $item->course);
+        abort_unless($actor->can('lesson_document.upload'), 403);
 
         $fail = static fn (string $key, array $replace = []) => ValidationException::withMessages(['file' => __($key, $replace)]);
 
@@ -46,11 +47,11 @@ final class UploadCurriculumDocument
         }
 
         $report = PdfInspector::inspect($file->getPathname());
-        if (! $report['valid'] || $report['pages'] < 1) {
-            throw $fail('media.pdf_invalid');
-        }
         if ($report['encrypted']) {
             throw $fail('media.pdf_encrypted');
+        }
+        if (! $report['valid'] || $report['pages'] < 1) {
+            throw $fail('media.pdf_invalid');
         }
         if ($report['active_content']) {
             throw $fail('media.pdf_active_content');
@@ -68,15 +69,24 @@ final class UploadCurriculumDocument
         $disk = Storage::disk(Config::string('media.disk'));
         $path = 'documents/'.Str::uuid()->toString().'.pdf';
         $stream = fopen($file->getPathname(), 'rb');
-        if ($stream === false || ! $disk->put($path, $stream)) {
+        if ($stream === false) {
             throw $fail('media.store_failed');
         }
-        fclose($stream);
 
         try {
+            if (! $disk->put($path, $stream)) {
+                throw $fail('media.store_failed');
+            }
+
             $document = DB::transaction(function () use ($actor, $lesson, $path, $hash, $size, $report): LessonCurriculumDocument {
-                Lesson::query()->whereKey($lesson->getKey())->lockForUpdate()->first();
-                $version = (int) LessonCurriculumDocument::query()->where('lesson_id', $lesson->getKey())->max('version') + 1;
+                Lesson::query()->lockForUpdate()->findOrFail($lesson->getKey());
+                $documents = LessonCurriculumDocument::query()->where('lesson_id', $lesson->getKey());
+                $existing = (clone $documents)->where('sha256', $hash)->lockForUpdate()->first();
+                if ($existing !== null) {
+                    return $existing;
+                }
+
+                $version = (int) $documents->max('version') + 1;
                 $document = LessonCurriculumDocument::query()->create([
                     'lesson_id' => $lesson->getKey(), 'version' => $version, 'path' => $path, 'sha256' => $hash, 'size' => $size,
                     'pages' => $report['pages'], 'status' => LessonCurriculumDocument::STATUS_UPLOADED, 'active' => false, 'uploaded_by' => $actor->getKey(),
@@ -91,10 +101,18 @@ final class UploadCurriculumDocument
         } catch (Throwable $exception) {
             $disk->delete($path);
             throw $exception;
+        } finally {
+            fclose($stream);
+        }
+
+        if ($document->path !== $path) {
+            $disk->delete($path);
+
+            return $document;
         }
 
         if (Config::boolean('ai.ingestion.dispatch_on_upload')) {
-            ProcessCurriculumDocument::dispatch($document->getKey());
+            ProcessCurriculumDocument::dispatch($document->getKey())->afterCommit();
         }
 
         return $document;

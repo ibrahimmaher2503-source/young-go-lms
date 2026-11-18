@@ -11,7 +11,7 @@ use App\Models\MediaAsset;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\ValidationException;
 
-/** T2 restricted: a private Vimeo video limited to the platform's domains in Vimeo's own settings. */
+/** Vimeo URLs alone provide no evidence of private playback or domain restrictions. */
 final class VimeoProvider implements VideoDeliveryProvider
 {
     public function key(): string
@@ -26,7 +26,7 @@ final class VimeoProvider implements VideoDeliveryProvider
 
     public function tier(): string
     {
-        return MediaAsset::TIER_RESTRICTED;
+        return MediaAsset::TIER_OPEN;
     }
 
     public function validate(array $source): array
@@ -53,6 +53,6 @@ final class VimeoProvider implements VideoDeliveryProvider
         $hash = $asset->metadata['hash'] ?? null;
         $embed = 'https://player.vimeo.com/video/'.$asset->external_id.'?dnt=1'.(is_string($hash) ? '&h='.$hash : '');
 
-        return new PlaybackDescriptor(PlaybackDescriptor::EMBED, 'vimeo', MediaAsset::TIER_RESTRICTED, embedUrl: $embed, sandbox: Config::string('media.iframe_sandbox'));
+        return new PlaybackDescriptor(PlaybackDescriptor::EMBED, 'vimeo', $this->tier(), embedUrl: $embed, sandbox: Config::string('media.iframe_sandbox'));
     }
 }

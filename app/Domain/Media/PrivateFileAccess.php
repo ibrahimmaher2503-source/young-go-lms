@@ -10,6 +10,7 @@ use App\Domain\Entitlements\EntitlementService;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
+use App\Models\MediaAsset;
 use App\Models\SubtitleTrack;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +30,7 @@ final class PrivateFileAccess
         }
 
         $lesson = match (true) {
-            $file instanceof LessonResource, $file instanceof LessonCurriculumDocument, $file instanceof SubtitleTrack => $file->lesson,
+            $file instanceof LessonResource, $file instanceof LessonCurriculumDocument, $file instanceof SubtitleTrack, $file instanceof MediaAsset => $file->lesson,
             default => null,
         };
         if (! $lesson instanceof Lesson) {
@@ -43,6 +44,12 @@ final class PrivateFileAccess
 
         if ($file instanceof LessonCurriculumDocument && (! $file->active || $file->status !== LessonCurriculumDocument::STATUS_READY)) {
             return false;
+        }
+
+        if ($file instanceof MediaAsset) {
+            $item = $lesson->item()->with(['course', 'section'])->first();
+
+            return $item !== null && $this->previewAccess->canAccessItem($user, $item)->allowed;
         }
 
         if ($file instanceof LessonResource) {

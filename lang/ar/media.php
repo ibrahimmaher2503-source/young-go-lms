@@ -36,6 +36,8 @@ return [
     'pdf_too_many_pages' => 'يزيد عدد صفحات الملف على :max صفحة.',
     'pdf_failed_version' => 'فشل هذا الإصدار في الفحص ولا يمكن اعتماده.',
     'pdf_not_ready_for_approval' => 'هذا الإصدار لا ينتظر الاعتماد بعد.',
+    'pdf_text_changed' => 'تغيّر النص أثناء الاعتماد. راجع النص المحدّث وحاول مرة أخرى.',
+    'pdf_version_superseded' => 'تم اعتماد إصدار أحدث من ملف PDF هذا.',
     'pdf_index_unavailable' => 'تعذّر فهرسة نص الدرس الآن. حاول لاحقاً.',
     'pdf_text_invalid' => 'أدخل نص الصفحة (حتى :max حرف).',
     'key_terms_too_many' => 'اختر :max مصطلحات رئيسية على الأكثر.',

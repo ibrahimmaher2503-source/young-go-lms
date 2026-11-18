@@ -6,10 +6,11 @@ namespace App\Domain\Media\Providers;
 
 use App\Domain\Media\Contracts\VideoDeliveryProvider;
 use App\Domain\Media\PlaybackDescriptor;
+use App\Domain\Media\SignedFileUrl;
 use App\Models\MediaAsset;
+use App\Models\User;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -79,13 +80,13 @@ final class PrivateFileProvider implements VideoDeliveryProvider
         return ['provider' => $this->key, 'kind' => $this->kind, 'path' => $path, 'protection_tier' => $this->tier(), 'status' => 'ready', 'metadata' => ['extension' => $extension]];
     }
 
-    public function descriptor(MediaAsset $asset): PlaybackDescriptor
+    public function descriptor(MediaAsset $asset, ?User $viewer = null): PlaybackDescriptor
     {
         $expires = now()->addSeconds(Config::integer('media.signed_ttl'));
 
         return new PlaybackDescriptor(
             $this->type, $this->key, MediaAsset::TIER_PROTECTED,
-            url: URL::temporarySignedRoute('media.play', $expires, ['asset' => $asset->getKey()]),
+            url: $viewer === null ? null : app(SignedFileUrl::class)->for($viewer, $asset),
             expiresAt: $expires,
         );
     }

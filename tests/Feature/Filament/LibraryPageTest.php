@@ -19,6 +19,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Symfony\Component\HttpFoundation\File\File;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -31,7 +32,7 @@ beforeEach(function (): void {
 function lpPdf(string $salt = ''): File
 {
     $path = tempnam(sys_get_temp_dir(), 'lp');
-    file_put_contents($path, "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n% {$salt}");
+    file_put_contents($path, PdfFixture::bytes(marker: $salt));
 
     return new File($path);
 }

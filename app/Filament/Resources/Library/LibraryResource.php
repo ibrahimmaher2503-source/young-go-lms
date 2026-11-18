@@ -77,13 +77,14 @@ final class LibraryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id', 'desc')
+            ->modifyQueryUsing(static fn (Builder $query): Builder => $query->withCount(['mediaAssets', 'lessonResources']))
             ->columns([
                 TextColumn::make('title')->label(__('library.name'))->state(static fn (LibraryItem $r): string => (string) $r->title)->searchable(query: static fn (Builder $q, string $s): Builder => $q->where('title', 'like', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $s).'%')),
                 TextColumn::make('kind')->label(__('library.kind'))->badge()->color('gray')->formatStateUsing(static fn (string $state): string => __('library.kinds.'.$state)),
                 TextColumn::make('owner_type')->label(__('library.scope'))->badge()->formatStateUsing(static fn (string $state): string => __('library.scopes.'.$state)),
                 TextColumn::make('size')->label(__('library.size'))->formatStateUsing(static fn (int $state): string => Number::fileSize($state, 1)),
                 TextColumn::make('tags')->label(__('library.tags'))->state(static fn (LibraryItem $r): string => implode(', ', (array) $r->tags))->placeholder('-'),
-                TextColumn::make('uses')->label(__('library.uses'))->state(static fn (LibraryItem $r): int => $r->referenceCount()),
+                TextColumn::make('uses')->label(__('library.uses'))->state(static fn (LibraryItem $r): int => (int) $r->getAttribute('media_assets_count') + (int) $r->getAttribute('lesson_resources_count')),
             ])
             ->filters([
                 SelectFilter::make('kind')->label(__('library.kind'))->options(collect(['video', 'audio', 'document', 'image', 'file'])->mapWithKeys(static fn (string $k): array => [$k => __('library.kinds.'.$k)])->all()),

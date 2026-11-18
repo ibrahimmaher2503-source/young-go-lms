@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Media;
 
+use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
@@ -29,17 +30,23 @@ final class LessonPublishRule
             }
 
             $item->loadMissing('course');
-            if ($item->course->access_mode !== 'paid') {
+            if (! in_array($item->course->access_mode, Course::PAID_ACCESS_MODES, true)) {
                 continue;
             }
 
             $media = $lesson->media;
-            if ($media !== null && $media->protection_tier === MediaAsset::TIER_OPEN && ! $media->hasException()) {
+            if ($media !== null && self::effectiveTier($media) === MediaAsset::TIER_OPEN && ! $media->hasException()) {
                 $blocked[] = (int) $item->getKey();
             }
         }
 
         return $blocked;
+    }
+
+    public static function effectiveTier(MediaAsset $media): string
+    {
+        // Earlier Vimeo records were classified from the submitted URL without provider verification.
+        return $media->provider === 'vimeo' ? MediaProviders::for('vimeo')->tier() : $media->protection_tier;
     }
 
     /**

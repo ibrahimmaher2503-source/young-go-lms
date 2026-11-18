@@ -36,6 +36,8 @@ return [
     'pdf_too_many_pages' => 'The PDF has more than :max pages.',
     'pdf_failed_version' => 'This version failed checks and cannot be approved.',
     'pdf_not_ready_for_approval' => 'This version is not waiting for approval yet.',
+    'pdf_text_changed' => 'The text changed during approval. Review the latest text and try again.',
+    'pdf_version_superseded' => 'A newer version of this PDF has already been approved.',
     'pdf_index_unavailable' => 'The lesson text could not be indexed right now. Try again later.',
     'pdf_text_invalid' => 'Enter the page text (up to :max characters).',
     'key_terms_too_many' => 'Choose at most :max key terms.',

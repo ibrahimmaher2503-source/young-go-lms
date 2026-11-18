@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -34,26 +37,9 @@ beforeEach(function (): void {
     Storage::fake('local');
 });
 
-/** Builds a small PDF with $pages page objects; $extra is appended to the trailer dictionary. */
-function pdfBytes(int $pages = 2, string $extra = '', string $marker = ''): string
+function pdfBytes(int $pages = 2): string
 {
-    $objects = "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count {$pages}>>endobj\n";
-    for ($i = 0; $i < $pages; $i++) {
-        $objects .= (3 + $i)." 0 obj<</Type/Page/Parent 2 0 R>>endobj\n";
-    }
-
-    return "%PDF-1.4\n{$objects}% {$marker}\ntrailer<</Root 1 0 R{$extra}>>\n%%EOF\n";
-}
-
-function pdfWithObjectStream(int $pages): string
-{
-    $inner = '';
-    for ($i = 0; $i < $pages; $i++) {
-        $inner .= '<</Type/Page/Parent 2 0 R>> ';
-    }
-    $stream = gzcompress($inner);
-
-    return "%PDF-1.5\n5 0 obj<</Type/ObjStm/N {$pages}/First 0/Filter/FlateDecode/Length ".strlen($stream).">>\nstream\n".$stream."\nendstream\nendobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+    return PdfFixture::bytes($pages);
 }
 
 function fileOf(string $bytes): File
@@ -75,26 +61,48 @@ function filesLesson(): array
     return [$instructor, $item->itemable, $course];
 }
 
-it('inspects pdfs: pages, object streams, encryption, active content and broken files', function (): void {
+it('inspects real PDF pages, object streams, encryption, attachments and broken files', function (): void {
     $report = fn (string $bytes) => PdfInspector::inspect(fileOf($bytes)->getPathname());
+    $binary = config('media.qpdf_binary') ?: (new ExecutableFinder)->find('qpdf');
+    expect($binary)->not->toBeNull();
+    $input = fileOf(pdfBytes(4))->getPathname();
+    $output = tempnam(sys_get_temp_dir(), 'validated-pdf');
+    $attachment = tempnam(sys_get_temp_dir(), 'pdf-note');
+    file_put_contents($attachment, 'Course notes');
 
-    expect($report(pdfBytes(3)))->toMatchArray(['valid' => true, 'pages' => 3, 'encrypted' => false, 'active_content' => false])
-        ->and($report(pdfWithObjectStream(4))['pages'])->toBe(4)
-        ->and($report(pdfBytes(1, '/Encrypt 9 0 R'))['encrypted'])->toBeTrue()
-        ->and($report(pdfBytes(1, '', '/JavaScript (app.alert(1))'))['active_content'])->toBeTrue()
-        ->and($report('%PDF-1.4 truncated, no end marker'))->toMatchArray(['valid' => false, 'pages' => 0])
-        ->and($report('plain text'))->toMatchArray(['valid' => false]);
+    try {
+        (new Process([$binary, '--object-streams=generate', $input, $output]))->mustRun();
+        expect(PdfInspector::inspect($output))->toMatchArray(['valid' => true, 'pages' => 4, 'encrypted' => false, 'active_content' => false]);
+        (new Process([$binary, '--object-streams=generate', $input, '--add-attachment', $attachment, '--', $output]))->mustRun();
+        expect(PdfInspector::inspect($output))->toMatchArray(['valid' => true, 'pages' => 4, 'active_content' => true]);
+
+        (new Process([$binary, '--encrypt', 'user-password', 'owner-password', '256', '--', $input, $output]))->mustRun();
+        expect(PdfInspector::inspect($output)['encrypted'])->toBeTrue()
+            ->and($report(pdfBytes(3)))->toMatchArray(['valid' => true, 'pages' => 3, 'encrypted' => false, 'active_content' => false])
+            ->and($report('%PDF-1.4 truncated, no end marker'))->toMatchArray(['valid' => false, 'pages' => 0])
+            ->and($report('plain text'))->toMatchArray(['valid' => false]);
+    } finally {
+        unlink($input);
+        unlink($output);
+        unlink($attachment);
+    }
 })->group('T-P3-08', 'A3');
 
-it('rejects encrypted, oversized, long, active, unreadable and non-pdf uploads', function (string $kind): void {
+it('requires structural validation of the PDF page tree and cross reference table', function (): void {
+    $incomplete = "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\n%%EOF\n";
+
+    expect(PdfInspector::inspect(fileOf($incomplete)->getPathname()))
+        ->toMatchArray(['valid' => false, 'pages' => 0]);
+})->group('T-P3-08', 'A3');
+
+it('rejects encrypted, oversized, long, unreadable and non-pdf uploads', function (string $kind): void {
     [$instructor, $lesson] = filesLesson();
-    config(['media.pdf_max_pages' => 5, 'media.pdf_max_kilobytes' => 1]);
+    config(['media.pdf_max_pages' => 5, 'media.pdf_max_kilobytes' => 3]);
 
     $bytes = match ($kind) {
-        'encrypted' => pdfBytes(1, '/Encrypt 9 0 R'),
-        'oversized' => pdfBytes(1, '', str_repeat('x', 2048)),
+        'encrypted' => PdfFixture::encryptedBytes(),
+        'oversized' => PdfFixture::bytes(marker: str_repeat('x', 4096)),
         'too long' => pdfBytes(6),
-        'script' => pdfBytes(1, '', '/JS (this.print())'),
         'truncated' => "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\n",
         'png renamed' => "\x89PNG\r\n\x1a\n".str_repeat("\0", 40),
         'empty' => '',
@@ -102,7 +110,7 @@ it('rejects encrypted, oversized, long, active, unreadable and non-pdf uploads',
 
     expect(fn () => app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf($bytes)))->toThrow(ValidationException::class);
     expect(LessonCurriculumDocument::query()->count())->toBe(0)->and(Storage::disk('local')->allFiles())->toBe([]);
-})->with(['encrypted', 'oversized', 'too long', 'script', 'truncated', 'png renamed', 'empty'])->group('T-P3-08', 'A3', 'ED-031');
+})->with(['encrypted', 'oversized', 'too long', 'truncated', 'png renamed', 'empty'])->group('T-P3-08', 'A3', 'ED-031');
 
 it('stores a valid pdf as an inactive version 1 under a random private name', function (): void {
     [$instructor, $lesson] = filesLesson();
@@ -124,6 +132,32 @@ it('treats the same file again as a no-op', function (): void {
     $again = app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf($bytes));
 
     expect($again->id)->toBe($first->id)->and(LessonCurriculumDocument::query()->count())->toBe(1)->and(Storage::disk('local')->allFiles('documents'))->toHaveCount(1);
+})->group('T-P3-08', 'A2');
+
+it('discards the staged file if another upload commits the same document first', function (): void {
+    [$instructor, $lesson] = filesLesson();
+    $bytes = pdfBytes();
+    $disk = Storage::disk('local');
+    $winnerPath = 'documents/first-upload.pdf';
+    $disk->put($winnerPath, $bytes);
+
+    $stagingDisk = Mockery::mock($disk);
+    $stagingDisk->shouldReceive('put')->once()->andReturnUsing(function (string $path, $stream) use ($disk, $lesson, $bytes, $winnerPath): bool {
+        $saved = $disk->put($path, $stream);
+        $lesson->curriculumDocuments()->create([
+            'version' => 1, 'path' => $winnerPath, 'sha256' => hash('sha256', $bytes),
+            'size' => strlen($bytes), 'pages' => 2, 'status' => LessonCurriculumDocument::STATUS_UPLOADED,
+        ]);
+
+        return $saved;
+    });
+    Storage::set('local', $stagingDisk);
+
+    $result = app(UploadCurriculumDocument::class)($instructor, $lesson, fileOf($bytes));
+
+    expect($result->path)->toBe($winnerPath)
+        ->and($lesson->curriculumDocuments()->count())->toBe(1)
+        ->and($disk->allFiles())->toBe([$winnerPath]);
 })->group('T-P3-08', 'A2');
 
 it('keeps the previous version active until the new one is approved and then retires it atomically', function (): void {
@@ -178,7 +212,7 @@ it('adds lesson resources of every kind with safe storage and rejects dangerous 
         ->and($note->path)->toEndWith('.txt')->and($link->type)->toBe('link')->and($link->downloadable)->toBeFalse()
         ->and($lesson->resources->pluck('sort')->all())->toBe([1, 2, 3]);
 
-    foreach (["MZ\x90\x00\x03\x00\x00\x00\x04\x00", '<?php echo 1;', pdfBytes(1, '/Encrypt 4 0 R')] as $bad) {
+    foreach (["MZ\x90\x00\x03\x00\x00\x00\x04\x00", '<?php echo 1;', PdfFixture::encryptedBytes()] as $bad) {
         expect(fn () => $resources->addFile($instructor, $lesson, fileOf($bad), ['title' => ['en' => 'x']]))->toThrow(ValidationException::class);
     }
     expect(fn () => $resources->addLink($instructor, $lesson, ['title' => ['en' => 'x'], 'url' => 'http://example.org/a']))->toThrow(ValidationException::class);

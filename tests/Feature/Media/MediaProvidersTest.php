@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Media\LessonPublishRule;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\PlaybackDescriptor;
 use App\Domain\Media\Queries\LessonPlayback;
@@ -45,7 +46,7 @@ it('validates every source type and returns a playable descriptor', function (ar
     Storage::disk('local')->put('media/pic.png', 'i');
 
     $asset = app(AttachLessonMedia::class)($instructor, $lesson, $source);
-    $descriptor = LessonPlayback::for($lesson->refresh());
+    $descriptor = LessonPlayback::for($lesson->refresh(), $instructor);
 
     expect($asset->provider)->toBe($provider)->and($asset->protection_tier)->toBe($tier)->and($asset->status)->toBe('ready')
         ->and($descriptor)->toBeInstanceOf(PlaybackDescriptor::class)->and($descriptor->type)->toBe($type)->and($descriptor->tier)->toBe($tier)
@@ -55,7 +56,7 @@ it('validates every source type and returns a playable descriptor', function (ar
     'audio' => [['provider' => 'audio', 'path' => 'media/song.mp3'], 'audio', 'T1', 'audio'],
     'document' => [['provider' => 'document', 'path' => 'media/notes.pdf'], 'document', 'T1', 'document'],
     'image' => [['provider' => 'image', 'path' => 'media/pic.png'], 'image', 'T1', 'image'],
-    'vimeo' => [['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789/abcdef1234'], 'embed', 'T2', 'vimeo'],
+    'unverified Vimeo' => [['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789/abcdef1234'], 'embed', 'T3', 'vimeo'],
     'youtube' => [['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ'], 'embed', 'T3', 'youtube'],
     'external url' => [['provider' => 'external_url', 'url' => 'https://cdn.example.com/lesson.mp4'], 'video', 'T3', 'external_url'],
     'iframe' => [['provider' => 'iframe', 'url' => 'https://slides.example.edu/deck/1'], 'embed', 'T3', 'iframe'],
@@ -72,6 +73,28 @@ it('builds the right embed links', function (): void {
     $descriptor = LessonPlayback::for($lesson->refresh());
     expect($descriptor->embedUrl)->toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0')->and($descriptor->sandbox)->toContain('allow-scripts');
 })->group('T-P3-05', 'A1');
+
+it('treats legacy Vimeo restrictions as unverified and withholds paid playback', function (): void {
+    [$instructor, $lesson, $course] = mediaLesson();
+    $asset = app(AttachLessonMedia::class)($instructor, $lesson, ['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789']);
+    $asset->update(['protection_tier' => MediaAsset::TIER_RESTRICTED]);
+    $item = $lesson->item()->firstOrFail();
+
+    expect(LessonPlayback::for($lesson->refresh())?->tier)->toBe(MediaAsset::TIER_OPEN);
+    $course->update(['access_mode' => 'paid']);
+    expect(LessonPlayback::for($lesson->refresh()))->toBeNull()
+        ->and(LessonPublishRule::blocked([$item]))->toBe([$item->id])
+        ->and($asset->refresh()->protection_tier)->toBe(MediaAsset::TIER_RESTRICTED);
+})->group('T-P3-05', 'A2', 'YG-GAP-VID-001', 'YG-GAP-VID-002');
+
+it('routes protected video and Vimeo fullscreen through the learner player stage', function (): void {
+    $template = '<x-learning.lesson-media :descriptor="$descriptor" title="Lesson" managed-stage />';
+    $video = new PlaybackDescriptor(PlaybackDescriptor::VIDEO, 'signed_storage', MediaAsset::TIER_PROTECTED, url: '/play');
+    $vimeo = new PlaybackDescriptor(PlaybackDescriptor::EMBED, 'vimeo', MediaAsset::TIER_RESTRICTED, embedUrl: 'https://player.vimeo.com/video/123456789');
+
+    $this->blade($template, ['descriptor' => $video])->assertSee('controlslist="nodownload nofullscreen"', false);
+    $this->blade($template, ['descriptor' => $vimeo])->assertSee('data-player-vimeo', false)->assertDontSee('allowfullscreen', false);
+})->group('T-P4-07', 'A3', 'YG-GAP-VID-003');
 
 it('rejects bad sources for each provider', function (array $source, string $field): void {
     [$instructor, $lesson] = mediaLesson();
@@ -123,10 +146,10 @@ it('gives protected files a signed link that expires', function (): void {
     [$instructor, $lesson] = mediaLesson();
     Storage::disk('local')->put('media/clip.mp4', 'video-bytes');
     $asset = app(AttachLessonMedia::class)($instructor, $lesson, ['provider' => 'signed_storage', 'path' => 'media/clip.mp4']);
-    $url = LessonPlayback::for($lesson->refresh())->url;
+    $url = LessonPlayback::for($lesson->refresh(), $instructor)->url;
 
     expect($url)->toContain('signature=')->and($url)->not->toContain('clip.mp4');
-    $this->get($url)->assertOk();
+    $this->actingAs($instructor)->get($url)->assertOk();
     $this->get('/media/'.$asset->id)->assertForbidden();
     $this->get(preg_replace('/signature=[^&]+/', 'signature=tampered', $url))->assertForbidden();
 
@@ -138,7 +161,7 @@ it('never serves open or unready media through the signed route', function (): v
     [$instructor, $lesson] = mediaLesson();
     $asset = app(AttachLessonMedia::class)($instructor, $lesson, ['provider' => 'external_url', 'url' => 'https://cdn.example.com/a.mp4']);
 
-    $this->get(URL::signedRoute('media.play', ['asset' => $asset->id]))->assertNotFound();
+    $this->actingAs($instructor)->get(URL::signedRoute('media.play', ['asset' => $asset->id, 'u' => $instructor->id]))->assertNotFound();
 })->group('T-P3-05', 'A1');
 
 it('lets only managing instructors attach media and audits the attachment', function (): void {

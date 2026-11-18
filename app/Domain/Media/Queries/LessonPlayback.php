@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Media\Queries;
 
+use App\Domain\Media\LessonPublishRule;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\PlaybackDescriptor;
+use App\Domain\Media\Providers\PrivateFileProvider;
 use App\Domain\Media\SignedFileUrl;
 use App\Models\Lesson;
+use App\Models\MediaAsset;
 use App\Models\User;
 
 /**
@@ -24,7 +27,14 @@ final class LessonPlayback
             return null;
         }
 
-        $descriptor = MediaProviders::for($media->provider)->descriptor($media);
+        $provider = MediaProviders::for($media->provider);
+        $descriptor = $provider instanceof PrivateFileProvider ? $provider->descriptor($media, $viewer) : $provider->descriptor($media);
+        if ($media->provider === 'vimeo' && $descriptor->tier === MediaAsset::TIER_OPEN) {
+            $item = $lesson->item()->with('course')->first();
+            if ($item === null || LessonPublishRule::blocked([$item]) !== []) {
+                return null;
+            }
+        }
         if ($viewer === null) {
             return $descriptor;
         }

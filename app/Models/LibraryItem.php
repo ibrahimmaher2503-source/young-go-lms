@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -41,7 +42,18 @@ final class LibraryItem extends Model
     /** Lessons and materials currently using this item. */
     public function referenceCount(): int
     {
-        return MediaAsset::query()->where('library_item_id', $this->getKey())->count()
-            + LessonResource::query()->where('library_item_id', $this->getKey())->count();
+        return $this->mediaAssets()->count() + $this->lessonResources()->count();
+    }
+
+    /** @return HasMany<MediaAsset, $this> */
+    public function mediaAssets(): HasMany
+    {
+        return $this->hasMany(MediaAsset::class);
+    }
+
+    /** @return HasMany<LessonResource, $this> */
+    public function lessonResources(): HasMany
+    {
+        return $this->hasMany(LessonResource::class);
     }
 }

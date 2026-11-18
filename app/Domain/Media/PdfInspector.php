@@ -4,62 +4,101 @@ declare(strict_types=1);
 
 namespace App\Domain\Media;
 
-/**
- * Structural checks on an uploaded PDF without a PDF library: header and end marker, encryption, active content and
- * page count (including pages stored inside compressed object streams). The extraction pipeline (T-P3-09) brings a real
- * parser; until then anything this cannot read with confidence is rejected, never trusted.
- */
+use Symfony\Component\Process\Exception\RuntimeException;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
+
+/** Inspect the parsed page tree and object dictionaries, including compressed objects. */
 final class PdfInspector
 {
+    private const int MAX_OUTPUT_BYTES = 16 * 1024 * 1024;
+
+    private const array INVALID = ['valid' => false, 'encrypted' => false, 'active_content' => false, 'pages' => 0];
+
     /** @return array{valid: bool, encrypted: bool, active_content: bool, pages: int} */
     public static function inspect(string $path): array
     {
-        $bytes = (string) file_get_contents($path);
+        $binary = config('media.qpdf_binary') ?: (new ExecutableFinder)->find('qpdf');
+        $path = realpath($path);
+        if (! is_string($binary) || $path === false) {
+            return self::INVALID;
+        }
 
-        $valid = preg_match('/%PDF-\d\.\d/', substr($bytes, 0, 1024)) === 1 && str_contains(substr($bytes, -2048), '%%EOF');
+        if (PHP_OS_FAMILY !== 'Windows') {
+            return self::parse($binary, $path);
+        }
+
+        // Windows temporary uploads may be open with delete-on-close sharing that QPDF cannot open directly.
+        $copy = tempnam(sys_get_temp_dir(), 'inspect-pdf-');
+        if ($copy === false) {
+            return self::INVALID;
+        }
+        try {
+            return @copy($path, $copy) ? self::parse($binary, $copy) : self::INVALID;
+        } finally {
+            unlink($copy);
+        }
+    }
+
+    /** @return array{valid: bool, encrypted: bool, active_content: bool, pages: int} */
+    private static function parse(string $binary, string $path): array
+    {
+        $process = new Process([
+            $binary, '--suppress-recovery', '--json=2', '--json-key=pages',
+            '--json-key=qpdf', '--json-key=encrypt', '--json-stream-data=none', $path,
+        ], timeout: 10);
+        $length = 0;
+        $overLimit = false;
+        try {
+            $process->run(function (string $type, string $output) use ($process, &$length, &$overLimit): void {
+                $length += strlen($output);
+                if (! $overLimit && $length > self::MAX_OUTPUT_BYTES) {
+                    $overLimit = true;
+                    $process->stop(0);
+                }
+            });
+
+            if ($overLimit) {
+                return self::INVALID;
+            }
+
+            if (! $process->isSuccessful()) {
+                $encrypted = new Process([$binary, '--is-encrypted', $path], timeout: 5);
+                $encrypted->disableOutput();
+
+                return ['encrypted' => $encrypted->run() === 0] + self::INVALID;
+            }
+        } catch (RuntimeException) {
+            return self::INVALID;
+        }
+
+        $parsed = json_decode($process->getOutput(), true);
+        if (! is_array($parsed['pages'] ?? null) || $parsed['pages'] === []
+            || ! is_array($parsed['qpdf'] ?? null) || ! is_bool($parsed['encrypt']['encrypted'] ?? null)) {
+            return self::INVALID;
+        }
 
         return [
-            'valid' => $valid,
-            'encrypted' => preg_match('#/Encrypt\b#', $bytes) === 1,
-            'active_content' => preg_match('#/(?:JavaScript|JS|Launch|EmbeddedFile|RichMedia)\b#', $bytes) === 1,
-            'pages' => $valid ? self::pages($bytes) : 0,
+            'valid' => true,
+            'encrypted' => $parsed['encrypt']['encrypted'] || isset($parsed['qpdf'][1]['trailer']['value']['/Encrypt']),
+            'active_content' => self::hasActiveContent($parsed['qpdf']),
+            'pages' => count($parsed['pages']),
         ];
     }
 
-    private static function pages(string $bytes): int
+    /** @param array<array-key, mixed> $object */
+    private static function hasActiveContent(array $object): bool
     {
-        $direct = preg_match_all('#/Type\s*/Page(?![A-Za-z])#', $bytes);
-        if ($direct !== false && $direct > 0) {
-            return $direct;
+        foreach ($object as $key => $value) {
+            if (in_array($key, ['/AA', '/JS', '/JavaScript', '/XFA', '/EF', '/EmbeddedFiles', '/RichMediaContent', '/RichMediaSettings'], true)
+                || ($key === '/OpenAction' && ! (is_array($value) && array_is_list($value)))
+                || ($key === '/S' && in_array($value, ['/JavaScript', '/Launch', '/SubmitForm', '/ImportData', '/Rendition', '/Movie', '/Sound', '/GoToE', '/RichMediaExecute'], true))
+                || (in_array($key, ['/Type', '/Subtype'], true) && in_array($value, ['/EmbeddedFile', '/FileAttachment', '/RichMedia', '/3D', '/Movie', '/Sound', '/Screen'], true))
+                || (is_array($value) && self::hasActiveContent($value))) {
+                return true;
+            }
         }
 
-        // Modern writers keep page objects inside compressed object streams: inflate those and count there.
-        $count = 0;
-        $offset = 0;
-        while (($start = strpos($bytes, 'stream', $offset)) !== false) {
-            $dataStart = $start + 6;
-            if (isset($bytes[$dataStart]) && $bytes[$dataStart] === "\r") {
-                $dataStart++;
-            }
-            if (isset($bytes[$dataStart]) && $bytes[$dataStart] === "\n") {
-                $dataStart++;
-            }
-            $end = strpos($bytes, 'endstream', $dataStart);
-            if ($end === false) {
-                break;
-            }
-
-            $dictionary = substr($bytes, max(0, $start - 300), min(300, $start));
-            if (str_contains($dictionary, '/ObjStm')) {
-                $raw = substr($bytes, $dataStart, $end - $dataStart);
-                $inflated = @gzuncompress($raw) ?: @gzinflate(substr($raw, 2));
-                if (is_string($inflated)) {
-                    $count += (int) preg_match_all('#/Type\s*/Page(?![A-Za-z])#', $inflated);
-                }
-            }
-            $offset = $end + 9;
-        }
-
-        return $count;
+        return false;
     }
 }

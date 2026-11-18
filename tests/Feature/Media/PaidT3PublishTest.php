@@ -44,12 +44,12 @@ function paidLesson(string $source = 'youtube', string $access = 'paid', bool $p
     return [$instructor, $course, $item->refresh(), $section];
 }
 
-it('blocks publishing a paid lesson that uses an open source', function (): void {
-    [$instructor, $course, $item] = paidLesson('youtube');
+it('blocks publishing a paid lesson that uses an open source', function (string $source): void {
+    [$instructor, $course, $item] = paidLesson($source);
 
     expect(fn () => app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published'))->toThrow(ValidationException::class);
     expect($item->refresh()->status)->toBe('draft')->and(Activity::query()->where('event', 'curriculum.items_published')->count())->toBe(0);
-})->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
+})->with(['youtube', 'vimeo'])->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
 
 it('blocks publishing the whole section too', function (): void {
     [$instructor, , $item, $section] = paidLesson('youtube');
@@ -58,12 +58,15 @@ it('blocks publishing the whole section too', function (): void {
     expect($section->refresh()->published)->toBeFalse()->and($item->refresh()->status)->toBe('draft');
 })->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
 
-it('allows protected, restricted and text sources on paid lessons', function (string $source): void {
+it('allows protected video and text sources on paid lessons', function (string $source): void {
     Storage::disk('local')->put('media/clip.mp4', 'v');
     [$instructor, $course, $item] = paidLesson($source);
+    if ($source === 'signed_storage') {
+        app(AttachLessonMedia::class)($instructor, $item->itemable, ['provider' => 'signed_storage', 'path' => 'media/clip.mp4']);
+    }
 
     expect(app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published'))->toBe(1);
-})->with(['vimeo', 'text'])->group('T-P3-05', 'A2');
+})->with(['signed_storage', 'text'])->group('T-P3-05', 'A2');
 
 it('allows an open source for free courses and for free-preview lessons', function (): void {
     [$instructor, $course, $item] = paidLesson('youtube', 'free');
@@ -115,3 +118,32 @@ it('drops the exception when the media source is replaced', function (): void {
     expect($item->itemable->refresh()->media->hasException())->toBeFalse();
     expect(fn () => app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published'))->toThrow(ValidationException::class);
 })->group('T-P3-05', 'A2');
+
+it('rejects an open replacement for a published paid lesson and preserves its protected media', function (): void {
+    [$instructor, $course, $item] = paidLesson('text');
+    Storage::disk('local')->put('media/protected.mp4', 'protected video');
+    $original = app(AttachLessonMedia::class)($instructor, $item->itemable, ['provider' => 'signed_storage', 'path' => 'media/protected.mp4']);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+    $audits = Activity::query()->where('event', 'media.attached')->count();
+
+    expect(fn () => app(AttachLessonMedia::class)($instructor, $item->itemable, ['provider' => 'youtube', 'url' => 'https://youtu.be/abcdefghijk']))
+        ->toThrow(ValidationException::class);
+
+    expect($item->refresh()->status)->toBe('published')
+        ->and($item->itemable->media->id)->toBe($original->id)
+        ->and($item->itemable->media->provider)->toBe('signed_storage')
+        ->and(Activity::query()->where('event', 'media.attached')->count())->toBe($audits);
+    Storage::disk('local')->assertExists('media/protected.mp4');
+})->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
+
+it('rejects removing preview access from a published paid open lesson without an exception', function (): void {
+    [$instructor, $course, $item] = paidLesson('youtube', 'paid', true);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+
+    expect(fn () => app(ManageLessons::class)->update($instructor, $item->itemable, ['title' => ['en' => 'Changed'], 'is_preview' => false]))
+        ->toThrow(ValidationException::class);
+
+    expect($item->refresh()->status)->toBe('published')
+        ->and($item->itemable->is_preview)->toBeTrue()
+        ->and($item->itemable->getTranslation('title', 'en'))->toBe('L');
+})->group('T-P3-05', 'A2', 'YG-GAP-VID-002');

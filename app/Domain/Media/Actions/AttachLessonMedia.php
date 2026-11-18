@@ -6,7 +6,9 @@ namespace App\Domain\Media\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
+use App\Domain\Media\LessonPublishRule;
 use App\Domain\Media\MediaProviders;
+use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
 use App\Models\User;
@@ -32,12 +34,18 @@ final class AttachLessonMedia
             $attributes['duration_seconds'] = max(0, min(86400, (int) $source['duration_seconds']));
         }
 
-        $oldPath = MediaAsset::query()->where('lesson_id', $lesson->getKey())->value('path');
+        $oldPath = null;
 
-        $asset = DB::transaction(function () use ($actor, $lesson, $attributes): MediaAsset {
+        $asset = DB::transaction(function () use ($actor, $lesson, $item, $attributes, &$oldPath): MediaAsset {
+            $currentItem = CurriculumItem::query()->lockForUpdate()->findOrFail($item->getKey());
+            $oldPath = MediaAsset::query()->where('lesson_id', $lesson->getKey())->value('path');
             // Replacing the source also drops any exception granted for the previous one.
             MediaAsset::query()->where('lesson_id', $lesson->getKey())->delete();
             $asset = MediaAsset::query()->create([...$attributes, 'lesson_id' => $lesson->getKey()]);
+
+            if ($currentItem->status === CurriculumItem::STATUS_PUBLISHED) {
+                LessonPublishRule::assertPublishable([$currentItem->load('itemable.media')]);
+            }
 
             if ($this->audit->record('media.attached', $lesson, (int) $actor->getKey(), null, ['provider' => $asset->provider, 'tier' => $asset->protection_tier]) === null) {
                 throw new RuntimeException('Unable to record media audit.');

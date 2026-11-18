@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Media\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Media\LessonPublishRule;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
 use App\Models\User;
@@ -34,14 +35,14 @@ final class GrantMediaException
         }
 
         $media = $lesson->media;
-        if ($media === null || $media->protection_tier !== MediaAsset::TIER_OPEN) {
+        if ($media === null || LessonPublishRule::effectiveTier($media) !== MediaAsset::TIER_OPEN) {
             throw ValidationException::withMessages(['media' => __('media.no_exception_needed')]);
         }
 
         return DB::transaction(function () use ($actor, $media, $lesson, $reason): MediaAsset {
             $media->forceFill(['exception_reason' => $reason, 'exception_by' => $actor->getKey(), 'exception_at' => now()])->save();
 
-            if ($this->audit->record('media.exception_granted', $lesson, (int) $actor->getKey(), null, ['provider' => $media->provider, 'tier' => $media->protection_tier], ['reason' => $reason]) === null) {
+            if ($this->audit->record('media.exception_granted', $lesson, (int) $actor->getKey(), null, ['provider' => $media->provider, 'tier' => MediaAsset::TIER_OPEN], ['reason' => $reason]) === null) {
                 throw new RuntimeException('Unable to record media audit.');
             }
 

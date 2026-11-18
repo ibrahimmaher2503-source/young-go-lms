@@ -19,17 +19,93 @@ function saveSpeed(speed) {
     }
 }
 
+function vimeoPlayback(frame) {
+    const origin = 'https://player.vimeo.com';
+    const media = new EventTarget();
+    const post = (method, value) => frame.contentWindow?.postMessage({ method, value }, origin);
+    const events = ['play', 'pause', 'ended', 'timeupdate'];
+    let ready = false;
+    let position = NaN;
+    media.duration = NaN;
+    media.pause = () => {
+        if (ready) {
+            post('pause');
+        }
+    };
+    Object.defineProperty(media, 'currentTime', {
+        get: () => position,
+        set: (seconds) => post('setCurrentTime', seconds),
+    });
+
+    window.addEventListener('message', (event) => {
+        if (event.origin !== origin || event.source !== frame.contentWindow) {
+            return;
+        }
+        let message;
+        try {
+            message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        } catch {
+            return;
+        }
+
+        if (!ready && (message?.event === 'ready' || message?.method === 'ping')) {
+            ready = true;
+            events.forEach((name) => post('addEventListener', name));
+            post('getDuration');
+        }
+        if (ready && message?.method === 'getDuration' && Number.isFinite(message.value)) {
+            media.duration = message.value;
+            media.dispatchEvent(new Event('loadedmetadata'));
+        }
+        if (ready && events.includes(message?.event) && Number.isFinite(message.data?.seconds) && message.data.seconds >= 0) {
+            position = message.data.seconds;
+            media.dispatchEvent(new Event(message.event));
+        }
+    });
+    frame.addEventListener('load', () => post('ping'));
+    post('ping');
+
+    return media;
+}
+
 function initPlayer(root) {
     const media = root.querySelector('[data-player-media]');
-    if (!media) {
-        return;
+    const frame = root.querySelector('[data-player-vimeo]');
+    const fullscreen = root.querySelector('[data-player-fullscreen]');
+    const stage = root.querySelector('[data-player-stage]');
+    const toggleFullscreen = () => {
+        if (document.fullscreenElement === stage) {
+            document.exitFullscreen().catch(() => {});
+        } else {
+            stage?.requestFullscreen?.().catch(() => {});
+        }
+    };
+    if (fullscreen) {
+        fullscreen.hidden = !document.fullscreenEnabled;
+        fullscreen.addEventListener('click', toggleFullscreen);
     }
+
+    const playback = media ?? (frame ? vimeoPlayback(frame) : null);
+    if (playback) {
+        window.ygPlayer = {
+            currentPosition: () => Math.floor(playback.currentTime),
+            pause: () => playback.pause(),
+            onPause: (callback) => playback.addEventListener('pause', callback),
+        };
+    }
+    if (!media) {
+        return playback;
+    }
+    const setVideoRatio = () => {
+        if (media.videoWidth > 0 && media.videoHeight > 0) {
+            stage?.style.setProperty('--lesson-video-ratio', String(media.videoWidth / media.videoHeight));
+        }
+    };
+    setVideoRatio();
+    media.addEventListener('loadedmetadata', setVideoRatio);
 
     const select = root.querySelector('[data-player-speed]');
     const captions = root.querySelector('[data-player-captions]');
-    const fullscreen = root.querySelector('[data-player-fullscreen]');
-    const stage = root.querySelector('[data-player-stage]');
-
     const setSpeed = (speed) => {
         media.playbackRate = speed;
         if (select) {
@@ -62,21 +138,11 @@ function initPlayer(root) {
             media.pause();
         }
     };
-    const toggleFullscreen = () => {
-        const target = stage || media;
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        } else if (target.requestFullscreen) {
-            target.requestFullscreen();
-        }
-    };
-
     setSpeed(readSpeed());
     setCaptions(false);
 
     select?.addEventListener('change', () => setSpeed(Number(select.value)));
     captions?.addEventListener('click', () => setCaptions(root.dataset.captions !== 'on'));
-    fullscreen?.addEventListener('click', toggleFullscreen);
 
     document.addEventListener('keydown', (event) => {
         const target = event.target;
@@ -110,7 +176,9 @@ function initPlayer(root) {
                 seek(10);
                 break;
             case 'f':
-                toggleFullscreen();
+                if (fullscreen) {
+                    toggleFullscreen();
+                }
                 break;
             case 'c':
                 if (captions) {
@@ -127,11 +195,8 @@ function initPlayer(root) {
         }
     });
 
-    // The assistant (P7) reads this to attach a question to the moment the learner paused.
-    window.ygPlayer = { currentPosition: () => Math.floor(media.currentTime || 0) };
+    return media;
 }
-
-document.querySelectorAll('[data-player]').forEach(initPlayer);
 
 // Progress (T-P4-04): the server decides what counts; the page only reports where the learner is.
 const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -157,13 +222,12 @@ function applyResult(root, result) {
     root.dataset.lessonStatus = result.status;
 }
 
-function initProgress(root) {
+function initProgress(root, media) {
     const url = root.dataset.progressUrl;
     if (!url) {
         return;
     }
 
-    const media = root.querySelector('[data-player-media]');
     if (media) {
         const resume = Number(root.dataset.resume || 0);
         media.addEventListener('loadedmetadata', () => {
@@ -173,7 +237,10 @@ function initProgress(root) {
         }, { once: true });
 
         const report = (keepalive = false) => {
-            const position = Math.floor(media.currentTime || 0);
+            if (!Number.isFinite(media.currentTime)) {
+                return;
+            }
+            const position = Math.floor(media.currentTime);
             send(url, { position }, keepalive).then((response) => (response.ok ? response.json() : null)).then((result) => result && applyResult(root, result)).catch(() => {});
         };
         let timer = null;
@@ -205,7 +272,7 @@ function initProgress(root) {
     });
 }
 
-document.querySelectorAll('[data-player]').forEach(initProgress);
+document.querySelectorAll('[data-player]').forEach((root) => initProgress(root, initPlayer(root)));
 
 // Watermark (YG-GAP-VID-003): it stays inside the stage, so it is also visible in full screen, and it moves every few seconds.
 document.querySelectorAll('[data-watermark]').forEach((mark) => {

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Media\PrivateFileAccess;
 use App\Domain\Media\SignedFileUrl;
+use App\Models\LessonResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -36,11 +38,19 @@ final class PrivateFileController
         $file = $class::query()->find($id);
         abort_if($file === null, 404);
         abort_unless($access->allows($user, $file), 403);
+        if ($file instanceof LessonResource && $request->boolean('staff_preview')) {
+            CurriculumAccess::authorizeLesson($user, $file->lesson, CurriculumAccess::UPDATE);
+        }
 
         $path = $file->path;
         $disk = Storage::disk(Config::string('media.disk'));
         abort_if($path === null || ! $disk->exists($path), 404);
 
-        return $disk->download($path, null, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+        $headers = ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'];
+        if ($file instanceof LessonResource && $request->boolean('inline') && in_array($file->mime, ['application/pdf', 'text/plain', 'image/png', 'image/jpeg', 'image/webp'], true)) {
+            return $disk->response($path, null, [...$headers, 'Content-Type' => $file->mime, 'Content-Security-Policy' => 'sandbox'], 'inline');
+        }
+
+        return $disk->download($path, null, $headers);
     }
 }

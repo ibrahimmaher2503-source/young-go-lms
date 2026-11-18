@@ -24,4 +24,5 @@ return [
     // Curriculum PDF limits (AI spec 6.1 defaults): 25 MB and 120 pages.
     'pdf_max_kilobytes' => 25600,
     'pdf_max_pages' => 120,
+    'qpdf_binary' => env('MEDIA_QPDF_BINARY'),
 ];

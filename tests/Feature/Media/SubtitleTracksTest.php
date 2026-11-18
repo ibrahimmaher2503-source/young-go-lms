@@ -85,11 +85,14 @@ it('rejects invalid VTT files and stores nothing', function (string $contents, s
     'end before start' => ["WEBVTT\n\n00:00:05.000 --> 00:00:02.000\nBackwards\n", 'timing'],
     'cues out of order' => ["WEBVTT\n\n00:00:05.000 --> 00:00:06.000\nB\n\n00:00:01.000 --> 00:00:02.000\nA\n", 'timing'],
     'no cues' => ["WEBVTT\n\nNOTE only a note\n", 'no_cues'],
-    'bad timestamp' => ["WEBVTT\n\n0:1.0 --> 0:2.0\nBad\n", 'no_cues'],
+    'bad timestamp' => ["WEBVTT\n\n0:1.0 --> 0:2.0\nBad\n", 'timing'],
+    'mixed timing' => [stGood()."\nCue three\n00:00:07.000 --> invalid\nBad\n", 'timing'],
+    'bad timing delimiter' => [stGood()."\n00:00:07.000 -> 00:00:09.000\nBad\n", 'timing'],
 ])->group('T-P3-14', 'A1', 'YG-GAP-LRN-003');
 
 it('accepts valid VTT with BOM, short timestamps and cue settings', function (): void {
     expect(VttValidator::problem(stGood()))->toBeNull()
+        ->and(VttValidator::problem(stGood()."\nNOTE comment with a literal --> arrow\n"))->toBeNull()
         ->and(VttValidator::problem("\xEF\xBB\xBFWEBVTT - title\n\n01:02.000 --> 01:04.000 align:start\nArabic: مرحبا\n"))->toBeNull()
         ->and(VttValidator::problem("WEBVTT\r\n\r\n00:00:01.000 --> 00:00:02.000\r\nCRLF\r\n"))->toBeNull()
         ->and(VttValidator::problem(str_repeat('a', VttValidator::MAX_BYTES + 1)))->toBe('size');
@@ -114,6 +117,42 @@ it('keeps one track per language, a single default, and cleans up files', functi
     $subs->remove($instructor, $replaced);
     expect(SubtitleTrack::query()->count())->toBe(1)->and($ar->refresh()->is_default)->toBeTrue()
         ->and(Storage::disk('local')->exists($replaced->path))->toBeFalse();
+})->group('T-P3-14', 'A1', 'ED-008');
+
+it('preserves the previous subtitle file and record when audit fails', function (string $operation): void {
+    [$instructor, $lesson] = stLesson();
+    $subs = app(ManageSubtitleTracks::class);
+    $track = $subs->add($instructor, $lesson, 'en', 'English', stFile(stGood()));
+    $path = $track->path;
+    activity()->disableLogging();
+    try {
+        expect(fn () => $operation === 'replace'
+            ? $subs->add($instructor, $lesson, 'en', 'Changed', stFile(stGood('Changed')))
+            : $subs->remove($instructor, $track))->toThrow(RuntimeException::class);
+    } finally {
+        activity()->enableLogging();
+    }
+    expect(SubtitleTrack::query()->sole()->path)->toBe($path)
+        ->and(Storage::disk('local')->get($path))->toBe(stGood())
+        ->and(Storage::disk('local')->allFiles('subtitles'))->toBe([$path]);
+})->with(['replace', 'remove'])->group('T-P3-14', 'A1', 'ED-008');
+
+it('keeps the committed replacement when old-file cleanup fails after commit', function (): void {
+    [$instructor, $lesson] = stLesson();
+    $subs = app(ManageSubtitleTracks::class);
+    $old = $subs->add($instructor, $lesson, 'en', 'English', stFile(stGood()));
+    $disk = Storage::disk('local');
+    $failingDisk = Mockery::mock($disk);
+    $failingDisk->shouldReceive('delete')->withAnyArgs()->andReturnUsing(fn ($path) => $disk->delete($path))->byDefault();
+    $failingDisk->shouldReceive('delete')->with($old->path)->andThrow(new RuntimeException('Cleanup unavailable.'));
+    Storage::set('local', $failingDisk);
+
+    expect(fn () => $subs->add($instructor, $lesson, 'en', 'Changed', stFile(stGood('Changed'))))
+        ->toThrow(RuntimeException::class, 'Cleanup unavailable.');
+
+    $replacement = SubtitleTrack::query()->sole();
+    expect($replacement->path)->not->toBe($old->path)
+        ->and($disk->get($replacement->path))->toBe(stGood('Changed'));
 })->group('T-P3-14', 'A1', 'ED-008');
 
 it('refuses other lesson types, other languages, bad labels and unauthorized people', function (): void {

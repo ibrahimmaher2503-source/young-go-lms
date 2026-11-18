@@ -7,6 +7,7 @@ namespace App\Domain\Media;
 use App\Domain\Identity\ActingLearner;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonResource;
+use App\Models\MediaAsset;
 use App\Models\SubtitleTrack;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -17,12 +18,12 @@ use InvalidArgumentException;
 /** Short-lived download links tied to one signed-in account: another account cannot reuse them. */
 final class SignedFileUrl
 {
-    public const array TYPES = ['resource' => LessonResource::class, 'document' => LessonCurriculumDocument::class, 'subtitle' => SubtitleTrack::class];
+    public const array TYPES = ['resource' => LessonResource::class, 'document' => LessonCurriculumDocument::class, 'subtitle' => SubtitleTrack::class, 'media' => MediaAsset::class];
 
     public function __construct(private readonly PrivateFileAccess $access, private readonly ActingLearner $acting) {}
 
     /** Returns null when the user may not open the file, so callers never hand out a link they would then refuse. */
-    public function for(User $user, Model $file): ?string
+    public function for(User $user, Model $file, bool $inline = false, bool $staffPreview = false): ?string
     {
         $type = array_search($file::class, self::TYPES, true);
         if ($type === false) {
@@ -33,14 +34,24 @@ final class SignedFileUrl
             return null;
         }
 
-        $parameters = ['type' => $type, 'id' => $file->getKey(), 'u' => $user->getKey()];
+        $parameters = $file instanceof MediaAsset
+            ? ['asset' => $file->getKey(), 'u' => $user->getKey()]
+            : ['type' => $type, 'id' => $file->getKey(), 'u' => $user->getKey()];
+        if ($file instanceof LessonResource) {
+            if ($inline || $staffPreview) {
+                $parameters['inline'] = 1;
+            }
+            if ($staffPreview) {
+                $parameters['staff_preview'] = 1;
+            }
+        }
         $parent = $this->acting->actingParent();
         if ($parent !== null && $this->acting->current()?->is($user)) {
             $parameters['actor'] = $parent->getKey();
         }
 
         return URL::temporarySignedRoute(
-            'files.download',
+            $file instanceof MediaAsset ? 'media.play' : 'files.download',
             now()->addSeconds(Config::integer('media.signed_ttl')),
             $parameters,
         );

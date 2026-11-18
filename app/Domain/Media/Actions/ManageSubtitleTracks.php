@@ -67,17 +67,19 @@ final class ManageSubtitleTracks
                 if ($default || $first) {
                     $this->makeDefault($track);
                 }
-                if ($oldPath !== null) {
-                    $disk->delete($oldPath);
-                }
                 if ($this->audit->record('media.subtitle_added', $lesson, (int) $actor->getKey(), null, ['locale' => $locale, 'replaced' => $replaced !== null]) === null) {
                     throw new RuntimeException('Unable to record subtitle audit.');
+                }
+                if ($oldPath !== null) {
+                    DB::afterCommit(fn () => $disk->delete($oldPath));
                 }
 
                 return $track->refresh();
             });
         } catch (Throwable $exception) {
-            $disk->delete($path);
+            if (! SubtitleTrack::query()->where('path', $path)->exists()) {
+                $disk->delete($path);
+            }
             throw $exception;
         }
     }
@@ -101,10 +103,10 @@ final class ManageSubtitleTracks
             if ($wasDefault) {
                 SubtitleTrack::query()->where('lesson_id', $lesson->getKey())->orderBy('id')->first()?->forceFill(['is_default' => true])->save();
             }
-            Storage::disk(Config::string('media.disk'))->delete($path);
             if ($this->audit->record('media.subtitle_removed', $lesson, (int) $actor->getKey(), null, ['locale' => $locale]) === null) {
                 throw new RuntimeException('Unable to record subtitle audit.');
             }
+            DB::afterCommit(fn () => Storage::disk(Config::string('media.disk'))->delete($path));
         });
     }
 

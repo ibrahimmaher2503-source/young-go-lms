@@ -22,8 +22,8 @@ final class VttValidator
         }
 
         $contents = (string) preg_replace('/^\xEF\xBB\xBF/', '', $contents);
-        $lines = preg_split('/\r\n|\r|\n/', $contents) ?: [];
-        if (! preg_match('/^WEBVTT(?:[ \t].*)?$/', (string) ($lines[0] ?? ''))) {
+        $normalized = str_replace(["\r\n", "\r"], "\n", $contents);
+        if (! preg_match('/\AWEBVTT(?:[ \t][^\n]*)?(?:\n|\z)/', $normalized)) {
             return 'signature';
         }
         if (preg_match('/<\s*(script|iframe|object|embed)\b|javascript:/i', $contents)) {
@@ -32,9 +32,17 @@ final class VttValidator
 
         $cues = 0;
         $previousStart = -1.0;
-        foreach ($lines as $line) {
-            if (! preg_match('/^('.self::TIME.')\s+-->\s+('.self::TIME.')(?:\s.*)?$/', $line, $match)) {
+        $blocks = preg_split('/\n(?:[ \t]*\n)+/', $normalized, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach (array_slice($blocks, 1) as $block) {
+            $lines = explode("\n", $block);
+            if (preg_match('/^NOTE(?:[ \t]|$)/', $lines[0])
+                || ($cues === 0 && in_array($lines[0], ['STYLE', 'REGION'], true))) {
                 continue;
+            }
+            $timingIndex = str_contains($lines[0], '-->') ? 0 : 1;
+            if (! preg_match('/^('.self::TIME.')[ \t]+-->[ \t]+('.self::TIME.')(?:[ \t].*)?$/', $lines[$timingIndex] ?? '', $match)
+                || str_contains(implode("\n", array_slice($lines, $timingIndex + 1)), '-->')) {
+                return 'timing';
             }
             [$start, $end] = [self::seconds($match[1]), self::seconds($match[2])];
             if ($end <= $start || $start < $previousStart) {
