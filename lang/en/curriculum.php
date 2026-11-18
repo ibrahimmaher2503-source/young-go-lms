@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'association' => 'Assessment association',
+    'assessment_title' => 'Assessment title',
     'association_course' => 'Course',
     'association_lesson' => 'Lesson',
     'associated_lesson_invalid' => 'Choose an active lesson in this course.',

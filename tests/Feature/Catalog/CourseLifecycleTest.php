@@ -70,7 +70,9 @@ function clBuilt(string $suffix = ''): array
 
     $reading = app(ManageLessons::class)->add($instructor, $section, ['title' => ['en' => 'Reading'], 'type' => 'text']);
     app(ManageLessons::class)->update($instructor, $reading->itemable, ['title' => ['en' => 'Reading'], 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hello']]]]]]);
-    $quiz = app(ManageAssessmentItems::class)->add($instructor, $section, 'quiz', ['title' => ['en' => 'Quiz']]);
+    $quiz = app(ManageAssessmentItems::class)->add($instructor, $section, 'quiz', [
+        'title' => ['en' => 'Quiz'], 'association' => 'lesson', 'associated_lesson_item_id' => $reading->id,
+    ]);
     app(SetCurriculumStatus::class)($instructor, $course, [$video->id, $reading->id, $quiz->id], 'published');
 
     return [$course->refresh(), $admin, $instructor];
@@ -93,6 +95,8 @@ it('duplicates a course into an independent draft with copied files and no learn
     $newItems = CurriculumItem::query()->where('course_id', $copy->id)->orderBy('sort')->orderBy('id')->get();
     expect($newItems)->toHaveCount(3)->and($newItems->pluck('status')->unique()->all())->toBe(['draft'])
         ->and($newItems->pluck('itemable_type')->all())->toBe(['lesson', 'lesson', 'quiz'])
+        ->and($newItems[2]->association)->toBe('lesson')
+        ->and($newItems[2]->associated_lesson_item_id)->toBe($newItems[1]->id)
         ->and(CourseSection::query()->where('course_id', $copy->id)->first()->published)->toBeFalse();
     $oldLessonIds = $items->where('itemable_type', 'lesson')->pluck('itemable_id');
     expect($newItems->where('itemable_type', 'lesson')->pluck('itemable_id')->intersect($oldLessonIds))->toBeEmpty()

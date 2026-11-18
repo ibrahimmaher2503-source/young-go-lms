@@ -36,6 +36,10 @@ use Throwable;
  */
 final class SaveCourseWizard
 {
+    public const int PRICING_STEP = 3;
+
+    public const int MEDIA_STEP = 4;
+
     public const int LAST_STEP = 7;
 
     public const array LEVELS = ['beginner', 'intermediate', 'advanced', 'all'];
@@ -43,6 +47,8 @@ final class SaveCourseWizard
     public const array FORMATS = ['recorded', 'live', 'hybrid'];
 
     public const array CONTENT_LANGUAGES = ['ar', 'en', 'both'];
+
+    public const array VIDEO_LINK_PROVIDERS = ['youtube', 'vimeo'];
 
     /** Statuses the wizard may set; publishing and review go through their own actions. */
     public const array WIZARD_STATUSES = ['draft', 'private', 'upcoming', 'suspended', 'archived'];
@@ -67,7 +73,7 @@ final class SaveCourseWizard
         }
 
         $data = $this->guardPrivileged($actor, $course, $data);
-        $pricing = $this->validatePricing($actor, $data, $step === 3 && $complete);
+        $pricing = $this->validatePricing($actor, $data, $course, $step === self::PRICING_STEP && $complete);
         $clean = $this->validate($data, $course, $complete ? $step : null);
         if ($course?->status === CourseStatus::PendingReview && ! $actor->can('course.publish')) {
             throw ValidationException::withMessages(['status' => __('course_wizard.review.locked_pending')]);
@@ -168,10 +174,19 @@ final class SaveCourseWizard
      * @param  array<string, mixed>  $data
      * @return array{access_mode?: string|null, market_prices?: array<string, string|null>, access_duration_days?: int|string|null, bundle_eligible?: bool|null, manual_access_allowed?: bool|null}
      */
-    private function validatePricing(User $actor, array $data, bool $complete): array
+    private function validatePricing(User $actor, array $data, ?Course $course, bool $complete): array
     {
         $fields = Arr::only($data, ['access_mode', 'market_prices', 'access_duration_days', 'bundle_eligible', 'manual_access_allowed']);
-        if (! self::canSetPricing($actor)) {
+        if (in_array($fields['access_mode'] ?? null, [null, ''], true)) {
+            unset($fields['access_mode']);
+        }
+        $canSetPricing = self::canSetPricing($actor);
+        $prices = $fields['market_prices'] ?? [];
+        if ((! $canSetPricing || ! isset($fields['access_mode'])) && is_array($prices)
+            && array_filter($prices, static fn ($amount): bool => $amount !== null && $amount !== '') === []) {
+            unset($fields['market_prices']);
+        }
+        if (! $canSetPricing) {
             if ($fields !== []) {
                 throw new AuthorizationException;
             }
@@ -179,7 +194,11 @@ final class SaveCourseWizard
             return [];
         }
 
-        $individual = in_array($fields['access_mode'] ?? null, Course::INDIVIDUAL_ACCESS_MODES, true);
+        $mode = $fields['access_mode'] ?? $course?->access_mode;
+        $individual = in_array($mode, Course::INDIVIDUAL_ACCESS_MODES, true);
+        if ($complete) {
+            $fields['access_mode'] = $mode;
+        }
         $rules = [
             'access_mode' => [$complete ? 'required' : 'nullable', Rule::in([Course::ACCESS_FREE, ...Course::PAID_ACCESS_MODES])],
             'market_prices' => ['nullable', 'array:'.implode(',', array_column(Market::cases(), 'value'))],
@@ -193,6 +212,10 @@ final class SaveCourseWizard
                 $individual && $complete && $market->isActive() ? 'required' : 'nullable',
                 'regex:/^\d{1,9}(?:\.\d{1,2})?$/D', 'numeric', 'gt:0',
             ];
+        }
+
+        if (! $individual) {
+            unset($fields['market_prices']);
         }
 
         return Validator::make($fields, $rules)->validate();
@@ -256,7 +279,7 @@ final class SaveCourseWizard
                     CoursePrice::query()->updateOrCreate($key, ['currency' => $market->currency(), 'amount_minor' => $minor]);
                 }
             }
-        } else {
+        } elseif ($before['access_mode'] !== $mode) {
             foreach (CoursePrice::query()->where('course_id', $course->getKey())->get() as $existingPrice) {
                 $before['market_prices'][$existingPrice->market] = $existingPrice->amount_minor;
                 $after['market_prices'][$existingPrice->market] = null;
@@ -310,6 +333,9 @@ final class SaveCourseWizard
             if (array_key_exists($optional, $data) && ($data[$optional] === null || $data[$optional] === '')) {
                 unset($data[$optional]);
             }
+        }
+        if ($course !== null && ($data['status'] ?? null) === $course->status->value) {
+            unset($data['status']);
         }
 
         $canOwnership = $actor->can('panel.admin.access') && $actor->can('course.create');

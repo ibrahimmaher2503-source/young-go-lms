@@ -18,9 +18,9 @@ use App\Models\User;
  */
 final class QuizQuestionMatcher
 {
-    public function matches(User $learner, string $question): bool
+    public function matches(User $learner, string $question, int $courseId): bool
     {
-        foreach (QuizGuard::openAttempts($learner) as $attempt) {
+        foreach (QuizGuard::openAttempts($learner, $courseId) as $attempt) {
             $prompts = [];
             foreach ($attempt->snapshot['questions'] ?? [] as $entry) {
                 foreach ((array) ($entry['prompt'] ?? []) as $prompt) {

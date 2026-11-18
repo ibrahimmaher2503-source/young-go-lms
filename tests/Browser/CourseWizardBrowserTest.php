@@ -51,10 +51,16 @@ it('renders the pricing step with market amounts, localized labels and no overfl
 
     $page = $this->visit("/admin/courses/{$course->id}/edit")->resize($width, $height);
     $page->script("async () => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); await document.fonts.ready; }");
-    $page->assertSee('EGP')->assertSee('SAR')->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
-    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
+    $page->assertSee('EGP')->assertSee('SAR')
+        ->assertSee(trans('courses.market_price_disabled', locale: $locale))
+        ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script(<<<'JS'
+        () => document.querySelector('input[id$=".market_prices.EG"]')?.value ?? null
+        JS))->toBe('599.00')
+        ->and($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
         ->and($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue()
         ->and($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
+
     if ($width >= 1440) {
         expect($page->script(<<<'JS'
             () => {

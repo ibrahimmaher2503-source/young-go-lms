@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\AI\Actions\IngestCurriculumDocument;
 use App\Domain\AI\Ingestion\Contracts\PdfTextExtractor;
 use App\Domain\Cohorts\Actions\ManageCohorts;
+use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
@@ -59,6 +60,48 @@ it('renders the curriculum manager accessibly in both directions and sizes', fun
     }
     $page->screenshot(fullPage: true, filename: "T-P3-04/curriculum-{$locale}-{$width}");
 })->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P3-04', 'A1', 'PRD-09.5');
+
+it('opens the localized assessment placement form in the curriculum manager', function (string $locale, int $width, int $height, string $theme): void {
+    [$course, $instructor, [$section], [$lesson]] = browserCurriculum($locale);
+    app(ManageAssessmentItems::class)->add($instructor, $section, 'quiz', [
+        'title' => ['ar' => 'اختبار الرسم', 'en' => 'Drawing quiz'],
+        'association' => 'lesson',
+        'associated_lesson_item_id' => $lesson->id,
+    ]);
+    $this->actingAs($instructor);
+
+    $page = $this->visit("/instructor/courses/{$course->id}/curriculum")->resize($width, $height);
+    $page->script("async () => {
+        localStorage.setItem('theme', '{$theme}');
+        window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'}));
+        await document.fonts.ready;
+    }");
+    $page->assertSee(__('curriculum.types.quiz', [], $locale))
+        ->click(__('curriculum.add_assessment', [], $locale))
+        ->assertSee(__('curriculum.association', [], $locale));
+    $page->script(<<<'JS'
+        async () => {
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await Promise.allSettled(document.getAnimations()
+                .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
+                .map(animation => animation.finished));
+        }
+        JS);
+    $page->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr')
+        ->and($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark')
+        ->and($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
+
+    $directory = base_path('tests/Browser/screenshots/T-P3-11');
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+    $page->screenshot(fullPage: false, filename: "T-P3-11/assessment-{$locale}-{$width}-{$theme}");
+})->with([
+    ['ar', 390, 844, 'light'], ['ar', 390, 844, 'dark'], ['en', 390, 844, 'light'], ['en', 390, 844, 'dark'],
+    ['ar', 1440, 900, 'light'], ['ar', 1440, 900, 'dark'], ['en', 1440, 900, 'light'], ['en', 1440, 900, 'dark'],
+    ['ar', 1568, 1003, 'light'],
+])->group('browser', 'T-P3-11', 'A1');
 
 it('saves a drag and drop reorder across sections', function (): void {
     [$course, $instructor, $sections, $items] = browserCurriculum('en');

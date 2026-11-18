@@ -15,6 +15,7 @@ use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\User;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -50,8 +51,11 @@ final class ManageLessons
         });
     }
 
-    /** @param array<string, mixed> $data */
-    public function update(User $actor, Lesson $lesson, array $data): Lesson
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  (Closure(Lesson): void)|null  $saveMedia
+     */
+    public function update(User $actor, Lesson $lesson, array $data, ?Closure $saveMedia = null): Lesson
     {
         $item = $this->itemFor($lesson);
         CurriculumAccess::authorize($actor, $item->course);
@@ -63,10 +67,11 @@ final class ManageLessons
             }
         }
 
-        return DB::transaction(function () use ($actor, $item, $lesson, $attributes): Lesson {
+        return DB::transaction(function () use ($actor, $item, $lesson, $attributes, $saveMedia): Lesson {
             $currentItem = CurriculumItem::query()->lockForUpdate()->findOrFail($item->getKey());
             $this->attachRichImages($actor, $lesson, $attributes['content']['content'] ?? []);
             $lesson->update($attributes);
+            $saveMedia?->__invoke($lesson);
             if ($currentItem->status === CurriculumItem::STATUS_PUBLISHED) {
                 LessonPublishRule::assertPublishable([$currentItem->load('itemable.media')]);
             }

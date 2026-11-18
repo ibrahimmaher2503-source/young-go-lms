@@ -165,6 +165,7 @@ final class ManageCurriculum extends Page
                         $item = app(ManageLessons::class)->add($this->actor(), $section, $this->lessonData($data));
                         $lesson = $item->itemable;
                         if ($lesson instanceof Lesson) {
+                            $this->saveMaterials($lesson, $data);
                             $this->saveMedia($lesson, $data);
                         }
                     });
@@ -192,8 +193,13 @@ final class ManageCurriculum extends Page
                 $lesson = $this->lessonFor($arguments['lesson'] ?? 0);
                 if (! $this->attempt($action, function () use ($lesson, $data): void {
                     DB::transaction(function () use ($lesson, $data): void {
-                        app(ManageLessons::class)->update($this->actor(), $lesson, $this->lessonData($data));
-                        $this->saveMedia($lesson, $data);
+                        app(ManageLessons::class)->update(
+                            $this->actor(),
+                            $lesson,
+                            $this->lessonData($data),
+                            fn (Lesson $updated) => $this->saveMedia($updated, $data),
+                        );
+                        $this->saveMaterials($lesson, $data);
                     });
                 })) {
                     return;
@@ -258,6 +264,7 @@ final class ManageCurriculum extends Page
     public function addAssessmentAction(): Action
     {
         return Action::make('addAssessment')->label(__('curriculum.add_assessment'))->icon('heroicon-o-clipboard-document-check')->color('gray')
+            ->modalSubmitActionLabel(__('curriculum.save'))
             ->schema([
                 Select::make('kind')->label(__('curriculum.assessment_kind'))->options([
                     'quiz' => __('curriculum.types.quiz'), 'assignment' => __('curriculum.types.assignment'),
@@ -265,15 +272,17 @@ final class ManageCurriculum extends Page
                 Select::make('section_id')->label(__('curriculum.section'))->required()->native(false)
                     ->options(fn (): array => CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->orderBy('sort')->get()->mapWithKeys(fn (CourseSection $s): array => [$s->getKey() => (string) $s->title])->all()),
                 Select::make('association')->label(__('curriculum.association'))->options([
-                    'course' => __('curriculum.association_course'), 'section' => __('curriculum.section'), 'lesson' => __('curriculum.association_lesson'),
+                    'course' => __('curriculum.association_course'),
+                    'section' => __('curriculum.section'),
+                    'lesson' => __('curriculum.association_lesson'),
                 ])->default('section')->required()->native(false)->live(),
                 Select::make('associated_lesson_item_id')->label(__('curriculum.association_lesson'))->native(false)
                     ->visible(fn (Get $get): bool => $get('association') === 'lesson')
                     ->required()
                     ->options(fn (): array => CurriculumOutline::forManager($this->course())->flatMap(fn (CourseSection $section) => $section->items)
                         ->where('itemable_type', 'lesson')->mapWithKeys(fn (CurriculumItem $item): array => [$item->getKey() => $item->itemable instanceof Lesson ? (string) $item->itemable->title : ''])->all()),
-                TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
-                TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
+                TextInput::make('title.ar')->label(__('curriculum.assessment_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
+                TextInput::make('title.en')->label(__('curriculum.assessment_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             ])
             ->action(function (array $data, Action $action): void {
                 $section = CourseSection::query()->where('course_id', $this->course()->getKey())->whereNull('archived_at')->findOrFail($data['section_id']);
@@ -615,8 +624,10 @@ final class ManageCurriculum extends Page
      */
     private function saveMedia(Lesson $lesson, array $data): void
     {
-        $this->saveDocuments($lesson, $data);
-        $this->saveLibrary($lesson, $data);
+        $libraryMedia = $data['library_media'] ?? null;
+        if (filled($libraryMedia) && ($item = LibraryAccess::visibleTo($this->actor())->find($libraryMedia))) {
+            app(AttachLibraryItem::class)->asMedia($this->actor(), $item, $lesson, $lesson->duration_seconds);
+        }
 
         $provider = $data['media_provider'] ?? null;
         if (! is_string($provider) || $provider === '') {
@@ -676,14 +687,12 @@ final class ManageCurriculum extends Page
     }
 
     /** @param  array<string, mixed>  $data */
-    private function saveLibrary(Lesson $lesson, array $data): void
+    private function saveMaterials(Lesson $lesson, array $data): void
     {
+        $this->saveDocuments($lesson, $data);
         $attach = app(AttachLibraryItem::class);
         $find = fn (mixed $id): ?\App\Models\LibraryItem => filled($id) ? LibraryAccess::visibleTo($this->actor())->find($id) : null;
 
-        if ($item = $find($data['library_media'] ?? null)) {
-            $attach->asMedia($this->actor(), $item, $lesson, $lesson->duration_seconds);
-        }
         if ($item = $find($data['library_resource'] ?? null)) {
             $attach->asResource($this->actor(), $item, $lesson);
         }

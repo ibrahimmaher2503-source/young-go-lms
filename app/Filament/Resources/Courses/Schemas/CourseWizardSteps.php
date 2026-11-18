@@ -205,7 +205,10 @@ final class CourseWizardSteps
                         ->visible(static fn ($get): bool => $canOwnership && $get('owner_type') === Course::OWNER_INDEPENDENT)
                         ->options(static fn (): array => User::query()->role(['instructor_academy', 'instructor_independent'])->orderBy('name')->pluck('name', 'id')->all()),
                     Select::make('status')->label(__('courses.status'))->visible($canStatus)
-                        ->options(self::labelled('statuses', SaveCourseWizard::WIZARD_STATUSES, 'courses.')),
+                        ->options(static fn (?Course $record): array => self::labelled('statuses', array_unique([
+                            ...SaveCourseWizard::WIZARD_STATUSES,
+                            ...($record === null ? [] : [$record->status->value]),
+                        ]))),
                     Toggle::make('featured')->label(__('courses.featured'))->visible($canStatus),
                 ]),
             ]),

@@ -34,10 +34,6 @@ final class ListCategories extends WorkspaceListRecords
             $image = $data['image'] ?? null;
             $bytes = null;
             if ($image instanceof UploadedFile) {
-                if (! in_array(strtolower($image->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp'], true)) {
-                    throw ValidationException::withMessages(['image' => __('media.invalid_type')]);
-                }
-
                 $bytes = $image->get();
                 if (! is_string($bytes)) {
                     throw ValidationException::withMessages(['image' => __('media.invalid_type')]);

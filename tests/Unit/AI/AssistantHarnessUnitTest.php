@@ -13,6 +13,7 @@ use App\Domain\AI\Guards\PiiMasker;
 use App\Domain\AI\Guards\QuizQuestionMatcher;
 use App\Domain\AI\Providers\KeywordModerationClassifier;
 use App\Models\Course;
+use App\Models\CourseSection;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonDocumentPage;
@@ -85,6 +86,8 @@ it('verifies InputGuard inspect and inspectAgainst agree on the same texts acros
     $student = User::factory()->create(['status' => 'active'])->assignRole('student');
     $course = Course::query()->create(['title' => ['en' => 'Course'], 'slug_ar' => 'c-ar-'.uniqid(), 'slug_en' => 'c-en-'.uniqid()]);
     $lesson = Lesson::query()->create(['title' => 'Shapes', 'type' => 'video']);
+    $section = CourseSection::query()->create(['course_id' => $course->id, 'title' => ['en' => 'Drawing']]);
+    $lesson->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
 
     $document = LessonCurriculumDocument::query()->create([
         'lesson_id' => $lesson->id,
@@ -117,6 +120,7 @@ it('verifies InputGuard inspect and inspectAgainst agree on the same texts acros
     $quiz = Quiz::query()->create([
         'title' => ['en' => 'Midterm Quiz'],
     ]);
+    $quizItem = $quiz->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
     Question::query()->create([
         'quiz_id' => $quiz->id,
         'prompt' => ['en' => 'What are the three primary colors in art?'],
@@ -193,7 +197,43 @@ it('verifies InputGuard inspect and inspectAgainst agree on the same texts acros
         $vAgainst = $guard->inspectAgainst($student, $questionText, $pages, $quizPrompts);
         $assertClosure($vInspect, $vAgainst);
     }
-})->group('T-P7-05', 'unit');
+
+    $otherCourse = Course::query()->create(['title' => ['en' => 'Other course'], 'slug_ar' => 'other-ar', 'slug_en' => 'other-en']);
+    $otherSection = CourseSection::query()->create(['course_id' => $otherCourse->id, 'title' => ['en' => 'Other section']]);
+    $quizItem->update(['course_id' => $otherCourse->id, 'section_id' => $otherSection->id]);
+    expect($guard->inspect($student, $document, $quizPrompts[0])->isBlocked())->toBeFalse();
+})->group('T-P7-05', 'T-P7-02', 'A2', 'unit');
+
+it('guards a frozen prompt from a second open attempt until that attempt expires', function (): void {
+    $learner = User::factory()->create();
+    $course = Course::query()->create(['title' => ['en' => 'Drawing'], 'slug_ar' => 'drawing-ar', 'slug_en' => 'drawing-en']);
+    $section = CourseSection::query()->create(['course_id' => $course->id, 'title' => ['en' => 'Drawing']]);
+    $quiz = Quiz::query()->create(['title' => ['en' => 'Drawing']]);
+    $quiz->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
+    $attempt = [
+        'learner_id' => $learner->id,
+        'status' => QuizAttempt::IN_PROGRESS,
+        'started_at' => now()->subMinute(),
+        'attempt_no' => 1,
+        'total' => 1,
+        'settings' => [],
+    ];
+    QuizAttempt::query()->create($attempt + ['quiz_id' => $quiz->id, 'snapshot' => ['questions' => []]]);
+
+    $otherQuiz = Quiz::query()->create(['title' => ['en' => 'Perspective']]);
+    $otherQuiz->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
+    $prompt = 'How does a vanishing point affect perspective?';
+    $second = QuizAttempt::query()->create($attempt + [
+        'quiz_id' => $otherQuiz->id,
+        'snapshot' => ['questions' => [['prompt' => ['en' => $prompt]]]],
+        'deadline_at' => now()->addMinute(),
+    ]);
+    $matcher = app(QuizQuestionMatcher::class);
+
+    expect($matcher->matches($learner, $prompt, $course->id))->toBeTrue();
+    $second->update(['deadline_at' => now()->subHour()]);
+    expect($matcher->matches($learner, $prompt, $course->id))->toBeFalse();
+})->group('T-P7-02', 'A2');
 
 it('tests QuizQuestionMatcher similarity, containment thresholds and Arabic normalization', function (): void {
     $matcher = new QuizQuestionMatcher;

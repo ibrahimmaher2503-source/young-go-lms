@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'association' => 'ارتباط التقييم',
+    'assessment_title' => 'عنوان التقييم',
     'association_course' => 'الدورة',
     'association_lesson' => 'الدرس',
     'associated_lesson_invalid' => 'اختر درساً نشطاً في هذه الدورة.',

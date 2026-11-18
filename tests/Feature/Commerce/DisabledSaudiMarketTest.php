@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Commerce\Actions\CreateOrder;
+use App\Domain\Commerce\Actions\ProcessPaymentWebhook;
 use App\Domain\Commerce\Actions\StartCheckout;
 use App\Domain\Commerce\Actions\SubmitManualPaymentProof;
 use App\Domain\Commerce\Actions\TransitionOrder;
+use App\Domain\Commerce\Contracts\PaymentGateway;
 use App\Domain\Commerce\ManualPaymentProof;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderLine;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\PaymentAttempt;
+use App\Domain\Commerce\PaymentAttemptStatus;
+use App\Domain\Commerce\PaymentEventOutcome;
 use App\Domain\Commerce\Payments\FakePaymentGateway;
 use App\Domain\Commerce\ProductType;
 use App\Domain\Settings\Actions\EnableGatedFlag;
@@ -67,5 +71,18 @@ it('keeps Saudi order and payment flows disabled even when market configuration 
     expect(ManualPaymentProof::query()->count())->toBe(0);
     expect(fn () => app(TransitionOrder::class)($order, OrderStatus::Paid))
         ->toThrow(ValidationException::class, __('commerce.market_unavailable'));
-    expect($order->refresh()->status)->toBe(OrderStatus::Pending);
+
+    $attempt = PaymentAttempt::query()->create([
+        'order_id' => $order->id, 'gateway' => 'fake', 'sequence' => 1, 'reference' => 'fixture-sa-attempt',
+        'status' => PaymentAttemptStatus::Created, 'active_order_id' => $order->id,
+        'amount_minor' => 1000, 'currency' => 'SAR', 'expires_at' => now()->addMinute(),
+    ]);
+    app()->instance(PaymentGateway::class, $gateway);
+    $payload = ['id' => 'fixture-sa-callback', 'reference' => $attempt->reference, 'amount_minor' => 1000, 'currency' => 'SAR', 'success' => true];
+    $webhook = app(ProcessPaymentWebhook::class)($payload, FakePaymentGateway::sign($payload));
+
+    expect($webhook->event->outcome)->toBe(PaymentEventOutcome::Flagged)
+        ->and($webhook->event->reason)->toBe('market_unavailable')
+        ->and($order->refresh()->status)->toBe(OrderStatus::Pending)
+        ->and($attempt->refresh()->status)->toBe(PaymentAttemptStatus::Created);
 })->group('T-P8-13', 'T-P8-13:A1', 'D-009', 'D-010')->group('payments');
