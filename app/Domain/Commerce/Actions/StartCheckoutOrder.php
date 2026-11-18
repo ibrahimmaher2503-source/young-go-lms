@@ -11,7 +11,7 @@ use App\Domain\Shared\Markets\Market;
 use App\Models\User;
 
 /**
- * Checkout entry (T-P8-12): returns the payer's still-open order for the same single product and learner, or creates one
+ * Checkout entry (T-P8-12; products: course, bundle and subscription plan): returns the payer's still-open order for the same single product and learner, or creates one
  * through `CreateOrder`. Reloading or re-clicking therefore never piles up pending orders (each could hold a coupon use).
  * The idempotency key only makes a double submit of the same form safe; it never revives a finished order.
  */

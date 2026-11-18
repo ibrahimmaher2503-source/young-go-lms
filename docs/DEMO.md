@@ -20,6 +20,7 @@ All demo accounts use the password from `config/demo.php` (`demo.password`): `De
 | Account | Login | Role |
 |---|---|---|
 | Admin | `admin@demo.younggo.test` | admin |
+| Finance | `finance@demo.younggo.test` | finance |
 | Academy instructor (Sara) | `instructor.academy@demo.younggo.test` | instructor_academy |
 | Independent instructor (Karim) | `instructor.indie@demo.younggo.test` | instructor_independent |
 | Learner Nour (AR) | `learner.nour@demo.younggo.test` | student |

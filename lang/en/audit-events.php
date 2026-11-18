@@ -121,6 +121,7 @@ return [
     'subscription.started' => 'Subscription started on payment',
     'subscription.renewed' => 'Subscription renewed on payment',
     'subscription.cancelled' => 'Subscription cancelled',
+    'subscription.refunded' => 'Subscription ended by refund',
     'subscription.expired' => 'Subscription expired after grace',
     'contact.enquiry_received' => 'Contact enquiry received',
     'contact.enquiry_assigned' => 'Contact enquiry assigned',

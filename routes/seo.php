@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\PublicBundleController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicCategoryController;
 use App\Http\Controllers\PublicCourseController;
 use App\Http\Controllers\PublicCoursePreviewController;
 use App\Http\Controllers\PublicInstructorController;
+use App\Http\Controllers\PublicPlansController;
 use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Middleware\ForgetPublicLocale;
@@ -30,6 +32,8 @@ Route::prefix('{publicLocale}')
         Route::get('/courses/{course}/preview/{item}', PublicCoursePreviewController::class)->whereNumber('item')->name('catalog.preview');
         Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
         Route::get('/categories/{category}', PublicCategoryController::class)->name('categories.show');
+        Route::get('/plans', PublicPlansController::class)->name('plans.index');
+        Route::get('/bundles/{slug}', PublicBundleController::class)->name('bundles.show');
         Route::get('/instructors/{instructor}', PublicInstructorController::class)->name('instructors.show');
         Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
         Route::get('/blog/{post}', [BlogController::class, 'show'])->name('blog.show');

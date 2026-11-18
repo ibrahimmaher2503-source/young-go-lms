@@ -16,6 +16,8 @@ return [
     'myself' => 'me',
     'already_has' => 'already enrolled',
     'all_enrolled' => 'Everyone you can buy for already has access to this course.',
+    'already_subscribed' => 'already subscribed',
+    'all_subscribed' => 'Everyone you can buy for already has an active subscription to this plan. Renew it from My subscription when the renewal window opens.',
     'continue' => 'Continue to payment',
     'back' => 'Back',
     'buy_now' => 'Buy now',

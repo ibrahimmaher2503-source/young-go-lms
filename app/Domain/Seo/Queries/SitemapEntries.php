@@ -6,8 +6,11 @@ namespace App\Domain\Seo\Queries;
 
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Catalog\Queries\PublicCategory;
+use App\Domain\Commerce\Queries\PublicBundles;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Domain\Seo\PublicUrl;
+use App\Domain\Shared\Markets\Market;
+use App\Domain\Subscriptions\Queries\PublicPlans;
 use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Course;
@@ -65,6 +68,18 @@ final class SitemapEntries
             if ($urls !== []) {
                 yield ['lastmod' => $category->updated_at?->toAtomString(), 'urls' => $urls];
             }
+        }
+
+        if ((new PublicPlans)->forMarket(Market::Egypt)->isNotEmpty()) {
+            yield ['lastmod' => null, 'urls' => array_combine(PublicUrl::locales(), array_map(PublicUrl::plans(...), PublicUrl::locales()))];
+        }
+
+        foreach ((new PublicBundles)->forMarket(Market::Egypt) as $bundle) {
+            $urls = [];
+            foreach (PublicUrl::locales() as $locale) {
+                $urls[$locale] = PublicUrl::bundle($bundle, $locale);
+            }
+            yield ['lastmod' => $bundle->updated_at?->toAtomString(), 'urls' => $urls];
         }
 
         foreach ((new PublicInstructors)->query()->orderBy('instructor_profiles.id')->cursor() as $profile) {

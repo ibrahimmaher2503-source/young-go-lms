@@ -16,6 +16,7 @@ use App\Domain\Commerce\RefundMethod;
 use App\Domain\Commerce\RefundStatus;
 use App\Domain\Entitlements\Actions\RevokeEntitlementsForSource;
 use App\Domain\Entitlements\EntitlementSource;
+use App\Domain\Subscriptions\Actions\EndSubscriptionForRefund;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,8 @@ use RuntimeException;
  *    refund reference is the idempotency key), then the result is recorded. A provider failure marks the refund `failed` and
  *    changes nothing else; it never falls back to a manual record.
  *  - Manual refunds (transfer-proof orders, or a gateway that cannot refund) need the external reference of the money returned.
- * Access follows `config('refunds.revoke_access')`: only the entitlements this order granted are revoked, and only then does the
+ * Access follows `config('refunds.revoke_access')`: only the entitlements this order granted are revoked (course purchases, bundle
+ * courses, and the subscription periods the order paid for, which also closes the period and stops its renewal reminders), and only then does the
  * actor also need manual_entitlement.grant (checked before any money moves). Executing an executed refund is a no-op.
  */
 final class ExecuteRefund
@@ -40,6 +42,7 @@ final class ExecuteRefund
         private readonly TransitionOrder $transition,
         private readonly RevokeEntitlementsForSource $revoke,
         private readonly IssueReceipt $receipts,
+        private readonly EndSubscriptionForRefund $endSubscription,
     ) {}
 
     public function __invoke(User $actor, Refund $refund, ?string $externalReference = null): Refund
@@ -106,7 +109,7 @@ final class ExecuteRefund
             $fully = $this->executedSum($order) >= $order->total_minor;
             ($this->transition)($order, $fully ? OrderStatus::Refunded : OrderStatus::PartiallyRefunded, $actor);
 
-            $revoked = $revoke ? ($this->revoke)($actor, [EntitlementSource::Purchase, EntitlementSource::ManualPayment], 'order:'.$order->reference, 'refund '.$locked->reference) : 0;
+            $revoked = $revoke ? $this->revokeAccess($actor, $order, 'refund '.$locked->reference) : 0;
             $this->receipts->__invoke($order, $locked);
 
             $recorded = $this->audit->record('refund.executed', $locked, (int) $actor->getKey(), ['status' => RefundStatus::Approved->value], [
@@ -139,6 +142,13 @@ final class ExecuteRefund
         }
 
         return $revoke;
+    }
+
+    /** Revokes everything this order granted: course purchases, bundle courses and the access of the subscription periods it paid for. */
+    private function revokeAccess(User $actor, Order $order, string $reason): int
+    {
+        return ($this->revoke)($actor, [EntitlementSource::Purchase, EntitlementSource::ManualPayment, EntitlementSource::Bundle], 'order:'.$order->reference, $reason)
+            + ($this->endSubscription)($actor, $order, $reason);
     }
 
     private function executedSum(Order $order): int

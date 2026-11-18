@@ -121,6 +121,7 @@ return [
     'subscription.started' => 'بدأ الاشتراك بعد الدفع',
     'subscription.renewed' => 'تم تجديد الاشتراك بعد الدفع',
     'subscription.cancelled' => 'تم إلغاء الاشتراك',
+    'subscription.refunded' => 'انتهى الاشتراك بسبب استرداد المبلغ',
     'subscription.expired' => 'انتهى الاشتراك بعد فترة السماح',
     'contact.enquiry_received' => 'تم استلام رسالة تواصل',
     'contact.enquiry_assigned' => 'تم تعيين مسؤول لرسالة تواصل',

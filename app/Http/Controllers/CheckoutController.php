@@ -26,6 +26,7 @@ use App\Domain\Seo\PublicUrl;
 use App\Domain\Settings\Queries\ManualPaymentPayee;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\Money;
+use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -52,9 +53,11 @@ final class CheckoutController
         $options = $learners($payer);
         $default = $acting->current();
         $owned = [];
-        if ($product['course'] instanceof Course) {
-            foreach ($options as $learner) {
+        foreach ($options as $learner) {
+            if ($product['course'] instanceof Course) {
                 $owned[$learner->getKey()] = $access->currentFor($learner, $product['course']) !== null;
+            } elseif ($product['plan'] instanceof SubscriptionPlan) {
+                $owned[$learner->getKey()] = $offers->planCovered($product['plan']->getKey(), $learner);
             }
         }
 
@@ -69,7 +72,7 @@ final class CheckoutController
     {
         $payer = $this->payer($request);
         $data = $request->validate([
-            'type' => ['required', Rule::in([ProductType::Course->value, ProductType::Bundle->value])],
+            'type' => ['required', Rule::in([ProductType::Course->value, ProductType::Bundle->value, ProductType::Plan->value])],
             'product_id' => ['required', 'integer', 'min:1'],
             'learner_id' => ['required', 'integer', 'min:1'],
             'key' => ['required', 'string', 'regex:/^[A-Za-z0-9_\-:.]{8,64}$/'],
@@ -161,16 +164,25 @@ final class CheckoutController
         return redirect()->route('checkout.order', $order);
     }
 
-    /** @return array{course: Course|null, bundle: Bundle|null, title: string, price: Money, back: string} */
+    /** @return array{course: Course|null, bundle: Bundle|null, plan: SubscriptionPlan|null, title: string, price: Money, back: string} */
     private function resolve(string $type, int $id, CheckoutOffers $offers, Market $market): array
     {
+        if ($type === ProductType::Plan->value) {
+            $plan = $offers->plan($id, $market);
+            abort_if($plan === null, 404);
+            $price = $plan->priceFor($market);
+            abort_if($price === null, 404);
+
+            return ['course' => null, 'bundle' => null, 'plan' => $plan, 'title' => (string) $plan->name, 'price' => Money::ofMinor($price->amount_minor, $price->currency), 'back' => route('plans.index')];
+        }
+
         if ($type === ProductType::Bundle->value) {
             $bundle = $offers->bundle($id, $market);
             abort_if($bundle === null, 404);
             $price = $bundle->priceFor($market);
             abort_if($price === null, 404);
 
-            return ['course' => null, 'bundle' => $bundle, 'title' => (string) $bundle->name, 'price' => $price->money(), 'back' => route('catalog.index')];
+            return ['course' => null, 'bundle' => $bundle, 'plan' => null, 'title' => (string) $bundle->name, 'price' => $price->money(), 'back' => route('catalog.index')];
         }
 
         abort_unless($type === ProductType::Course->value, 404);
@@ -179,7 +191,7 @@ final class CheckoutController
         $price = $offers->coursePrice($course, $market);
         abort_if($price === null, 404);
 
-        return ['course' => $course, 'bundle' => null, 'title' => (string) $course->title, 'price' => $price, 'back' => PublicUrl::course($course, app()->getLocale())];
+        return ['course' => $course, 'bundle' => null, 'plan' => null, 'title' => (string) $course->title, 'price' => $price, 'back' => PublicUrl::course($course, app()->getLocale())];
     }
 
     private function payer(Request $request): User

@@ -74,7 +74,10 @@ final class FakePaymentGateway implements PaymentGateway
         $this->counter++;
         $id = 'fake_intent_'.$intent->reference;
 
-        return new CheckoutSession('fake', $id, 'fake_order_'.$this->counter, 'https://fake-gateway.test/checkout/'.$id);
+        // Local demo: the app serves a tiny Pay / Fail page (FakeGatewayController). Testing keeps the unreachable fake host so tests stay offline.
+        $url = app()->environment('local') ? route('fake-gateway.show', ['reference' => $intent->reference]) : 'https://fake-gateway.test/checkout/'.$id;
+
+        return new CheckoutSession('fake', $id, 'fake_order_'.$this->counter, $url);
     }
 
     public function verifyCallback(array $payload, ?string $signature): VerifiedPaymentEvent

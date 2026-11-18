@@ -6,6 +6,8 @@ namespace App\Domain\Seo;
 
 use App\Domain\Catalog\Queries\PublicCategory;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
+use App\Domain\Commerce\Bundle;
+use App\Domain\Commerce\Queries\PublicBundles;
 use App\Domain\Content\Queries\PublicBlog;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Models\BlogPost;
@@ -42,6 +44,16 @@ final class PublicUrl
     public static function course(Course $course, string $locale): string
     {
         return url('/'.$locale.'/courses/'.rawurlencode(PublicCourseDetail::keyFor($course, $locale)));
+    }
+
+    public static function plans(string $locale): string
+    {
+        return url('/'.$locale.'/plans');
+    }
+
+    public static function bundle(Bundle $bundle, string $locale): string
+    {
+        return url('/'.$locale.'/bundles/'.rawurlencode(PublicBundles::keyFor($bundle, $locale)));
     }
 
     public static function page(CmsPage $page, string $locale): string

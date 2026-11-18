@@ -1,4 +1,4 @@
-{{-- Props: type, id, title, price (Money), market, learners, owned (id => bool), selected, key, back, course|bundle. Step 1: choose who the purchase is for. --}}
+{{-- Props: type (course|bundle|plan), id, title, price (Money), market, learners, owned (id => bool), selected, key, back, course|bundle. Step 1: choose who the purchase is for. --}}
 @php
     $allOwned = $learners->isNotEmpty() && $learners->every(fn ($l) => ($owned[$l->getKey()] ?? false));
     $nameOf = fn ($u) => $u->display_name ?: $u->name;
@@ -23,7 +23,7 @@
                         <x-ui.form-field for="learner_id" :label="__('checkout.learner_label')" :help="__('checkout.learner_help')" :error="$errors->first('learner_id')">
                             <x-ui.select id="learner_id" name="learner_id" :invalid="$errors->has('learner_id')" aria-describedby="learner_id-help">
                                 @foreach($learners as $learner)
-                                    <option value="{{ $learner->getKey() }}" @selected($selected === $learner->getKey()) @disabled($owned[$learner->getKey()] ?? false)>{{ $nameOf($learner) }}@if($learner->getKey() === auth()->id()) ({{ __('checkout.myself') }})@endif @if($owned[$learner->getKey()] ?? false) - {{ __('checkout.already_has') }}@endif</option>
+                                    <option value="{{ $learner->getKey() }}" @selected($selected === $learner->getKey()) @disabled($owned[$learner->getKey()] ?? false)>{{ $nameOf($learner) }}@if($learner->getKey() === auth()->id()) ({{ __('checkout.myself') }})@endif @if($owned[$learner->getKey()] ?? false) - {{ __($type === 'plan' ? 'checkout.already_subscribed' : 'checkout.already_has') }}@endif</option>
                                 @endforeach
                             </x-ui.select>
                         </x-ui.form-field>
@@ -32,7 +32,7 @@
                         <p>{{ __('checkout.learner_self', ['name' => $nameOf($learners->first())]) }}</p>
                     @endif
 
-                    @if($allOwned)<x-ui.alert tone="info">{{ __('checkout.all_enrolled') }}</x-ui.alert>@endif
+                    @if($allOwned)<x-ui.alert tone="info">{{ __($type === 'plan' ? 'checkout.all_subscribed' : 'checkout.all_enrolled') }}</x-ui.alert>@endif
                     @if($errors->has('order'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('order') }}</x-ui.alert>@endif
                     <div class="flex flex-wrap items-center gap-3">
                         <x-ui.button type="submit" size="lg" :disabled="$allOwned">{{ __('checkout.continue') }}</x-ui.button>

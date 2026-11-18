@@ -145,6 +145,7 @@ final class DemoSeeder extends Seeder
     private function people(): void
     {
         $this->admin = $this->person('admin', 'مدير العرض', 'Demo Admin', ['admin']);
+        $this->person('finance', 'مالية العرض', 'Demo Finance', ['finance']);
         $this->academy = $this->person('instructor.academy', 'سارة المدربة', 'Sara (academy instructor)', ['instructor_academy']);
         $this->indie = $this->person('instructor.indie', 'كريم المستقل', 'Karim (independent instructor)', ['instructor_independent']);
         $this->learners['nour'] = $this->person('learner.nour', 'نور', 'Nour', ['student']);

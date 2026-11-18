@@ -10,6 +10,7 @@
     <div class="mx-auto max-w-3xl space-y-4">
         <h1 class="text-2xl font-bold">{{ __('refunds.history_title') }}</h1>
         <p class="text-muted">{{ __('refunds.history_intro') }}</p>
+        <p><x-ui.link :href="route('subscription.index')">{{ __('subscriptions.my_title') }}</x-ui.link></p>
 
         @if($orders->isEmpty())
             <x-ui.empty-state :title="__('refunds.history_empty')" :description="__('refunds.history_empty_help')" data-empty>

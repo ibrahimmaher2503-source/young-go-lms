@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Public display hook for plans: the one definition of a sellable plan. It is active, the market is active, it has a
- * price for that market and at least one included course is published. No public page or route uses it yet (checkout UI is T-P8-12).
+ * price for that market and at least one included course is published. Used by the public bundle page and the checkout (T-P8-12).
  */
 final class PublicPlans
 {

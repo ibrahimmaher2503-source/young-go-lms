@@ -6,6 +6,7 @@ use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseReviewController;
+use App\Http\Controllers\FakeGatewayController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\InstructorStatementController;
 use App\Http\Controllers\LearnController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupportViewAsController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnforceTwoFactor;
@@ -64,12 +66,16 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/payments/proofs/{proof}/file', [ManualPaymentProofController::class, 'file'])->whereNumber('proof')->middleware('throttle:certificate-download')->name('manual-payments.file');
     // T-P8-12: learner checkout. GET routes never write; the coupon code is rate limited per account.
     Route::get('/checkout/return', [CheckoutController::class, 'return'])->name('checkout.return');
-    Route::get('/checkout/{type}/{id}', [CheckoutController::class, 'product'])->whereIn('type', ['course', 'bundle'])->whereNumber('id')->name('checkout.product');
+    Route::get('/checkout/{type}/{id}', [CheckoutController::class, 'product'])->whereIn('type', ['course', 'bundle', 'plan'])->whereNumber('id')->name('checkout.product');
     Route::post('/checkout/start', [CheckoutController::class, 'start'])->middleware('throttle:20,1')->name('checkout.start');
     Route::get('/checkout/orders/{order}', [CheckoutController::class, 'order'])->whereNumber('order')->name('checkout.order');
     Route::post('/checkout/orders/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->whereNumber('order')->middleware('throttle:checkout-coupon')->name('checkout.coupon.apply');
     Route::delete('/checkout/orders/{order}/coupon', [CheckoutController::class, 'removeCoupon'])->whereNumber('order')->middleware('throttle:20,1')->name('checkout.coupon.remove');
     Route::post('/checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.pay');
+    // T-P8-08/T-P8-12: the account's own subscriptions (learner or payer). Renewal is manual and only creates a pending order.
+    Route::get('/my/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/my/subscription/{subscription}/renew', [SubscriptionController::class, 'renew'])->whereNumber('subscription')->middleware('throttle:10,1')->name('subscription.renew');
+    Route::post('/my/subscription/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->whereNumber('subscription')->middleware('throttle:10,1')->name('subscription.cancel');
     Route::get('/my/payments', [PaymentHistoryController::class, 'index'])->name('payments.history');
     Route::get('/my/payments/{order}/receipt', [PaymentHistoryController::class, 'receipt'])->whereNumber('order')->middleware('throttle:certificate-download')->name('payments.receipt');
     Route::get('/my/payments/{order}/refunds/{refund}/receipt', [PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');
@@ -85,6 +91,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/family', [PageController::class, 'family'])->name('family');
     Route::get('/link', [PageController::class, 'link'])->name('link');
 });
+
+// Demo stand-in for the fake gateway's hosted page (the controller answers 404 outside local and testing).
+Route::get('/fake-gateway/{reference}', [FakeGatewayController::class, 'show'])->name('fake-gateway.show');
+Route::post('/fake-gateway/{reference}', [FakeGatewayController::class, 'complete'])->middleware('throttle:20,1')->name('fake-gateway.complete');
 
 // Public certificate verification: no account, safe fields only, throttled per address.
 Route::get('/verify/{token}', [CertificateController::class, 'verify'])->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:certificate-verify')->name('certificates.verify');

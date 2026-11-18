@@ -54,6 +54,12 @@ final class Subscription extends Model
         };
     }
 
+    /** When a renewal order is first accepted (the renewal window before the latest period ends), or null without a period. Matches CreateOrder. */
+    public function renewalOpensAt(): ?Carbon
+    {
+        return $this->latestPeriod()?->ends_at->copy()->subDays((int) config('subscriptions.renewal_window_days', 7));
+    }
+
     /** @return BelongsTo<SubscriptionPlan, $this> */
     public function plan(): BelongsTo
     {

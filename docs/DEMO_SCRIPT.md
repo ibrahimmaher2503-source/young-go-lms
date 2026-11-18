@@ -45,7 +45,7 @@ Email = `<key>@demo.younggo.test`.
 | Adam (child, 9) | username `demo.adam` | student, guardian-linked | 18 (sensitive child refusal) |
 | Yara (child, 12) | username `demo.yara` | student, guardian-linked | optional |
 
-**Missing account: finance.** `docs/DEMO.md` and `database/seeders/DemoSeeder.php` create no `finance` user. Steps 3, 7, 8, 9, 10 are written for a finance user. The admin panel shows most of the same pages, but the settlement actions (`settlement.manage`) are finance-only per the T-P8-09 notes. **Before the demo, the PO creates a finance staff user** (Staff users, role `finance`; check the exact role name in Role permissions). Until then, mark the finance-only actions as blocked.
+**Finance account.** `finance@demo.younggo.test` (role `finance`, demo password) is created by the demo seeder, so the finance-only steps (3, 7, 8, 9, 10) can be run as written.
 
 Staff panels (sign in at the panel URL; Filament redirects to its login):
 
@@ -134,11 +134,11 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 **Role:** Laila (learner).
 **URL:** `/checkout/course/{stage-workshop id}`, then the order page.
 
-**Steps**
+1. As Laila, open checkout for `stage-workshop` (a hybrid course with an open cohort). Pick **card** or **wallet** on the order page and submit. Expected: the server creates a fake checkout session and redirects to the local fake gateway page `/fake-gateway/{attempt}` (local environment only) with **Pay** and **Fail payment** buttons.
 1. As Laila, open checkout for `stage-workshop` (a hybrid course with an open cohort). Pick **card** or **wallet** on the order page and submit. Expected: the server creates a fake checkout session and redirects to a fake gateway URL on `fake-gateway.test`. The page does not exist in the app.
-2. Confirm the order stays **pending** in the app until a verified callback arrives.
+3. Press **Pay**. A signed fake callback goes through the normal payment webhook path; Laila lands on the checkout return page with the order paid and the course open. **Fail payment** leaves the order pending so she can pay again.
 3. The app has no fake-gateway payment page, and the callback route `/webhooks/paymob` only accepts signed POST requests. The PO cannot complete this step from the browser.
-
+**Status: [SHOW] (local demo).** The fake gateway page exists in local environments only (404 elsewhere). Owner gap B-07 covers real Paymob. Do not treat the manual proof path (step 3) as a substitute for the card path.
 **Status: [GAP].** Record: "fake gateway redirect leads to an unreachable host; no in-app fake payment screen; completion needs a signed test callback (developer action)." Owner gap B-07 covers real Paymob. Do not treat the manual proof path (step 3) as a substitute for the card path.
 
 **What you can still check:** the card and wallet buttons appear (config `payments.methods`), and the gateway step never charges anything in local (the fake gateway refuses outside `local`/`testing`).
