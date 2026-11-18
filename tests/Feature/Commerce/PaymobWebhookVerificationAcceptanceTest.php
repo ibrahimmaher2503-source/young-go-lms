@@ -539,7 +539,7 @@ it('answers 405 to GET on the webhook route', function (): void {
     // method-not-allowed response for this path, so GET returns 404 from the fallback instead of 405. GET still
     // changes nothing, but the acceptance list asks for 405.
     $this->get(route('webhooks.paymob'))->assertStatus(405);
-})->group('T-P8-03', 'A3')->skip('BUG: routes/pages.php Route::fallback shadows the 405 for GET /webhooks/paymob (returns 404).');
+})->group('T-P8-03', 'A3');
 
 it('rate limits the webhook to 120 requests a minute', function (): void {
     $payload = ['id' => 'txn_rl', 'reference' => 'RL-A1', 'amount_minor' => 1, 'currency' => 'EGP', 'success' => true];

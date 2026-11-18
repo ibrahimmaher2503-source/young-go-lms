@@ -381,7 +381,7 @@ it('A1 the coupon apply limit counts only coupon applies, not the checkout start
     }
 
     $this->actingAs($student)->post(route('checkout.coupon.apply', $order), ['code' => 'NOPE'])->assertStatus(429);
-})->skip('BUG: checkout.coupon.apply throttle bucket is shared with checkout.start; the 10th apply after one start is 429 (routes/pages.php)')->group('T-P8-12', 'A1');
+})->group('T-P8-12', 'A1');
 
 it('A1 a coupon change after a gateway session was opened makes the next pay open a fresh session', function (): void {
     $admin = t812_user('admin');

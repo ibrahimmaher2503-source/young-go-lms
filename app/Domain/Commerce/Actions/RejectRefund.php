@@ -39,7 +39,7 @@ final class RejectRefund
             }
 
             $before = $locked->status->value;
-            $locked->forceFill(['status' => RefundStatus::Rejected->value, 'approved_by' => $actor->getKey(), 'approved_at' => now(), 'review_note' => $reason])->save();
+            $locked->forceFill(['status' => RefundStatus::Rejected->value, 'rejected_by' => $actor->getKey(), 'rejected_at' => now(), 'review_note' => $reason])->save();
 
             $recorded = $this->audit->record('refund.rejected', $locked, (int) $actor->getKey(), ['status' => $before], ['status' => RefundStatus::Rejected->value], ['reason' => $reason]);
             if ($recorded === null) {

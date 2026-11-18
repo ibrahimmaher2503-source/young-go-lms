@@ -43,7 +43,7 @@ final class Learner360Record
     /** Staff accounts are not learners: their record is never shown here. */
     public function canView(User $viewer, User $learner): bool
     {
-        return $viewer->can('learner.360.view') && ! $this->eligibility->isStaff($learner);
+        return $viewer->can('learner.record.view') && ! $this->eligibility->isStaff($learner);
     }
 
     /**
@@ -51,7 +51,7 @@ final class Learner360Record
      */
     public function for(User $viewer, User $learner): array
     {
-        $sensitive = $viewer->can('learner.360.sensitive');
+        $sensitive = $viewer->can('learner.record.sensitive');
         $minor = GuardianAccess::isMinor($learner);
         $rows = config()->integer('support.learner_360.list_rows');
         $locale = app()->getLocale();

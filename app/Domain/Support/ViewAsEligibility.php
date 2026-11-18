@@ -29,7 +29,7 @@ final class ViewAsEligibility
 
     public function refusal(User $actor, User $learner): ?ViewAsRefusal
     {
-        if (! $actor->can('support.view_as') || ! $actor->can('learner.360.view')) {
+        if (! $actor->can('support.view_as') || ! $actor->can('learner.record.view')) {
             return ViewAsRefusal::Permission;
         }
 
@@ -62,7 +62,7 @@ final class ViewAsEligibility
             return ViewAsRefusal::Safeguarding;
         }
 
-        if (GuardianAccess::isMinor($learner) && ! $actor->can('learner.360.sensitive')) {
+        if (GuardianAccess::isMinor($learner) && ! $actor->can('learner.record.sensitive')) {
             return ViewAsRefusal::MinorRestricted;
         }
 

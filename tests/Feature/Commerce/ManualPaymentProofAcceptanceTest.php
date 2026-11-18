@@ -307,10 +307,15 @@ it('learner, parent, instructor, support, inactive finance and an approve-only c
         ->and(p804Entitlements(EntitlementSource::ManualPayment->value))->toBe(0);
 })->group('T-P8-04', 'A2')->group('payments');
 
-// BUG: app/Domain/Commerce/Actions/RejectManualPaymentProof.php checks only payment.approve_manual, so a custom role
-// holding that permission alone can reject. Spec A2 requires the same refusal as approve (manual_entitlement.grant too).
-it('BUG: a custom role with only payment.approve_manual cannot reject a proof')
-    ->todo('BUG: RejectManualPaymentProof gates on payment.approve_manual only; A2 requires the same refusal as approve.');
+it('a custom role with only payment.approve_manual cannot reject a proof', function (): void {
+    p804Role('p804_reject_only', ['payment.approve_manual']);
+    $payer = p804Active('student');
+    $proof = p804Submit($payer, p804Order($payer));
+    $approveOnly = User::factory()->create(['status' => 'active'])->assignRole('p804_reject_only');
+
+    expect(fn () => app(RejectManualPaymentProof::class)($approveOnly, $proof, 'Not allowed to decide this proof.'))->toThrow(AuthorizationException::class)
+        ->and($proof->refresh()->status)->toBe(ManualPaymentStatus::Pending);
+})->group('T-P8-04', 'A2')->group('payments');
 
 it('payment.view-only staff see the queue without review actions or detail and file links', function (): void {
     p804Role('p804_viewer', ['payment.view', 'panel.finance.access']);
@@ -681,10 +686,18 @@ it('refuses a disguised file: text content named as a png', function (): void {
         ->and(Storage::disk('local')->allFiles('manual-payments'))->toBe([]);
 })->group('T-P8-04', 'A1')->group('payments');
 
-// BUG: app/Domain/Commerce/ManualPaymentProofFiles.php delegates images to app/Domain/Media/ImageReencoder.php, which raises
-// the refusal on key `file` (media.invalid_type). Spec requires key `proof` with manual_payment.file_type.
-it('BUG: a disguised file is refused on key proof with manual_payment.file_type')
-    ->todo('BUG: ImageReencoder refuses on key file, not proof; the form shows the error on the wrong field.');
+it('refuses a disguised file on key proof with manual_payment.file_type', function (): void {
+    $payer = p804Active('student');
+    // A real PNG signature (so the sniffed type is image/png) followed by bytes that do not decode as an image.
+    $file = UploadedFile::fake()->createWithContent('slip.png', "\x89PNG\r\n\x1a\n".str_repeat('not a real picture ', 8));
+
+    $refusal = p804Refused(fn () => p804Submit($payer, p804Order($payer), [], $file));
+
+    expect($refusal->errors())->toHaveKey('proof')
+        ->and($refusal->errors())->not->toHaveKey('file')
+        ->and($refusal->errors()['proof'][0])->toBe(__('manual_payment.file_type'))
+        ->and(Storage::disk('local')->allFiles('manual-payments'))->toBe([]);
+})->group('T-P8-04', 'A1')->group('payments');
 
 it('stores the proof privately under manual-payments with a uuid name and keeps path and checksum out of arrays', function (): void {
     $payer = p804Active('student');

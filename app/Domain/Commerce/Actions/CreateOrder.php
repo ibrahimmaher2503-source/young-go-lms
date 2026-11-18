@@ -183,7 +183,9 @@ final class CreateOrder
     {
         $bundle = Bundle::query()->with(['prices', 'items.course'])->find($line->productId);
         if (! $bundle instanceof Bundle || ! $bundle->is_active || $bundle->items->isEmpty()
-            || $bundle->items->contains(static fn ($i): bool => $i->course?->status !== CourseStatus::Published)) {
+            || $bundle->items->contains(static fn ($i): bool => $i->course?->status !== CourseStatus::Published)
+            // Eligibility is re-checked at sale time: a course flagged out of bundles after the bundle was saved blocks the sale.
+            || $bundle->items->contains(static fn ($i): bool => ! $i->course->bundle_eligible)) {
             $this->refuse('product_unavailable');
         }
         $price = $bundle->priceFor($market);

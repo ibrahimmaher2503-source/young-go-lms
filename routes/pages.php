@@ -67,7 +67,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/checkout/{type}/{id}', [CheckoutController::class, 'product'])->whereIn('type', ['course', 'bundle'])->whereNumber('id')->name('checkout.product');
     Route::post('/checkout/start', [CheckoutController::class, 'start'])->middleware('throttle:20,1')->name('checkout.start');
     Route::get('/checkout/orders/{order}', [CheckoutController::class, 'order'])->whereNumber('order')->name('checkout.order');
-    Route::post('/checkout/orders/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.coupon.apply');
+    Route::post('/checkout/orders/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->whereNumber('order')->middleware('throttle:checkout-coupon')->name('checkout.coupon.apply');
     Route::delete('/checkout/orders/{order}/coupon', [CheckoutController::class, 'removeCoupon'])->whereNumber('order')->middleware('throttle:20,1')->name('checkout.coupon.remove');
     Route::post('/checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.pay');
     Route::get('/my/payments', [PaymentHistoryController::class, 'index'])->name('payments.history');

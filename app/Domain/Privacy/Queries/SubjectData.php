@@ -64,7 +64,7 @@ final class SubjectData
             'submission_feedback' => $this->rows(DB::table('submission_feedback')->whereIn('submission_id', $submissionIds), ['author_id']),
             'orders' => $this->rows(DB::table('orders')->where('payer_id', $userId), ['idempotency_key', 'request_hash']),
             'order_items' => $this->rows(DB::table('order_items')->where(static fn (Builder $q): Builder => $q->where('learner_id', $userId)->orWhereIn('order_id', $orderIds))),
-            'refunds' => $this->rows(DB::table('refunds')->whereIn('order_id', $orderIds), ['provider_transaction_id', 'provider_refund_id', 'failure_code', 'requested_by', 'approved_by', 'executed_by', 'review_note']),
+            'refunds' => $this->rows(DB::table('refunds')->whereIn('order_id', $orderIds), ['provider_transaction_id', 'provider_refund_id', 'failure_code', 'requested_by', 'approved_by', 'rejected_by', 'executed_by', 'review_note']),
             'receipts' => $this->rows(DB::table('e_receipts')->whereIn('order_id', $orderIds), ['snapshot', 'receipt_key', 'provider', 'provider_uuid', 'failure_code']),
             'help_requests' => $this->rows(DB::table('help_requests')->whereIn('id', $helpIds)),
             'help_request_messages' => $this->rows(DB::table('help_request_messages')->whereIn('help_request_id', $helpIds)),

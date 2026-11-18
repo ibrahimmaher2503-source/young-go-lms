@@ -38,7 +38,12 @@ final class ManualPaymentProofFiles
         $extension = $allowed[$mime];
         $bytes = null;
         if (str_starts_with($mime, 'image/')) {
-            $image = ImageReencoder::reencode((string) file_get_contents($file->getPathname()));
+            try {
+                $image = ImageReencoder::reencode((string) file_get_contents($file->getPathname()));
+            } catch (ValidationException) {
+                // The re-encoder reports key `file`; the proof form shows this refusal on `proof`.
+                throw ValidationException::withMessages(['proof' => __('manual_payment.file_type')]);
+            }
             $bytes = $image['bytes'];
             $mime = $image['mime'];
             $extension = $image['extension'];

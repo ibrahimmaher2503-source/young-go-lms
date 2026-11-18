@@ -103,6 +103,10 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
+            if ($ability === 'viewTelescope') {
+                return null;
+            }
+
             $guard = (string) config('permissions.guard', 'web');
             $permissionNames = array_column(config('permissions.permissions', []), 'name');
             if (in_array($ability, $permissionNames, true) && $user->checkPermissionTo($ability, $guard)) {
@@ -188,6 +192,7 @@ class AppServiceProvider extends ServiceProvider
             return [Limit::perMinute(5)->by($user.'|'.$request->ip()), Limit::perMinutes(15, 10)->by($user)];
         });
         RateLimiter::for('progress', static fn (Request $request): Limit => Limit::perMinute(max(1, (int) config('learning.progress.heartbeats_per_minute')))->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route('item')));
+        RateLimiter::for('checkout-coupon', static fn (Request $request): Limit => Limit::perMinute(10)->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route()?->getName()));
         RateLimiter::for('certificate-verify', static fn (Request $request): Limit => Limit::perMinute(30)->by($request->ip()));
         RateLimiter::for('certificate-download', static fn (Request $request): Limit => Limit::perMinute(10)->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->route('certificate')));
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));

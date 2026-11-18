@@ -30,6 +30,8 @@ use Illuminate\Support\Carbon;
  * @property int $requested_by
  * @property int|null $approved_by
  * @property Carbon|null $approved_at
+ * @property int|null $rejected_by
+ * @property Carbon|null $rejected_at
  * @property string|null $review_note
  * @property int|null $executed_by
  * @property Carbon|null $executed_at
@@ -47,6 +49,7 @@ final class Refund extends Model
             'status' => RefundStatus::class,
             'amount_minor' => 'integer',
             'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
             'executed_at' => 'datetime',
         ];
     }

@@ -24,7 +24,7 @@ final class RejectManualPaymentProof
 
     public function __invoke(User $actor, ManualPaymentProof $proof, string $reason): ManualPaymentProof
     {
-        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('payment.approve_manual')) {
+        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('payment.approve_manual') || ! $actor->can('manual_entitlement.grant')) {
             throw new AuthorizationException;
         }
         $reason = trim($reason);

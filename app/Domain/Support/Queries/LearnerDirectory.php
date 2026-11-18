@@ -17,7 +17,7 @@ final class LearnerDirectory
     /** @return list<array{id: int, name: string, email: string|null, username: string|null}> */
     public function search(User $viewer, string $term): array
     {
-        if (! $viewer->can('learner.360.view')) {
+        if (! $viewer->can('learner.record.view')) {
             return [];
         }
 
