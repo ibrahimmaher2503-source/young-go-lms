@@ -3,7 +3,7 @@
     @if ($kpis !== [])
         <section class="yg-dashboard-tools" aria-labelledby="yg-kpi-title">
             <header><h2 id="yg-kpi-title">{{ __('dashboard.kpis_title') }}</h2><p>{{ __('dashboard.kpis_period', ['days' => $days]) }}</p></header>
-            <dl class="yg-summary-strip">
+            <dl class="yg-kpi-strip">
                 @foreach ($kpis as $kpi)
                     <div class="yg-summary-item" data-tone="{{ $kpi['tone'] }}" data-kpi="{{ $kpi['key'] }}">
                         <x-filament::icon :icon="$kpi['icon']" class="yg-summary-icon" aria-hidden="true" />

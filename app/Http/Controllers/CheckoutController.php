@@ -23,6 +23,7 @@ use App\Domain\Content\Queries\PublicSitePages;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Seo\PublicUrl;
+use App\Domain\Settings\Queries\ManualPaymentPayee;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\Money;
 use App\Models\Course;
@@ -30,7 +31,6 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -93,7 +93,7 @@ final class CheckoutController
 
         $redemption = CouponRedemption::query()->with('coupon')->where('order_id', $order->getKey())->where('status', CouponRedemptionStatus::Reserved->value)->first();
         $terms = $pages()->get('terms');
-        $payee = Config::get('manual_payments.payee');
+        $payee = app(ManualPaymentPayee::class)();
 
         return view('checkout.order', [
             'order' => $order,
@@ -103,7 +103,7 @@ final class CheckoutController
             'proof' => ManualPaymentProof::query()->where('order_id', $order->getKey())->latest('id')->first(),
             'attempt' => PaymentAttempt::query()->where('order_id', $order->getKey())->latest('sequence')->first(),
             'termsUrl' => $terms !== null ? PublicUrl::page($terms, app()->getLocale()) : null,
-            'payee' => is_string($payee) && trim($payee) !== '' ? trim($payee) : null,
+            'payee' => $payee,
         ]);
     }
 

@@ -10,13 +10,16 @@ use App\Filament\Pages\AssistantControls;
 use App\Filament\Pages\AssistantInsights;
 use App\Filament\Pages\AssistantTestConsole;
 use App\Filament\Pages\AssistantUsageReport;
+use App\Filament\Pages\GeneralSettingsPage;
 use App\Filament\Pages\InstructorAgreementPage;
 use App\Filament\Pages\LearnerThreeSixtyPage;
 use App\Filament\Pages\MarketingTags;
 use App\Filament\Pages\MyPayoutProfile;
+use App\Filament\Pages\PaymentPayeeSettings;
 use App\Filament\Pages\PaymentReconciliationPage;
 use App\Filament\Pages\ReportsPage;
 use App\Filament\Pages\RetentionSettings;
+use App\Filament\Pages\SettingsHub;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Announcements\AnnouncementResource;
 use App\Filament\Resources\Audit\AuditLogResource;
@@ -57,6 +60,7 @@ use App\Filament\Resources\StaffUsers\StaffUserResource;
 use App\Filament\Resources\Statements\StatementResource;
 use App\Filament\Resources\SubmissionReview\SubmissionReviewResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
+use App\Filament\Shared\StaffNavigation;
 use App\Filament\Shared\WorkspaceAvatarProvider;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -67,6 +71,7 @@ use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationBuilder;
 use Filament\Panel;
 use Filament\Support\Enums\Width;
 use Filament\Tables\View\TablesRenderHook;
@@ -92,6 +97,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->defaultThemeMode(ThemeMode::Light)
                 ->font('Noto Sans Arabic', provider: LocalFontProvider::class)
                 ->maxContentWidth(Width::Full)
+                ->navigation(static fn (NavigationBuilder $builder): NavigationBuilder => StaffNavigation::build($builder))
                 ->authGuard('web')
                 ->brandName(static fn (): string => (string) __('app.name'))
                 ->userMenuItems([Action::make('security')->label(static fn (): string => (string) __('pages.tf_title'))->url('/security/two-factor')->icon('heroicon-o-shield-check')])
@@ -100,7 +106,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages(match ($id) {
                     'finance' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class],
-                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, LearnerThreeSixtyPage::class, RetentionSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
+                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, LearnerThreeSixtyPage::class, RetentionSettings::class, SettingsHub::class, GeneralSettingsPage::class, PaymentPayeeSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
                     default => [WorkspaceDashboard::class, ReportsPage::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, InstructorAgreementPage::class, MyPayoutProfile::class],
                 })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])

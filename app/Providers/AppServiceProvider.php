@@ -43,6 +43,7 @@ use App\Domain\Live\MeetingProvider;
 use App\Domain\Notifications\Listeners\NotifyPayerOfPayment;
 use App\Domain\Progress\LessonCompletionLookup;
 use App\Domain\Progress\ProgressHistory;
+use App\Domain\Settings\Listeners\ApplyMailSenderIdentity;
 use App\Domain\Settings\PlatformFlag;
 use App\Models\Assignment;
 use App\Models\Lesson;
@@ -55,6 +56,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -124,6 +126,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
         // T-P6-05: anything that can change a learner's completion asks the evaluator (idempotent, synchronous).
+        Event::listen(MessageSending::class, [ApplyMailSenderIdentity::class, 'handle']);
         Event::listen(CourseCompletionInputChanged::class, [EvaluateCompletion::class, 'handle']);
         // T-P6-06: a completed course gets its certificate once (idempotent) and the learner a single notice.
         Event::listen(CourseCompleted::class, [IssueCertificateOnCompletion::class, 'handle']);

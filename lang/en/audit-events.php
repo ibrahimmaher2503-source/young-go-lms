@@ -121,6 +121,8 @@ return [
     'newsletter.subscribed' => 'Newsletter subscription added',
     'newsletter.unsubscribed' => 'Newsletter subscription ended',
     'marketing.tags_saved' => 'Marketing tag IDs saved',
+    'settings.general_saved' => 'General settings saved',
+    'settings.payee_saved' => 'Manual payment payee details saved',
     'lead.exported' => 'Enquiries or subscribers exported to CSV',
     'instructor_profile.saved' => 'Instructor public profile saved',
     'instructor_profile.approved' => 'Instructor public profile approved',

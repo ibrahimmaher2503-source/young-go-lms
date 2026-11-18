@@ -121,6 +121,8 @@ return [
     'newsletter.subscribed' => 'تمت إضافة اشتراك في النشرة البريدية',
     'newsletter.unsubscribed' => 'انتهى اشتراك في النشرة البريدية',
     'marketing.tags_saved' => 'تم حفظ معرّفات علامات التسويق',
+    'settings.general_saved' => 'تم حفظ الإعدادات العامة',
+    'settings.payee_saved' => 'تم حفظ بيانات المستفيد من الدفع اليدوي',
     'lead.exported' => 'تم تصدير الرسائل أو المشتركين إلى ملف',
     'instructor_profile.saved' => 'تم حفظ الملف العام للمدرب',
     'instructor_profile.approved' => 'تم اعتماد الملف العام للمدرب',
