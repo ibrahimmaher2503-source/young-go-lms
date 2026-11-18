@@ -41,12 +41,12 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `help.student_replied` | help | mandatory | wired | `:lesson` | `help.notice.student_replied.title` |  |
 | `help.overdue` | help | mandatory | wired | `:lesson` | `help.notice.overdue.title` |  |
 | `help.reply` | help | mandatory | wired | `:lesson` | `help.notice.reply.title` |  |
-| `settlement.statement` | settlement | mandatory | pending | `:period` | `notification_events.templates.settlement_statement.title` | T-P8-10 |
-| `settlement.status` | settlement | mandatory | pending | `:period` `:status` | `notification_events.templates.settlement_status.title` | T-P8-10 |
+| `settlement.statement` | settlement | mandatory | wired | `:period` | `notification_events.templates.settlement_statement.title` |  |
+| `settlement.status` | settlement | mandatory | wired | `:period` `:status` | `notification_events.templates.settlement_status.title` |  |
 
 ## Wiring notes
 
 - Preferences gate in `NotificationDispatcher::send` (via `LocalizedNotification::event()`; null = mandatory). The email switch on the profile page (`notification_preferences.email`) now only affects optional notices; mandatory notices keep their email copy.
 - Template overrides apply in: live (4), certificate.issued, help (4), assignment graded/accepted/rejected/revision, quiz.result, payment.review, payment.approved, course.announcement.
 - Payer notices: `NotifyPayerOfPayment` listens to `PaymentVerified`, `ManualPaymentApproved`, `ManualPaymentProofSubmitted`.
-- Pending: access.*, payment.pending/failed/refunded/review_rejected, assignment.published/due/submitted, certificate.revoked, settlement.* (no source event exists yet; each owner task calls `NotificationDispatcher::send(user, new TemplatedNotice(event, values, dedupeKey, url))`).
+- Pending: access.*, payment.pending/failed/refunded/review_rejected, assignment.published/due/submitted, certificate.revoked, (settlement.* are wired by T-P8-10; each owner task calls `NotificationDispatcher::send(user, new TemplatedNotice(event, values, dedupeKey, url))`).

@@ -41,6 +41,9 @@ use App\Filament\Resources\Library\LibraryResource;
 use App\Filament\Resources\ManualGrants\ManualGrantResource;
 use App\Filament\Resources\ManualPayments\ManualPaymentProofResource;
 use App\Filament\Resources\MyEarnings\MyEarningsResource;
+use App\Filament\Resources\MyStatements\MyStatementsResource;
+use App\Filament\Resources\Settlements\SettlementResource;
+use App\Filament\Resources\Statements\StatementResource;
 use App\Filament\Resources\NewsletterSubscribers\NewsletterSubscriberResource;
 use App\Filament\Resources\NotificationTemplates\NotificationTemplateResource;
 use App\Filament\Resources\PayoutProfiles\PayoutProfileResource;
@@ -104,14 +107,14 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                     'admin' => [
                         AuditLogResource::class, StaffUserResource::class, RolePermissionResource::class,
                         ContactEnquiryResource::class, NewsletterSubscriberResource::class,
-                        CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, CommissionRuleResource::class, LedgerEntryResource::class,
+                        CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class,
                         CourseReviewResource::class,
                         InstructorApplicationResource::class, InstructorAgreementResource::class,
                         NotificationTemplateResource::class, AnnouncementResource::class,
                         DataRequestResource::class,
                     ],
-                    'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, AnnouncementResource::class, MyEarningsResource::class],
-                    default => [ManualGrantResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, PayoutProfileResource::class, CommissionRuleResource::class, LedgerEntryResource::class], // finance
+                    'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, AnnouncementResource::class, MyEarningsResource::class, MyStatementsResource::class],
+                    default => [ManualGrantResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, PayoutProfileResource::class, CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));

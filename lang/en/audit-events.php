@@ -192,4 +192,11 @@ return [
     'ledger.earnings_recorded' => 'Instructor earnings recorded for a paid order',
     'ledger.earnings_reversed' => 'Instructor earnings reversed for a refund',
     'ledger.adjustment_recorded' => 'Instructor ledger adjustment recorded',
+    'ledger.entry_held' => 'Instructor ledger entry held',
+    'ledger.entry_released' => 'Instructor ledger entry released',
+    'statement.generated' => 'Instructor statement generated',
+    'settlement.created' => 'Instructor settlement batch created',
+    'settlement.approved' => 'Instructor settlement batch approved',
+    'settlement.paid' => 'Instructor settlement payout recorded',
+    'settlement.cancelled' => 'Instructor settlement batch cancelled',
 ];

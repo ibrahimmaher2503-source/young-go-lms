@@ -14,6 +14,8 @@ use App\Http\Controllers\LiveJoinController;
 use App\Http\Controllers\ManualPaymentProofController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\InstructorStatementController;
+use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizAttemptController;
@@ -60,10 +62,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::post('/checkout/orders/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.coupon.apply');
     Route::delete('/checkout/orders/{order}/coupon', [CheckoutController::class, 'removeCoupon'])->whereNumber('order')->middleware('throttle:20,1')->name('checkout.coupon.remove');
     Route::post('/checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.pay');
-    Route::get('/my/payments', [\App\Http\Controllers\PaymentHistoryController::class, 'index'])->name('payments.history');
-    Route::get('/my/payments/{order}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'receipt'])->whereNumber('order')->middleware('throttle:certificate-download')->name('payments.receipt');
-    Route::get('/my/payments/{order}/refunds/{refund}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');
-    Route::get('/my/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::get('/my/payments', [PaymentHistoryController::class, 'index'])->name('payments.history');
+    Route::get('/my/payments/{order}/receipt', [PaymentHistoryController::class, 'receipt'])->whereNumber('order')->middleware('throttle:certificate-download')->name('payments.receipt');
+    Route::get('/my/payments/{order}/refunds/{refund}/receipt', [PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');
+    // T-P8-10: instructor statement PDF (own statements; finance with ledger.view).
+    Route::get('/my/statements/{statement}/pdf', [InstructorStatementController::class, 'pdf'])->whereNumber('statement')->middleware('throttle:certificate-download')->name('statements.pdf');
+    Route::get('/my/wishlist',[WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/my/wishlist/{course}', [WishlistController::class, 'toggle'])->whereNumber('course')->middleware('throttle:30,1')->name('wishlist.toggle');
     Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store'])->whereNumber('course')->middleware('throttle:6,1')->name('reviews.store');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');

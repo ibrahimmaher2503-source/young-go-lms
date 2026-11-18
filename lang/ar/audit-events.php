@@ -192,4 +192,11 @@ return [
     'ledger.earnings_recorded' => 'تم تسجيل أرباح المدرّبين لطلب مدفوع',
     'ledger.earnings_reversed' => 'تم عكس أرباح المدرّبين بسبب استرداد',
     'ledger.adjustment_recorded' => 'تم تسجيل تسوية في دفتر المدرّبين',
+    'ledger.entry_held' => 'تم تعليق قيد في دفتر المدرّبين',
+    'ledger.entry_released' => 'تم إلغاء تعليق قيد في دفتر المدرّبين',
+    'statement.generated' => 'تم إصدار كشف حساب مدرّب',
+    'settlement.created' => 'تم إنشاء دفعة تسوية للمدرّبين',
+    'settlement.approved' => 'تم اعتماد دفعة تسوية',
+    'settlement.paid' => 'تم تسجيل دفع تسوية مدرّب',
+    'settlement.cancelled' => 'تم إلغاء دفعة تسوية',
 ];
