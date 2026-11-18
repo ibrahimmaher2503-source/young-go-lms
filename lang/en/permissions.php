@@ -56,6 +56,7 @@ return [
     'profile.view' => 'View own profile',
     'report.finance.view' => 'View finance reports',
     'report.view' => 'View reports',
+    'review.moderate' => 'Moderate course reviews',
     'settlement.manage' => 'Manage settlements',
     'submission.create' => 'Submit assignments',
     'submission.grade' => 'Grade submissions',

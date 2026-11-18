@@ -28,6 +28,7 @@
         @case('more') <circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/> @break
         @case('plus') <path d="M12 5v14M5 12h14"/> @break
         @case('users') <circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2.4.7 4 2.2 4 5.2"/> @break
-        @case('home') <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/> @break
+        @case('heart') <path d="M12 20.5s-8-4.6-8-10.4A4.6 4.6 0 0 1 12 7.5a4.6 4.6 0 0 1 8 2.6c0 5.8-8 10.4-8 10.4z"/> @break
+        @case('home')<path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/> @break
     @endswitch
 </svg>

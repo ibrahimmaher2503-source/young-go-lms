@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\LearnerHomeController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizAttemptController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnforceTwoFactor;
 use App\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +51,9 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'create'])->whereNumber('order')->name('manual-payments.create');
     Route::post('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'store'])->whereNumber('order')->middleware('throttle:progress')->name('manual-payments.store');
     Route::get('/payments/proofs/{proof}/file', [ManualPaymentProofController::class, 'file'])->whereNumber('proof')->middleware('throttle:certificate-download')->name('manual-payments.file');
+    Route::get('/my/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/my/wishlist/{course}', [WishlistController::class, 'toggle'])->whereNumber('course')->middleware('throttle:30,1')->name('wishlist.toggle');
+    Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store'])->whereNumber('course')->middleware('throttle:6,1')->name('reviews.store');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');
     Route::get('/profile', [PageController::class, 'profile'])->name('profile.page');
     Route::get('/family', [PageController::class, 'family'])->name('family');

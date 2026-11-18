@@ -59,6 +59,7 @@ return [
         ['name' => 'profile.view'],
         ['name' => 'report.finance.view'],
         ['name' => 'report.view'],
+        ['name' => 'review.moderate'],
         ['name' => 'settlement.manage'],
         ['name' => 'submission.create'],
         ['name' => 'submission.grade'],
@@ -83,7 +84,7 @@ return [
             'help_request.manage', 'help_request.reply', 'instructor.manage', 'instructor.view', 'learner.profile.view',
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
-            'payment.refund', 'payment.view', 'report.view', 'user.manage', 'user.view', 'ai.view_usage',
+            'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',
@@ -91,12 +92,12 @@ return [
             'content.blog.manage', 'content.page.manage', 'content.seo.manage', 'dashboard.view', 'lesson_document.upload', 'media.manage', 'panel.admin.access',
         ],
         'instructor_academy' => [
-            'assessment.manage', 'course.update', 'course.view', 'curriculum.create', 'curriculum.delete', 'curriculum.update',
+            'assessment.manage', 'course.create', 'course.update', 'course.view', 'curriculum.create', 'curriculum.delete', 'curriculum.update',
             'curriculum.view', 'dashboard.view', 'help_request.reply', 'learner.profile.view', 'learner.progress.view',
             'lesson_document.upload', 'live_session.manage', 'panel.instructor.access', 'submission.grade',
         ],
         'instructor_independent' => [
-            'assessment.manage', 'course.update', 'course.view', 'curriculum.create', 'curriculum.delete', 'curriculum.update',
+            'assessment.manage', 'course.create', 'course.update', 'course.view', 'curriculum.create', 'curriculum.delete', 'curriculum.update',
             'curriculum.view', 'dashboard.view', 'help_request.reply', 'learner.profile.view', 'learner.progress.view',
             'lesson_document.upload', 'live_session.manage', 'panel.instructor.access', 'submission.grade',
         ],

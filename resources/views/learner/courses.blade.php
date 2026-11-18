@@ -1,6 +1,9 @@
 <x-layouts.learner :title="__('learner.my_courses')" wide>
     <div class="space-y-6">
-        <h1 class="text-3xl font-bold">{{ __('learner.my_courses') }}</h1>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h1 class="text-3xl font-bold">{{ __('learner.my_courses') }}</h1>
+            <x-ui.link :href="route('wishlist.index')" data-wishlist-link>{{ __('engagement.wishlist_title') }}</x-ui.link>
+        </div>
 
         <nav aria-label="{{ __('learner.filter') }}" class="flex flex-wrap gap-2">
             @foreach($filters as $name)
@@ -24,5 +27,6 @@
                 @endforeach
             </div>
         @endif
+        @if($courses->hasPages())<x-ui.pagination :paginator="$courses" />@endif
     </div>
 </x-layouts.learner>

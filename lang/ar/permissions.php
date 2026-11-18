@@ -56,6 +56,7 @@ return [
     'profile.view' => 'عرض الملف الشخصي',
     'report.finance.view' => 'عرض التقارير المالية',
     'report.view' => 'عرض التقارير',
+    'review.moderate' => 'مراجعة تقييمات الدورات',
     'settlement.manage' => 'إدارة التسويات',
     'submission.create' => 'تسليم الواجبات',
     'submission.grade' => 'تقييم الواجبات',
