@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Notifications;
 
+use App\Domain\Notifications\Actions\SendPhoneReminder;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Ramsey\Uuid\Uuid;
 use Throwable;
 
 /**
@@ -15,11 +17,16 @@ use Throwable;
  */
 final class NotificationDispatcher
 {
-    public function __construct(private readonly LearnerNotificationRouter $router) {}
+    public function __construct(private readonly LearnerNotificationRouter $router, private readonly SendPhoneReminder $phoneReminder) {}
 
     /** @return bool true when it was sent now, false when this key was already sent to this recipient */
     public function send(User $recipient, LocalizedNotification $notification): bool
     {
+        // T-P9-05: an optional notice the recipient turned off is not sent (and not recorded, so turning it on later still works).
+        if (! NotificationPreferences::allows($recipient, $notification->event())) {
+            return false;
+        }
+
         try {
             $dispatch = NotificationDispatch::query()->create([
                 'dedupe_key' => $notification->dedupeKey(), 'recipient_id' => $recipient->getKey(), 'notification' => class_basename($notification),
@@ -28,8 +35,12 @@ final class NotificationDispatcher
             return false;
         }
 
+        $notification = clone $notification;
+        $notification->id = Uuid::uuid5(Uuid::NAMESPACE_URL, 'young-go:notification:'.$recipient->getKey().':'.$notification->dedupeKey())->toString();
+
         try {
             $this->router->send($recipient, $notification);
+            ($this->phoneReminder)($recipient, $notification);
         } catch (Throwable $exception) {
             $dispatch->delete();
 

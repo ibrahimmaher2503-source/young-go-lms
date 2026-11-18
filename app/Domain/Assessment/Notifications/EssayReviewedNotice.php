@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Assessment\Notifications;
 
 use App\Domain\Notifications\LocalizedNotification;
+use App\Domain\Notifications\NotificationTemplates;
 use App\Models\QuizAttempt;
 use App\Models\User;
 
@@ -20,12 +21,16 @@ final class EssayReviewedNotice extends LocalizedNotification
 
     protected function title(User $recipient): string
     {
-        return __('review.notice.essay_reviewed.title', ['title' => (string) $this->attempt->quiz->title]);
+        $values = ['title' => (string) $this->attempt->quiz->title];
+
+        return NotificationTemplates::render('quiz.result', 'title', $values, __('review.notice.essay_reviewed.title', $values));
     }
 
     protected function body(User $recipient): string
     {
-        return __('review.notice.essay_reviewed.body', ['title' => (string) $this->attempt->quiz->title]);
+        $values = ['title' => (string) $this->attempt->quiz->title];
+
+        return NotificationTemplates::render('quiz.result', 'body', $values, __('review.notice.essay_reviewed.body', $values));
     }
 
     protected function url(User $recipient): string

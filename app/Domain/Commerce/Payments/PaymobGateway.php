@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Commerce\Payments;
 
 use App\Domain\Commerce\Contracts\PaymentGateway;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,6 +24,10 @@ final class PaymobGateway implements PaymentGateway
         'is_3d_secure', 'is_auth', 'is_capture', 'is_refunded', 'is_standalone_payment', 'is_voided', 'order.id', 'owner',
         'pending', 'source_data.pan', 'source_data.sub_type', 'source_data.type', 'success',
     ];
+
+    private const int LIST_PAGE_SIZE = 100;
+
+    private const int MAX_LIST_PAGES = 50;
 
     public function __construct(private readonly PaymobCredentials $credentials) {}
 
@@ -142,6 +147,77 @@ final class PaymobGateway implements PaymentGateway
             ->get('/api/acceptance/transactions/'.rawurlencode($transactionId)));
 
         return $this->normalise($json);
+    }
+
+    public function listTransactions(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $apiKey = $this->credentials->apiKey();
+        if (! $this->isConfigured() || $apiKey === null) {
+            return [];
+        }
+
+        $auth = $this->send('auth_token', fn () => Http::baseUrl($this->credentials->baseUrl)
+            ->timeout($this->credentials->timeoutSeconds)->acceptJson()->asJson()->post('/api/auth/tokens', ['api_key' => $apiKey]));
+        $token = $auth['token'] ?? null;
+        if (! is_string($token) || $token === '') {
+            throw new PaymentGatewayException('Paymob returned an unexpected authentication response.', 'bad_response');
+        }
+
+        // Pages come newest first; stop once a whole page is older than the window. Hard page cap keeps one run bounded.
+        $found = [];
+        for ($page = 1; $page <= self::MAX_LIST_PAGES; $page++) {
+            $json = $this->send('list_transactions', fn () => Http::baseUrl($this->credentials->baseUrl)
+                ->timeout($this->credentials->timeoutSeconds)->withToken($token)->acceptJson()
+                ->get('/api/acceptance/transactions', ['page' => $page, 'page_size' => self::LIST_PAGE_SIZE]));
+            $rows = $json['results'] ?? [];
+            if (! is_array($rows) || $rows === []) {
+                break;
+            }
+
+            $olderThanWindow = 0;
+            foreach ($rows as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $createdAt = self::parseTime($row['created_at'] ?? null);
+                if ($createdAt === null) {
+                    continue;
+                }
+                if ($createdAt->lt($from)) {
+                    $olderThanWindow++;
+                } elseif ($createdAt->lte($to)) {
+                    $found[] = $this->normalise($row);
+                }
+            }
+            if ($olderThanWindow === count($rows) || ($json['next'] ?? null) === null) {
+                break;
+            }
+        }
+
+        return $found;
+    }
+
+    private static function parseTime(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+        try {
+            return CarbonImmutable::parse($value);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /** The Paymob refund endpoint is not documented in docs/integrations/PAYMOB.md, so none is built from memory (rule 2); finance refunds manually. */
+    public function supportsRefunds(): bool
+    {
+        return false;
+    }
+
+    public function refund(RefundIntent $intent): RefundResult
+    {
+        throw new PaymentGatewayException('Paymob refunds are not supported yet.', 'refund_unsupported');
     }
 
     private function assertConfigured(): void

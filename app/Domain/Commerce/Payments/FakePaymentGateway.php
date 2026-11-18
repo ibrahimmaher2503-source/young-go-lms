@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Commerce\Payments;
 
 use App\Domain\Commerce\Contracts\PaymentGateway;
+use Carbon\CarbonImmutable;
 use LogicException;
 
 /**
@@ -96,6 +97,31 @@ final class FakePaymentGateway implements PaymentGateway
         $this->throwIfFailing();
 
         return $this->transactions[$transactionId] ?? throw new PaymentGatewayException('Unknown fake transaction.', 'not_found');
+    }
+
+    public function listTransactions(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $this->calls[] = ['method' => 'listTransactions', 'args' => ['from' => $from->toIso8601String(), 'to' => $to->toIso8601String()]];
+        $this->throwIfFailing();
+
+        // The fake keeps no creation time: every queued transaction counts as inside the window.
+        return array_values($this->transactions);
+    }
+
+    public function supportsRefunds(): bool
+    {
+        return true;
+    }
+
+    public function refund(RefundIntent $intent): RefundResult
+    {
+        $this->calls[] = ['method' => 'refund', 'args' => [
+            'reference' => $intent->reference, 'order_reference' => $intent->orderReference, 'transaction_id' => $intent->providerTransactionId,
+            'amount_minor' => $intent->amountMinor, 'currency' => $intent->currency,
+        ]];
+        $this->throwIfFailing();
+
+        return new RefundResult('fake', 'fake_refund_'.$intent->reference);
     }
 
     /**

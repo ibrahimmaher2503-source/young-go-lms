@@ -6,6 +6,7 @@ namespace App\Domain\Live\Notifications;
 
 use App\Domain\Live\LiveSessionTime;
 use App\Domain\Notifications\LocalizedNotification;
+use App\Domain\Notifications\NotificationTemplates;
 use App\Models\LiveSession;
 use App\Models\User;
 
@@ -34,14 +35,28 @@ final class LiveSessionNotice extends LocalizedNotification
         return "live:{$this->session->getKey()}:{$this->kind}".($this->variant === '' ? '' : ':'.$this->variant);
     }
 
+    public function phoneTemplate(): ?string
+    {
+        return $this->kind === self::REMINDER ? 'live_session_reminder' : null;
+    }
+
+    public function event(): string
+    {
+        return 'live.'.$this->kind;
+    }
+
     protected function title(User $recipient): string
     {
-        return __("live.notice.{$this->kind}.title", ['title' => (string) $this->session->title]);
+        $values = ['title' => (string) $this->session->title, 'time' => LiveSessionTime::label($this->session, $recipient)];
+
+        return NotificationTemplates::render('live.'.$this->kind, 'title', $values, __("live.notice.{$this->kind}.title", $values));
     }
 
     protected function body(User $recipient): string
     {
-        return __("live.notice.{$this->kind}.body", ['title' => (string) $this->session->title, 'time' => LiveSessionTime::label($this->session, $recipient)]);
+        $values = ['title' => (string) $this->session->title, 'time' => LiveSessionTime::label($this->session, $recipient)];
+
+        return NotificationTemplates::render('live.'.$this->kind, 'body', $values, __("live.notice.{$this->kind}.body", $values));
     }
 
     protected function url(User $recipient): string

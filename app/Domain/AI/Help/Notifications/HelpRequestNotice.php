@@ -6,6 +6,7 @@ namespace App\Domain\AI\Help\Notifications;
 
 use App\Domain\AI\Help\HelpLinks;
 use App\Domain\Notifications\LocalizedNotification;
+use App\Domain\Notifications\NotificationTemplates;
 use App\Models\User;
 
 /**
@@ -30,14 +31,23 @@ final class HelpRequestNotice extends LocalizedNotification
         return $this->dedupe;
     }
 
+    public function event(): string
+    {
+        return 'help.'.$this->kind;
+    }
+
     protected function title(User $recipient): string
     {
-        return __('help.notice.'.$this->kind.'.title', ['lesson' => $this->lessonTitle]);
+        $values = ['lesson' => $this->lessonTitle];
+
+        return NotificationTemplates::render('help.'.$this->kind, 'title', $values, __('help.notice.'.$this->kind.'.title', $values));
     }
 
     protected function body(User $recipient): string
     {
-        return __('help.notice.'.$this->kind.'.body', ['lesson' => $this->lessonTitle]);
+        $values = ['lesson' => $this->lessonTitle];
+
+        return NotificationTemplates::render('help.'.$this->kind, 'body', $values, __('help.notice.'.$this->kind.'.body', $values));
     }
 
     protected function url(User $recipient): string

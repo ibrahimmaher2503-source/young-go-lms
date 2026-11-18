@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Commerce\Payments;
 
 use App\Domain\Commerce\Contracts\PaymentGateway;
+use Carbon\CarbonImmutable;
 
 /** The default outside local/testing while credentials are absent: it never talks to anyone and refuses every call. */
 final class NullPaymentGateway implements PaymentGateway
@@ -35,6 +36,21 @@ final class NullPaymentGateway implements PaymentGateway
     }
 
     public function fetchTransaction(string $transactionId): VerifiedPaymentEvent
+    {
+        throw new PaymentGatewayNotConfigured;
+    }
+
+    public function listTransactions(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        return [];
+    }
+
+    public function supportsRefunds(): bool
+    {
+        return false;
+    }
+
+    public function refund(RefundIntent $intent): RefundResult
     {
         throw new PaymentGatewayNotConfigured;
     }

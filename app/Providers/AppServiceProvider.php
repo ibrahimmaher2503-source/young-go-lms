@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domain\Assessment\AssessmentHistory;
-
 use App\Domain\AI\Assistant\AssistantEngine;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Contracts\ModerationClassifier;
@@ -18,6 +16,7 @@ use App\Domain\AI\Providers\KeywordModerationClassifier;
 use App\Domain\AI\Resilience\CircuitBreaker;
 use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\Resilience\ResilientProvider;
+use App\Domain\Assessment\AssessmentHistory;
 use App\Domain\Certificates\Listeners\IssueCertificateOnCompletion;
 use App\Domain\Cohorts\CohortHistory;
 use App\Domain\Commerce\Contracts\PaymentGateway;
@@ -108,6 +107,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MeetingProvider::class, ManualMeetingProvider::class);
         // T-P8-02: Paymob when credentials are complete, else Fake (local/testing) or the refusing Null gateway (B-07). Singleton so the Fake keeps its recorded calls.
         $this->app->singleton(PaymentGateway::class, static fn (): PaymentGateway => (new PaymentGatewayResolver)());
+        // T-P8-06: e-receipt submission is disabled (null driver) until owner decision O-023 closes.
+        $this->app->singleton(\App\Domain\Commerce\Contracts\EReceiptProvider::class, static fn (): \App\Domain\Commerce\Contracts\EReceiptProvider => (new \App\Domain\Commerce\Receipts\EReceiptProviderResolver)());
         // One authority for learner access (T-P4-01); it fails closed on anything it does not know.
         Event::listen(Logout::class, static function (Logout $event): void {
             if (app()->bound('session.store') && session()->isStarted()) {
@@ -118,6 +119,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(CourseCompletionInputChanged::class, [EvaluateCompletion::class, 'handle']);
         // T-P6-06: a completed course gets its certificate once (idempotent) and the learner a single notice.
         Event::listen(CourseCompleted::class, [IssueCertificateOnCompletion::class, 'handle']);
+        // T-P9-05: payer notices for payments (never break the payment; see NotifyPayerOfPayment).
+        Event::listen(\App\Domain\Commerce\Events\PaymentVerified::class, [\App\Domain\Notifications\Listeners\NotifyPayerOfPayment::class, 'verified']);
+        Event::listen(\App\Domain\Commerce\Events\ManualPaymentApproved::class, [\App\Domain\Notifications\Listeners\NotifyPayerOfPayment::class, 'manualApproved']);
+        Event::listen(\App\Domain\Commerce\Events\ManualPaymentProofSubmitted::class, [\App\Domain\Notifications\Listeners\NotifyPayerOfPayment::class, 'proofSubmitted']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class], 'course.history');

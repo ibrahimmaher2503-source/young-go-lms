@@ -8,7 +8,10 @@ use App\Domain\Commerce\Payments\CheckoutIntent;
 use App\Domain\Commerce\Payments\CheckoutSession;
 use App\Domain\Commerce\Payments\InvalidPaymentSignature;
 use App\Domain\Commerce\Payments\PaymentGatewayException;
+use App\Domain\Commerce\Payments\RefundIntent;
+use App\Domain\Commerce\Payments\RefundResult;
 use App\Domain\Commerce\Payments\VerifiedPaymentEvent;
+use Carbon\CarbonImmutable;
 
 /**
  * One payment provider behind a stable contract (Arch 10.3). Amounts always come from the server-side order via
@@ -47,4 +50,25 @@ interface PaymentGateway
      * @throws PaymentGatewayException
      */
     public function fetchTransaction(string $transactionId): VerifiedPaymentEvent;
+
+    /**
+     * Provider transactions created between `$from` and `$to` (inclusive), read-only, for daily reconciliation (T-P8-11).
+     * An unconfigured gateway returns an empty list and never touches the network.
+     *
+     * @return list<VerifiedPaymentEvent>
+     *
+     * @throws PaymentGatewayException
+     */
+    public function listTransactions(CarbonImmutable $from, CarbonImmutable $to): array;
+
+    /** True only when this gateway can send money back to the payer through the provider (T-P8-06). */
+    public function supportsRefunds(): bool;
+
+    /**
+     * Refunds part or all of one provider transaction. `RefundIntent::reference` is the idempotency key. Money safety first:
+     * any failure throws and the caller records the refund as failed; nothing falls back to a manual record silently.
+     *
+     * @throws PaymentGatewayException
+     */
+    public function refund(RefundIntent $intent): RefundResult;
 }

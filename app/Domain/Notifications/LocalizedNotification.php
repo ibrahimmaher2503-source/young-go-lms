@@ -18,6 +18,17 @@ abstract class LocalizedNotification extends Notification
     /** Same key and same recipient means the same message: a retry or a second scheduler run sends nothing more. */
     abstract public function dedupeKey(): string;
 
+    public function phoneTemplate(): ?string
+    {
+        return null;
+    }
+
+    /** T-P9-05: the NotificationMatrix event key. Null (the default) means "not opt-outable": always sent. */
+    public function event(): ?string
+    {
+        return null;
+    }
+
     abstract protected function title(User $recipient): string;
 
     abstract protected function body(User $recipient): string;
@@ -30,7 +41,13 @@ abstract class LocalizedNotification extends Notification
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return $notifiable instanceof User && filled($notifiable->getAttribute('email')) ? ['database', 'mail'] : ['database'];
+        return $notifiable instanceof User && filled($notifiable->getAttribute('email')) && NotificationPreferences::emailAllowed($notifiable, $this->event()) ? ['database', 'mail'] : ['database'];
+    }
+
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
+        // A mail retry must keep the inbox copy already delivered under the dispatcher's stable ID.
+        return $channel !== 'database' || ! $notifiable instanceof User || ! $notifiable->notifications()->whereKey($this->id)->exists();
     }
 
     public function toMail(object $notifiable): MailMessage
