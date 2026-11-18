@@ -23,7 +23,7 @@
         $ages = __('course_page.ages_to', ['max' => $course->max_age]);
     }
     $accessLabel = $course->access_mode === App\Models\Course::ACCESS_FREE ? __('courses.free') : __('course_page.paid');
-    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn];
+    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $purchasable ?? false];
     $linkClass = 'rounded-md font-semibold text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 @endphp
 <x-layouts.base :title="$seo['title']" variant="public" full indexable>

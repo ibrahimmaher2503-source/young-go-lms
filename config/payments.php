@@ -20,6 +20,9 @@ return [
     // Minutes an unpaid checkout session stays reusable before a new one is created (working default).
     'attempt_ttl_minutes' => 30,
 
+    // Hours an unpaid order with no open payment or proof stays pending before it is cancelled and its coupon use released (working default, T-P8-12).
+    'order_ttl_hours' => 24,
+
     // Paths on this site given to the gateway. The return page shows status only; the callback is the single fulfilment path (T-P8-03).
     'return_path' => '/checkout/return',
     'callback_path' => '/webhooks/paymob',

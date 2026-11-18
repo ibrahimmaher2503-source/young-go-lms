@@ -20,6 +20,9 @@ return [
     // A transfer older than this many days is refused (working default).
     'max_age_days' => 30,
 
+    // Where the payer sends the transfer (Instapay handle, bank details). UNKNOWN until the owner supplies it (AGENTS rule 2); empty shows generic text.
+    'payee' => env('MANUAL_PAYMENT_PAYEE'),
+
     // Where proofs live inside the private media disk.
     'directory' => 'manual-payments',
 ];

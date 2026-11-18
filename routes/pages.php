@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\LearnController;
@@ -51,6 +52,14 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'create'])->whereNumber('order')->name('manual-payments.create');
     Route::post('/my/orders/{order}/payment-proof', [ManualPaymentProofController::class, 'store'])->whereNumber('order')->middleware('throttle:progress')->name('manual-payments.store');
     Route::get('/payments/proofs/{proof}/file', [ManualPaymentProofController::class, 'file'])->whereNumber('proof')->middleware('throttle:certificate-download')->name('manual-payments.file');
+    // T-P8-12: learner checkout. GET routes never write; the coupon code is rate limited per account.
+    Route::get('/checkout/return', [CheckoutController::class, 'return'])->name('checkout.return');
+    Route::get('/checkout/{type}/{id}', [CheckoutController::class, 'product'])->whereIn('type', ['course', 'bundle'])->whereNumber('id')->name('checkout.product');
+    Route::post('/checkout/start', [CheckoutController::class, 'start'])->middleware('throttle:20,1')->name('checkout.start');
+    Route::get('/checkout/orders/{order}', [CheckoutController::class, 'order'])->whereNumber('order')->name('checkout.order');
+    Route::post('/checkout/orders/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.coupon.apply');
+    Route::delete('/checkout/orders/{order}/coupon', [CheckoutController::class, 'removeCoupon'])->whereNumber('order')->middleware('throttle:20,1')->name('checkout.coupon.remove');
+    Route::post('/checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->whereNumber('order')->middleware('throttle:10,1')->name('checkout.pay');
     Route::get('/my/payments', [\App\Http\Controllers\PaymentHistoryController::class, 'index'])->name('payments.history');
     Route::get('/my/payments/{order}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'receipt'])->whereNumber('order')->middleware('throttle:certificate-download')->name('payments.receipt');
     Route::get('/my/payments/{order}/refunds/{refund}/receipt', [\App\Http\Controllers\PaymentHistoryController::class, 'refundReceipt'])->whereNumber(['order', 'refund'])->middleware('throttle:certificate-download')->name('payments.refund-receipt');

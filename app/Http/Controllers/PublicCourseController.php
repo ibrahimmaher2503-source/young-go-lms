@@ -6,17 +6,19 @@ namespace App\Http\Controllers;
 
 use App\Domain\Catalog\CourseSeo;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
+use App\Domain\Commerce\Queries\CheckoutOffers;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Instructors\Queries\PublicInstructors;
 use App\Domain\Seo\PublicUrl;
+use App\Domain\Shared\Markets\Market;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 
 /** Public course page (YG-WEB-004). A course that is not published answers 404, exactly like one that does not exist. */
 final class PublicCourseController
 {
-    public function __invoke(string $course, PublicCourseDetail $details, ActingLearner $acting, EntitlementService $access, PublicInstructors $instructors): View
+    public function __invoke(string $course, PublicCourseDetail $details, ActingLearner $acting, EntitlementService $access, PublicInstructors $instructors, CheckoutOffers $offers): View
     {
         $found = $details->find($course);
         abort_if($found === null, 404);
@@ -25,14 +27,17 @@ final class PublicCourseController
         $learner = $acting->current();
         $key = PublicCourseDetail::key($found);
 
+        $profiles = $instructors->forUsers($found->instructors->modelKeys());
+
         return view('catalog.show', [
             'course' => $found,
-            'profiles' => $instructors->forUsers($found->instructors->modelKeys()),
+            'profiles' => $profiles,
             'curriculum' => $curriculum,
-            'seo' => CourseSeo::for($found, PublicUrl::course($found, app()->getLocale()), $curriculum['lessons']),
+            'seo' => CourseSeo::for($found, PublicUrl::course($found, app()->getLocale()), $curriculum['lessons'], $profiles),
             'key' => $key,
             'entitled' => $learner instanceof User && $access->currentFor($learner, $found) !== null,
             'signedIn' => $learner instanceof User,
+            'purchasable' => $offers->coursePrice($found, Market::Egypt) !== null,
         ]);
     }
 }
