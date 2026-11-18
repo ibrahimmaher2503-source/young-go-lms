@@ -26,7 +26,7 @@
                         <h3 class="yg-rv-title">{{ $course->title }}</h3>
                         <p class="yg-rv-meta">{{ __('ai_admin.availability.course_help') }}</p>
                     </div>
-                    <button type="button" class="yg-ai-switch" role="switch" aria-pressed="{{ $course->ai_enabled ? 'true' : 'false' }}" wire:click="toggleCourse" wire:loading.attr="disabled" data-course-switch="{{ $course->ai_enabled ? 'on' : 'off' }}">
+                    <button type="button" class="yg-ai-switch" role="switch" aria-checked="{{ $course->ai_enabled ? 'true' : 'false' }}" wire:click="toggleCourse" wire:loading.attr="disabled" data-course-switch="{{ $course->ai_enabled ? 'on' : 'off' }}">
                         {{ $course->ai_enabled ? __('ai_admin.availability.on') : __('ai_admin.availability.off') }}
                     </button>
                 </div>
@@ -50,7 +50,7 @@
                                     <td>{{ $row['title'] }} <span class="yg-rv-meta">· {{ __('curriculum.types.'.$row['type']) }}</span></td>
                                     <td><span class="yg-rv-badge" data-readiness="{{ $row['readiness']->value }}"><span aria-hidden="true">{{ $row['readiness']->icon() }}</span>&nbsp;{{ $row['readiness']->label() }}</span></td>
                                     <td>
-                                        <button type="button" class="yg-ai-switch" role="switch" aria-pressed="{{ $row['enabled'] ? 'true' : 'false' }}" aria-label="{{ $row['title'] }}" wire:click="toggleLesson({{ $row['item_id'] }})" wire:loading.attr="disabled" data-lesson-switch="{{ $row['enabled'] ? 'on' : 'off' }}">
+                                        <button type="button" class="yg-ai-switch" role="switch" aria-checked="{{ $row['enabled'] ? 'true' : 'false' }}" aria-label="{{ $row['title'] }}" wire:click="toggleLesson({{ $row['item_id'] }})" wire:loading.attr="disabled" data-lesson-switch="{{ $row['enabled'] ? 'on' : 'off' }}">
                                             {{ $row['enabled'] ? __('ai_admin.availability.on') : __('ai_admin.availability.off') }}
                                         </button>
                                     </td>

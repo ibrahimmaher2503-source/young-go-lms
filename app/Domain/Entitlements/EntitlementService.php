@@ -144,6 +144,21 @@ final class EntitlementService implements LessonAccessChecker
         return $this->lookup($learner, $course)['current'];
     }
 
+    /** The entitlement id already recorded for an exact (source, reference, learner, course) tuple, or null. */
+    public function idForSource(User $learner, Course $course, EntitlementSource $source, string $sourceRef): ?int
+    {
+        $id = Entitlement::query()
+            ->where([
+                'source_type' => $source->value,
+                'source_ref' => $sourceRef,
+                'learner_id' => $learner->getKey(),
+                'course_id' => $course->getKey(),
+            ])
+            ->value('id');
+
+        return $id === null ? null : (int) $id;
+    }
+
     /** Called by the grant, revoke and expire actions so a changed answer is never served from the cache. */
     public function flush(): void
     {
@@ -248,7 +263,7 @@ final class EntitlementService implements LessonAccessChecker
                 return AccessDecision::allow();
             }
             $gates = ($previous->itemable instanceof Lesson && $course->sequence_mode === Course::SEQUENCE_SEQUENTIAL)
-                || ($previous->itemable instanceof Quiz && $previous->itemable->progression === 'require_pass');
+                || ($previous->itemable instanceof Quiz && $previous->itemable->hasActiveQuestions() && in_array($previous->itemable->progression, ['require_pass', 'after_submission'], true));
             if ($previous->required && $gates && ! in_array((int) $previous->getKey(), $done, true)) {
                 return AccessDecision::deny('sequence_locked', null, (string) $previous->itemable->title);
             }

@@ -10,6 +10,7 @@ use App\Filament\Shared\Pages\WorkspaceListRecords;
 use App\Models\Category;
 use Filament\Actions\CreateAction;
 use Filament\Support\Components\Attributes\Unexposed;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
 final class ListCategories extends WorkspaceListRecords
@@ -30,7 +31,20 @@ final class ListCategories extends WorkspaceListRecords
     public function saveCategory(array $data, ?Category $record = null): Category
     {
         try {
-            return app(SaveCategory::class)($data, $record);
+            $image = $data['image'] ?? null;
+            $bytes = null;
+            if ($image instanceof UploadedFile) {
+                if (! in_array(strtolower($image->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                    throw ValidationException::withMessages(['image' => __('media.invalid_type')]);
+                }
+
+                $bytes = $image->get();
+                if (! is_string($bytes)) {
+                    throw ValidationException::withMessages(['image' => __('media.invalid_type')]);
+                }
+            }
+
+            return app(SaveCategory::class)($data, $record, $bytes);
         } catch (ValidationException $exception) {
             $prefix = $this->getMountedActionSchema()?->getStatePath();
             if ($prefix === null) {

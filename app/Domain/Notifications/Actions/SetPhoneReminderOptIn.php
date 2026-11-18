@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\Notifications\Actions;
 
 use App\Domain\Audit\AuditLogger;
-use App\Domain\Engagement\ReviewerName;
+use App\Domain\Identity\GuardianAccess;
 use App\Domain\Shared\Phone\PhoneNumbers;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use RuntimeException;
 
 /** Per-channel phone reminder consent, bound to the current canonical E.164 number. Minors cannot opt in (O-015 default). Audited without the number. */
 final class SetPhoneReminderOptIn
@@ -30,7 +31,7 @@ final class SetPhoneReminderOptIn
             $was = isset($optIns[$channel]);
 
             if ($enabled) {
-                if (ReviewerName::isChild($account)) {
+                if (GuardianAccess::isMinor($account)) {
                     throw new InvalidArgumentException('Phone reminders are not available for minors.');
                 }
 
@@ -47,8 +48,8 @@ final class SetPhoneReminderOptIn
 
             $account->forceFill(['phone_reminder_opt_ins' => $optIns])->save();
 
-            if ($was !== $enabled) {
-                $this->audit->record('notifications.phone_opt_in_changed', $account, (int) $account->getKey(), ['enabled' => $was], ['enabled' => $enabled], ['channel' => $channel]);
+            if ($was !== $enabled && $this->audit->record('notifications.phone_opt_in_changed', $account, (int) $account->getKey(), ['enabled' => $was], ['enabled' => $enabled], ['channel' => $channel]) === null) {
+                throw new RuntimeException('Unable to record phone opt-in audit.');
             }
         });
     }

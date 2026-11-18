@@ -14,7 +14,9 @@ use App\Domain\AI\Queries\AssistantStatus;
 use App\Domain\AI\UnavailableReason;
 use App\Domain\Identity\ActingLearner;
 use App\Models\Lesson;
+use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,7 +36,7 @@ final class AssistantController
     public function show(Lesson $lesson): JsonResponse
     {
         $learner = $this->acting->current();
-        abort_if($learner === null, 403);
+        abort_if($learner === null || ! $this->acting->canViewPrivateLearnerConversations(), 403);
 
         return $this->json($this->status->for($learner, $lesson), 200);
     }
@@ -42,7 +44,7 @@ final class AssistantController
     public function store(Request $request, Lesson $lesson): Response
     {
         $learner = $this->acting->current();
-        abort_if($learner === null, 403);
+        abort_if($learner === null || ! $this->acting->canViewPrivateLearnerConversations(), 403);
 
         $data = $request->validate([
             'mode' => ['nullable', Rule::enum(AssistantMode::class)],
@@ -76,22 +78,40 @@ final class AssistantController
             return $this->json($this->payload($reply), $reply->outcome === AssistantOutcome::Fallback ? 503 : 200);
         }
 
-        return $this->stream($reply);
+        return $this->stream($learner, $lesson, $reply);
     }
 
     /** Token events carry the already validated answer; the final result event carries the structured reply. */
-    private function stream(AssistantReply $reply): StreamedResponse
+    private function stream(User $learner, Lesson $lesson, AssistantReply $reply): StreamedResponse
     {
-        return response()->stream(function () use ($reply): void {
+        return response()->stream(function () use ($learner, $lesson, $reply): void {
+            try {
+                $this->ask->assertSourceAvailable($learner, $lesson, $reply->documentId, quotaReserved: true);
+            } catch (AssistantRefused $refused) {
+                $this->emit('result', ['state' => $refused->reason === null ? 'forbidden' : $refused->reason->value, 'message' => $refused->getMessage()]);
+
+                return;
+            } catch (AuthorizationException|ModelNotFoundException) {
+                $this->emit('result', ['state' => 'forbidden', 'message' => __('ai.unavailable.no_entitlement')]);
+
+                return;
+            }
+
             foreach (preg_split('/(?<=\s)/u', $reply->message, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $chunk) {
-                echo "event: token\ndata: ".json_encode(['text' => $chunk], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n\n";
+                $this->emit('token', ['text' => $chunk]);
                 if (ob_get_level() > 0) {
                     ob_flush();
                 }
                 flush();
             }
-            echo "event: result\ndata: ".json_encode($this->payload($reply), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n\n";
+            $this->emit('result', $this->payload($reply));
         }, 200, ['Content-Type' => 'text/event-stream', 'Cache-Control' => 'no-store, no-transform', 'X-Accel-Buffering' => 'no']);
+    }
+
+    /** @param  array<string, mixed>  $data */
+    private function emit(string $event, array $data): void
+    {
+        echo "event: {$event}\ndata: ".json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n\n";
     }
 
     /** @return array<string, mixed> */

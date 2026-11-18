@@ -16,11 +16,14 @@ if (root) {
     const counter = q('[data-ai-counter]');
     const announce = q('[data-ai-announce]');
     const actions = q('[data-ai-actions]');
+    const humanHelp = q('[data-ai-human-help]');
+    const requestHelp = q('[data-ai-request-help]');
+    const contactHelp = q('[data-ai-contact-help]');
     const starters = q('[data-ai-starters]');
     const starterList = q('[data-ai-starter-list]');
     const opener = document.querySelector('[data-ai-open]');
     const closeButton = q('[data-ai-close]');
-    const media = document.querySelector('[data-player-media]');
+    const player = window.ygPlayer;
     const simplerButton = q('[data-ai-action="simpler"]');
     const feedbackButtons = [...root.querySelectorAll('[data-ai-action="understood"], [data-ai-action="still"]')];
 
@@ -46,7 +49,14 @@ if (root) {
     const setState = (state) => {
         root.dataset.state = state;
         root.setAttribute('aria-busy', state === 'loading' || state === 'streaming' ? 'true' : 'false');
+        humanHelp.hidden = !['not_in_source', 'out_of_scope', 'quota', 'fallback', 'error'].includes(state);
     };
+    const setHelpMessage = (id) => {
+        lastMessageId = id || null;
+        requestHelp.hidden = !lastMessageId || !root.dataset.feedbackUrl;
+        contactHelp.hidden = !requestHelp.hidden;
+    };
+    setHelpMessage(null);
     const clearNotice = () => { notice.replaceChildren(); };
     const showNotice = (message, { tone = 'info', retry = null, role = 'status', link = null } = {}) => {
         clearNotice();
@@ -96,10 +106,11 @@ if (root) {
         return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
     };
     const captureTimestamp = () => {
-        if (!media || !Number.isFinite(media.currentTime)) {
+        const currentPosition = player?.currentPosition();
+        if (!Number.isFinite(currentPosition)) {
             return;
         }
-        position = Math.floor(media.currentTime);
+        position = currentPosition;
         const chip = q('[data-ai-timestamp]');
         q('[data-ai-timestamp-text]').textContent = fill(strings.pausedAt, { time: formatTime(position) });
         chip.hidden = false;
@@ -147,6 +158,7 @@ if (root) {
             starters.hidden = terms.length === 0 || thread.childElementCount > 0;
         } catch {
             statusLoaded = false;
+            setState('error');
             showNotice(strings.networkError, { tone: 'danger', role: 'alert', retry: () => { clearNotice(); loadStatus(); } });
         }
     };
@@ -222,12 +234,14 @@ if (root) {
     const showJsonState = (response, body, bubble) => {
         const state = body.state || '';
         const message = body.message || strings.unavailable;
+        setHelpMessage(body.guard ? null : body.message_id);
         if (state === 'not_in_source' || state === 'out_of_scope') {
             conversationId = body.conversation_id || conversationId;
             const hint = bubble.querySelector('[data-ai-hint]');
-            bubble.querySelector('[data-ai-text]').textContent = state === 'not_in_source' ? strings.notInSource : strings.outOfScope;
+            bubble.querySelector('[data-ai-text]').textContent = body.message || (state === 'not_in_source' ? strings.notInSource : strings.outOfScope);
             hint.textContent = state === 'not_in_source' ? strings.notInSourceHint : strings.outOfScopeHint;
-            hint.hidden = false;
+            hint.hidden = Boolean(body.guard);
+            setPages(bubble, body.source_pages);
             setState(state);
             say(bubble.querySelector('[data-ai-text]').textContent);
 
@@ -265,6 +279,7 @@ if (root) {
             return;
         }
         lastRequest = request;
+        setHelpMessage(null);
         clearNotice();
         starters.hidden = true;
         actions.hidden = true;
@@ -285,6 +300,7 @@ if (root) {
         say(strings.loading);
 
         let streamed = false;
+        let completed = false;
         try {
             const response = await fetch(root.dataset.askUrl, {
                 method: 'POST',
@@ -303,6 +319,12 @@ if (root) {
                         text.textContent += data.text;
                         thread.scrollTop = thread.scrollHeight;
                     } else if (event === 'result') {
+                        completed = true;
+                        if (data.state !== 'answered') {
+                            showJsonState({ status: 403 }, data, bubble);
+
+                            return;
+                        }
                         // The result carries the validated message; it replaces what was streamed.
                         text.textContent = data.message || text.textContent;
                         conversationId = data.conversation_id || conversationId;
@@ -313,7 +335,7 @@ if (root) {
                         say(strings.answered);
                     }
                 });
-                if (root.dataset.state !== 'answer') {
+                if (!completed) {
                     throw new Error('incomplete');
                 }
                 simplerUsed = request.mode === 'simpler';
@@ -346,9 +368,7 @@ if (root) {
     const open = () => {
         root.dataset.open = 'true';
         opener?.setAttribute('aria-expanded', 'true');
-        if (media && typeof media.pause === 'function') {
-            media.pause();
-        }
+        player?.pause();
         captureTimestamp();
         loadStatus();
         (blocked ? thread : input).focus();
@@ -367,7 +387,7 @@ if (root) {
             close();
         }
     });
-    media?.addEventListener('pause', () => {
+    player?.onPause(() => {
         if (root.dataset.open === 'true' || !isSheet()) {
             captureTimestamp();
         }
@@ -401,9 +421,10 @@ if (root) {
     // Feedback (T-P7-04): "understood" is recorded; "still not understood" creates one help request for this answer (the server
     // returns the existing one on a repeated tap) and the panel shows the request-created state with a link to the thread.
     const sendFeedback = async (type) => {
-        if (busy || blocked || !lastMessageId || !root.dataset.feedbackUrl) {
+        if (busy || !lastMessageId || !root.dataset.feedbackUrl) {
             return;
         }
+        requestHelp.disabled = true;
         feedbackButtons.forEach((button) => { button.disabled = true; });
         try {
             const response = await fetch(root.dataset.feedbackUrl, {
@@ -434,8 +455,11 @@ if (root) {
         } catch {
             feedbackButtons.forEach((button) => { button.disabled = false; });
             showNotice(strings.feedbackError, { tone: 'danger', role: 'alert' });
+        } finally {
+            requestHelp.disabled = false;
         }
     };
+    requestHelp.addEventListener('click', () => sendFeedback('not_understood'));
     root.querySelector('[data-ai-action="understood"]').addEventListener('click', () => sendFeedback('understood'));
     root.querySelector('[data-ai-action="still"]').addEventListener('click', () => sendFeedback('not_understood'));
 

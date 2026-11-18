@@ -26,6 +26,6 @@
     .yg-ai-bar { display: block; block-size: .5rem; border-radius: 999px; background: var(--yg-color-primary); min-inline-size: 2px; }
     .yg-ai-bar-track { display: block; background: var(--yg-color-page); border-radius: 999px; }
     .yg-ai-switch { min-block-size: 2.75rem; padding: 0 1rem; border: 1px solid var(--yg-color-border); border-radius: .5rem; background: var(--yg-color-surface); font-weight: 600; cursor: pointer; }
-    .yg-ai-switch[aria-pressed="true"] { background: var(--yg-color-primary); color: var(--yg-color-on-primary); }
+    .yg-ai-switch[aria-checked="true"] { background: var(--yg-color-primary); color: var(--yg-color-on-primary); }
     .yg-ai-error { color: var(--yg-color-danger); font-weight: 600; }
 </style>

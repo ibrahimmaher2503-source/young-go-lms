@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'request_human_help' => 'اطلب المساعدة من شخص',
     'title' => 'مساعد الدرس',
     'disclosure' => 'توضيح بالذكاء الاصطناعي. المدرّس هو المرجع الرسمي.',
     'open' => 'فتح مساعد الدرس',

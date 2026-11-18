@@ -20,10 +20,6 @@ return [
     // Style tier names the prompt understands.
     'style_tiers' => ['kids', 'teens', 'adults'],
 
-    // The age that separates teens from kids is OPEN too (O-015). While it is null everyone under the adult age gets the
-    // simplest style tier.
-    'teen_age' => env('AI_TEEN_AGE') === null ? null : (int) env('AI_TEEN_AGE'),
-
     // Assistant answer limits (AI spec section 4): hard word cap per reply language, 1 to 4 sentences, 300-character question.
     'max_words' => 80,
     'max_words_en' => 70,

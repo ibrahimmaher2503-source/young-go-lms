@@ -47,14 +47,16 @@ final class ContextBuilder
      */
     private function retrievePages(LessonCurriculumDocument $document, string $question, array $all): array
     {
+        $size = max(1, (int) config('ai.ingestion.chunk_tokens', 800)) * 4;
         $chunks = LessonDocumentChunk::query()->where('document_id', $document->getKey())->orderBy('id')->get()
             ->map(static fn (LessonDocumentChunk $chunk): array => ['from' => $chunk->page_from, 'to' => $chunk->page_to, 'text' => $chunk->text, 'embedding' => json_decode((string) $chunk->embedding, true)])
             ->all();
 
         if ($chunks === []) {
-            // Large document without stored chunks: one chunk per page, keyword retrieval only.
             foreach ($all as $number => $text) {
-                $chunks[] = ['from' => $number, 'to' => $number, 'text' => $text, 'embedding' => null];
+                foreach (mb_str_split($text, $size) as $excerpt) {
+                    $chunks[] = ['from' => $number, 'to' => $number, 'text' => $excerpt, 'embedding' => null];
+                }
             }
         }
 
@@ -72,9 +74,20 @@ final class ContextBuilder
         arsort($scored);
         $pages = [];
         foreach (array_slice(array_keys($scored), 0, max(1, (int) config('ai.assistant.retrieval_top_k', 6))) as $index) {
-            for ($number = $chunks[$index]['from']; $number <= $chunks[$index]['to']; $number++) {
-                if (isset($all[$number])) {
-                    $pages[$number] = $all[$number];
+            $chunk = $chunks[$index];
+            $remaining = $size;
+            foreach ($all as $number => $text) {
+                if ($number < $chunk['from'] || $number > $chunk['to']) {
+                    continue;
+                }
+                $excerpt = $chunk['from'] === $chunk['to'] ? trim($chunk['text']) : $text;
+                if ($remaining <= 0 || $excerpt === '' || ! str_contains($text, $excerpt) || ! str_contains($chunk['text'], $excerpt)) {
+                    continue;
+                }
+                $excerpt = mb_substr($excerpt, 0, $remaining);
+                $remaining -= mb_strlen($excerpt);
+                if (! isset($pages[$number]) || ! str_contains($pages[$number], $excerpt)) {
+                    $pages[$number] = isset($pages[$number]) ? $pages[$number]."\n\n".$excerpt : $excerpt;
                 }
             }
         }

@@ -47,6 +47,11 @@
 
     <div data-ai-notice class="space-y-2"></div>
 
+    <div data-ai-human-help hidden>
+        <x-ui.button type="button" variant="secondary" size="sm" data-ai-request-help hidden>{{ __('ai.request_human_help') }}</x-ui.button>
+        <x-ui.button :href="route('contact.show')" variant="secondary" size="sm" data-ai-contact-help hidden>{{ __('ai.request_human_help') }}</x-ui.button>
+    </div>
+
     <div data-ai-starters hidden>
         <p class="mb-2 text-sm font-semibold text-muted" id="ai-starters-label">{{ __('ai.panel.starters') }}</p>
         <ul class="flex flex-wrap gap-2" aria-labelledby="ai-starters-label" data-ai-starter-list></ul>

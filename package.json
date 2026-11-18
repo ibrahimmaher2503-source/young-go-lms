@@ -4,13 +4,20 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/check-token-contrast.mjs && vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^4.0.0",
+    "@e2e-dev/web": "^0.16.0",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3",
+    "ai": "^7.0.0",
+    "e2e": "^0.23.1",
     "laravel-vite-plugin": "^3.2",
+    "playwright": "^1.65",
     "tailwindcss": "^4.3",
     "vite": "^8.3",
-    "playwright": "^1.65"
+    "zod": "^4.1.8"
   }
 }

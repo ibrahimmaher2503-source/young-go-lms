@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Domain\AI\Ingestion\IngestCurriculumDocument;
+use App\Domain\AI\Actions\IngestCurriculumDocument;
 use App\Models\LessonCurriculumDocument;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;

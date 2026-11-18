@@ -9,6 +9,23 @@ body {
     line-height: var(--yg-line-height-body);
 }
 
+[data-player-stage]:fullscreen {
+    display: grid;
+    place-items: center;
+}
+
+[data-player-stage]:fullscreen > [data-player-surface] {
+    inline-size: min(100%, calc(100dvh * var(--lesson-video-ratio, 16 / 9)));
+}
+
+[data-player-stage]:fullscreen video {
+    aspect-ratio: var(--lesson-video-ratio, 16 / 9);
+}
+
+video[data-stage-fullscreen-only]::-webkit-media-controls-fullscreen-button {
+    display: none;
+}
+
 .lesson-materials [role="tablist"] {
     border-block-end: 1px solid var(--yg-color-border);
 }

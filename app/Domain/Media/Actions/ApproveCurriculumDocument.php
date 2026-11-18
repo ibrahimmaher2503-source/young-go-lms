@@ -7,6 +7,7 @@ namespace App\Domain\Media\Actions;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Ingestion\KeyTermExtractor;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonDocumentChunk;
@@ -39,16 +40,22 @@ final class ApproveCurriculumDocument
         }
 
         $fresh = LessonCurriculumDocument::query()->findOrFail($document->getKey());
+        CurriculumAccess::authorizeLesson($approver, $fresh->lesson, 'lesson_document.approve');
         $this->assertApprovable($fresh);
 
         // Embeddings are a network call to the provider, so they are prepared before any lock is taken.
         $texts = $this->approvedTexts($fresh);
         $chunks = $this->plan($texts);
 
-        return DB::transaction(function () use ($approver, $document, $texts, $chunks): LessonCurriculumDocument {
-            Lesson::query()->whereKey($document->lesson_id)->lockForUpdate()->first();
-            $current = LessonCurriculumDocument::query()->lockForUpdate()->findOrFail($document->getKey());
+        return DB::transaction(function () use ($approver, $fresh, $texts, $chunks): LessonCurriculumDocument {
+            Lesson::query()->lockForUpdate()->findOrFail($fresh->lesson_id);
+            $current = LessonCurriculumDocument::query()->lockForUpdate()->findOrFail($fresh->getKey());
+            CurriculumAccess::authorizeLesson($approver, $current->lesson, 'lesson_document.approve');
             $this->assertApprovable($current);
+
+            if ($texts !== $this->approvedTexts($current)) {
+                throw ValidationException::withMessages(['document' => __('media.pdf_text_changed')]);
+            }
 
             $current->forceFill(['status' => LessonCurriculumDocument::STATUS_INDEXING])->save();
 
@@ -83,6 +90,10 @@ final class ApproveCurriculumDocument
 
         if ($document->status !== LessonCurriculumDocument::STATUS_AWAITING_APPROVAL) {
             throw ValidationException::withMessages(['document' => __('media.pdf_not_ready_for_approval')]);
+        }
+
+        if ($document->lesson->curriculumDocuments()->where('active', true)->where('version', '>', $document->version)->exists()) {
+            throw ValidationException::withMessages(['document' => __('media.pdf_version_superseded')]);
         }
     }
 

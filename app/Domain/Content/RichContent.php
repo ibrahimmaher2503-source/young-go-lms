@@ -100,6 +100,7 @@ final class RichContent
             'table' => ['type' => 'table', 'content' => array_values(array_filter(self::blocks($children, $depth + 1), static fn (array $b): bool => $b['type'] === 'tableRow'))],
             'tableRow' => ['type' => 'tableRow', 'content' => array_values(array_filter(self::blocks($children, $depth + 1), static fn (array $b): bool => in_array($b['type'], ['tableHeader', 'tableCell'], true)))],
             'tableHeader', 'tableCell' => ['type' => $type, 'content' => self::blocks($children, $depth + 1)],
+            'customBlock' => self::customBlock($node),
             'image' => ($id = (int) ($node['attrs']['resource_id'] ?? 0)) > 0 ? ['type' => 'image', 'attrs' => ['resource_id' => $id, 'alt' => mb_substr(trim((string) ($node['attrs']['alt'] ?? '')), 0, 200)]] : null,
             'embed' => ($url = self::embedUrl((string) ($node['attrs']['url'] ?? ''))) !== null ? ['type' => 'embed', 'attrs' => ['url' => $url]] : null,
             default => null,
@@ -136,6 +137,34 @@ final class RichContent
         return $out;
     }
 
+    /**
+     * @param  array<array-key, mixed>  $node
+     * @return array<string, mixed>|null
+     */
+    private static function customBlock(array $node): ?array
+    {
+        $id = $node['attrs']['id'] ?? null;
+        $config = $node['attrs']['config'] ?? null;
+        if (! is_array($config)) {
+            return null;
+        }
+
+        $clean = match ($id) {
+            'lesson-callout' => is_string($config['text'] ?? null) ? [
+                'tone' => in_array($config['tone'] ?? null, self::CALLOUT_TONES, true) ? $config['tone'] : 'info',
+                'text' => mb_substr(trim($config['text']), 0, 2000),
+            ] : null,
+            'lesson-embed' => ($url = self::embedUrl(is_string($config['url'] ?? null) ? $config['url'] : '')) !== null ? ['url' => $url] : null,
+            'lesson-library-image' => ($asset = filter_var($config['library_item_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) !== false ? [
+                'library_item_id' => $asset,
+                'alt' => is_string($config['alt'] ?? null) ? mb_substr(trim($config['alt']), 0, 200) : '',
+            ] : null,
+            default => null,
+        };
+
+        return $clean === null ? null : ['type' => 'customBlock', 'attrs' => ['id' => $id, 'config' => $clean]];
+    }
+
     /** Only http(s) and mailto links survive; javascript:, data:, vbscript: and relative tricks are dropped. */
     private static function linkUrl(string $url): ?string
     {
@@ -153,7 +182,7 @@ final class RichContent
     }
 
     /** Embeds must be https on an approved host (the media iframe allowlist plus the two video hosts). */
-    private static function embedUrl(string $url): ?string
+    public static function embedUrl(string $url): ?string
     {
         $url = trim($url);
         if (preg_match('/[\x00-\x20\x7f]/', $url) === 1 || strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https' || filter_var($url, FILTER_VALIDATE_URL) === false) {
@@ -190,7 +219,8 @@ final class RichContent
             'tableRow' => '<tr>'.$inner().'</tr>',
             'tableHeader' => '<th scope="col">'.$inner().'</th>',
             'tableCell' => '<td>'.$inner().'</td>',
-            'image' => self::renderImage($node, $lesson, $viewer),
+            'customBlock' => self::renderCustomBlock($node, $lesson, $viewer),
+            'image' => self::renderImage($node['attrs'], $lesson, $viewer),
             'embed' => '<div class="rc-embed"><iframe src="'.self::e((string) $node['attrs']['url']).'" title="'.self::e(__('content.embed')).'" loading="lazy" allowfullscreen sandbox="'.self::e((string) config('media.iframe_sandbox', 'allow-scripts allow-same-origin allow-presentation')).'" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>',
             default => '',
         };
@@ -212,17 +242,32 @@ final class RichContent
         return $html;
     }
 
-    /** Images come only from the lesson's own image materials, as signed links for the viewer; anything else renders nothing. */
-    /** @param  array<string, mixed>  $node */
-    private static function renderImage(array $node, ?Lesson $lesson, ?User $viewer): string
+    /** @param array<string, mixed> $node */
+    private static function renderCustomBlock(array $node, ?Lesson $lesson, ?User $viewer): string
+    {
+        $config = $node['attrs']['config'];
+
+        return match ($node['attrs']['id']) {
+            'lesson-callout' => '<aside dir="auto" class="rc-callout rc-callout-'.self::e($config['tone']).'" role="note">'.nl2br(self::e($config['text'])).'</aside>',
+            'lesson-embed' => self::render(['type' => 'embed', 'attrs' => $config], $lesson, $viewer),
+            'lesson-library-image' => self::renderImage($config, $lesson, $viewer),
+            default => '',
+        };
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private static function renderImage(array $attributes, ?Lesson $lesson, ?User $viewer): string
     {
         if ($lesson === null || $viewer === null) {
             return '';
         }
 
-        $resource = LessonResource::query()->where('lesson_id', $lesson->getKey())->where('type', LessonResource::TYPE_IMAGE)->find((int) $node['attrs']['resource_id']);
-        $url = $resource === null ? null : app(SignedFileUrl::class)->for($viewer, $resource);
+        $images = $lesson->resources()->where('type', LessonResource::TYPE_IMAGE)->whereNotNull('library_item_id');
+        $resource = isset($attributes['library_item_id'])
+            ? $images->where('library_item_id', $attributes['library_item_id'])->first()
+            : $images->find((int) $attributes['resource_id']);
+        $url = $resource === null ? null : app(SignedFileUrl::class)->for($viewer, $resource, inline: true);
 
-        return $url === null ? '' : '<figure class="rc-figure"><img src="'.self::e($url).'" alt="'.self::e((string) $node['attrs']['alt']).'" loading="lazy"></figure>';
+        return $url === null ? '' : '<figure class="rc-figure"><img src="'.self::e($url).'" alt="'.self::e((string) $attributes['alt']).'" loading="lazy"></figure>';
     }
 }

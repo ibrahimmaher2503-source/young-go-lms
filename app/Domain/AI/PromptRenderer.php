@@ -22,7 +22,7 @@ final class PromptRenderer
             '{max_words}' => (string) ($maxWords ?? config('ai.max_words', 80)),
             '{style_tier_instructions}' => $prompt->style_tiers[$tier] ?? '',
             '{reply_language}' => $replyLanguage,
-            '{lesson_title}' => $lessonTitle,
+            '{lesson_title}' => $this->neutralize($lessonTitle, $tag),
             '{document_version}' => (string) $documentVersion,
             '{page_tagged_text}' => $tagged,
         ]);

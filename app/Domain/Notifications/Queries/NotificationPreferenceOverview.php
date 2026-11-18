@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notifications\Queries;
 
-use App\Domain\Engagement\ReviewerName;
+use App\Domain\Identity\GuardianAccess;
 use App\Domain\Notifications\Actions\SetPhoneReminderOptIn;
 use App\Domain\Notifications\NotificationEventDefinition;
 use App\Domain\Notifications\NotificationMatrix;
@@ -26,7 +26,7 @@ final class NotificationPreferenceOverview
         $drivers = Config::array('live.phone_reminders');
         $optIns = (array) $user->getAttribute('phone_reminder_opt_ins');
         $phone = [];
-        if (filled($user->getAttribute('phone')) && ! ReviewerName::isChild($user)) {
+        if (filled($user->getAttribute('phone')) && ! GuardianAccess::isMinor($user)) {
             foreach (SetPhoneReminderOptIn::CHANNELS as $channel) {
                 if (filled($drivers[$channel] ?? null)) {
                     $phone[] = ['channel' => $channel, 'enabled' => ($optIns[$channel] ?? null) === $user->getAttribute('phone')];

@@ -19,7 +19,7 @@ use Throwable;
  */
 final class FakeAiProvider implements AiProviderInterface
 {
-    public const string DEFAULT_ANSWER = '{"status":"not_in_source","answer":"","pages":[]}';
+    public const string DEFAULT_ANSWER = '{"status":"not_in_source","answer":"","source_pages":[],"support_quote":"","language":"en"}';
 
     /** @var list<string|array<string, mixed>|Closure(AiCompletionRequest): string> */
     private array $queue = [];

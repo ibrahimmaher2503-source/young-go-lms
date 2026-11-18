@@ -22,6 +22,7 @@ return [
     'sign_in_to_enroll' => 'Sign in to enroll',
     'enrollment_soon' => 'Enrollment opens soon',
     'continue' => 'Continue learning',
+    'age_suitability' => 'Age suitability',
     'ages_range' => 'Ages :min to :max',
     'ages_from' => 'Ages :min and up',
     'ages_to' => 'Up to age :max',

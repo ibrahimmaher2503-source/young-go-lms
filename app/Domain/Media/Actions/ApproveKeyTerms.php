@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Media\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonKeyTerm;
 use App\Models\User;
@@ -31,6 +32,8 @@ final class ApproveKeyTerms
         }
 
         return DB::transaction(function () use ($actor, $document, $termIds): int {
+            $document = LessonCurriculumDocument::query()->lockForUpdate()->findOrFail($document->getKey());
+            CurriculumAccess::authorizeLesson($actor, $document->lesson, 'lesson_document.approve');
             LessonKeyTerm::query()->where('document_id', $document->getKey())->update(['approved' => false]);
             $approved = LessonKeyTerm::query()->where('document_id', $document->getKey())->whereIn('id', $termIds)->update(['approved' => true]);
 

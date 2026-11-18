@@ -66,6 +66,18 @@ final class Quiz extends Model
         return $this->questions()->where('active', true);
     }
 
+    public function hasActiveQuestions(): bool
+    {
+        $attributes = $this->getAttributes();
+        if (array_key_exists('active_questions_count', $attributes)) {
+            return (int) $attributes['active_questions_count'] > 0;
+        }
+
+        return $this->relationLoaded('activeQuestions')
+            ? $this->activeQuestions->isNotEmpty()
+            : $this->activeQuestions()->exists();
+    }
+
     /** Sum of the points of the active questions. */
     public function totalMarks(): float
     {

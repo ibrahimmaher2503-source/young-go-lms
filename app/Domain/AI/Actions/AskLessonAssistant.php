@@ -100,7 +100,7 @@ final class AskLessonAssistant
         $cacheable = $input->mode === AssistantMode::Normal && $messages->isEmpty() && $checked->piiKinds === [];
         $hit = $cacheable ? $this->cache->find((int) $lesson->getKey(), $document->version, $question, $language->code, $tier, $prompt->version) : null;
         if ($hit !== null) {
-            $this->recheck($learner, $lesson, $document);
+            $this->assertSourceAvailable($learner, $lesson, (int) $document->getKey());
 
             return $this->persistCached($learner, $lesson, $document, $conversation, $input, $question, $checked->piiKinds, $tier, $prompt, $hit);
         }
@@ -146,11 +146,19 @@ final class AskLessonAssistant
     ): AssistantReply {
         $context = $this->contexts->build($document, $question);
 
-        $this->recheck($learner, $lesson, $document);
+        $this->assertSourceAvailable($learner, $lesson, (int) $document->getKey(), quotaReserved: true);
 
         [$request, $rules] = $this->engine->request($prompt, $tier, $language, (string) $lesson->title, $document->version, $context, $this->turns($messages, $question, $input->mode), StudentHash::of((int) $learner->getKey()));
 
         [$verdict, $how, $attempts, $usageResult] = $this->engine->exchange($request, $context, $rules);
+
+        try {
+            $this->assertSourceAvailable($learner, $lesson, (int) $document->getKey(), quotaReserved: true);
+        } catch (AssistantRefused|AuthorizationException $exception) {
+            $this->recordProviderUsage($learner, $lesson, $usageResult, 'source_unavailable');
+
+            throw $exception;
+        }
 
         $reply = $this->persist($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $verdict, $how, $attempts, $usageResult, $checked->piiKinds);
 
@@ -226,17 +234,21 @@ final class AskLessonAssistant
         return $question;
     }
 
-    /** Entitlement and document status are checked again right before the prompt is built (AI spec 7.8). */
-    private function recheck(User $learner, Lesson $lesson, LessonCurriculumDocument $document): void
+    /** Recheck the source before building the prompt and before releasing the answer. */
+    public function assertSourceAvailable(User $learner, Lesson $lesson, int $documentId, bool $quotaReserved = false): void
     {
+        if ($learner->refresh()->getAttribute('status') !== 'active' || ! $learner->can('ai.ask')) {
+            throw new AuthorizationException;
+        }
+
         $this->entitlements->flush();
-        $availability = $this->eligibility->check($learner, $lesson);
+        $availability = $this->eligibility->check($learner, $lesson->refresh(), $quotaReserved);
         if ($availability->reason !== null) {
             throw AssistantRefused::unavailable($availability->reason);
         }
 
         $current = $lesson->activeCurriculumDocument();
-        if ($current === null || $current->getKey() !== $document->getKey()) {
+        if ($current === null || (int) $current->getKey() !== $documentId) {
             throw AssistantRefused::unavailable(UnavailableReason::NoApprovedDocument);
         }
     }
@@ -310,13 +322,10 @@ final class AskLessonAssistant
         };
         $item = $lesson->item;
         $course = $item->course;
-        $tokens = $usage === null ? [0, 0, 0] : [$usage->usage->inputTokens, $usage->usage->cachedTokens, $usage->usage->outputTokens];
-        $model = $usage === null ? null : $usage->model;
-        $cost = $usage === null ? 0 : $usage->costMinor;
-        $latency = $usage === null ? 0 : $usage->latencyMs;
+        $model = $usage?->model;
         $result = $outcome === AssistantOutcome::Fallback ? ($reason ?? 'fallback') : $outcome->value;
 
-        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $outcome, $answered, $reason, $text, $pages, $language, $trimmed, $attempts, $tokens, $model, $cost, $latency, $result, $course, $pii): AssistantReply {
+        return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $question, $tier, $prompt, $outcome, $answered, $reason, $text, $pages, $language, $trimmed, $attempts, $usage, $model, $result, $course, $pii): AssistantReply {
             $conversation ??= AiConversation::query()->create([
                 'student_id' => $learner->getKey(), 'course_id' => $course->getKey(), 'lesson_id' => $lesson->getKey(),
                 'document_version' => $document->version, 'locale' => $input->locale, 'style_tier' => $tier->value,
@@ -338,12 +347,7 @@ final class AskLessonAssistant
                 'prompt_version' => $prompt->version, 'model' => $model, 'cache_hit' => false,
             ]);
 
-            AiUsage::query()->create([
-                'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
-                'provider' => ProviderRegistry::currentKey(), 'model' => $model,
-                'input_tokens' => $tokens[0], 'cached_tokens' => $tokens[1], 'output_tokens' => $tokens[2],
-                'cost_minor' => $cost, 'latency_ms' => $latency, 'result' => $result,
-            ]);
+            $this->recordProviderUsage($learner, $lesson, $usage, $result);
 
             if ($this->audit->record('ai.assistant_asked', $conversation, (int) $learner->getKey(), null, [
                 'lesson_id' => $lesson->getKey(), 'document_version' => $document->version, 'status' => $outcome->value,
@@ -352,8 +356,22 @@ final class AskLessonAssistant
                 throw new RuntimeException('Unable to record assistant audit.');
             }
 
-            return new AssistantReply($outcome, $text, $pages, $language, $answered, (int) $message->getKey(), (int) $conversation->getKey());
+            return new AssistantReply($outcome, $text, $pages, $language, $answered, (int) $message->getKey(), (int) $conversation->getKey(), (int) $document->getKey());
         });
+    }
+
+    private function recordProviderUsage(User $learner, Lesson $lesson, ?AiCompletionResult $usage, string $result): void
+    {
+        AiUsage::query()->create([
+            'student_hash' => StudentHash::of((int) $learner->getKey()), 'lesson_id' => $lesson->getKey(),
+            'provider' => ProviderRegistry::currentKey(), 'model' => $usage?->model,
+            'input_tokens' => $usage?->usage->inputTokens ?? 0,
+            'cached_tokens' => $usage?->usage->cachedTokens ?? 0,
+            'output_tokens' => $usage?->usage->outputTokens ?? 0,
+            'cost_minor' => $usage === null ? 0 : $usage->costMinor,
+            'latency_ms' => $usage === null ? 0 : $usage->latencyMs,
+            'result' => $result,
+        ]);
     }
 
     /**
@@ -372,7 +390,7 @@ final class AskLessonAssistant
         $kind = $checked->blocked ?? throw new RuntimeException('Guard verdict without a guard.');
         $course = $lesson->item->course;
         // Self-harm from anyone who is not a known adult is flagged for designated admins (O-015, O-028); adults only get the message.
-        $flag = $kind === GuardKind::Safeguarding && $tier !== StyleTier::Adults;
+        $flag = $kind === GuardKind::Safeguarding && ! $this->eligibility->isAdult($learner);
         $pages = $checked->page === null ? [] : [$checked->page];
 
         return DB::transaction(function () use ($learner, $lesson, $document, $conversation, $input, $checked, $tier, $kind, $course, $flag, $pages): AssistantReply {
@@ -419,7 +437,7 @@ final class AskLessonAssistant
                 throw new RuntimeException('Unable to record assistant audit.');
             }
 
-            return new AssistantReply(AssistantOutcome::OutOfScope, $checked->message, $pages, $input->locale, false, (int) $message->getKey(), (int) $conversation->getKey(), $kind->value);
+            return new AssistantReply(AssistantOutcome::OutOfScope, $checked->message, $pages, $input->locale, false, (int) $message->getKey(), (int) $conversation->getKey(), (int) $document->getKey(), $kind->value);
         });
     }
 
@@ -474,7 +492,7 @@ final class AskLessonAssistant
                 throw new RuntimeException('Unable to record assistant audit.');
             }
 
-            return new AssistantReply(AssistantOutcome::Answered, $hit->answer, $hit->pages, $hit->language, true, (int) $message->getKey(), (int) $conversation->getKey(), null, true);
+            return new AssistantReply(AssistantOutcome::Answered, $hit->answer, $hit->pages, $hit->language, true, (int) $message->getKey(), (int) $conversation->getKey(), (int) $document->getKey(), null, true);
         });
     }
 }

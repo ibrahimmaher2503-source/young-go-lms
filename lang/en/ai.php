@@ -21,6 +21,7 @@ return [
     'out_of_scope' => 'Ask a question about this lesson.',
     'quota_reached' => 'You have reached your question limit.',
     'temporarily_unavailable' => 'The lesson assistant is temporarily unavailable.',
+    'request_human_help' => 'Ask for human help',
     'request_created' => 'Your instructor request was created.',
     'view_request' => 'View request',
     'thread_limit' => 'You have reached the question limit for this conversation. You can send a request to your instructor.',

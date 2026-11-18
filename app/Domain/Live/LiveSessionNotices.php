@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Live;
 
 use App\Domain\Entitlements\CourseLearners;
+use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Live\Notifications\LiveSessionNotice;
 use App\Domain\Notifications\NotificationDispatcher;
 use App\Models\CurriculumItem;
@@ -20,7 +21,7 @@ use Throwable;
  */
 final class LiveSessionNotices
 {
-    public function __construct(private readonly NotificationDispatcher $dispatcher) {}
+    public function __construct(private readonly NotificationDispatcher $dispatcher, private readonly EntitlementService $access) {}
 
     /** @return int how many people were notified now (people already told are skipped by the dedupe key) */
     public function send(LiveSession $session, string $kind, string $variant = ''): int
@@ -46,8 +47,10 @@ final class LiveSessionNotices
     /** @return Collection<int, User> */
     public function audience(LiveSession $session): Collection
     {
-        return CourseLearners::query($session->course)->get()
-            ->filter(fn (User $learner): bool => $learner->getAttribute('access_status') === 'active')
+        $course = $session->course;
+
+        return CourseLearners::query($course)->get()
+            ->filter(fn (User $learner): bool => $this->access->canAccessCourse($learner, $course)->allowed)
             ->filter(fn (User $learner): bool => $session->cohort_id === null || ($session->cohort?->hasSeat($learner) ?? false))
             ->values();
     }

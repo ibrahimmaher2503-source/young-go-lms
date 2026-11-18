@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Media\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Curriculum\CurriculumAccess;
 use App\Models\LessonCurriculumDocument;
 use App\Models\LessonDocumentPage;
 use App\Models\User;
@@ -33,12 +34,17 @@ final class EditExtractedPage
 
         return DB::transaction(function () use ($actor, $document, $pageNo, $text): LessonDocumentPage {
             $current = LessonCurriculumDocument::query()->lockForUpdate()->findOrFail($document->getKey());
+            CurriculumAccess::authorizeLesson($actor, $current->lesson, 'lesson_document.approve');
             if ($current->status !== LessonCurriculumDocument::STATUS_AWAITING_APPROVAL) {
                 throw ValidationException::withMessages(['document' => __('media.pdf_not_ready_for_approval')]);
             }
 
             $page = LessonDocumentPage::query()->where('document_id', $current->getKey())->where('page_no', $pageNo)->firstOrFail();
             $before = (string) ($page->approved_text ?? $page->raw_text);
+            DB::table('lesson_document_page_revisions')->insert([
+                'page_id' => $page->getKey(), 'edited_by' => $actor->getKey(),
+                'previous_text' => $before, 'text' => $text, 'created_at' => now(),
+            ]);
             $page->forceFill(['approved_text' => $text])->save();
 
             if ($this->audit->record('curriculum_document.text_edited', $current->lesson, (int) $actor->getKey(), ['sha1' => sha1($before), 'length' => mb_strlen($before)], ['sha1' => sha1($text), 'length' => mb_strlen($text)], ['version' => $current->version, 'page' => $pageNo]) === null) {

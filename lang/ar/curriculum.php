@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 return [
+    'association' => 'ارتباط التقييم',
+    'association_course' => 'الدورة',
+    'association_lesson' => 'الدرس',
+    'associated_lesson_invalid' => 'اختر درساً نشطاً في هذه الدورة.',
+    'manage_resources' => 'إدارة موارد الدرس',
+    'preview_resource' => 'معاينة المورد',
+    'remove_resource' => 'حذف المورد',
+    'resources_empty' => 'لا توجد موارد لهذا الدرس.',
     'title' => 'العنوان',
     'page' => 'منهج الدورة',
     'content' => 'محتوى الدورة',
@@ -100,7 +108,7 @@ return [
     'resources_count' => ':count مواد',
     'more' => 'المزيد',
     'rich_content' => 'نص الدرس',
-    'rich_content_help' => 'عناوين وقوائم واقتباسات وجداول وروابط. الصور تأتي من مواد الدرس، ولا يُقبل HTML مباشر.',
+    'rich_content_help' => 'أضف عناوين وقوائم واقتباسات وجداول وملاحظات بارزة وتضمينات معتمدة أو صورًا من مكتبة الوسائط.',
     'view_as_learner' => 'عرض كمتعلم',
     'assignment' => [
         'configure' => 'إعدادات الواجب',

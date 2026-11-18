@@ -59,15 +59,17 @@ final class SitemapEntries
 
         foreach ((new PublicCategory)->listed() as $category) {
             $urls = [];
-            foreach (PublicUrl::locales() as $locale) {
+            foreach (PublicUrl::localesWith($category, 'name') as $locale) {
                 $urls[$locale] = PublicUrl::category($category, $locale);
             }
-            yield ['lastmod' => $category->updated_at?->toAtomString(), 'urls' => $urls];
+            if ($urls !== []) {
+                yield ['lastmod' => $category->updated_at?->toAtomString(), 'urls' => $urls];
+            }
         }
 
         foreach ((new PublicInstructors)->query()->orderBy('instructor_profiles.id')->cursor() as $profile) {
             $urls = [];
-            foreach (PublicUrl::locales() as $locale) {
+            foreach (PublicUrl::localesWith($profile, 'display_name') ?: PublicUrl::locales() as $locale) {
                 $urls[$locale] = PublicUrl::instructor($profile, $locale);
             }
             yield ['lastmod' => $profile->updated_at?->toAtomString(), 'urls' => $urls];

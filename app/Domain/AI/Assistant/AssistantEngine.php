@@ -71,27 +71,34 @@ final class AssistantEngine
         $result = null;
         $tokens = [0, 0, 0];
         $latency = 0;
+        $cost = 0;
+        $started = hrtime(true);
         $maxAttempts = 1 + max(0, (int) config('ai.assistant.retries', 1));
 
         while ($attempts < $maxAttempts) {
+            $remaining = $request->timeoutSeconds - (int) floor((hrtime(true) - $started) / 1e9);
+            if ($attempts > 0 && $remaining <= 0) {
+                return [null, 'timeout', $attempts, $this->usage($result, $tokens, $latency, $cost)];
+            }
             $attempts++;
             try {
                 $result = $this->provider->complete($attempts === 1 ? $request : new AiCompletionRequest(
                     $request->promptVersion, $request->cacheablePrefix, $request->turns, $request->maxTokens, $request->responseSchema,
-                    $request->timeoutSeconds, $request->userHash, $request->idempotencyKey.':retry',
+                    $remaining, $request->userHash, $request->idempotencyKey.':retry',
                 ));
             } catch (Throwable $exception) {
                 if (! $exception instanceof AiProviderNotConfigured && ! $exception instanceof AiProviderCircuitOpen) {
                     report($exception);
                 }
 
-                return [null, 'provider_error', $attempts, $this->usage($result, $tokens, $latency)];
+                return [null, 'provider_error', $attempts, $this->usage($result, $tokens, $latency, $cost)];
             }
 
             $tokens = [$tokens[0] + $result->usage->inputTokens, $tokens[1] + $result->usage->cachedTokens, $tokens[2] + $result->usage->outputTokens];
             $latency += $result->latencyMs;
-            if ($result->latencyMs > $request->timeoutSeconds * 1000) {
-                return [null, 'timeout', $attempts, $this->usage($result, $tokens, $latency)];
+            $cost += $result->costMinor;
+            if (max($latency, (hrtime(true) - $started) / 1e6) > $request->timeoutSeconds * 1000) {
+                return [null, 'timeout', $attempts, $this->usage($result, $tokens, $latency, $cost)];
             }
 
             $verdict = $this->guard->inspect($result->content, $context, $rules);
@@ -100,16 +107,16 @@ final class AssistantEngine
             }
         }
 
-        return [$verdict, 'guard', $attempts, $this->usage($result, $tokens, $latency)];
+        return [$verdict, 'guard', $attempts, $this->usage($result, $tokens, $latency, $cost)];
     }
 
     /**
      * @param  array{0: int, 1: int, 2: int}  $tokens
      */
-    private function usage(?AiCompletionResult $last, array $tokens, int $latency): ?AiCompletionResult
+    private function usage(?AiCompletionResult $last, array $tokens, int $latency, int $cost): ?AiCompletionResult
     {
         return $last === null ? null : new AiCompletionResult(
-            $last->content, new UsageTokens($tokens[0], $tokens[1], $tokens[2]), $last->costMinor, $latency,
+            $last->content, new UsageTokens($tokens[0], $tokens[1], $tokens[2]), $cost, $latency,
             $last->providerRequestId, $last->finishReason, $last->model,
         );
     }

@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 return [
+    'association' => 'Assessment association',
+    'association_course' => 'Course',
+    'association_lesson' => 'Lesson',
+    'associated_lesson_invalid' => 'Choose an active lesson in this course.',
+    'manage_resources' => 'Manage lesson resources',
+    'preview_resource' => 'Preview resource',
+    'remove_resource' => 'Remove resource',
+    'resources_empty' => 'This lesson has no resources.',
     'title' => 'Title',
     'page' => 'Course curriculum',
     'content' => 'Course content',
@@ -100,7 +108,7 @@ return [
     'resources_count' => ':count materials',
     'more' => 'More actions',
     'rich_content' => 'Lesson text',
-    'rich_content_help' => 'Headings, lists, quotes, tables and links. Images come from the lesson materials; raw HTML is not accepted.',
+    'rich_content_help' => 'Add headings, lists, quotes, tables, callouts, approved embeds or images from the media library.',
     'view_as_learner' => 'View as learner',
     'assignment' => [
         'configure' => 'Assignment settings',

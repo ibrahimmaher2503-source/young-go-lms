@@ -22,7 +22,43 @@ final class AssistantEligibility
 {
     public function __construct(private readonly LessonAccessChecker $access, private readonly AiSettings $settings) {}
 
-    public function check(User $student, Lesson $lesson): AssistantAvailability
+    public function check(User $student, Lesson $lesson, bool $quotaReserved = false): AssistantAvailability
+    {
+        $configuration = $this->configuration($lesson);
+        if (! $configuration->isAvailable()) {
+            return $configuration;
+        }
+
+        if (! $this->access->canAccessLessonFiles($student, $lesson)) {
+            return AssistantAvailability::unavailable(UnavailableReason::NoEntitlement);
+        }
+
+        if ($lesson->activeCurriculumDocument() === null) {
+            return AssistantAvailability::unavailable(UnavailableReason::NoApprovedDocument);
+        }
+
+        if (! $quotaReserved && $this->quotaExhausted($student, $lesson)) {
+            return AssistantAvailability::unavailable(UnavailableReason::QuotaExhausted);
+        }
+
+        return $this->consent($student);
+    }
+
+    public function forPreview(Lesson $lesson, bool $locked): AssistantAvailability
+    {
+        $configuration = $this->configuration($lesson);
+        if (! $configuration->isAvailable()) {
+            return $configuration;
+        }
+
+        return match (true) {
+            $locked => AssistantAvailability::unavailable(UnavailableReason::NoEntitlement),
+            $lesson->activeCurriculumDocument() === null => AssistantAvailability::unavailable(UnavailableReason::NoApprovedDocument),
+            default => $configuration,
+        };
+    }
+
+    private function configuration(Lesson $lesson): AssistantAvailability
     {
         if (! Feature::for(null)->active(PlatformFlag::AiAssistant->value)) {
             return AssistantAvailability::unavailable(UnavailableReason::GlobalOff);
@@ -46,19 +82,7 @@ final class AssistantEligibility
             return AssistantAvailability::unavailable(UnavailableReason::NotRecordedLesson);
         }
 
-        if (! $this->access->canAccessLessonFiles($student, $lesson)) {
-            return AssistantAvailability::unavailable(UnavailableReason::NoEntitlement);
-        }
-
-        if ($lesson->activeCurriculumDocument() === null) {
-            return AssistantAvailability::unavailable(UnavailableReason::NoApprovedDocument);
-        }
-
-        if ($this->quotaExhausted($student, $lesson)) {
-            return AssistantAvailability::unavailable(UnavailableReason::QuotaExhausted);
-        }
-
-        return $this->consent($student);
+        return AssistantAvailability::available();
     }
 
     private function isRecorded(CurriculumItem $item, Lesson $lesson): bool
@@ -105,7 +129,7 @@ final class AssistantEligibility
     }
 
     /** O-015: with no configured adult age, or no known birth month, nobody counts as an adult. */
-    private function isAdult(User $student): bool
+    public function isAdult(User $student): bool
     {
         $adultAge = config('ai.adult_age');
         $year = $student->getAttribute('birth_year');

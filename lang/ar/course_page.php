@@ -22,6 +22,7 @@ return [
     'sign_in_to_enroll' => 'سجّل الدخول للاشتراك',
     'enrollment_soon' => 'الاشتراك يفتح قريبًا',
     'continue' => 'تابع التعلم',
+    'age_suitability' => 'ملاءمة العمر',
     'ages_range' => 'من :min إلى :max سنة',
     'ages_from' => ':min سنوات فأكثر',
     'ages_to' => 'حتى :max سنة',

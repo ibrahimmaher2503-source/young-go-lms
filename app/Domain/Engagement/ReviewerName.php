@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Engagement;
 
-use App\Domain\Identity\Models\GuardianChildLink;
+use App\Domain\Identity\GuardianAccess;
 use App\Models\User;
 
 /**
@@ -18,20 +18,7 @@ final class ReviewerName
 
     public static function isChild(User $user): bool
     {
-        if (GuardianChildLink::query()->where('child_id', $user->getKey())->exists()) {
-            return true;
-        }
-
-        $adultAge = config('ai.adult_age');
-        $year = $user->getAttribute('birth_year');
-        $month = $user->getAttribute('birth_month');
-        if (! is_numeric($adultAge) || $year === null || $month === null) {
-            return false;
-        }
-
-        $now = now();
-
-        return $now->year - (int) $year - ($now->month < (int) $month ? 1 : 0) < (int) $adultAge;
+        return GuardianAccess::isMinor($user);
     }
 
     public static function for(User $user): string

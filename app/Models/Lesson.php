@@ -13,6 +13,7 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * @property string $type
+ * @property array<string, mixed>|null $content
  * @property int|null $duration_seconds
  * @property bool $is_preview
  * @property Carbon|null $archived_at

@@ -55,7 +55,8 @@ final class ScheduleLiveSession
             CourseSection::query()->whereKey($section->getKey())->lockForUpdate()->first();
             $session = LiveSession::query()->create([
                 'course_id' => $course->getKey(), 'cohort_id' => $fields['cohort_id'] ?? null, 'instructor_id' => $fields['instructor_id'] ?? null,
-                'title' => array_filter($fields['title']), 'description' => array_filter($fields['description'] ?? []),
+                'title' => array_filter($fields['title']),
+                'description' => array_filter($fields['description'] ?? [], static fn (mixed $v): bool => is_string($v) && trim($v) !== ''),
                 'starts_at' => $startsAt, 'ends_at' => $endsAt, 'timezone' => $fields['timezone'], 'provider' => $fields['provider'],
                 'meeting_url' => $url, 'join_window_minutes' => (int) ($fields['join_window_minutes'] ?? 15), 'status' => LiveSession::SCHEDULED,
             ]);

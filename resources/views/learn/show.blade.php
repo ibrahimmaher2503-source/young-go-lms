@@ -123,8 +123,15 @@
                                     <x-learning.assistant-opener />
                                 @endif
                             </div>
-                        @elseif($canMarkComplete)
-                            <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
+                        @elseif($canMarkComplete || $aiAvailable)
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if($canMarkComplete)
+                                    <x-ui.button type="button" variant="secondary" data-player-complete>{{ __('learn.mark_complete') }}</x-ui.button>
+                                @endif
+                                @if($aiAvailable)
+                                    <x-learning.assistant-opener />
+                                @endif
+                            </div>
                         @endif
 
                         @if($curriculumPdfUrl || $resources)

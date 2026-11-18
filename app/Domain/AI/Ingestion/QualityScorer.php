@@ -14,11 +14,15 @@ final class QualityScorer
             return 0.0;
         }
 
-        $readable = preg_match_all('/[\p{Arabic}\p{Latin}\p{N}\p{P}\p{S}]/u', (string) preg_replace('/\s+/u', '', $text));
+        $readableWords = preg_match_all('/(?:(?=\p{L})[\p{Arabic}\p{Latin}]\p{M}*){2,}/u', $text, $wordsWithLetters);
+        if ($readableWords === false || $readableWords === 0) {
+            return 0.0;
+        }
+        $readable = array_sum(array_map(mb_strlen(...), $wordsWithLetters[0]));
         $presentation = (int) preg_match_all('/[\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', $text);
         $letters = max(1, (int) preg_match_all('/\p{L}/u', $text));
 
-        $score = 100 * (((int) $readable - $presentation) / $total) - 200 * ($presentation / $letters);
+        $score = 100 * ($readable / $total) - 200 * ($presentation / $letters);
 
         $words = preg_split('/[\s\p{P}]+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if ($words !== []) {

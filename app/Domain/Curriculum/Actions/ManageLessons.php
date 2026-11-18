@@ -7,6 +7,9 @@ namespace App\Domain\Curriculum\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Content\RichContent;
 use App\Domain\Curriculum\CurriculumAccess;
+use App\Domain\Library\Actions\AttachLibraryItem;
+use App\Domain\Library\LibraryAccess;
+use App\Domain\Media\LessonPublishRule;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
@@ -31,15 +34,18 @@ final class ManageLessons
         }
         $attributes = $this->attributes($data);
 
-        return DB::transaction(static function () use ($section, $attributes): CurriculumItem {
+        return DB::transaction(function () use ($actor, $section, $attributes): CurriculumItem {
             CourseSection::query()->whereKey($section->getKey())->lockForUpdate()->first();
             $lesson = Lesson::query()->create($attributes);
             $sort = (int) CurriculumItem::query()->where('section_id', $section->getKey())->max('sort') + 1;
 
-            return CurriculumItem::query()->create([
+            $item = CurriculumItem::query()->create([
                 'course_id' => $section->course_id, 'section_id' => $section->getKey(), 'sort' => $sort,
                 'itemable_type' => 'lesson', 'itemable_id' => $lesson->getKey(), 'status' => CurriculumItem::STATUS_DRAFT,
             ]);
+            $this->attachRichImages($actor, $lesson, $attributes['content']['content'] ?? []);
+
+            return $item;
         });
     }
 
@@ -48,9 +54,18 @@ final class ManageLessons
     {
         $item = $this->itemFor($lesson);
         CurriculumAccess::authorize($actor, $item->course);
-        $lesson->update($this->attributes($data));
+        $attributes = $this->attributes($data);
 
-        return $lesson;
+        return DB::transaction(function () use ($actor, $item, $lesson, $attributes): Lesson {
+            $currentItem = CurriculumItem::query()->lockForUpdate()->findOrFail($item->getKey());
+            $this->attachRichImages($actor, $lesson, $attributes['content']['content'] ?? []);
+            $lesson->update($attributes);
+            if ($currentItem->status === CurriculumItem::STATUS_PUBLISHED) {
+                LessonPublishRule::assertPublishable([$currentItem->load('itemable.media')]);
+            }
+
+            return $lesson;
+        });
     }
 
     /** Archived lessons disappear for students and stay for attempts, submissions and history. Audited. */
@@ -65,6 +80,24 @@ final class ManageLessons
                 throw new RuntimeException('Unable to record curriculum audit.');
             }
         });
+    }
+
+    /** @param list<array<string, mixed>> $nodes */
+    private function attachRichImages(User $actor, Lesson $lesson, array $nodes): void
+    {
+        foreach ($nodes as $node) {
+            if (($node['attrs']['id'] ?? null) === 'lesson-library-image') {
+                $id = (int) $node['attrs']['config']['library_item_id'];
+                $asset = LibraryAccess::visibleTo($actor)->where('kind', 'image')->find($id);
+                if ($asset === null) {
+                    throw ValidationException::withMessages(['content' => __('content.image_unavailable')]);
+                }
+                if (! $lesson->resources()->where('library_item_id', $id)->exists()) {
+                    app(AttachLibraryItem::class)->asResource($actor, $asset, $lesson);
+                }
+            }
+            $this->attachRichImages($actor, $lesson, $node['content'] ?? []);
+        }
     }
 
     private function itemFor(Lesson $lesson): CurriculumItem

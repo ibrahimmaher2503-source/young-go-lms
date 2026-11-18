@@ -15,7 +15,6 @@ use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -37,10 +36,9 @@ final class ManageAssessmentItems
             throw ValidationException::withMessages(['section' => __('curriculum.section_archived')]);
         }
 
+        $title = CurriculumAccess::validTitle($data, 'title');
+
         $validated = Validator::make($data, [
-            'title' => ['required', 'array'],
-            'title.ar' => ['nullable', 'string', 'max:150', Rule::requiredIf(blank($data['title']['en'] ?? null))],
-            'title.en' => ['nullable', 'string', 'max:150', Rule::requiredIf(blank($data['title']['ar'] ?? null))],
             'association' => ['sometimes', 'required', 'in:course,section,lesson'],
             'associated_lesson_item_id' => ['exclude_unless:association,lesson', 'required', 'integer'],
             'description' => ['nullable', 'array'],
@@ -48,9 +46,14 @@ final class ManageAssessmentItems
             'description.en' => ['nullable', 'string', 'max:5000'],
         ])->validate();
 
+        $description = array_filter(
+            array_map(static fn (mixed $v): string => is_string($v) ? trim($v) : '', (array) ($validated['description'] ?? [])),
+            static fn (string $v): bool => $v !== '',
+        );
+
         $model = self::KINDS[$kind];
 
-        return DB::transaction(function () use ($actor, $section, $kind, $model, $validated): CurriculumItem {
+        return DB::transaction(function () use ($actor, $section, $kind, $model, $validated, $title, $description): CurriculumItem {
             CourseSection::query()->whereKey($section->getKey())->lockForUpdate()->first();
             $lessonItemId = $validated['associated_lesson_item_id'] ?? null;
             if ($lessonItemId !== null && ! CurriculumItem::query()->where('course_id', $section->course_id)
@@ -58,7 +61,7 @@ final class ManageAssessmentItems
                 ->whereHasMorph('itemable', [Lesson::class], fn ($lesson) => $lesson->whereNull('archived_at'))->exists()) {
                 throw ValidationException::withMessages(['associated_lesson_item_id' => __('curriculum.associated_lesson_invalid')]);
             }
-            $entity = $model::query()->create(['title' => array_filter($validated['title']), 'description' => array_filter($validated['description'] ?? [])]);
+            $entity = $model::query()->create(['title' => $title, 'description' => $description]);
             $sort = (int) CurriculumItem::query()->where('section_id', $section->getKey())->max('sort') + 1;
             $item = CurriculumItem::query()->create([
                 'course_id' => $section->course_id, 'section_id' => $section->getKey(), 'sort' => $sort,

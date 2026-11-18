@@ -76,7 +76,7 @@ final class CurriculumOutline
         $byId = $courses->keyBy('id');
         $sections = CourseSection::query()->whereIn('course_id', $byId->keys())->whereNull('archived_at')->where('published', true)->orderBy('sort')->orderBy('id')
             ->with(['items' => static fn ($items) => self::activeItems($items)->where('status', CurriculumItem::STATUS_PUBLISHED)
-                ->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media'], LiveSession::class => ['cohort']])])->orderBy('sort')->orderBy('id')])->get();
+                ->with(['itemable' => static fn (MorphTo $morph) => $morph->morphWith([Lesson::class => ['media'], LiveSession::class => ['cohort']])->morphWithCount([Quiz::class => ['activeQuestions']])])->orderBy('sort')->orderBy('id')])->get();
 
         foreach ($sections as $section) {
             foreach ($section->items as $item) {

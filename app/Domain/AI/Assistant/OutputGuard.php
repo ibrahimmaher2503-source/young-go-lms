@@ -18,17 +18,7 @@ final class OutputGuard
             return GuardVerdict::rejected(GuardFailure::Schema);
         }
 
-        // Not-answered statuses never show model text: the learner sees a fixed localized message instead.
-        if ($data['status'] === AssistantOutcome::NotInSource->value) {
-            return GuardVerdict::accepted(AssistantOutcome::NotInSource);
-        }
-        if ($data['status'] === AssistantOutcome::OutOfScope->value) {
-            return GuardVerdict::accepted(AssistantOutcome::OutOfScope);
-        }
-        if ($data['status'] !== AssistantOutcome::Answered->value) {
-            return GuardVerdict::rejected(GuardFailure::Schema);
-        }
-
+        $outcome = AssistantOutcome::tryFrom($data['status']);
         $keys = array_keys($data);
         sort($keys);
         $answer = $data['answer'] ?? null;
@@ -36,17 +26,23 @@ final class OutputGuard
         $quote = $data['support_quote'] ?? null;
         $language = $data['language'] ?? null;
         if ($keys !== ['answer', 'language', 'source_pages', 'status', 'support_quote']
-            || ! is_string($answer) || trim($answer) === '' || ! is_string($quote) || trim($quote) === ''
-            || ! in_array($language, ['ar', 'en'], true) || ! is_array($pages) || $pages === [] || ! array_is_list($pages)) {
+            || $outcome === null || $outcome === AssistantOutcome::Fallback
+            || ! is_string($answer) || ! is_string($quote)
+            || ! in_array($language, ['ar', 'en'], true) || ! is_array($pages) || ! array_is_list($pages)
+            || count(array_filter($pages, is_int(...))) !== count($pages)) {
+            return GuardVerdict::rejected(GuardFailure::Schema);
+        }
+
+        if ($outcome !== AssistantOutcome::Answered) {
+            return GuardVerdict::accepted($outcome);
+        }
+        if (trim($answer) === '' || trim($quote) === '' || $pages === []) {
             return GuardVerdict::rejected(GuardFailure::Schema);
         }
 
         $cited = [];
         foreach ($pages as $page) {
-            if (! is_int($page)) {
-                return GuardVerdict::rejected(GuardFailure::Schema);
-            }
-            if (! isset($context->allPages[$page])) {
+            if (! isset($context->promptPages[$page])) {
                 return GuardVerdict::rejected(GuardFailure::Citation);
             }
             $cited[$page] = $page;
@@ -105,7 +101,7 @@ final class OutputGuard
 
         // A link must come from the lesson text itself.
         if (preg_match_all('~(?:https?://|www\.)[^\s)]+~iu', $answer, $urls) > 0) {
-            $source = implode("\n", $context->allPages);
+            $source = implode("\n", $context->promptPages);
             foreach ($urls[0] as $url) {
                 if (! str_contains($source, $url)) {
                     return true;
@@ -138,7 +134,7 @@ final class OutputGuard
         }
 
         foreach ($pages as $page) {
-            if ($this->matches($words, TextNormalizer::words($context->allPages[$page]))) {
+            if ($this->matches($words, TextNormalizer::words($context->promptPages[$page]))) {
                 return true;
             }
         }

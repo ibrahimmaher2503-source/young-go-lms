@@ -10,6 +10,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([RolePermissionSeeder::class, CategorySeeder::class, CmsPageSeeder::class]);
+        $this->call([RolePermissionSeeder::class, AgeBandSeeder::class, CategorySeeder::class, CmsPageSeeder::class, InstructorAgreementSeeder::class]);
     }
 }

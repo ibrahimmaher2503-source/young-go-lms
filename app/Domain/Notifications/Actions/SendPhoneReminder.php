@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notifications\Actions;
 
-use App\Domain\Engagement\ReviewerName;
+use App\Domain\Identity\GuardianAccess;
 use App\Domain\Notifications\LocalizedNotification;
 use App\Domain\Notifications\PhoneChannelResolver;
 use App\Domain\Notifications\PhoneTemplates;
@@ -46,7 +46,7 @@ final class SendPhoneReminder
         }
 
         // Minors never get phone messages (O-015 default); a guardian phone copy needs its own decision.
-        if (ReviewerName::isChild($recipient)) {
+        if (GuardianAccess::isMinor($recipient)) {
             $this->skip('minor', $template);
 
             return;

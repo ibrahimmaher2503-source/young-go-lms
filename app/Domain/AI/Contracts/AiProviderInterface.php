@@ -15,7 +15,7 @@ use App\Domain\AI\Dto\ProviderHealth;
  */
 interface AiProviderInterface
 {
-    /** Non-streaming completion. */
+    /** Non-streaming completion. Network adapters must set a total transport timeout from the request. */
     public function complete(AiCompletionRequest $request): AiCompletionResult;
 
     /**
