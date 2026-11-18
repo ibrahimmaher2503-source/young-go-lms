@@ -18,16 +18,24 @@ use App\Models\User;
  */
 final class QuizQuestionMatcher
 {
-    public function matches(User $learner, string $question): bool
+    public function matches(User $learner, string $question, int $courseId): bool
     {
-        $attempt = QuizGuard::openAttempt($learner);
-        if ($attempt === null) {
-            return false;
+        foreach (QuizGuard::openAttempts($learner, $courseId) as $attempt) {
+            $prompts = [];
+            foreach ($attempt->snapshot['questions'] ?? [] as $entry) {
+                foreach ((array) ($entry['prompt'] ?? []) as $prompt) {
+                    if (is_string($prompt)) {
+                        $prompts[] = $prompt;
+                    }
+                }
+            }
+            if ($this->matchesPrompts($question, $prompts)
+                || ($attempt->quiz !== null && $this->matchesPrompts($question, QuizGuardQuestions::promptsFor($attempt->quiz)))) {
+                return true;
+            }
         }
 
-        $quiz = $attempt->quiz;
-
-        return $this->matchesPrompts($question, $quiz === null ? [] : QuizGuardQuestions::promptsFor($quiz));
+        return false;
     }
 
     /**

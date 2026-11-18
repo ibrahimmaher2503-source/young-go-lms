@@ -22,9 +22,10 @@ final class QuizGuard
     }
 
     /** @return Collection<int, QuizAttempt> */
-    public static function openAttempts(User $learner): Collection
+    public static function openAttempts(User $learner, int $courseId): Collection
     {
-        return self::query($learner)->with('quiz')->get();
+        return self::query($learner)->whereHas('quiz.item', fn ($item) => $item->where('course_id', $courseId))
+            ->with('quiz')->get();
     }
 
     /** @return Builder<QuizAttempt> */

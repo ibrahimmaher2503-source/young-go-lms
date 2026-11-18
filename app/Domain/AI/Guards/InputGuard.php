@@ -25,10 +25,12 @@ final class InputGuard
 
     public function inspect(User $learner, LessonCurriculumDocument $document, string $question): InputVerdict
     {
+        $courseId = $document->lesson?->item?->course_id;
+
         return $this->run(
             $learner,
             $question,
-            fn (string $text): bool => $this->quiz->matches($learner, $text),
+            fn (string $text): bool => $courseId !== null && $this->quiz->matches($learner, $text, $courseId),
             fn (string $text): ?int => $this->quiz->pageHint($document, $text),
         );
     }
