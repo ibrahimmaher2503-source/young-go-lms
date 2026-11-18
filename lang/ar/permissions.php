@@ -56,6 +56,8 @@ return [
     'profile.view' => 'عرض الملف الشخصي',
     'report.finance.view' => 'عرض التقارير المالية',
     'report.view' => 'عرض التقارير',
+    'payout_profile.reveal' => 'عرض بيانات الدفع للمدرّسين كاملة',
+    'payout_profile.view' => 'عرض ملفات الدفع للمدرّسين (مخفية جزئيًا)',
     'review.moderate' => 'مراجعة تقييمات الدورات',
     'settlement.manage' => 'إدارة التسويات',
     'submission.create' => 'تسليم الواجبات',

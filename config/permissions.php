@@ -55,6 +55,8 @@ return [
         ['name' => 'panel.admin.access'],
         ['name' => 'panel.finance.access'],
         ['name' => 'panel.instructor.access'],
+        ['name' => 'payout_profile.reveal'],
+        ['name' => 'payout_profile.view'],
         ['name' => 'profile.update'],
         ['name' => 'profile.view'],
         ['name' => 'report.finance.view'],
@@ -111,7 +113,7 @@ return [
         ],
         'finance' => [
             'dashboard.view', 'ledger.view', 'manual_entitlement.grant', 'payment.approve_manual', 'payment.refund',
-            'payment.view', 'panel.finance.access', 'report.finance.view', 'settlement.manage',
+            'payment.view', 'panel.finance.access', 'payout_profile.reveal', 'payout_profile.view', 'report.finance.view', 'settlement.manage',
         ],
         'support' => [
             'dashboard.view', 'help_request.manage', 'help_request.reply', 'learner.profile.view', 'learner.progress.view', 'panel.admin.access', 'user.view',

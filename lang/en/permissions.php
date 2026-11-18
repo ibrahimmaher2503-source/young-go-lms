@@ -56,6 +56,8 @@ return [
     'profile.view' => 'View own profile',
     'report.finance.view' => 'View finance reports',
     'report.view' => 'View reports',
+    'payout_profile.reveal' => 'Reveal full payout details',
+    'payout_profile.view' => 'View masked payout profiles',
     'review.moderate' => 'Moderate course reviews',
     'settlement.manage' => 'Manage settlements',
     'submission.create' => 'Submit assignments',

@@ -163,7 +163,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('password-reset', static fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
         // Public lead forms (T-P2-08): a short burst limit and an hourly cap per address, separate buckets per form.
-        foreach (['contact', 'newsletter'] as $form) {
+        foreach (['contact', 'newsletter', 'instructor-application'] as $form) {
             RateLimiter::for($form, static fn (Request $request): array => [
                 Limit::perMinute(max(1, Config::integer('contact.rate_limit.per_minute')))->by($form.'|m|'.$request->ip()),
                 Limit::perHour(max(1, Config::integer('contact.rate_limit.per_hour')))->by($form.'|h|'.$request->ip()),

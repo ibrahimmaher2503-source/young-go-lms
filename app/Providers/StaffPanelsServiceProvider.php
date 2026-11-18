@@ -76,7 +76,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->pages(match ($id) {
                     'finance' => [WorkspaceDashboard::class],
                     'admin' => [WorkspaceDashboard::class, \App\Filament\Pages\MarketingTags::class,AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
-                    default => [WorkspaceDashboard::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class],
+                    default => [WorkspaceDashboard::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, \App\Filament\Pages\InstructorAgreementPage::class, \App\Filament\Pages\MyPayoutProfile::class],
                 })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
                 ->renderHook(TablesRenderHook::CONTENT_BEFORE, static fn () => view('filament.shared.table-scroll-hint'))
@@ -87,9 +87,10 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                         ContactEnquiryResource::class, NewsletterSubscriberResource::class,
                         CategoryResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class, HomepageBlockResource::class, CourseResource::class, ManualGrantResource::class, LibraryResource::class, LearnerDeviceResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, CouponResource::class, ManualPaymentProofResource::class,
                         \App\Filament\Resources\Reviews\CourseReviewResource::class,
+                        \App\Filament\Resources\InstructorApplications\InstructorApplicationResource::class, \App\Filament\Resources\InstructorAgreements\InstructorAgreementResource::class,
                     ],
                     'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class],
-                    default => [ManualGrantResource::class, CouponResource::class, ManualPaymentProofResource::class], // finance
+                    default => [ManualGrantResource::class, CouponResource::class, ManualPaymentProofResource::class, \App\Filament\Resources\PayoutProfiles\PayoutProfileResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));

@@ -6,6 +6,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CmsController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\InstructorApplicationController;
 use App\Http\Controllers\MediaPlaybackController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PrivateFileController;
@@ -31,6 +32,12 @@ Route::get('/blog/{post}', [BlogController::class, 'show'])->name('blog.show');
 // T-P2-08: public lead capture. Spam: honeypot field + per-address throttles; unsubscribe is a signed link, no login.
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
 Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
+// T-P9-01: "Teach with Young Go". Public page; applying needs a signed-in account; ID document download is staff-only.
+Route::get('/teach', [InstructorApplicationController::class, 'show'])->name('instructors.teach');
+Route::post('/teach', [InstructorApplicationController::class, 'store'])
+    ->middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class, 'throttle:instructor-application'])->name('instructors.apply');
+Route::get('/admin/instructor-applications/{application}/id-document', [InstructorApplicationController::class, 'document'])
+    ->whereNumber('application')->middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTwoFactor::class, 'can:instructor.manage', 'throttle:certificate-download'])->name('instructor-applications.document');
 Route::get('/cookies', [ConsentController::class, 'show'])->name('consent.show');
 Route::post('/cookies', [ConsentController::class, 'store'])->middleware('throttle:30,1')->name('consent.store');
 Route::get('/newsletter', [NewsletterController::class, 'show'])->name('newsletter.show');
