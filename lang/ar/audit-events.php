@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'learner.session_evicted' => 'إنهاء أقدم جلسة للمتعلّم',
     'user.roles_changed' => 'تحديث أدوار مستخدم',
     'role.permissions_changed' => 'تحديث صلاحيات دور',
     'guardian.child_created' => 'إنشاء حساب طفل',

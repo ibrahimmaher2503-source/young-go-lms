@@ -77,7 +77,7 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P4-04 | Progress, resume and completion state | review | T-P4-03 | implementer, test-writer | M | high | | |
 | T-P4-05 | Student dashboard and library | todo | T-P4-04 | ui-builder, implementer, test-writer | M | normal | | |
 | T-P4-06 | Protected PDFs, resources and previews | blocked | T-P4-03, T-P3-08 | implementer, ui-builder, test-writer | S | high | | Learner downloads implemented; G7 reached three review cycles at 4.08/5 against 4.5. See docs/reviews/T-P4-06_VISUAL_MATCH.md |
-| T-P4-07 | Watermark, session and device limits | todo | T-P4-03, T-P1-02 | implementer, ui-builder, test-writer | M | normal | | |
+| T-P4-07 | Watermark, session and device limits | in_progress | T-P4-03, T-P1-02 | implementer, ui-builder, test-writer | M | normal | | Session lifecycle first; registered devices, staff reset and watermark follow |
 | T-P4-08 | Parent dashboard | todo | T-P4-05, T-P1-06 | ui-builder, implementer, test-writer | M | high | | |
 | T-P4-09 | Layered access: sequence and drip with reason codes | todo | T-P4-01, T-P4-04, T-P3-04 | implementer, ui-builder, test-writer | M | high | | |
 | T-P4-10 | Instructor learner insights and view-as-learner preview | todo | T-P4-04, T-P4-09 | implementer, ui-builder, test-writer | M | normal | | |
@@ -150,6 +150,12 @@ Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped
 | T-P12-MG | Milestone gate P12 | todo | T-P12-01 | orchestrator | S | high | | |
 
 ## Task logs
+
+### T-P4-07 — Learner session limit
+
+- Ready: enforce the default two active learner sessions from YG-GAP-SEC-001. Reuse Laravel's web session lifecycle, AuditLogger, role catalog and localized auth strings. Keep database tracking independent of the configured Laravel session driver and its regenerated IDs. Store only a hashed per-session token.
+- AI: hook — watermark/session rules do not affect AI; view-as/expired sessions block AI. A revoked learner session loses authentication before protected handlers run. View-as learner enforcement is owned by T-P4-10.
+- S0: prove actual logins evict the oldest session, preserve the two newest, and record one audit event. S1–S3: migration, domain action and web middleware. S4–S5: bilingual sign-out notice; existing auth UI. Device registration/reset and watermark need their own A2/A3 evidence and G7.
 
 ### T-P4-01 — Preview access review
 

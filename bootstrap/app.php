@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\ResolveActingLearner;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrackLearnerSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [SetLocale::class, ResolveActingLearner::class]);
+        $middleware->web(append: [SetLocale::class, TrackLearnerSession::class, ResolveActingLearner::class]);
         $middleware->api(append: [SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

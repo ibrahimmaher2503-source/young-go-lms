@@ -1,5 +1,8 @@
 <x-layouts.base variant="auth" :title="__('auth.sign_in')">
     <h1 class="mb-4 text-center text-3xl font-bold">{{ __('pages.login_title') }}</h1>
+    @if(session('learner_session_notice'))
+        <x-ui.alert tone="warning" role="status" class="mb-4">{{ __('auth.learner_session_ended') }}</x-ui.alert>
+    @endif
     <x-ui.card>
         <p class="mb-4 text-muted">{{ __('pages.login_intro') }}</p>
         <x-ui.ajax-form :action="url('/login')" :success="url('/home')">

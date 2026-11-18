@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'learner_session_ended' => 'انتهت هذه الجلسة. يرجى تسجيل الدخول مجددًا.',
     'reset_invalid' => 'رابط إعادة تعيين كلمة المرور غير صالح أو انتهت صلاحيته.',
     'registration_unavailable' => 'التسجيل غير متاح مؤقتًا.',
     'password_too_long' => 'كلمة المرور يجب ألا تتجاوز 72 بايت.',

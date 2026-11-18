@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'learner_session_ended' => 'This session ended. Please sign in again.',
     'reset_invalid' => 'This password reset link is invalid or expired.',
     'registration_unavailable' => 'Registration is temporarily unavailable.',
     'password_too_long' => 'The password must not exceed 72 bytes.',
