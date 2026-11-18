@@ -23,6 +23,7 @@ enum Market: string
 
     public function isActive(): bool
     {
-        return Config::boolean("markets.{$this->value}.active");
+        // T-P12-01 owns the Saudi activation path and its approval checks.
+        return $this === self::Egypt && Config::boolean("markets.{$this->value}.active");
     }
 }
