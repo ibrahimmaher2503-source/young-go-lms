@@ -7,7 +7,7 @@
                 @foreach ($kpis as $kpi)
                     <div class="yg-summary-item" data-tone="{{ $kpi['tone'] }}" data-kpi="{{ $kpi['key'] }}">
                         <x-filament::icon :icon="$kpi['icon']" class="yg-summary-icon" aria-hidden="true" />
-                        <dt class="yg-summary-label">{{ $kpi['label'] }}</dt>
+                        <dt class="yg-summary-label" title="{{ $kpi['label'] }}">{{ $kpi['label'] }}</dt>
                         <dd class="yg-summary-value" data-kpi-value="{{ $kpi['raw'] }}">
                             @foreach ($kpi['lines'] as $line)
                                 <bdi dir="ltr">{{ $line }}</bdi>@if (! $loop->last) <span aria-hidden="true">·</span> @endif

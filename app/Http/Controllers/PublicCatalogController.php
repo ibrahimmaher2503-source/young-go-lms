@@ -66,7 +66,7 @@ final class PublicCatalogController
             'language' => array_combine($languages, array_map(static fn (string $language): string => trans()->has('catalog.'.$language) ? __('catalog.'.$language) : $language, $languages)),
             'instructor' => User::query()->where('status', 'active')->whereIn('id', $options
                 ->join('course_instructors as catalog_assignments', 'catalog_assignments.course_id', '=', 'courses.id')
-                ->select('catalog_assignments.instructor_id'))->orderBy('name')->pluck('name', 'id')->all(),
+                ->select('catalog_assignments.instructor_id'))->orderBy('name')->get()->mapWithKeys(static fn (User $user): array => [$user->getKey() => (string) $user->display_name])->all(),
             'access' => ['free' => __('courses.free'), 'paid' => __('courses.paid'), 'subscription' => __('catalog.subscription')],
             'availability' => array_combine(CohortAvailability::filters(), array_map(static fn (string $key): string => __('catalog.avail_'.$key), CohortAvailability::filters())),
         ];
@@ -78,6 +78,7 @@ final class PublicCatalogController
             'market' => Market::Egypt,
             'prices' => $offers->coursePrices($courses->items(), Market::Egypt),
             'availability' => CohortAvailability::forCourses($courses->items()),
+            'lessonCounts' => $catalog->lessonCounts($courses->items()),
             'active' => $this->activeFilters($filters, $choices, $sorts, Market::Egypt),
             'filters' => $filters,
             'options' => $choices,

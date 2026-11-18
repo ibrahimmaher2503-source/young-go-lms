@@ -39,7 +39,7 @@ final class ListStatements extends WorkspaceListRecords
                         return $options;
                     }),
                     Select::make('instructor_id')->label(__('ledger.instructor'))->searchable()->native(false)->helperText(__('settlements.generate_all_help'))
-                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->pluck('name', 'id')->all()),
+                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->get()->mapWithKeys(static fn (User $u): array => [$u->getKey() => (string) $u->display_name])->all()),
                 ])
                 ->action(static function (array $data): void {
                     $actor = Auth::user();

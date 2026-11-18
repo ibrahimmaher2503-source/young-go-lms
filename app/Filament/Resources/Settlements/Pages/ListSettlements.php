@@ -36,7 +36,7 @@ final class ListSettlements extends WorkspaceListRecords
                 ->modalDescription(__('settlements.create_help'))
                 ->schema([
                     Select::make('instructor_id')->label(__('ledger.instructor'))->searchable()->native(false)->helperText(__('settlements.create_all_help'))
-                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->pluck('name', 'id')->all()),
+                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->get()->mapWithKeys(static fn (User $u): array => [$u->getKey() => (string) $u->display_name])->all()),
                     DatePicker::make('until')->label(__('settlements.until'))->helperText(__('settlements.until_help')),
                     TextInput::make('note')->label(__('ledger.note'))->maxLength(255),
                 ])

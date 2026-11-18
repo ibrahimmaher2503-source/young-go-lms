@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'fact_level' => 'Level',
+    'fact_language' => 'Language',
+    'fact_format' => 'Format',
+    'fact_lessons' => 'Lessons',
     'facts' => 'Course facts',
     'sections' => 'Course sections',
     'overview' => 'Overview',

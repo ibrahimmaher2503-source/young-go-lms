@@ -124,11 +124,11 @@ final class RefundResource extends Resource
             ->columns([
                 TextColumn::make('reference')->label(__('refunds.col_reference'))->fontFamily('mono')->searchable(),
                 TextColumn::make('order.reference')->label(__('refunds.col_order'))->fontFamily('mono')->searchable(),
-                TextColumn::make('payer')->label(__('refunds.col_payer'))->state(static fn (Refund $r): string => (string) $r->order?->payer?->getAttribute('name')),
+                TextColumn::make('payer')->label(__('refunds.col_payer'))->state(static fn (Refund $r): string => (string) $r->order?->payer?->getAttribute('display_name')),
                 TextColumn::make('amount_minor')->label(__('refunds.col_amount'))->state(static fn (Refund $r): string => self::money($r->amount_minor, $r->currency)),
                 TextColumn::make('method')->label(__('refunds.col_method'))->badge()->state(static fn (Refund $r): string => __('refunds.method_'.$r->method->value)),
-                TextColumn::make('reason')->label(__('refunds.col_reason'))->limit(60)->tooltip(static fn (Refund $r): string => $r->reason),
-                TextColumn::make('requested_by')->label(__('refunds.col_requested_by'))->state(static fn (Refund $r): string => (string) $r->requester?->getAttribute('name')),
+                TextColumn::make('reason')->label(__('refunds.col_reason'))->limit(60)->wrap()->extraAttributes(['dir' => 'auto'])->tooltip(static fn (Refund $r): string => $r->reason),
+                TextColumn::make('requested_by')->label(__('refunds.col_requested_by'))->state(static fn (Refund $r): string => (string) $r->requester?->getAttribute('display_name')),
                 LocalizedDateColumn::make('created_at')->label(__('refunds.col_requested')),
                 StatusBadgeColumn::make('status', $colors)->label(__('refunds.col_status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('refunds.state_'.($state instanceof RefundStatus ? $state->value : (string) $state))),

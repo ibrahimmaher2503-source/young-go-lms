@@ -19,7 +19,7 @@
         <tbody>
         @foreach($settlement->items as $item)
             <tr data-settlement-item="{{ $item->id }}">
-                <td>{{ $item->instructor?->name }}</td>
+                <td>{{ $item->instructor?->display_name }}</td>
                 <td>{{ $item->entry_count }}</td>
                 <td dir="ltr">{{ RefundResource::money($item->amount_minor, $settlement->currency) }}</td>
                 <td>{{ $item->payout_method ? __('settlements.method_'.$item->payout_method) : '-' }}</td>

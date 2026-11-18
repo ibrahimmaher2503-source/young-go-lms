@@ -74,7 +74,7 @@
                 @else
                     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach($courses as $course)
-                            <x-learning.course-card :course="$course" :wishlist="true" :placeholder="true" :price="$prices[$course->id] ?? null" :market="$market" :availability="$availability[$course->id] ?? null"><x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" data-course-link>{{ __('catalog.view_course') }}</x-ui.link></x-learning.course-card>
+                            <x-learning.course-card :course="$course" :wishlist="true" :placeholder="true" :price="$prices[$course->id] ?? null" :market="$market" :availability="$availability[$course->id] ?? null" :lessons="$lessonCounts[$course->id] ?? null"><x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" data-course-link>{{ __('catalog.view_course') }}</x-ui.link></x-learning.course-card>
                         @endforeach
                     </div>
                     @if($courses->hasPages())<x-ui.pagination :paginator="$courses"/>@endif

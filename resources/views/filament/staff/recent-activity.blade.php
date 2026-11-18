@@ -1,6 +1,6 @@
 <div class="yg-activity-list">
     @forelse($activities as $activity)
-        @php($actorName = $activity->causer instanceof \App\Models\User ? $activity->causer->name : __('staff.system_actor'))
+        @php($actorName = $activity->causer instanceof \App\Models\User ? $activity->causer->display_name : __('staff.system_actor'))
         <div class="yg-activity-row">
             <x-ui.avatar :name="$actorName" class="yg-person-avatar" />
             <div>

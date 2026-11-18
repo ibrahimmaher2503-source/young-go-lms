@@ -25,7 +25,7 @@ final class LedgerTable
     {
         $columns = [LocalizedDateColumn::make('earned_at')->label(__('ledger.col_date'))->sortable()];
         if ($withInstructor) {
-            $columns[] = TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (LedgerEntry $e): string => (string) $e->instructor?->getAttribute('name'));
+            $columns[] = TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (LedgerEntry $e): string => (string) $e->instructor?->getAttribute('display_name'));
         }
 
         return [...$columns,

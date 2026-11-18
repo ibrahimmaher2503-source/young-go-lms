@@ -80,7 +80,7 @@ final class CommissionRuleResource extends Resource
         return $table->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('sale_type')->label(__('ledger.sale_type'))->badge()->state(static fn (CommissionRule $r): string => __('ledger.sale_'.$r->sale_type->value)),
-                TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (CommissionRule $r): string => $r->instructor === null ? __('ledger.all') : (string) $r->instructor->getAttribute('name')),
+                TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (CommissionRule $r): string => $r->instructor === null ? __('ledger.all') : (string) $r->instructor->getAttribute('display_name')),
                 TextColumn::make('course')->label(__('ledger.course'))->state(static fn (CommissionRule $r): string => $r->course === null ? __('ledger.all') : (string) $r->course->title)->limit(40),
                 TextColumn::make('rate')->label(__('ledger.rate'))->state(static fn (CommissionRule $r): string => $r->isFixed()
                     ? RefundResource::money((int) $r->fixed_amount_minor, (string) $r->currency)

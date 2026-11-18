@@ -55,7 +55,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             }
             $primary = app()->getLocale() === 'ar' ? 'name_ar' : 'name_en';
             $secondary = $primary === 'name_ar' ? 'name_en' : 'name_ar';
-            foreach ([$primary, $secondary] as $column) {
+            foreach ([$primary, $secondary, 'name'] as $column) {
                 $candidate = $attributes[$column] ?? null;
                 if (is_string($candidate) && trim($candidate) !== '') {
                     return $candidate;

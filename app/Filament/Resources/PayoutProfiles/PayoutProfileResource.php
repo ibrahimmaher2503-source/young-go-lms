@@ -77,7 +77,7 @@ final class PayoutProfileResource extends Resource
     {
         return $table->defaultSort('updated_at', 'desc')
             ->columns([
-                TextColumn::make('instructor')->label(__('instructor_onboarding.payout.col_instructor'))->state(static fn (PayoutProfile $r): string => (string) $r->user?->name),
+                TextColumn::make('instructor')->label(__('instructor_onboarding.payout.col_instructor'))->state(static fn (PayoutProfile $r): string => (string) $r->user?->display_name),
                 TextColumn::make('method')->label(__('instructor_onboarding.payout.method'))->badge()
                     ->formatStateUsing(static fn (string $state): string => __('instructor_onboarding.payout.method_'.$state)),
                 TextColumn::make('identifier')->label(__('instructor_onboarding.payout.col_identifier'))->fontFamily('mono')->state(static fn (PayoutProfile $r): string => PayoutMask::identifier($r)),

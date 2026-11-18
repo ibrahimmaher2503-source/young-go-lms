@@ -66,6 +66,35 @@ final class ReportFilters
         return new self($from, $to, self::id($input['course'] ?? null), self::id($input['instructor'] ?? null), $market);
     }
 
+    /** The market-local calendar day "today" (Egypt unless a market is set), as Y-m-d: the default "To" of the report range. */
+    public static function defaultTo(?string $market = null): string
+    {
+        return CarbonImmutable::now(self::zoneFor(self::market($market)))->toDateString();
+    }
+
+    /** The default "From": the first of the last market-local days, ending today (inclusive). */
+    public static function defaultFrom(?string $market = null): string
+    {
+        return CarbonImmutable::now(self::zoneFor(self::market($market)))->subDays(29)->toDateString();
+    }
+
+    /** The first day of the range in the market-local calendar (what the "From" input shows), Y-m-d. */
+    public function localFromDate(): string
+    {
+        return $this->from->setTimezone(self::zoneFor($this->market))->toDateString();
+    }
+
+    /** The last (inclusive) day of the range in the market-local calendar, Y-m-d. */
+    public function localToDate(): string
+    {
+        return $this->to->setTimezone(self::zoneFor($this->market))->toDateString();
+    }
+
+    private static function zoneFor(?string $market): string
+    {
+        return ($market === null ? Market::Egypt : Market::from($market))->timezone();
+    }
+
     /** @param  list<int>|null  $courseIds */
     public function scoped(?array $courseIds, ?int $courseId, ?int $instructorId, ?string $market): self
     {

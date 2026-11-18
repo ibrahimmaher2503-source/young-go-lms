@@ -7,7 +7,7 @@
     $instructorRows = $course->instructors->map(function ($user) use ($profiles, $locale) {
         $profile = $profiles->get($user->getKey());
 
-        return ['name' => (string) ($profile?->publicName($locale) ?: $user->name), 'url' => $profile ? route('instructors.show', ['instructor' => App\Domain\Instructors\Queries\PublicInstructors::keyFor($profile, $locale)]) : null];
+        return ['name' => (string) ($profile?->publicName($locale) ?: $user->display_name), 'headline' => $profile ? trim((string) $profile->getTranslation('headline', $locale)) : '', 'url' => $profile ? route('instructors.show', ['instructor' => App\Domain\Instructors\Queries\PublicInstructors::keyFor($profile, $locale)]) : null];
     })->filter(fn ($row) => $row['name'] !== '')->values();
     $instructors = $instructorRows->pluck('name');
     $cover = filled($course->cover_image) ? Illuminate\Support\Facades\Storage::disk('public')->url($course->cover_image)
@@ -76,6 +76,24 @@
             <x-ui.tabs id="course-tabs" variant="underline" :label="__('course_page.sections')" :items="$tabItems" class="rounded-card border border-border bg-surface px-3 pb-3 sm:px-4" data-course-tabs>
                 <x-slot:overview>
             <section id="overview" class="space-y-4" aria-label="{{ __('course_page.overview') }}" data-section="overview">
+                @php
+                    $aboutText = filled($course->description) ? null : trim((string) $course->short_description);
+                    $facts = array_filter([
+                        __('course_page.fact_level') => $levelLabel,
+                        __('course_page.fact_language') => $languageLabel,
+                        __('course_page.fact_format') => __('courses.'.$course->format),
+                        __('course_page.age_suitability') => $ages,
+                        __('course_page.fact_lessons') => $curriculum['lessons'] > 0 ? __('curriculum.lessons_count', ['count' => $curriculum['lessons']]) : null,
+                    ], static fn ($value): bool => filled($value));
+                @endphp
+                @if(! filled($course->description) && $aboutText !== '')
+                    <x-ui.card :title="__('course_page.about')"><p class="break-words whitespace-pre-line" dir="auto">{{ $aboutText }}</p></x-ui.card>
+                @endif
+                @if(! filled($course->description) && $facts !== [])
+                    <x-ui.card :title="__('course_page.facts')" data-section="facts">
+                        <dl class="grid gap-3 sm:grid-cols-2">@foreach($facts as $label => $value)<div><dt class="text-muted">{{ $label }}</dt><dd class="break-words font-semibold">{{ $value }}</dd></div>@endforeach</dl>
+                    </x-ui.card>
+                @endif
                 @if(filled($course->description))
                     <x-ui.card :title="__('course_page.about')"><div class="break-words whitespace-pre-line" dir="auto">{!! \App\Domain\Catalog\CourseDescription::clean($course->description) !!}</div></x-ui.card>
                 @endif
@@ -147,7 +165,7 @@
                 <x-slot:instructor>
                 <x-ui.card id="instructor" :title="__('course_page.instructor')" data-section="instructor">
                     <ul class="space-y-2">
-                        @foreach($instructorRows as $row)<li class="flex items-center gap-2"><x-ui.icon name="user" class="size-5 text-muted"/>@if($row['url'])<a href="{{ $row['url'] }}" class="{{ $linkClass }} break-words" data-instructor-link>{{ $row['name'] }}</a>@else<span class="break-words">{{ $row['name'] }}</span>@endif</li>@endforeach
+                        @foreach($instructorRows as $row)<li class="flex items-center gap-2"><x-ui.icon name="user" class="size-5 text-muted"/>@if($row['url'])<a href="{{ $row['url'] }}" class="{{ $linkClass }} break-words" data-instructor-link>{{ $row['name'] }}</a>@else<span class="break-words">{{ $row['name'] }}</span>@endif @if($row['headline'] !== '')<span class="text-sm text-muted break-words" dir="auto">&middot; {{ $row['headline'] }}</span>@endif</li>@endforeach
                     </ul>
                 </x-ui.card>
                 </x-slot:instructor>

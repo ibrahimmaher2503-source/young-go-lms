@@ -56,8 +56,8 @@
                 @else
                     <x-ui.card :title="__('checkout.payer_title')" data-payer-details>
                         <dl class="grid gap-4 sm:grid-cols-2">
-                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_name') }}</dt><dd class="mt-1 min-h-11 break-words rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="auto">{{ $payer->name }}</dd></div>
-                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_email') }}</dt><dd class="mt-1 min-h-11 break-all rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="ltr">{{ $payer->email }}</dd></div>
+                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_name') }}</dt><dd class="mt-1 min-h-11 break-words rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="auto" style="text-align:start">{{ $payer->display_name }}</dd></div>
+                            <div class="min-w-0"><dt class="text-sm text-muted">{{ __('checkout.payer_email') }}</dt><dd class="mt-1 min-h-11 [overflow-wrap:anywhere] text-sm sm:text-base rounded-lg border border-border bg-page px-3 py-2.5 font-semibold" dir="ltr">{{ $payer->email }}</dd></div>
                             @if($learnerNames->isNotEmpty())<div class="min-w-0 sm:col-span-2"><dt class="text-sm text-muted">{{ __('checkout.learner_for') }}</dt><dd class="mt-1 break-words font-semibold" dir="auto">{{ $learnerNames->implode(', ') }}</dd></div>@endif
                         </dl>
                         <p class="mt-3 text-sm text-muted">{{ __('checkout.payer_help') }}</p>

@@ -60,6 +60,7 @@ return [
     'adjustment_saved' => 'تمت إضافة التسوية إلى الدفتر.',
     'summary_earned' => 'المستحق (:currency)',
     'summary_reversed' => 'المعكوس بسبب الاسترداد (:currency)',
+    'summary_adjustments' => 'التسويات (:currency)',
     'summary_net' => 'الصافي (:currency)',
 
     'sale_type_invalid' => 'اختر نوع البيع.',

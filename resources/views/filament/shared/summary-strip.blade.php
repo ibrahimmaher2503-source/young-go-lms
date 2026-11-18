@@ -8,7 +8,7 @@
                     <x-filament::icon :icon="$item['icon']" class="yg-summary-icon" aria-hidden="true" />
                 @endif
 
-                <dt class="yg-summary-label">{{ $item['label'] }}</dt>
+                <dt class="yg-summary-label" title="{{ $item['label'] }}">{{ $item['label'] }}</dt>
                 <dd class="yg-summary-value" data-workspace-value="{{ $item['value'] }}">{{ $item['value'] }}</dd>
             </div>
         @endforeach

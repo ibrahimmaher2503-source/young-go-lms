@@ -21,6 +21,7 @@ final class ListMyEarnings extends WorkspaceListRecords
         foreach (app(LedgerTotals::class)->forInstructor((int) Auth::id()) as $currency => $totals) {
             $items[] = ['label' => __('ledger.summary_earned', ['currency' => $currency]), 'value' => RefundResource::money($totals['earnings'], $currency), 'icon' => 'heroicon-o-arrow-trending-up', 'tone' => 'success'];
             $items[] = ['label' => __('ledger.summary_reversed', ['currency' => $currency]), 'value' => RefundResource::money($totals['reversals'], $currency), 'icon' => 'heroicon-o-arrow-uturn-left'];
+            $items[] = ['label' => __('ledger.summary_adjustments', ['currency' => $currency]), 'value' => RefundResource::money($totals['adjustments'], $currency), 'icon' => 'heroicon-o-adjustments-horizontal'];
             $items[] = ['label' => __('ledger.summary_net', ['currency' => $currency]), 'value' => RefundResource::money($totals['net'], $currency), 'icon' => 'heroicon-o-scale'];
         }
 

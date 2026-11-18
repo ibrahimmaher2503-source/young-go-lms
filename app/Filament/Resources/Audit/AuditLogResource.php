@@ -76,7 +76,7 @@ final class AuditLogResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('event')->label(__('audit.event'))->badge()->color('gray')->formatStateUsing(static fn (?string $state): string => Lang::has('audit-events.'.$state) ? __('audit-events.'.$state) : __('audit.other_event')),
-                TextColumn::make('causer_id')->label(__('audit.actor'))->formatStateUsing(static fn ($state, Activity $record): string => $record->causer instanceof User ? $record->causer->name : __('staff.system_actor')),
+                TextColumn::make('causer_id')->label(__('audit.actor'))->formatStateUsing(static fn ($state, Activity $record): string => $record->causer instanceof User ? (string) $record->causer->display_name : __('staff.system_actor')),
                 TextColumn::make('subject_type')->label(__('audit.subject'))->formatStateUsing(static fn (?string $state): string => match ($state) {
                     User::class => __('staff.user'), Role::class => __('staff.roles'), default => __('audit.record')
                 }),

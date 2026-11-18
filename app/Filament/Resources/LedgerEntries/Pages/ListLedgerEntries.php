@@ -38,7 +38,7 @@ final class ListLedgerEntries extends WorkspaceListRecords
                 ->modalDescription(__('ledger.adjustment_help'))
                 ->schema([
                     Select::make('instructor_id')->label(__('ledger.instructor'))->required()->searchable()->native(false)
-                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->pluck('name', 'id')->all()),
+                        ->options(static fn (): array => User::query()->role(PublicInstructors::ROLES)->orderBy('name')->limit(300)->get()->mapWithKeys(static fn (User $u): array => [$u->getKey() => (string) $u->display_name])->all()),
                     Select::make('course_id')->label(__('ledger.course'))->searchable()->native(false)
                         ->options(static fn (): array => Course::query()->orderByDesc('id')->limit(300)->get()->mapWithKeys(static fn (Course $c): array => [$c->getKey() => (string) $c->title])->all()),
                     TextInput::make('amount')->label(__('ledger.signed_amount', ['currency' => $currency]))->numeric()->required()->helperText(__('ledger.signed_amount_help')),
@@ -68,6 +68,7 @@ final class ListLedgerEntries extends WorkspaceListRecords
         foreach (app(LedgerTotals::class)->forInstructor() as $currency => $totals) {
             $items[] = ['label' => __('ledger.summary_earned', ['currency' => $currency]), 'value' => RefundResource::money($totals['earnings'], $currency), 'icon' => 'heroicon-o-arrow-trending-up', 'tone' => 'success'];
             $items[] = ['label' => __('ledger.summary_reversed', ['currency' => $currency]), 'value' => RefundResource::money($totals['reversals'], $currency), 'icon' => 'heroicon-o-arrow-uturn-left'];
+            $items[] = ['label' => __('ledger.summary_adjustments', ['currency' => $currency]), 'value' => RefundResource::money($totals['adjustments'], $currency), 'icon' => 'heroicon-o-adjustments-horizontal'];
             $items[] = ['label' => __('ledger.summary_net', ['currency' => $currency]), 'value' => RefundResource::money($totals['net'], $currency), 'icon' => 'heroicon-o-scale'];
         }
 

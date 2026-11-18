@@ -6,5 +6,5 @@
         <span lang="{{ app()->isLocale('ar') ? 'en' : 'ar' }}">{{ app()->isLocale('ar') ? 'English' : 'العربية' }}</span>
     </x-filament::button>
 </form>
-@if(auth()->check())<span class="yg-account-name">{{ auth()->user()->name }}</span>@endif
+@if(auth()->check())<span class="yg-account-name">{{ auth()->user()->display_name }}</span>@endif
 </div>

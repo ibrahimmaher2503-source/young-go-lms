@@ -1,9 +1,9 @@
 {{-- Props: course, wishlist, compact; optional approved instructor names, placeholder (true shows a token-colored cover block and prefers the course cover), price (Money) with market, and catalog availability. --}}
-@props(['course', 'wishlist' => false, 'compact' => false, 'price' => null, 'market' => null, 'availability' => null, 'instructorNames' => null, 'placeholder' => false])
+@props(['course', 'wishlist' => false, 'compact' => false, 'price' => null, 'market' => null, 'availability' => null, 'instructorNames' => null, 'placeholder' => false, 'lessons' => null])
 @php
     $categoryCover = $course->category?->status === 'active' ? $course->category->image : null;
     $cover = ($compact || $placeholder) && filled($course->cover_image) ? $course->cover_image : $categoryCover;
-    $instructors = $instructorNames ?? $course->instructors->where('status', 'active')->pluck('name')->implode(', ');
+    $instructors = $instructorNames ?? $course->instructors->where('status', 'active')->map(static fn ($user): string => (string) $user->display_name)->filter()->implode(', ');
 @endphp
 <article @class([
     'min-w-0 rounded-xl border border-border bg-surface',
@@ -23,6 +23,9 @@
     <h3 class="break-words text-lg font-bold">{{ $course->title }}</h3>
     @if($instructors !== '')
         <p @class(['break-words', 'text-sm text-muted' => $compact])><bdi>{{ $instructors }}</bdi></p>
+    @endif
+    @if(! $compact && $lessons !== null && $lessons > 0)
+        <p class="flex items-center gap-1.5 text-sm text-muted" data-card-lessons><x-ui.icon name="layers" class="size-4"/>{{ __('curriculum.lessons_count', ['count' => $lessons]) }}</p>
     @endif
     @if(! $compact && filled($course->short_description))
         <p class="break-words">{{ $course->short_description }}</p>

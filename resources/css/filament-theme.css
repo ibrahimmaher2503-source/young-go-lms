@@ -700,3 +700,41 @@
     border-radius: 9999px;
 }
 .yg-empty-state-icon svg { inline-size: 1.5rem; block-size: 1.5rem; }
+
+/* G7-P8 fixes C: equal-height KPI tiles with 2-line labels, wrapping table headers, compact mobile pagination. */
+.yg-summary-strip, .yg-kpi-strip { grid-auto-rows: 1fr; }
+.yg-summary-item { align-content: center; min-block-size: 5.5rem; }
+.yg-summary-label {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+.yg-summary-item .yg-workspace-note { min-inline-size: 0; overflow-wrap: anywhere; }
+.yg-summary-value { min-inline-size: 0; overflow-wrap: anywhere; }
+
+.fi-ta-header-cell-label,
+.fi-ta-header-cell > button,
+.fi-ta-header-cell > span { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; overflow: visible; }
+.yg-workspace-main .fi-ta-header-cell { min-inline-size: 5.5rem; vertical-align: middle; }
+.fi-ta-content-ctn { overflow-x: auto; max-inline-size: 100%; -webkit-overflow-scrolling: touch; }
+.fi-ta-cell, .fi-ta-text-item-label { min-inline-size: 0; overflow-wrap: anywhere; }
+.fi-ta-header-toolbar .fi-badge:empty,
+.fi-ta-filters-trigger-action-ctn .fi-badge { min-inline-size: 1.25rem; justify-content: center; }
+.fi-ta-ctn, .fi-ta { min-inline-size: 0; max-inline-size: 100%; }
+@media (max-width: 47.999rem) {
+    .fi-ta-table { min-inline-size: 36rem; }
+    .fi-ta-header-toolbar { flex-wrap: wrap; row-gap: 0.5rem; }
+    .yg-workspace-pagination.fi-pagination { justify-content: center; padding-inline: 0.5rem; }
+    .yg-workspace-pagination.fi-pagination .fi-pagination-items { flex-wrap: nowrap; gap: 0.25rem; justify-content: center; }
+    .yg-workspace-pagination.fi-pagination .fi-pagination-item-btn { min-inline-size: 2.25rem; min-block-size: 2.5rem; padding-inline: 0.25rem; }
+    .fi-pagination-items .fi-pagination-item-label { font-size: var(--yg-font-small); }
+}
+.fi-ta-text-item-label, .fi-ta-text-item { max-inline-size: 100%; text-overflow: clip; unicode-bidi: plaintext; }
+.fi-ta-cell .fi-ta-text { min-inline-size: 6rem; white-space: normal; }
+@media (min-width: 48rem) {
+    .yg-summary-strip:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

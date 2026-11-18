@@ -22,7 +22,7 @@ final class StatementTable
             TextColumn::make('period')->label(__('settlements.period'))->sortable(),
         ];
         if ($withInstructor) {
-            $columns[] = TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (InstructorStatement $s): string => (string) $s->instructor?->getAttribute('name'));
+            $columns[] = TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (InstructorStatement $s): string => (string) $s->instructor?->getAttribute('display_name'));
         }
 
         return [...$columns,

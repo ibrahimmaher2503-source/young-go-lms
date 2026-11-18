@@ -155,7 +155,7 @@ final class DemoSeeder extends Seeder
 
         Auth::setUser($this->admin);
         $category = (int) Category::query()->orderBy('id')->value('id');
-        foreach ([[$this->academy, 'sara-demo', 'سارة'], [$this->indie, 'karim-demo', 'كريم']] as [$instructor, $slug, $display]) {
+        foreach ([[$this->academy, 'sara-demo', ['ar' => 'سارة', 'en' => 'Sara']], [$this->indie, 'karim-demo', ['ar' => 'كريم', 'en' => 'Karim']]] as [$instructor, $slug, $display]) {
             app(SaveInstructorProfile::class)($this->admin, null, [
                 'user_id' => $instructor->getKey(), 'slug_ar' => $slug.'-ar', 'slug_en' => $slug, 'display_name' => $display,
                 'headline' => 'Creative instructor', 'bio' => 'Demo instructor profile.', 'status' => InstructorProfile::APPROVED,

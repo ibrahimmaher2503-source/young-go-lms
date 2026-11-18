@@ -57,8 +57,8 @@ final class ReportsPage extends Page
     public function mount(): void
     {
         abort_unless(self::canAccess(), 403);
-        $this->to = now()->toDateString();
-        $this->from = now()->subDays(29)->toDateString();
+        $this->to = ReportFilters::defaultTo();
+        $this->from = ReportFilters::defaultFrom();
         $first = app(ReportCatalog::class)->available($this->user())[0] ?? null;
         $this->report = $first instanceof ReportKey ? $first->value : '';
     }
@@ -119,7 +119,7 @@ final class ReportsPage extends Page
             'tooLarge' => $count > $cap,
             'cap' => $cap,
             'exportUrl' => route('reports.export', ['report' => $key->value] + array_filter($input, static fn (string $value): bool => $value !== '')),
-            'range' => [$filters->from->toDateString(), $filters->to->toDateString()],
+            'range' => [$filters->localFromDate(), $filters->localToDate()],
         ];
     }
 

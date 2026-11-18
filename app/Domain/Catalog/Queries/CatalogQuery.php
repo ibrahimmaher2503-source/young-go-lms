@@ -12,6 +12,8 @@ use App\Domain\Entitlements\EnrollmentReport;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Search\ArabicNormalizer;
 use App\Models\Course;
+use App\Models\CurriculumItem;
+use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Builder;
 
 final class CatalogQuery
@@ -137,12 +139,49 @@ final class CatalogQuery
             );
         }
 
-        if ($sort === self::SORT_POPULAR && ($counts = EnrollmentReport::activeCountsByCourse()) !== []) {
-            $cases = implode(' ', array_fill(0, count($counts), 'when ? then ?'));
-            $query->orderByRaw('case courses.id '.$cases.' else 0 end desc', array_merge(...array_map(null, array_keys($counts), array_values($counts))));
+        if ($sort === self::SORT_POPULAR) {
+            $query->leftJoinSub(EnrollmentReport::activeCountsByCourse(), 'enrollment_counts', 'enrollment_counts.course_id', '=', 'courses.id')
+                ->select('courses.*')->orderByRaw('coalesce(enrollment_counts.learners, 0) desc');
         }
 
         return $query->orderByDesc('courses.created_at')->orderByDesc('courses.id');
+    }
+
+    /**
+     * Published lessons per course for a page of cards, in one grouped query (no per-card lookup).
+     *
+     * @param  iterable<Course>  $courses
+     * @return array<int, int> course id => lesson count (courses without lessons are absent)
+     */
+    public function lessonCounts(iterable $courses): array
+    {
+        $ids = [];
+        foreach ($courses as $course) {
+            $ids[] = (int) $course->getKey();
+        }
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $counts = [];
+        $rows = CurriculumItem::query()
+            ->join('course_sections', 'course_sections.id', '=', 'curriculum_items.section_id')
+            ->whereIn('course_sections.course_id', $ids)
+            ->whereNull('course_sections.archived_at')
+            ->where('course_sections.published', true)
+            ->where('curriculum_items.status', CurriculumItem::STATUS_PUBLISHED)
+            ->where('curriculum_items.itemable_type', (new Lesson)->getMorphClass())
+            ->whereExists(Lesson::query()->selectRaw('1')->whereColumn('lessons.id', 'curriculum_items.itemable_id')->whereNull('lessons.archived_at'))
+            ->selectRaw('course_sections.course_id as course_id, count(*) as lessons')
+            ->groupBy('course_sections.course_id')
+            ->get();
+
+        foreach ($rows as $row) {
+            $counts[(int) $row->getAttribute('course_id')] = (int) $row->getAttribute('lessons');
+        }
+
+        return $counts;
     }
 
     /** @param Builder<Course> $query */

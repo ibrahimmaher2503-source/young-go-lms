@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'fact_level' => 'المستوى',
+    'fact_language' => 'اللغة',
+    'fact_format' => 'الصيغة',
+    'fact_lessons' => 'الدروس',
     'facts' => 'معلومات الدورة',
     'sections' => 'أقسام الدورة',
     'overview' => 'نظرة عامة',

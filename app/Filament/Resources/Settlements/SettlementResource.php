@@ -91,7 +91,7 @@ final class SettlementResource extends Resource
                 TextColumn::make('instructor_count')->label(__('settlements.instructors')),
                 TextColumn::make('entry_count')->label(__('settlements.entries')),
                 TextColumn::make('total_minor')->label(__('settlements.total'))->state(static fn (Settlement $s): string => RefundResource::money($s->total_minor, $s->currency))->extraAttributes(['dir' => 'ltr']),
-                TextColumn::make('creator')->label(__('settlements.created_by'))->state(static fn (Settlement $s): string => (string) $s->creator?->getAttribute('name')),
+                TextColumn::make('creator')->label(__('settlements.created_by'))->state(static fn (Settlement $s): string => (string) $s->creator?->getAttribute('display_name')),
                 LocalizedDateColumn::make('created_at')->label(__('settlements.created'))->sortable(),
                 StatusBadgeColumn::make('status', $colors)->label(__('ledger.status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('settlements.status_'.($state instanceof SettlementStatus ? $state->value : (string) $state))),
@@ -113,7 +113,7 @@ final class SettlementResource extends Resource
                     ->modalDescription(__('settlements.payout_help'))
                     ->schema(static fn (Settlement $s): array => [
                         Select::make('item_id')->label(__('ledger.instructor'))->required()->native(false)
-                            ->options($s->items()->whereNull('paid_at')->with('instructor')->get()->mapWithKeys(static fn (SettlementItem $i): array => [$i->getKey() => $i->instructor?->getAttribute('name').' - '.RefundResource::money($i->amount_minor, $s->currency)])->all()),
+                            ->options($s->items()->whereNull('paid_at')->with('instructor')->get()->mapWithKeys(static fn (SettlementItem $i): array => [$i->getKey() => $i->instructor?->getAttribute('display_name').' - '.RefundResource::money($i->amount_minor, $s->currency)])->all()),
                         Select::make('method')->label(__('settlements.method'))->required()->native(false)
                             ->options(collect(PayoutMethod::allowedFor($s->currency))->mapWithKeys(static fn (PayoutMethod $m): array => [$m->value => __('settlements.method_'.$m->value)])->all())
                             ->helperText(__('settlements.method_help_'.strtolower($s->currency))),

@@ -60,6 +60,7 @@ return [
     'adjustment_saved' => 'The adjustment was added to the ledger.',
     'summary_earned' => 'Earned (:currency)',
     'summary_reversed' => 'Reversed by refunds (:currency)',
+    'summary_adjustments' => 'Adjustments (:currency)',
     'summary_net' => 'Net (:currency)',
 
     'sale_type_invalid' => 'Choose a sale type.',

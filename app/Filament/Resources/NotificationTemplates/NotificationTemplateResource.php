@@ -74,8 +74,8 @@ final class NotificationTemplateResource extends Resource
 
         return $table->defaultSort('event_key')
             ->columns([
-                TextColumn::make('event_key')->label(__('notification_events.col_event'))->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->label() ?? $t->event_key)->searchable(['event_key']),
-                TextColumn::make('group')->label(__('notification_events.col_group'))->state(static fn (NotificationTemplate $t): string => __('notification_events.groups.'.(NotificationMatrix::find($t->event_key)->group ?? 'account'))),
+                TextColumn::make('event_key')->label(__('notification_events.col_event'))->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->label() ?? $t->event_key)->wrap()->searchable(['event_key']),
+                TextColumn::make('group')->label(__('notification_events.col_group'))->state(static fn (NotificationTemplate $t): string => __('notification_events.groups.'.(NotificationMatrix::find($t->event_key)->group ?? 'account')))->wrap(),
                 StatusBadgeColumn::make('category', ['mandatory' => 'warning', 'optional' => 'info'])->label(__('notification_events.col_category'))
                     ->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->mandatory === true ? 'mandatory' : 'optional')
                     ->formatStateUsing(static fn (mixed $state): string => __('notification_events.category_'.$state)),

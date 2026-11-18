@@ -20,7 +20,7 @@
     <dl class="space-y-2 border-t border-border pt-3">
         <div class="flex items-center justify-between gap-3"><dt class="text-muted">{{ __('checkout.subtotal') }}</dt><dd><x-ui.price :money="$subtotal" :market="$market" /></dd></div>
         @if($discount !== null)
-            <div class="flex items-center justify-between gap-3" data-discount><dt class="text-muted">{{ __('checkout.discount') }}</dt><dd><bdi dir="ltr">-</bdi><x-ui.price :money="$discount" :market="$market" /></dd></div>
+            <div class="flex items-center justify-between gap-3" data-discount><dt class="text-muted">{{ __('checkout.discount') }}</dt><dd><x-ui.price :money="$discount" :market="$market" negative /></dd></div>
         @endif
         <div class="flex items-center justify-between gap-3 rounded-lg bg-page p-3 text-lg font-bold" data-total><dt>{{ __('checkout.total') }}</dt><dd><x-ui.price :money="$total" :market="$market" /></dd></div>
     </dl>
