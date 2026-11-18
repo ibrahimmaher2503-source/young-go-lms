@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\InstructorFinance\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Commerce\Actions\AllocateBundlePrice;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderItem;
 use App\Domain\Commerce\OrderItemAllocation;
@@ -27,11 +28,11 @@ use RuntimeException;
  *  - Course line: one entry, `order_item:<id>:course:<course>`, percentage of the line's net share (OrderItemAllocations).
  *  - Bundle line: one entry per course allocation, same key shape, percentage of that course's allocated share, written even when
  *    the learner already held the course (earnings follow the sale, not the access).
- *  - Plan line: one fixed-amount entry per plan course, `subscription_period:<period>:course:<course>`; the period already
+ *  - Plan line: one entry per plan course (O-010: the period's net price split equally across the courses, rate on each share; a fixed-amount rule still wins), `subscription_period:<period>:course:<course>`; the period already
  *    belongs to one student, so this is the once-per-student-course-period guard. No watch time or engagement is read.
  * The rule is looked up as of the payment date (CommissionRules). The beneficiary is the course owner (`owner_instructor_id`);
  * an academy course without one earns nothing. With no rule the entry is written at amount 0 so uncovered sales are visible.
- * The commissionable base is the net line share (O-011 is OPEN); gross and discount are stored beside it. An order that was never
+ * The commissionable base is the net line share, after discount and excluding VAT (O-011); gross and discount are stored beside it. An order that was never
  * paid writes nothing. Audited once per call that wrote entries (`ledger.earnings_recorded`).
  */
 final class RecordOrderEarnings
@@ -40,6 +41,7 @@ final class RecordOrderEarnings
         private readonly AuditLogger $audit,
         private readonly CommissionRules $rules,
         private readonly OrderItemAllocations $allocations,
+        private readonly AllocateBundlePrice $split,
     ) {}
 
     /** @return int number of entries written */
@@ -91,11 +93,22 @@ final class RecordOrderEarnings
             return 0;
         }
 
+        // O-010: the period's net price is split equally across the plan's courses; each course earns the rate on its share.
+        $courseIds = SubscriptionPlanCourse::query()->where('plan_id', $item->product_id)->orderBy('id')->pluck('course_id')->map(static fn ($id): int => (int) $id)->all();
+        if ($courseIds === []) {
+            return 0;
+        }
+        $net = max(0, $item->allocated_minor ?? ($item->unit_price_minor - $item->discount_minor));
+        $weights = array_fill_keys($courseIds, 1);
+        $shares = $this->split->split($net, $weights);
+        $grossShares = $this->split->split(max(0, $item->unit_price_minor), $weights);
+
         $written = 0;
-        foreach (SubscriptionPlanCourse::query()->where('plan_id', $item->product_id)->orderBy('id')->pluck('course_id') as $courseId) {
-            $written += $this->write($order, $item, (int) $courseId, SaleType::Subscription, 'subscription_period:'.$period->getKey().':course:'.$courseId, [
-                'subscription_period_id' => $period->getKey(),
-            ], 0);
+        foreach ($courseIds as $courseId) {
+            $share = $shares[$courseId];
+            $written += $this->write($order, $item, $courseId, SaleType::Subscription, 'subscription_period:'.$period->getKey().':course:'.$courseId, [
+                'subscription_period_id' => $period->getKey(), 'gross_minor' => $grossShares[$courseId], 'discount_minor' => max(0, $grossShares[$courseId] - $share), 'base_minor' => $share,
+            ], $share);
         }
 
         return $written;

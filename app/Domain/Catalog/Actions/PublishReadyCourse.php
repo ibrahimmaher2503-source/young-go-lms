@@ -31,7 +31,7 @@ final class PublishReadyCourse
             CourseReadiness::assertReady($current, CourseReadiness::PUBLISH);
 
             $before = $current->status->value;
-            ($this->publish)($current);
+            ($this->publish)($current, $actor);
             $current->refresh()->forceFill(['reviewed_at' => now(), 'reviewed_by' => $actor->getKey()])->save();
             if ($this->audit->record('course.published', $current, (int) $actor->getKey(), ['status' => $before], ['status' => 'published']) === null) {
                 throw new RuntimeException('Unable to record course publication audit.');

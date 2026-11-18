@@ -14,6 +14,10 @@ return [
     // Live collection stays closed until the owner gates are met (AGENTS rule 3). A live secret key is ignored while false.
     'live_enabled' => (bool) env('PAYMENTS_LIVE_ENABLED', false),
 
+    // Gateway per currency (O-006, O-013 decided 2026-11-18): Paymob serves Egypt (EGP: cards, wallets; Instapay is a manual proof)
+    // and Paymob KSA serves Saudi (SAR). Both stay inert without credentials; the Saudi market itself stays disabled (markets.SA.active).
+    'gateway_by_currency' => ['EGP' => 'paymob', 'SAR' => 'paymob'],
+
     // Checkout methods offered to the payer, in display order. Cards and wallets first (T-P8-02).
     'methods' => ['card', 'wallet'],
 

@@ -8,6 +8,7 @@ return [
     'invalid_type' => 'نوع الملف غير مسموح به لهذا المصدر.',
     'file_missing' => 'لم يُعثر على الملف في التخزين الخاص.',
     'invalid_vimeo' => 'أدخل رابط فيديو Vimeo.',
+    'invalid_bunny' => 'أدخل رابط تضمين Bunny Stream أو رابط قائمة HLS.',
     'invalid_youtube' => 'أدخل رابط فيديو YouTube.',
     'host_not_allowed' => 'هذا الموقع ليس ضمن القائمة المعتمدة للتضمين.',
     'invalid_text' => 'أدخل نص الدرس (حتى 20000 حرف).',

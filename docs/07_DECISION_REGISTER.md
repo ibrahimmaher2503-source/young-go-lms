@@ -205,65 +205,82 @@ ED-001..ED-032 in `13_ENGINEERING_DECISIONS.md` are RECOMMENDED-DEFAULT technica
 
   O-002             New repository/branch/SSH/server                            Implementation access    UNKNOWN until
                                                                                                          supplied/observed
+                  DECIDED 2026-11-18, see D
 
   O-003             Legacy LMS source code, DB schema, file storage and         Migration/behavior audit Inspect before import
                     provider access                                                                      
 
   O-004             Framework/runtime and database                              Compatibility            Verify environment before
                                                                                                          lock
+                  DECIDED 2026-11-18, see D
 
   O-005             Video provider and storage capacity                         Streaming                Adapter first; provider
                                                                                 performance/cost         later
+                  DECIDED 2026-11-18, see D
 
   O-006             ~~Payment gateway~~ (closed by D-025: Paymob). Remaining:   Checkout activation      Paymob adapter disabled until
                     Paymob account credentials, enabled methods, exact                                   credentials; manual review
                     Instapay workflow                                                                    workflow; no fake success
+                  DECIDED 2026-11-18, see D (methods); credentials still OPEN
 
   O-007             Egyptian legal seller name, tax registration, VAT and       Legal checkout           Obtain from
                     invoice fields                                                                       owner/accountant
 
   O-008             Individual course commission percentages                    Instructor settlement    Configurable; no invented
                                                                                                          rates
+                  DECIDED 2026-11-18, see D
 
   O-009             Bundle allocation rule                                      Fair ledger distribution Admin allocation per
                                                                                                          bundle/course; final
                                                                                                          formula
                                                                                                          owner/accountant-approved
+                  DECIDED 2026-11-18, see D
 
   O-010             Fixed subscription amount per student/course/period         Subscription ledger      Configurable; values open
+                  DECIDED 2026-11-18, see D
 
   O-011             Commission base: discount/tax/gateway fees/refunds          Correct financial        Store components
                                                                                 calculation              separately; accountant
                                                                                                          approves base
+                  DECIDED 2026-11-18, see D
 
   O-012             Settlement frequency and payout method                      Finance operations       Manual settlement ledger
                                                                                                          first
+                  DECIDED 2026-11-18, see D
 
   O-013             Saudi entity, gateway, bank and tax/invoice rules           Saudi activation         Disabled market profile
+                  DECIDED 2026-11-18, see D (gateway); legal entity/tax facts still OPEN
 
   O-014             AI provider/model, data region, terms, retention and budget Privacy/cost             Adapter only; no real minor
                                                                                                          data until approval
+                  DECIDED 2026-11-18, see D
 
   O-015             Child age bands and guardian verification process           Minor safety             Configurable; legal/policy
                                                                                                          review required
+                  DECIDED 2026-11-18, see D
 
   O-016             Parent access to child's full AI history                    Child privacy            No full chat access by
                                                                                                          default; help status can be
                                                                                                          exposed per policy
+                  DECIDED 2026-11-18, see D
 
   O-017             Family subscription/shared household plan                   Commercial model         Not assumed
+                  DECIDED 2026-11-18, see D
 
   O-018             Exact migration scope for                                   Continuity               Inventory and owner
                     users/enrollments/progress/payments/attempts/certificates                            sign-off; courses/content
                                                                                                          mandatory
+                  DECIDED 2026-11-18, see D
 
   O-019             Certificate design/legal issuer wording                     Output validity          Use current approved assets
                                                                                                          when supplied
 
   O-020             Course completion defaults                                  Certification/progress   Configurable per course
+                  DECIDED 2026-11-18, see D
 
   O-021             Email provider, Zoom/Meet/BigBlueButton account and API     Integrations             Manual/standard adapters
                     credentials                                                                          until supplied
+                  DECIDED 2026-11-18, see D
 
   O-022             Dates, effort estimates, staffing and budget                Project planning         Not specified in this pack
   ----------------------------------------------------------------------------------------------------------------------------------
@@ -272,16 +289,51 @@ ED-001..ED-032 in `13_ENGINEERING_DECISIONS.md` are RECOMMENDED-DEFAULT technica
 
 | ID | Open item | Why it matters | Interim treatment |
 |---|---|---|---|
-| O-023 | Is Egyptian ETA e-receipt/e-invoice submission mandatory for Young Go, and does Paymob (or another provider) perform it? | Legal checkout | `EReceiptProvider` adapter disabled; ETA-ready fields stored; ask accountant + Paymob |
-| O-024 | Auto-renew with saved cards (Paymob support + owner approval) | Subscription UX | Manual renewal (R-017) |
-| O-025 | Final retention periods per data class | Privacy | Defaults in PRD YG-GAP-PRV-002 |
-| O-026 | SKIT UI kit source files/spec location | Admin visuals | Filament theme from design tokens until SKIT supplied |
-| O-027 | Brand assets (logo files, exact colors, fonts) extracted from current site | Visual identity | Extract in P0 T-P0-04; placeholders flagged |
-| O-029 | Error-tracking provider (Sentry-compatible or other) | Operations | Reporter adapter logs locally until chosen (ED-021) |
-| O-030 | Expected launch traffic (concurrent learners, peak live sessions) | Capacity sizing | Documented assumption in T-P11-02 |
-| O-028 | Safeguarding message wording and designated recipients for minors | Child safety | AI off for minors |
+| O-023 | DECIDED 2026-11-18, see D. Is Egyptian ETA e-receipt/e-invoice submission mandatory for Young Go, and does Paymob (or another provider) perform it? | Legal checkout | `EReceiptProvider` adapter disabled; ETA-ready fields stored; ask accountant + Paymob |
+| O-024 | DECIDED 2026-11-18, see D. Auto-renew with saved cards (Paymob support + owner approval) | Subscription UX | Manual renewal (R-017) |
+| O-025 | DECIDED 2026-11-18, see D. Final retention periods per data class | Privacy | Defaults in PRD YG-GAP-PRV-002 |
+| O-026 | DECIDED 2026-11-18 (PO): SKIT UI kit is approximated by the current design tokens; accepted as final for now. Changeable at any time from the token layer (`resources/css/tokens.css`, see `docs/brand/CHANGING_THE_BRAND.md`) | Admin visuals | Filament theme from design tokens |
+| O-027 | DECIDED 2026-11-18 (PO): the current brand (BRAND_SHEET, tokens, wordmark, Noto Sans Arabic) is accepted as final for now with no change; colors and fonts are global and changeable from one place (`resources/css/tokens.css`, mirrored by `config/brand.php`, guarded by `app:check-brand-tokens`) | Visual identity | Current tokens; no extraction needed |
+| O-029 | DECIDED 2026-11-18, see D. Error-tracking provider (Sentry-compatible or other) | Operations | Reporter adapter logs locally until chosen (ED-021) |
+| O-030 | DECIDED 2026-11-18, see D. Expected launch traffic (concurrent learners, peak live sessions) | Capacity sizing | Documented assumption in T-P11-02 |
+| O-028 | DECIDED 2026-11-18, see D. Safeguarding message wording and designated recipients for minors | Child safety | AI off for minors |
 
-## D. Decision change protocol
+## D. Decisions approved 2026-11-18 (PO)
+
+The PO approved these on 2026-11-18. The PRD left them OPEN; they are now decided. Items marked "verify" still need legal or
+accounting confirmation before go-live. Rows in section C stay for traceability and point here.
+
+| ID | Decision | Basis / market note | Verify with |
+|---|---|---|---|
+| O-008 | Commission 70% instructor / 30% platform default for independent-instructor courses; per-instructor and per-course rules override; academy-owned courses earn nothing for instructors | `config/commissions.php`; rule precedence unchanged | Accountant |
+| O-009 | Bundle earnings allocated proportionally to the list price of the member courses | Current behaviour (`AllocateBundlePrice`) | Accountant |
+| O-010 | Subscription: instructor earns 70% of the period price, split equally across the plan's courses, per student-course-period | `RecordOrderEarnings` plan lines; no engagement metric (D-013) | Accountant |
+| O-011 | Commission base is net of discount, excluding VAT; platform bears gateway fees; refunds reverse proportionally | Stored components kept separately | Accountant (VAT treatment) |
+| O-012 | Settlement monthly; payout by bank transfer (EG also wallet/Instapay; KSA bank transfer); minimum payout threshold configurable (default 500 EGP / 100 SAR); four-eyes: the creator of a batch cannot approve it unless super_admin | `config/commissions.php` `settlement`; `ApproveSettlement` | Finance, accountant |
+| O-024 | No auto-renew at launch; manual renewal | R-017 stays | Paymob, later |
+| O-017 | No family plan at launch | Not built | Owner, later |
+| O-016 | Parent sees the child's help status only, not AI chat history | Privacy default | Legal |
+| O-020 | Completion default: all required items done and quiz pass mark 60% (configurable per course) | Per-course setting | Owner |
+| O-025 | Keep code defaults; financial records minimum 7 years (EG 5, KSA 6); learning records while the account is active plus 2 years after closure | Longest applicable period wins | Legal, accountant |
+| O-015 | Keep current age bands; AI disabled for anyone under 18 until legal review; guardian verification by parent-account link plus OTP | Safe default | Legal (verify) |
+| O-028 | Safeguarding messages route to a designated safeguarding role (admin + support); wording is a draft pending legal review | Child safety | Legal (verify) |
+| O-018 | Migration scope: courses + content mandatory; users, enrollments, progress, certificates, quiz results, order history yes; AI chat history no | Legacy source still needed (O-003 OPEN) | Owner |
+| O-006 | Methods: cards and mobile wallets via Paymob EG; Instapay by manual proof. Credentials still to be supplied | Adapter inert without credentials | Owner (credentials) |
+| O-013 | Saudi gateway is Paymob KSA; market stays disabled; entity/tax facts to be supplied | `Market::isActive` unchanged | Legal, accountant (verify) |
+| O-014 | AI provider is OpenAI (model configurable); adapter inert without a key; no minor data until legal approval; data region and terms still to confirm | `app/Domain/AI/Providers/OpenAiProvider.php` | Legal (verify), owner |
+| O-005 | Video provider: Bunny Stream | `MediaProviders` `bunny` | Owner (account) |
+| O-021 | Email: Amazon SES; live sessions: Google Meet | `ses` mailer inert without keys; meet.google.com links accepted | Owner (credentials) |
+| O-029 | Error tracking: Sentry SaaS | ED-021 reporter `sentry`, inert without DSN | Owner (DSN) |
+| O-030 | Sizing assumption: 2000 registered learners, 300 concurrent peak, 150 concurrent in a live session | Input for T-P11-02 | Owner |
+| O-002 | Repository ibrahimmaher2503-source/young-go-lms, branch feat/lms-build | Recorded | None |
+| O-004 | Production DB MySQL 8 (SQLite for local/tests), PHP 8.3 | Recorded; note composer platform requirement may differ (R-001 says PHP 8.4) | Owner (hosting) |
+| O-023 | ETA e-receipt adapter stays disabled with ETA-ready fields | Obligation unconfirmed | Accountant (verify) |
+
+**Still OPEN (facts needed from the owner):** O-001 DNS/hosting access; O-003 legacy source/DB; O-007 legal seller name, tax id, VAT;
+O-019 certificate legal issuer wording; O-022 dates/budget; O-026 SKIT kit; O-027 brand assets; O-006 Paymob credentials;
+O-013 Saudi legal entity.
+
+## E. Decision change protocol
 
 When an open item is resolved, update this file with date, exact owner
 decision, impact and affected PRD/DMC/architecture sections. Do not

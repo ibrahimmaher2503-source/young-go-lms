@@ -7,11 +7,12 @@ namespace App\Domain\AI\Resilience;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
+use App\Domain\AI\Providers\OpenAiProvider;
 use App\Domain\Settings\AiSettings;
 
 /**
- * The provider keys the platform knows. No real provider is approved (O-014), so the only keys are the refusing "unconfigured"
- * provider and, in local and testing, the deterministic "fake". A real adapter is added here by T-P7-07 after the owner decides.
+ * The provider keys the platform knows: the refusing "unconfigured" provider, "openai" (decided 2026-11-18, O-014; inert without
+ * an API key and never the default until one is configured) and, in local and testing, the deterministic "fake".
  * The choice of a super admin (AiSettings) wins over the environment; with no choice the environment decides, as before.
  */
 final class ProviderRegistry
@@ -19,6 +20,8 @@ final class ProviderRegistry
     public const string UNCONFIGURED = 'unconfigured';
 
     public const string FAKE = 'fake';
+
+    public const string OPENAI = 'openai';
 
     public function __construct(private readonly AiSettings $settings) {}
 
@@ -30,7 +33,7 @@ final class ProviderRegistry
     /** @return list<string> keys an operator may pick */
     public function keys(): array
     {
-        return app()->environment('local', 'testing') ? [self::UNCONFIGURED, self::FAKE] : [self::UNCONFIGURED];
+        return app()->environment('local', 'testing') ? [self::UNCONFIGURED, self::OPENAI, self::FAKE] : [self::UNCONFIGURED, self::OPENAI];
     }
 
     public function activeKey(): string
@@ -41,6 +44,9 @@ final class ProviderRegistry
         }
 
         $configured = config('ai.provider');
+        if ($configured === self::OPENAI && self::openAiKeyPresent()) {
+            return self::OPENAI;
+        }
 
         return $configured === self::FAKE || app()->environment('local', 'testing') ? self::FAKE : self::UNCONFIGURED;
     }
@@ -62,8 +68,22 @@ final class ProviderRegistry
     {
         return match ($key) {
             self::FAKE => new FakeAiProvider,
+            self::OPENAI => new OpenAiProvider(
+                is_string(config('ai.openai.api_key')) ? config('ai.openai.api_key') : null,
+                $this->model() ?? (string) config('ai.openai.model', 'gpt-4o-mini'),
+                (string) config('ai.openai.base_url', 'https://api.openai.com/v1'),
+                (string) config('ai.openai.embedding_model', 'text-embedding-3-small'),
+                is_string(config('ai.openai.organization')) ? config('ai.openai.organization') : null,
+            ),
             default => new NullAiProvider,
         };
+    }
+
+    private static function openAiKeyPresent(): bool
+    {
+        $key = config('ai.openai.api_key');
+
+        return is_string($key) && trim($key) !== '';
     }
 
     private function chosen(string $property): ?string

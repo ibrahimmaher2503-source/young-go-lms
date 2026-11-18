@@ -213,12 +213,9 @@ it('lets an academy admin publish a ready course directly, without the review qu
 })->group('T-P3-03', 'A1');
 
 it('publishes through PublishReadyCourse for an actor who is not the logged-in user', function (): void {
-    // BUG: app/Domain/Catalog/Actions/PublishCourse.php:18 calls Gate::authorize('publish') against the session user,
-    // not the actor passed to PublishReadyCourse::__invoke, so a non-session actor is refused even with publish rights.
     $admin = t303rUser('admin');
     $course = t303rAcademyCourse($admin);
     t303rPrice($admin, $course);
 
     expect(app(PublishReadyCourse::class)($admin, $course->fresh())->status)->toBe(CourseStatus::Published);
-})->skip('BUG: PublishCourse authorizes the session user instead of the explicit actor (app/Domain/Catalog/Actions/PublishCourse.php:18)')
-    ->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1');

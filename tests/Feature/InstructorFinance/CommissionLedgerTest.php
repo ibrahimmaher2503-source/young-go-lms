@@ -39,7 +39,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
-use LogicException;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
@@ -297,7 +296,7 @@ it('writes a zero config default entry when a fixed rule is only in another curr
     $order = ledPaidOrder($learner, [new OrderLine(ProductType::Plan, $plan->id, $learner)]);
 
     $entry = ledEntries($order->id)->first();
-    expect($entry->amount_minor)->toBe(0)
+    expect($entry->amount_minor)->toBe(3500) // 2026-11-18 O-010: 70% of 5000 on one course (was 0)
         ->and($entry->rule_source)->toBe('config_default');
 })->group('T-P8-09', 'A2')->group('ledger');
 
@@ -351,7 +350,7 @@ it('picks course plus instructor over course over instructor over global over th
     $resolve = app(CommissionRules::class);
     $at = Carbon::parse('2026-03-10 10:00:00');
 
-    expect($resolve->resolve($instructor->id, $course->id, SaleType::Individual, 'EGP', $at)->amountFor(10000))->toBe(0);
+    expect($resolve->resolve($instructor->id, $course->id, SaleType::Individual, 'EGP', $at)->amountFor(10000))->toBe(7000); // 2026-11-18 O-008: default is 70% (was 0)
 
     ledRule($finance, ['sale_type' => 'individual', 'rate_bps' => 1000]);
     expect($resolve->resolve($instructor->id, $course->id, SaleType::Individual, 'EGP', $at)->amountFor(10000))->toBe(1000);

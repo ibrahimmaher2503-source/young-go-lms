@@ -51,6 +51,8 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // O-021 (decided 2026-11-18): Amazon SES. Inert until MAIL_MAILER=ses and the AWS keys in config/services.php are set;
+        // the transport needs the AWS SDK, which is installed with the deploy, not pinned here.
         'ses' => [
             'transport' => 'ses',
         ],

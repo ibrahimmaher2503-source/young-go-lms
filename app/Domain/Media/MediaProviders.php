@@ -6,6 +6,7 @@ namespace App\Domain\Media;
 
 use App\Domain\Media\Contracts\VideoDeliveryProvider;
 use App\Domain\Media\Providers\AllowlistedIframeProvider;
+use App\Domain\Media\Providers\BunnyStreamProvider;
 use App\Domain\Media\Providers\ExternalUrlProvider;
 use App\Domain\Media\Providers\PrivateFileProvider;
 use App\Domain\Media\Providers\RichTextProvider;
@@ -26,6 +27,7 @@ final class MediaProviders
             new PrivateFileProvider('image', 'image', PlaybackDescriptor::IMAGE, ['png', 'jpg', 'jpeg', 'webp'], ['image/png', 'image/jpeg', 'image/webp']),
             new VimeoProvider,
             new YouTubeProvider,
+            new BunnyStreamProvider,
             new ExternalUrlProvider,
             new AllowlistedIframeProvider,
             new RichTextProvider,

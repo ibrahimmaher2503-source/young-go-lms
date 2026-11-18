@@ -21,6 +21,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_LOCALE" value="en" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="TWO_FACTOR_ENFORCED" value="false"/>
@@ -32,6 +33,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="AI_INGEST_ON_UPLOAD" value="false"/>
+        <!-- 2026-11-18 O-012: production defaults are four-eyes ON and 500 EGP / 100 SAR minimum payout; legacy settlement tests use one finance user and tiny amounts, so they run with both relaxed. New tests set config() explicitly. -->
+        <env name="SETTLEMENT_FOUR_EYES" value="false"/>
+        <env name="SETTLEMENT_MIN_PAYOUT_EGP_MINOR" value="0"/>
+        <env name="SETTLEMENT_MIN_PAYOUT_SAR_MINOR" value="0"/>
         <env name="SESSION_LIMITS_ENABLED" value="false"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

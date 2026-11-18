@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\Shared\Observability\ErrorReporter;
 use App\Domain\Shared\Observability\LogErrorReporter;
+use App\Domain\Shared\Observability\SentryErrorReporter;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pulse\Pulse;
@@ -15,7 +16,8 @@ final class ObservabilityServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(ErrorReporter::class, LogErrorReporter::class);
+        // O-029: Sentry when a DSN is set, the local log reporter otherwise (ED-021).
+        $this->app->bind(ErrorReporter::class, static fn (): ErrorReporter => SentryErrorReporter::enabled() ? new SentryErrorReporter(new LogErrorReporter) : new LogErrorReporter);
         $this->app->make(Pulse::class)->ignoreRoutes();
     }
 

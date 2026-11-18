@@ -23,7 +23,7 @@ use RuntimeException;
 /**
  * Finance selects ledger entries (all `accrued`, one currency) and groups them into a draft settlement batch (T-P8-10). Per
  * instructor the selected entries are netted: a zero or negative net, or an instructor without a payout profile (YG-GAP-INS-003),
- * is NOT settled; their entries stay `accrued` and the negative balance carries into the next batch (recorded in
+ * or a net below the minimum payout of the currency (O-012, `commissions.settlement.minimum_payout_minor`), is NOT settled; their entries stay `accrued` and the negative balance carries into the next batch (recorded in
  * `carried_forward`). Settled entries move to `pending`; amounts are never touched. No money moves: settlement is a record.
  * `$key` makes the call idempotent. Needs `settlement.manage`. Audited as `settlement.created`.
  */
@@ -70,11 +70,14 @@ final class CreateSettlementBatch
 
                 $included = [];
                 $carried = [];
+                $minimum = max(0, (int) config('commissions.settlement.minimum_payout_minor.'.$currency, 0));
                 foreach ($entries->groupBy('instructor_id') as $instructorId => $group) {
                     $net = (int) $group->sum('amount_minor');
                     $instructor = User::query()->find((int) $instructorId);
                     if ($net <= 0) {
                         $carried[] = ['instructor_id' => (int) $instructorId, 'reason' => 'not_positive', 'amount_minor' => $net, 'entries' => $group->count()];
+                    } elseif ($net < $minimum) {
+                        $carried[] = ['instructor_id' => (int) $instructorId, 'reason' => 'below_minimum', 'amount_minor' => $net, 'entries' => $group->count()];
                     } elseif (! $instructor instanceof User || ! PayoutReadiness::isReady($instructor)) {
                         $carried[] = ['instructor_id' => (int) $instructorId, 'reason' => 'no_payout_profile', 'amount_minor' => $net, 'entries' => $group->count()];
                     } else {

@@ -11,7 +11,7 @@ use DateTimeInterface;
 
 /**
  * The one place that picks the commission rule for a sale. Precedence: course + instructor, course only, instructor only,
- * a global rule (no course, no instructor: the editable default), then the config fallback (zero until the owner approves rates, O-008/O-010). Only rules in force on the sale date count
+ * a global rule (no course, no instructor: the editable default), then the config fallback (70% by default, O-008/O-010). Only rules in force on the sale date count
  * (both ends inclusive); fixed-amount rules only count when their currency is the sale currency; within a tier the latest
  * `effective_from` (then the newest row) wins. Percentage rules apply to individual and bundle sales; subscription rules are
  * fixed amounts per student-course-period.
@@ -40,8 +40,11 @@ final class CommissionRules
             return new ResolvedRate($best, $best->rate_bps, $best->fixed_amount_minor, ResolvedRate::SOURCE_RULE);
         }
 
-        return $type === SaleType::Subscription
-            ? new ResolvedRate(null, null, max(0, (int) config('commissions.default_subscription_fixed_minor', 0)), ResolvedRate::SOURCE_DEFAULT)
-            : new ResolvedRate(null, max(0, (int) config('commissions.default_rate_bps.'.$type->value, 0)), null, ResolvedRate::SOURCE_DEFAULT);
+        $fixed = max(0, (int) config('commissions.default_subscription_fixed_minor', 0));
+        if ($type === SaleType::Subscription && $fixed > 0) {
+            return new ResolvedRate(null, null, $fixed, ResolvedRate::SOURCE_DEFAULT);
+        }
+
+        return new ResolvedRate(null, max(0, (int) config('commissions.default_rate_bps.'.$type->value, 0)), null, ResolvedRate::SOURCE_DEFAULT);
     }
 }

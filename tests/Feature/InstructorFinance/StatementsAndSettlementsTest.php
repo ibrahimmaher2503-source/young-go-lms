@@ -97,6 +97,52 @@ function t810_audit_count(string $event): int
     return Activity::query()->where('event', $event)->count();
 }
 
+it('summarizes only accrued ledger entries in the selected currency and date range with payout readiness', function (): void {
+    $ready = t810_instructor();
+    $unready = t810_instructor(false);
+    $earned = t810_entry($ready, LedgerEntryType::Earning, 4000, '2026-11-10 15:00:00');
+    $adjusted = t810_entry($ready, LedgerEntryType::Adjustment, -700, '2026-11-12 23:59:59');
+    $other = t810_entry($unready, LedgerEntryType::Earning, 1800, '2026-11-11 10:00:00');
+    t810_entry($ready, LedgerEntryType::Earning, 900, '2026-11-13 00:00:00');
+    t810_entry($ready, LedgerEntryType::Earning, 500, '2026-11-11 10:00:00', currency: 'SAR');
+    t810_entry($ready, LedgerEntryType::Earning, 200, '2026-11-11 10:00:00', LedgerStatus::Held);
+    $cutoff = Carbon::parse('2026-11-12 09:00:00');
+    $eligible = app(EligibleLedgerEntries::class);
+
+    expect($eligible->ids('egp', $ready->id, $cutoff))->toBe([$earned->id, $adjusted->id])
+        ->and($eligible->ids('EGP', until: $cutoff))->toBe([$earned->id, $adjusted->id, $other->id])
+        ->and(collect($eligible->summary('EGP', until: $cutoff))->keyBy('instructor_id')->all())->toEqual([
+            $ready->id => ['instructor_id' => $ready->id, 'name' => $ready->name, 'entries' => 2, 'net_minor' => 3300, 'payout_ready' => true],
+            $unready->id => ['instructor_id' => $unready->id, 'name' => $unready->name, 'entries' => 1, 'net_minor' => 1800, 'payout_ready' => false],
+        ])
+        ->and($eligible->summary('EGP', $unready->id, $cutoff))->toHaveCount(1)
+        ->and($cutoff->format('H:i:s'))->toBe('09:00:00');
+})->group('T-P8-10', 'A1', 'YG-GAP-INS-003')->group('payments');
+
+it('rejects invalid ledger adjustment targets and rolls back an unaudited adjustment', function (): void {
+    $finance = t810_user('finance');
+    $instructor = t810_instructor(false);
+    $adjust = app(RecordLedgerAdjustment::class);
+
+    expect(t810_refusal(fn () => $adjust($finance, $finance->id, 100, 'EGP', 'Correction test')))
+        ->toBe(__('ledger.instructor_invalid'))
+        ->and(t810_refusal(fn () => $adjust($finance, $instructor->id, 100, 'USD', 'Correction test')))
+        ->toBe(__('ledger.currency_invalid'))
+        ->and(t810_refusal(fn () => $adjust($finance, $instructor->id, 100, 'EGP', 'Correction test', 999999)))
+        ->toBe(__('ledger.course_invalid'));
+
+    activity()->disableLogging();
+    try {
+        expect(fn () => $adjust($finance, $instructor->id, -100, 'EGP', 'Correction test', key: 'audit-rollback'))
+            ->toThrow(RuntimeException::class, 'Unable to record ledger audit.');
+    } finally {
+        activity()->enableLogging();
+    }
+
+    expect(LedgerEntry::query()->count())->toBe(0)
+        ->and(t810_audit_count('ledger.adjustment_recorded'))->toBe(0);
+})->group('T-P8-10', 'PRD 17.4')->group('payments');
+
 /** @return list<string> flattened dotted keys of a lang array */
 function t810_keys(array $array, string $prefix = ''): array
 {

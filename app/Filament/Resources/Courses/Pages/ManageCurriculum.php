@@ -588,7 +588,7 @@ final class ManageCurriculum extends Page
 
     private const array UPLOAD_PROVIDERS = ['signed_storage', 'audio', 'document', 'image'];
 
-    private const array LINK_PROVIDERS = ['vimeo', 'youtube', 'external_url', 'iframe'];
+    private const array LINK_PROVIDERS = ['vimeo', 'bunny', 'youtube', 'external_url', 'iframe'];
 
     /** @return array<string, string> media sources that make sense for a lesson type */
     private static function providerOptions(string $type): array
@@ -597,7 +597,7 @@ final class ManageCurriculum extends Page
             'audio' => ['audio'],
             'document' => ['document'],
             'text' => ['rich_text', 'image'],
-            default => ['signed_storage', 'vimeo', 'youtube', 'external_url', 'iframe'],
+            default => ['signed_storage', 'vimeo', 'bunny', 'youtube', 'external_url', 'iframe'],
         };
 
         return array_combine($keys, array_map(static fn (string $key): string => __("curriculum.sources.{$key}"), $keys));

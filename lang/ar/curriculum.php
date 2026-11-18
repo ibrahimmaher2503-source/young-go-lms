@@ -82,6 +82,7 @@ return [
     'sources' => [
         'signed_storage' => 'رفع فيديو (محمي)',
         'vimeo' => 'رابط Vimeo (مقيّد)',
+        'bunny' => 'رابط Bunny Stream (مفتوح)',
         'youtube' => 'رابط YouTube (مفتوح)',
         'external_url' => 'رابط فيديو مباشر (مفتوح)',
         'iframe' => 'تضمين معتمد (مفتوح)',

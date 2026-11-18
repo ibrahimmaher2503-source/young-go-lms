@@ -27,6 +27,7 @@ return [
 
     'providers' => [
         'unconfigured' => 'Not configured',
+        'openai' => 'OpenAI (needs an API key)',
         'fake' => 'Test provider (development only)',
     ],
 

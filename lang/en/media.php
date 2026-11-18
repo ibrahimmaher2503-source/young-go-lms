@@ -8,6 +8,7 @@ return [
     'invalid_type' => 'This file type is not allowed for this source.',
     'file_missing' => 'The file was not found in private storage.',
     'invalid_vimeo' => 'Enter a Vimeo video link.',
+    'invalid_bunny' => 'Enter a Bunny Stream embed link or HLS playlist link.',
     'invalid_youtube' => 'Enter a YouTube video link.',
     'host_not_allowed' => 'This site is not on the approved list for embeds.',
     'invalid_text' => 'Enter the lesson text (up to 20,000 characters).',

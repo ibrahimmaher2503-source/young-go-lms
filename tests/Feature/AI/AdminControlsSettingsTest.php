@@ -382,7 +382,7 @@ it('saves provider settings, updates active prompt version, and tracks active ke
 
     // 2. Validation: openai refused (not in registry keys)
     expect(fn () => $save($superAdmin, [
-        'provider' => 'openai',
+        'provider' => 'bogus_provider',
         'prompt_version' => 1,
         'breaker_failures' => 5,
         'breaker_window_seconds' => 120,
@@ -451,9 +451,9 @@ it('saves provider settings, updates active prompt version, and tracks active ke
         'provider' => 'fake',
     ]);
 
-    // In production environment, registry keys() contains only 'unconfigured'
+    // In production environment, registry keys() contains 'unconfigured' and the inert 'openai' (2026-11-18, O-014)
     app()->detectEnvironment(fn () => 'production');
-    expect(app(ProviderRegistry::class)->keys())->toEqual(['unconfigured']);
+    expect(app(ProviderRegistry::class)->keys())->toEqual(['unconfigured', 'openai']);
     app()->detectEnvironment(fn () => 'testing'); // restore
 })->group('T-P7-06', 'A1', 'A2');
 

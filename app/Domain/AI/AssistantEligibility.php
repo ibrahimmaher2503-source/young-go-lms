@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\AI;
 
+use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Domain\Settings\AiSettings;
@@ -108,6 +109,11 @@ final class AssistantEligibility
     {
         if ($this->isAdult($student)) {
             return AssistantAvailability::available();
+        }
+
+        // O-014/O-015: the OpenAI route never serves a minor until legal approval flips `ai.openai.allow_minors`.
+        if (ProviderRegistry::currentKey() === ProviderRegistry::OPENAI && ! (bool) config('ai.openai.allow_minors', false)) {
+            return AssistantAvailability::unavailable(UnavailableReason::MinorsOff);
         }
 
         $consented = GuardianChildLink::query()

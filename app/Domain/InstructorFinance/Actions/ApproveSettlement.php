@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-/** Finance review step: a draft batch becomes approved and its entries move `pending` -> `approved`. Idempotent (an approved batch is returned as is). Needs `settlement.manage`. Audited as `settlement.approved`. */
+/** Finance review step: a draft batch becomes approved and its entries move `pending` -> `approved`. Idempotent (an approved batch is returned as is). Needs `settlement.manage`. Four-eyes (O-012): the user who created the batch cannot approve it unless they are super_admin. Audited as `settlement.approved`. */
 final class ApproveSettlement
 {
     public function __construct(private readonly AuditLogger $audit) {}
@@ -34,6 +34,10 @@ final class ApproveSettlement
             }
             if ($locked->status !== SettlementStatus::Draft) {
                 throw ValidationException::withMessages(['settlement' => __('settlements.state_invalid')]);
+            }
+            if ((bool) config('commissions.settlement.four_eyes', true) && (int) $locked->created_by === (int) $actor->getKey()
+                && ! $actor->hasRole((string) config('commissions.settlement.four_eyes_bypass_role', 'super_admin'))) {
+                throw ValidationException::withMessages(['settlement' => __('settlements.four_eyes_refused')]);
             }
 
             $ids = SettlementEntry::query()->whereIn('item_id', $locked->items()->select('id'))->pluck('ledger_entry_id')->all();

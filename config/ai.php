@@ -3,13 +3,26 @@
 declare(strict_types=1);
 
 return [
-    // Provider and model are OPEN (O-014). Until the owner approves one, nothing real is configured and the
-    // assistant fails loudly instead of answering. Local development and tests use the fake provider.
+    // O-014 (decided 2026-11-18): the provider is OpenAI, but it stays inert until OPENAI_API_KEY is set and a super admin (or
+    // AI_PROVIDER=openai) selects it. Without a key the assistant fails loudly instead of answering. Local development and tests use the fake provider.
     'provider' => env('AI_PROVIDER', 'unconfigured'),
 
-    // The age that counts as an adult for the assistant is OPEN (O-015). While this is null nobody is treated as an
-    // adult, so every learner needs guardian consent: the safe default. Set it only after the owner approves a number.
-    'adult_age' => env('AI_ADULT_AGE') === null ? null : (int) env('AI_ADULT_AGE'),
+    // O-015 (decided 2026-11-18): the AI is disabled for anyone under 18 until legal review. 18 counts as an adult; with no
+    // known birth month nobody is treated as an adult. Minors additionally need guardian consent and the minors flag.
+    'adult_age' => env('AI_ADULT_AGE') === null ? 18 : (int) env('AI_ADULT_AGE'),
+
+    // OpenAI adapter (app/Domain/AI/Providers/OpenAiProvider.php). Inert while api_key is empty. A super admin's model choice
+    // (AiSettings) wins over `model`. allow_minors must stay false until legal approves sending data of minors (O-014, O-015).
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        'organization' => env('OPENAI_ORGANIZATION'),
+        'allow_minors' => filter_var(env('AI_OPENAI_ALLOW_MINORS', false), FILTER_VALIDATE_BOOLEAN),
+        // Minor units of the budget currency per million tokens; 0 until prices are supplied.
+        'price_minor_per_million' => ['input' => (int) env('OPENAI_PRICE_INPUT_MINOR', 0), 'cached' => (int) env('OPENAI_PRICE_CACHED_MINOR', 0), 'output' => (int) env('OPENAI_PRICE_OUTPUT_MINOR', 0)],
+    ],
 
     // Prompt-injection guard: a lesson text may never contain this closing tag.
     'source_tag' => 'lesson_source',

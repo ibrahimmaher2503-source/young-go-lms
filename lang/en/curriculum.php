@@ -82,6 +82,7 @@ return [
     'sources' => [
         'signed_storage' => 'Upload a video (protected)',
         'vimeo' => 'Vimeo link (restricted)',
+        'bunny' => 'Bunny Stream link (open)',
         'youtube' => 'YouTube link (open)',
         'external_url' => 'Direct video link (open)',
         'iframe' => 'Approved embed (open)',

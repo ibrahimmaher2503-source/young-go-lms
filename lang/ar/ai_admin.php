@@ -27,6 +27,7 @@ return [
 
     'providers' => [
         'unconfigured' => 'غير مُعدّ',
+        'openai' => 'OpenAI (يتطلب مفتاح API)',
         'fake' => 'مزوّد تجريبي (للتطوير فقط)',
     ],
 
