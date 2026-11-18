@@ -56,7 +56,9 @@ final class AttachLessonMedia
 
         // The replaced private file is no longer referenced by anything.
         if (is_string($oldPath) && $oldPath !== $asset->path && str_starts_with($oldPath, 'media/')) {
-            Storage::disk(Config::string('media.disk'))->delete($oldPath);
+            DB::afterCommit(static function () use ($oldPath): void {
+                rescue(static fn () => Storage::disk(Config::string('media.disk'))->delete($oldPath));
+            });
         }
 
         return $asset;

@@ -158,6 +158,7 @@ final class ManageCurriculum extends Page
                         $item = app(ManageLessons::class)->add($this->actor(), $section, $this->lessonData($data));
                         $lesson = $item->itemable;
                         if ($lesson instanceof Lesson) {
+                            $this->saveMaterials($lesson, $data);
                             $this->saveMedia($lesson, $data);
                         }
                     });
@@ -185,8 +186,13 @@ final class ManageCurriculum extends Page
                 $lesson = $this->lessonFor($arguments['lesson'] ?? 0);
                 if (! $this->attempt($action, function () use ($lesson, $data): void {
                     DB::transaction(function () use ($lesson, $data): void {
-                        app(ManageLessons::class)->update($this->actor(), $lesson, $this->lessonData($data));
-                        $this->saveMedia($lesson, $data);
+                        app(ManageLessons::class)->update(
+                            $this->actor(),
+                            $lesson,
+                            $this->lessonData($data),
+                            fn (Lesson $updated) => $this->saveMedia($updated, $data),
+                        );
+                        $this->saveMaterials($lesson, $data);
                     });
                 })) {
                     return;
@@ -546,8 +552,10 @@ final class ManageCurriculum extends Page
      */
     private function saveMedia(Lesson $lesson, array $data): void
     {
-        $this->saveDocuments($lesson, $data);
-        $this->saveLibrary($lesson, $data);
+        $libraryMedia = $data['library_media'] ?? null;
+        if (filled($libraryMedia) && ($item = LibraryAccess::visibleTo($this->actor())->find($libraryMedia))) {
+            app(AttachLibraryItem::class)->asMedia($this->actor(), $item, $lesson, $lesson->duration_seconds);
+        }
 
         $provider = $data['media_provider'] ?? null;
         if (! is_string($provider) || $provider === '') {
@@ -607,14 +615,12 @@ final class ManageCurriculum extends Page
     }
 
     /** @param  array<string, mixed>  $data */
-    private function saveLibrary(Lesson $lesson, array $data): void
+    private function saveMaterials(Lesson $lesson, array $data): void
     {
+        $this->saveDocuments($lesson, $data);
         $attach = app(AttachLibraryItem::class);
         $find = fn (mixed $id): ?\App\Models\LibraryItem => filled($id) ? LibraryAccess::visibleTo($this->actor())->find($id) : null;
 
-        if ($item = $find($data['library_media'] ?? null)) {
-            $attach->asMedia($this->actor(), $item, $lesson, $lesson->duration_seconds);
-        }
         if ($item = $find($data['library_resource'] ?? null)) {
             $attach->asResource($this->actor(), $item, $lesson);
         }

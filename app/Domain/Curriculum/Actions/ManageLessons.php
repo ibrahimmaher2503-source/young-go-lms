@@ -7,10 +7,12 @@ namespace App\Domain\Curriculum\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Content\RichContent;
 use App\Domain\Curriculum\CurriculumAccess;
+use App\Domain\Media\LessonPublishRule;
 use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\User;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -43,14 +45,27 @@ final class ManageLessons
         });
     }
 
-    /** @param array<string, mixed> $data */
-    public function update(User $actor, Lesson $lesson, array $data): Lesson
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  (Closure(Lesson): void)|null  $saveMedia
+     */
+    public function update(User $actor, Lesson $lesson, array $data, ?Closure $saveMedia = null): Lesson
     {
         $item = $this->itemFor($lesson);
         CurriculumAccess::authorize($actor, $item->course);
-        $lesson->update($this->attributes($data));
+        $attributes = $this->attributes($data);
 
-        return $lesson;
+        return DB::transaction(static function () use ($attributes, $item, $lesson, $saveMedia): Lesson {
+            $currentItem = CurriculumItem::query()->lockForUpdate()->findOrFail($item->getKey());
+            $lesson->update($attributes);
+            $previewChanged = $lesson->wasChanged('is_preview');
+            $saveMedia?->__invoke($lesson);
+            if ($currentItem->status === CurriculumItem::STATUS_PUBLISHED && $previewChanged) {
+                LessonPublishRule::assertPublishable([$currentItem->load('itemable.media')]);
+            }
+
+            return $lesson;
+        });
     }
 
     /** Archived lessons disappear for students and stay for attempts, submissions and history. Audited. */

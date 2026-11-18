@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
+use App\Domain\Curriculum\Actions\SetCurriculumStatus;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
 use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Filament\Resources\Courses\Pages\ManageCurriculum;
@@ -19,6 +20,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Support\PdfFixture;
 
 uses(RefreshDatabase::class);
 
@@ -105,6 +107,49 @@ it('adds sections and lessons from the page as drafts and edits a lesson', funct
     expect($item->itemable->refresh()->getTranslation('title', 'en'))->toBe('Perspective drawing')->and($item->itemable->duration_seconds)->toBe(1200);
 })->group('T-P3-04', 'A4');
 
+it('replaces preview media and disables preview in the same published lesson edit', function (): void {
+    [$course, $instructor, , $items] = cpBuilt();
+    $course->update(['access_mode' => Course::ACCESS_PAID]);
+    $item = $items[0];
+    $lesson = $item->itemable;
+    app(ManageLessons::class)->update($instructor, $lesson, ['title' => ['en' => 'Tools'], 'is_preview' => true]);
+    app(AttachLessonMedia::class)($instructor, $lesson, ['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ']);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+    $this->actingAs($instructor);
+
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $lesson->id]), [
+            'title' => ['en' => 'Tools'], 'type' => 'text', 'is_preview' => false,
+            'media_provider' => 'rich_text', 'media_text' => 'Protected notes',
+        ])->assertHasNoActionErrors();
+
+    expect($lesson->refresh()->is_preview)->toBeFalse()
+        ->and($lesson->media->protection_tier)->toBe(MediaAsset::TIER_PROTECTED);
+})->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
+
+it('refuses preview removal before storing a new lesson material', function (): void {
+    config(['media.disk' => 'curriculum-preview-test']);
+    Storage::fake('curriculum-preview-test');
+    [$course, $instructor, , $items] = cpBuilt();
+    $course->update(['access_mode' => Course::ACCESS_PAID]);
+    $item = $items[0];
+    $lesson = $item->itemable;
+    app(ManageLessons::class)->update($instructor, $lesson, ['title' => ['en' => 'Tools'], 'is_preview' => true]);
+    app(AttachLessonMedia::class)($instructor, $lesson, ['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ']);
+    app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'published');
+    $this->actingAs($instructor);
+    Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
+        ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $lesson->id]), [
+            'title' => ['en' => 'Tools'], 'type' => 'video', 'is_preview' => false,
+            'resource_file' => UploadedFile::fake()->createWithContent('notes.txt', 'Draw straight lines'),
+            'resource_title' => ['en' => 'Practice notes'],
+        ])->assertNotified(__('media.t3_paid_blocked', ['count' => 1]));
+
+    expect($lesson->refresh()->is_preview)->toBeTrue()
+        ->and($lesson->resources)->toHaveCount(0)
+        ->and(collect(Storage::disk('curriculum-preview-test')->allFiles())->reject(fn (string $path): bool => str_contains($path, '/uploads/'))->all())->toBe([]);
+})->group('T-P3-05', 'A2', 'YG-GAP-VID-002');
+
 it('publishes the selection in bulk, audits it and archives with confirmation', function (): void {
     [$course, $instructor, , $items] = cpBuilt();
     $this->actingAs($instructor);
@@ -143,14 +188,15 @@ it('refuses page actions for a different course', function (): void {
     expect(CurriculumItem::query()->orderBy('id')->pluck('sort', 'id')->all())->toBe($before);
 })->group('T-P3-04', 'A3', 'I02');
 
-it('shows each lesson’s protection tier in the manager', function (): void {
+it('shows the protected source and classifies unverified Vimeo as open', function (): void {
     [$course, $instructor, , $items] = cpBuilt();
     app(AttachLessonMedia::class)($instructor, $items[0]->itemable, ['provider' => 'youtube', 'url' => 'https://youtu.be/dQw4w9WgXcQ']);
     app(AttachLessonMedia::class)($instructor, $items[1]->itemable, ['provider' => 'vimeo', 'url' => 'https://vimeo.com/123456789']);
+    app(AttachLessonMedia::class)($instructor, $items[2]->itemable, ['provider' => 'rich_text', 'text' => 'Protected notes']);
     $this->actingAs($instructor);
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
-        ->assertSee(__('media.tiers.T3'))->assertSee(__('media.tiers.T2'));
+        ->assertSee(__('media.tiers.T3'))->assertSee(__('media.tiers.T1'));
 })->group('T-P3-05', 'A1', 'YG-GAP-VID-001');
 
 it('saves a lesson with a private upload from the lesson editor and shows it in the manager', function (): void {
@@ -204,7 +250,7 @@ it('saves a curriculum PDF and lesson material from the lesson editor and shows 
     Storage::fake('local');
     [$course, $instructor, , $items] = cpBuilt();
     $this->actingAs($instructor);
-    $pdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 2>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R>>endobj\n4 0 obj<</Type/Page/Parent 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
+    $pdf = PdfFixture::bytes(2);
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
         ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
@@ -223,7 +269,7 @@ it('refuses an encrypted curriculum PDF from the editor and keeps nothing', func
     Storage::fake('local');
     [$course, $instructor, , $items] = cpBuilt();
     $this->actingAs($instructor);
-    $bad = "%PDF-1.4\n1 0 obj<</Type/Page>>endobj\ntrailer<</Root 1 0 R/Encrypt 9 0 R>>\n%%EOF\n";
+    $bad = PdfFixture::encryptedBytes();
 
     Livewire::test(ManageCurriculum::class, ['record' => $course->getKey()])
         ->callAction(TestAction::make('editLesson')->arguments(['lesson' => $items[0]->itemable_id]), [
