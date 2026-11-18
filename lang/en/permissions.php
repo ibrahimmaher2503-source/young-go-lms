@@ -52,6 +52,7 @@ return [
     'panel.admin.access' => 'Access administration',
     'panel.finance.access' => 'Access finance workspace',
     'panel.instructor.access' => 'Access instructor workspace',
+    'privacy.manage' => 'Manage privacy requests and retention',
     'profile.update' => 'Edit own profile',
     'profile.view' => 'View own profile',
     'report.finance.view' => 'View finance reports',

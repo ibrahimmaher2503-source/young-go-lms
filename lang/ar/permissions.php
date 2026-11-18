@@ -52,6 +52,7 @@ return [
     'panel.admin.access' => 'دخول لوحة الإدارة',
     'panel.finance.access' => 'دخول مساحة المالية',
     'panel.instructor.access' => 'دخول مساحة المدرّب',
+    'privacy.manage' => 'إدارة طلبات الخصوصية وسياسات الاحتفاظ بالبيانات',
     'profile.update' => 'تعديل الملف الشخصي',
     'profile.view' => 'عرض الملف الشخصي',
     'report.finance.view' => 'عرض التقارير المالية',

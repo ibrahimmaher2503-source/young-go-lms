@@ -24,6 +24,7 @@
                 <div><x-ui.checkbox id="notify_email" name="notification_preferences[email]" value="1" :label="__('pages.notifications_email')" :checked="$emailNotifications" /></div>
                 <x-ui.button type="submit">{{ __('pages.save') }}</x-ui.button>
                 <p class="text-sm"><a class="underline" href="{{ route('profile.notifications.show') }}">{{ __('notification_events.prefs_link') }}</a></p>
+                <p class="text-sm"><a class="underline" href="{{ route('profile.privacy.show') }}">{{ __('privacy.profile_link') }}</a></p>
             </x-ui.ajax-form>
         </x-ui.card>
 

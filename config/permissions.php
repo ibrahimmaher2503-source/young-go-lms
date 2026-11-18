@@ -57,6 +57,7 @@ return [
         ['name' => 'panel.instructor.access'],
         ['name' => 'payout_profile.reveal'],
         ['name' => 'payout_profile.view'],
+        ['name' => 'privacy.manage'],
         ['name' => 'profile.update'],
         ['name' => 'profile.view'],
         ['name' => 'report.finance.view'],
@@ -86,7 +87,7 @@ return [
             'help_request.manage', 'help_request.reply', 'instructor.manage', 'instructor.view', 'learner.profile.view',
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
-            'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage',
+            'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage', 'privacy.manage',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',
