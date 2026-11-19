@@ -53,7 +53,7 @@ final class GrantEntitlement
 
         $keys = ['source_type' => $source->value, 'source_ref' => $sourceRef, 'learner_id' => $learner->getKey(), 'course_id' => $course->getKey()];
 
-        $entitlement = DB::transaction(function () use ($keys, $startsAt, $endsAt, $actor, $reason, $learner, $course): Entitlement {
+        $entitlement = DB::transaction(function () use ($keys, $startsAt, $endsAt, $actor, $reason, $learner, $course, $source): Entitlement {
             $hadAccess = $this->service->canAccessCourse($learner, $course)->allowed;
             try {
                 $entitlement = Entitlement::query()->firstOrCreate($keys, [
@@ -68,7 +68,7 @@ final class GrantEntitlement
                 throw new RuntimeException('Unable to record entitlement audit.');
             }
 
-            if ($entitlement->wasRecentlyCreated && ! $hadAccess && $entitlement->isCurrent()) {
+            if ($entitlement->wasRecentlyCreated && ! $hadAccess && $entitlement->isCurrent() && $source !== EntitlementSource::LegacyMigration) {
                 $this->notice->afterCommit($entitlement, granted: true);
             }
 
