@@ -1,6 +1,6 @@
 # Prompt for the independent test agent
 
-Work in `C:/Users/N/.codex/worktrees/young-go-p1-08-acceptance/young-go-lms-pack-v3.2`. Keep all local changes. Read `AGENTS.md`, decision D-028, `agents/PROGRESS.md`, and the applicable acceptance sections in `agents/tasks/P01.md` and `agents/tasks/P02.md`. Record HEAD and the diff you actually test. Use isolated local test data and existing test helpers. Do not run against production or change task statuses.
+Work in `C:/projects/young-go-lms-pack-v3.2/young-go-lms-pack-v3.2`. Keep all local changes. Read `AGENTS.md`, decision D-028, `agents/PROGRESS.md`, and the applicable acceptance sections in `agents/tasks/P01.md` and `agents/tasks/P02.md`. Record HEAD and the diff you actually test. Use isolated local test data and existing test helpers. Do not run against production or change task statuses.
 
 Run the checks below in this order. Keep browser runs serial or give each process its own `PEST_BROWSER_STATE_FILE`. Build once before browser tests and keep assets stable during the runs. Use the existing fixtures, add a tagged test for any missing acceptance case, and keep existing assertions enabled. D-028 defers visual comparison and scoring. Browser interactions, accessibility checks, screenshot captures required by the task, authorization and other functional assertions still apply.
 

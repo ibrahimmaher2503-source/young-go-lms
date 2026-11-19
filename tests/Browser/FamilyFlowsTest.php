@@ -119,6 +119,14 @@ it('links an existing learner with a code the learner confirms', function (): vo
     expect(GuardianChildLink::query()->sole()->status)->toBe('verified');
 })->group('browser', 'T-P1-10', 'A1', 'YG-GAP-FAM-002');
 
+it('forbids the family page to a parent without child management permission', function (): void {
+    $parent = browserUser('parent');
+    $parent->roles->sole()->revokePermissionTo('guardian.child.manage');
+    $parent->unsetRelation('roles');
+
+    $this->actingAs($parent)->get('/family')->assertForbidden();
+})->group('browser', 'T-P1-10', 'A1', 'D-006');
+
 dataset('family-screens', [
     'login' => ['/login', null],
     'register' => ['/register', null],
@@ -127,6 +135,7 @@ dataset('family-screens', [
     'verify' => ['/email/verify', 'unverified'],
     'profile' => ['/profile', 'student'],
     'family' => ['/family', 'parent'],
+    'family-unavailable' => ['/family', 'student'],
     'link' => ['/link', 'student'],
     'not-found' => ['/missing-page-for-screenshot', null],
 ]);
@@ -153,11 +162,22 @@ it('renders every screen accessibly in both directions, themes and sizes', funct
     expect($page->script('() => [document.documentElement.lang, document.documentElement.dir]'))->toBe([$locale, $locale === 'ar' ? 'rtl' : 'ltr']);
     expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
     expect($page->script('() => document.documentElement.scrollWidth <= window.innerWidth'))->toBeTrue();
-    if ($path === '/family' && $width === 1440) {
+    if ($as === 'parent' && $width === 1440) {
         expect($page->script('() => { const card = document.querySelector("#add-child"); return card.nextElementSibling.getBoundingClientRect().height < card.getBoundingClientRect().height; }'))->toBeTrue();
     }
 
     $name = trim(str_replace(['/', '?', '=', '%'], '-', explode('?', $path)[0]), '-');
+    if ($path === '/family' && $as === 'student') {
+        $page->assertPathIs('/family')
+            ->assertPresent('[data-family-unavailable] h1')
+            ->assertSee(__('pages.family_unavailable_title', [], $locale))
+            ->assertVisible('header [popovertarget="account-menu"]')
+            ->assertPresent('header nav a[href$="/my/courses"]')
+            ->assertPresent('[data-bottom-nav] a[href$="/my/courses"]')
+            ->assertNotPresent('#add-child, #link_code, #guardian-verification, form[action*="/guardian/"]');
+        $name = 'family-unavailable';
+    }
+
     $directory = base_path('tests/Browser/screenshots/T-P1-10');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);

@@ -89,3 +89,11 @@ it('renders the public home and exposes accessible mobile navigation', function 
     ['ar', 'light', 1440, 900], ['en', 'light', 1440, 900], ['ar', 'dark', 1440, 900], ['en', 'dark', 1440, 900],
     ['ar', 'light', 1568, 1003],
 ])->group('browser', 'T-P2-03', 'A2', 'A3', 'YG-WEB-010', 'YG-GAP-PERF-001', 'YG-GAP-UX-001', 'ED-030');
+
+it('opens the localized catalog filters from the mobile categories link', function (string $locale): void {
+    $this->visit('/'.$locale)->resize(390, 844)
+        ->click('[commandfor="public-menu"]')
+        ->click('#public-menu a[href$="#catalog-filters"]')
+        ->assertVisible('#catalog-filters')
+        ->assertFragmentIs('catalog-filters');
+})->with(['ar', 'en'])->group('browser', 'T-P2-03', 'A2', 'YG-GAP-UX-001');
