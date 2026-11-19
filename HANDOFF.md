@@ -1,7 +1,23 @@
 # Young Go LMS --- Developer Handoff
 
-**Prepared:** 2026-11-16 (pack v3.1)\
-**Current stage:** P0/P1 implementation exists; prior-work closure audit is active. Do not start new tasks until its recorded gaps are resolved.
+**Updated:** 2026-11-19 (pack v3.2)\
+**Current stage:** P8/P9 milestone verification on `feat/lms-build`. Use the canonical workspace in D-029 and read [the task board](agents/PROGRESS.md) before starting a task.
+
+Owner G7 acceptance and outstanding functional criteria are recorded in
+[P8/P9 gate readiness](docs/reviews/GATE_READINESS_P8_P9.md). Use the
+[demo walk-through](docs/DEMO_SCRIPT.md) against a seeded scratch database.
+See the [performance report](docs/reviews/PERF_BUDGET_P8_2026-11-19.md)
+for the lab method and measured pages.
+
+The owner confirmed the [requested release facts](docs/07_DECISION_REGISTER.md)
+are unavailable. P10 depends on T-P10-01, which needs authoritative read-only
+legacy source, DB and media plus T-P3-MG. Keep live payments, ETA submission,
+Saudi checkout and live AI activation gated. Use fake integrations locally.
+
+Telescope is a dev dependency and its application provider is loaded when the
+package is installed. The quality workflow checks that Laravel also boots with
+`composer install --no-dev`. Repo choices for `main` and the original review
+findings document are pending owner direction.
 
 The [P0 clean-clone continuity record](docs/evidence/p0-closure/README.md#2026-11-18-clean-clone-recheck) records the tested revision, demo, gate results and open deployment, domain and recovery facts.
 
@@ -42,7 +58,7 @@ storage, exact live DNS, gateway, AI provider and deployment status.
 
 ## Resume development
 
-Use agents/PROGRESS.md for the active task board, docs/ENVIRONMENT_INVENTORY.md for verified environment facts, and README.md for setup. Development uses [private GitHub young-go-lms](https://github.com/ibrahimmaher2503-source/young-go-lms), branch feat/T-P0-03-bootstrap. CI run 43960234987 (023eae73d9b1d69dc49ed487c6f23780f19e21f5) passed the foundation and localization checks. Local bootstrap uses SQLite; hosted CI verifies MySQL, Redis and Horizon. The token preview is opt-in in local or staging environments.
+Use agents/PROGRESS.md for the active task board, docs/ENVIRONMENT_INVENTORY.md for verified environment facts, and README.md for setup. Development uses [private GitHub young-go-lms](https://github.com/ibrahimmaher2503-source/young-go-lms), branch `feat/lms-build`. Historical CI run 43960234987 (023eae73d9b1d69dc49ed487c6f23780f19e21f5) passed the foundation and localization checks with MySQL and Redis/Horizon. Local bootstrap uses SQLite. The token preview is opt-in in local or staging environments.
 
 The legacy hostname and read-only access are unconfirmed. Staging and production deployment, migration, backup and rollback evidence are pending. Use the migration plan and obtain recorded approval before cutover. The current scope is review and repair of already implemented tasks. Use the Current section and closure audit in agents/PROGRESS.md; do not infer completeness from this historical summary.
 

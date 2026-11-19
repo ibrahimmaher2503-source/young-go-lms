@@ -47,3 +47,58 @@ The owner accepted P8 as it stands, with the defects listed in `docs/reviews/G7_
 ## PO decision 2026-11-19: P9 design-only defects accepted
 
 The owner accepted the remaining design-only defects of P9 (re-review `G7_P9_REREVIEW_2026-11-19.md`: mean 4.18, none at 4.5). Functional defects X1-X5 and D1 were fixed (commit `beebd04`). Open and accepted as backlog: D2, C1, H1, X6, X7, W1b, P1, R2 (partial). G7 for P9 is closed as "accepted with known defects". T-P9-MG and T-P8-MG still need the owner-fact items (see HANDOFF_NEXT_PROMPT.md) before they can be marked done.
+
+## 2026-11-19 continuity check at `85ca87c`
+
+Independent PRD audit by `p8p9_gate_audit` (Sol): **CHANGES REQUIRED**
+for both milestones under ORCHESTRATOR §8 item 3 and the phase specs.
+
+| Criterion | P8 | P9 |
+|---|---|---|
+| Task closure and independent evidence | T-P8-01..13 remain in review. | T-P9-01..11 remain in review. |
+| G7 | Owner accepted with recorded design defects. | Owner accepted with recorded design defects. |
+| Demo | The scratch demo browser on `4bbdcc7` verified fake card failure, retry and paid confirmation on order 6. The script covers bundle and plan entry, refund access, commission and settlements. The full walkthrough is pending. | Script available. Independent demo on reset data, including the approved PDF/key-term fixture, remains open. |
+| Checklist | §10 remains open. Live items may be marked pending under the P8 acceptance criteria. B-07 (real Paymob), O-007 (Egyptian seller/tax) and O-023 (ETA applicability) remain live-release blockers. | §11 remains open. Platform overview, student progress and content reports are missing. Required notification wiring remains open in the matrix. |
+| Performance | Course detail and checkout meet the LCP/CLS budgets after the Feature suite finished. Course detail exceeded LCP under concurrent test load. See the [lab performance report](PERF_BUDGET_P8_2026-11-19.md). | Full performance evidence for applicable public and learner pages remains open. |
+| Continuity | Recorded in project state and handoff. | Recorded in project state and handoff. |
+
+The current code has the disabled-Saudi webhook guard, individual-course cohort
+holds, public bundle and plan entries, the learner subscription page, and
+bundle/subscription access revocation for eligible refunds. Refunded and voided
+gateway callbacks still flag for review. The approved O-025 policy keeps existing
+defaults and protects financial records. The learning-record lifecycle of
+account active plus two years remains unimplemented.
+
+The owner confirmed the requested [release facts](../07_DECISION_REGISTER.md)
+are unavailable. P10 remains blocked at T-P10-01. The authoritative legacy
+dataset and verified source identity are needed before work can advance along
+the P10 dependency chain.
+
+### Regression and local coverage
+
+- Vite production build: exit 0, including contrast for 34 token pairs.
+  Translation, RTL and brand token commands exited 0.
+- Per-folder Windows feature run plus root Feature files: 2214 passed,
+  12 existing TODOs, 4 skipped and 0 failures in the final folder results.
+  Settings was rerun after finalizing its new Orders assertions. Arch and
+  Invariants passed separately (17 tests, 107 assertions). Commands used
+  `php -d memory_limit=2G vendor/bin/pest <path>`. A separate Manual Payment
+  Proof run with qpdf 12.4.2 available passed 52 tests with one skip.
+- Telescope: the production-style `composer install --no-dev` bootstrap
+  reproduced a missing base provider class before the fix. Package discovery
+  and production-mode bootstrap then passed with the guard in `4bbdcc7`.
+  The Windows scratch install bypassed POSIX extension checks for Horizon.
+  The 11 focused Telescope privacy tests passed with dev dependencies.
+- The local fake card walkthrough exercised a seeded checkout order. Receipt
+  acceptance here covers browser fail, retry and paid confirmation. The payment
+  features, cohort fixtures and payout views use synthetic test data.
+- Final focused checks: mixed bundle coupon and cohort A8/A9, 48 passed
+  (273 assertions, two existing TODOs); finance payout views and StatementPdf,
+  61 passed (335); full Settings with new Orders list and read-only details,
+  51 passed (366, two existing TODOs). Statement PDF checks cover Blade output
+  and data. A Chromium-generated PDF remains a separate check.
+- Restored Watermark browser regressions: 16 passed (124 assertions), including
+  playback, masking and actual fullscreen in both locales and themes. Full
+  T-P4-07 A3 still needs periodic motion and explicit T2 render evidence.
+- Sol independent test writers and code review were used in this Codex session.
+  The requested Haiku model is unavailable here.

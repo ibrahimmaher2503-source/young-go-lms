@@ -1,7 +1,17 @@
 # Young Go LMS --- PROJECT STATE
 
-**Updated:** 2026-11-17 (pack v3.2)\
-**Stage:** P0/P1 closure review continues. The latest P1 verification and open items are recorded in [milestone evidence](docs/evidence/p1-milestone/README.md#closure-follow-up-2026-11-17). See [the task board](agents/PROGRESS.md) for all task statuses.
+**Updated:** 2026-11-19 (pack v3.2)\
+**Stage:** P8/P9 milestone verification on `feat/lms-build` in the single workspace required by D-029. See [the task board](agents/PROGRESS.md) for statuses.
+
+The owner accepted P8 and P9 G7 with recorded design defects. Functional milestone
+criteria and independent evidence are tracked in the [gate readiness record](docs/reviews/GATE_READINESS_P8_P9.md).
+The post-fix catalog passes the measured lab LCP and CLS budget. See the
+[performance report](docs/reviews/PERF_BUDGET_P8_2026-11-19.md) for page results and limits.
+
+P10 candidate inventory is prepared. The owner confirmed the authoritative
+legacy source, database and media are unavailable, along with the other release
+facts listed in the [decision register](docs/07_DECISION_REGISTER.md#d-decisions-approved-2026-11-18-po).
+The migration remains blocked at T-P10-01.
 
 The [P0 continuity record](docs/evidence/p0-closure/README.md#2026-11-18-clean-clone-recheck) identifies the locally verified revision, demo results and open release inputs.
 

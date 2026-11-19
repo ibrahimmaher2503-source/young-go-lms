@@ -86,3 +86,25 @@ Method: same as above (Playwright Chromium, 390x844, DPR 3, mobile UA, CDP 150 m
 | /courses | transfer per page | about 1.0 MB (font 845 KB) | about 350 KB, of which fonts 174 KB (Latin 29 KB + Arabic 146 KB; the Arabic subset is also fetched on EN pages because the language switcher shows Arabic text) | info |
 
 Not re-measured: course detail and checkout LCP (changes there are the hero `fetchpriority` and the summary thumbnail eager/priority), INP and JS (unchanged, 8.4 KB gzip). Catalog queries: the five facet queries are skipped on a warm cache; the per-request count was not re-recorded. Note: a first run of this measurement used a router that did not serve static files (fonts returned the 404 page) and gave meaningless numbers; it was discarded and redone with Laravel's `server.php` router.
+
+## Course detail and order remeasurement (2026-11-19)
+
+Revision `4bbdcc7`, Playwright 1.65.1 Chromium. Same 390 × 844 mobile
+viewport, DPR 3, mobile UA, 150 ms RTT, 1.6 Mbps down, 750 Kbps up, CPU
+4× and four cold browser loads per page. The Windows PHP server used OPcache
+and separate seeded SQLite databases for the two runs. Checkout was signed in as
+the demo learner Laila. Both measured responses were 200 and the priority
+images decoded. CLS uses the maximum session window and excludes recent input.
+
+| Run | Page | LCP samples (ms) | Median LCP | Median CLS | Lab budget |
+|---|---|---|---|---|---|
+| With concurrent Pest workers | `/courses/introduction-to-acting` (EN) | 2928, 1796, 2552, 3200 | 2740 ms | 0 | LCP exceeds budget |
+| With concurrent Pest workers | `/checkout/orders/6` (AR) | 1940, 1840, 1632, 1728 | 1784 ms | 0.00015 | Within LCP/CLS budgets |
+| After the Feature workers finished | `/courses/introduction-to-acting` (EN) | 1724, 1696, 1536, 1500 | 1616 ms | 0 | Within LCP/CLS budgets |
+| After the Feature workers finished | `/checkout/orders/6` (AR) | 1264, 1284, 1384, 1528 | 1334 ms | 0.00015 | Within LCP/CLS budgets |
+
+The course hero remained the LCP element. Course detail TTFB reached 1445 ms
+under concurrent test load and 464 ms in the second run. These two sets measure
+local lab behavior with demo covers. Production capacity and field INP remain
+unverified. The reports `remeasured.json` and `quiet.json` are in the local
+performance scratch directory. INP and JS were outside this remeasurement.

@@ -10,7 +10,7 @@ Every step carries a status tag:
 - **[PARTIAL]** the screen or action exists, but part of the expected behaviour is missing or depends on an open owner decision. The step says what to check and what to skip.
 - **[GAP]** cannot be shown yet. Do not improvise; record it as a gap in the checklist at the end.
 
-Known gaps come from `agents/PROGRESS.md` (P8 and P9 notes) and `docs/reviews/GATE_READINESS_P8_P9.md`. Nothing in this script describes behaviour that is not in the code or those notes. Where the expected result is taken from code rather than from a screen I have seen, the step says "verify on first run".
+Known gaps and demo receipts are tracked in `docs/reviews/GATE_READINESS_P8_P9.md`. Treat expected results as instructions to verify on the demo dataset.
 
 ---
 
@@ -123,29 +123,27 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 6. Sign back in as Omar. Open `/my/payments`. Expected: the order is **paid**, and the course is available: `acting-101` now shows **Continue learning** on its course page.
 7. Reject path (optional): submit a second proof on another order and reject it. Expected: the order returns to pending, with the rejection reason visible to Omar.
 
-**Expected side effects (verify):** coupon redemption is recorded, access is granted for `acting-101` through `GrantOrderEntitlements`, and an instructor ledger entry is created with amount 0 (see step 9).
+**Expected side effects (verify):** coupon redemption is recorded, access is granted for `acting-101` through `GrantOrderEntitlements`, and the eligible ledger entry uses the applicable commission rule (see step 9).
 
 **AR:** the proof form labels, the reference hint and the approval buttons in Arabic.
 
 ---
 
-## 4. Fake gateway payment (no Paymob) [GAP for the full flow]
+## 4. Local fake gateway payment [SHOW]
 
 **Role:** Laila (learner).
-**URL:** `/checkout/course/{stage-workshop id}`, then the order page.
+**URL:** her pending demo order, then `/fake-gateway/{reference}`.
 
-1. As Laila, open checkout for `stage-workshop` (a hybrid course with an open cohort). Pick **card** or **wallet** on the order page and submit. Expected: the server creates a fake checkout session and redirects to the local fake gateway page `/fake-gateway/{attempt}` (local environment only) with **Pay** and **Fail payment** buttons.
-1. As Laila, open checkout for `stage-workshop` (a hybrid course with an open cohort). Pick **card** or **wallet** on the order page and submit. Expected: the server creates a fake checkout session and redirects to a fake gateway URL on `fake-gateway.test`. The page does not exist in the app.
-3. Press **Pay**. A signed fake callback goes through the normal payment webhook path; Laila lands on the checkout return page with the order paid and the course open. **Fail payment** leaves the order pending so she can pay again.
-3. The app has no fake-gateway payment page, and the callback route `/webhooks/paymob` only accepts signed POST requests. The PO cannot complete this step from the browser.
-**Status: [SHOW] (local demo).** The fake gateway page exists in local environments only (404 elsewhere). Owner gap B-07 covers real Paymob. Do not treat the manual proof path (step 3) as a substitute for the card path.
-**Status: [GAP].** Record: "fake gateway redirect leads to an unreachable host; no in-app fake payment screen; completion needs a signed test callback (developer action)." Owner gap B-07 covers real Paymob. Do not treat the manual proof path (step 3) as a substitute for the card path.
+1. Run locally with `PAYMENTS_GATEWAY=fake` and `PAYMENTS_LIVE_ENABLED=false`. As Laila, open her pending order or start checkout for an eligible paid course.
+2. Select **card** or **wallet**, accept the terms and submit. Expect the local fake gateway page.
+3. Choose **Fail payment**. Expect a return to the order with an attempt failure and an option to retry.
+4. Retry and choose **Pay**. The fake callback follows the normal fulfillment path. Expect a paid order and access to its course.
 
-**What you can still check:** the card and wallet buttons appear (config `payments.methods`), and the gateway step never charges anything in local (the fake gateway refuses outside `local`/`testing`).
+Verify on first run. B-07 remains open for real Paymob.
 
 ---
 
-## 5. Bundle purchase [PARTIAL]
+## 5. Bundle purchase [SHOW]
 
 **Role:** Omar (buyer), finance (approval).
 **URL:** `/checkout/bundle/{bundle id}`; the bundle id is in `/admin/bundles` (admin). The seeded bundle is **Acting and Stage Bundle** (`acting-101` + `stage-workshop`).
@@ -156,7 +154,7 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 3. Choose manual transfer, submit a placeholder proof (as in step 3), and have finance approve it.
 4. Expected: the order is paid. Access is granted for both courses. `acting-101` is already held by Omar from step 3, so the allocation is recorded as **skipped (already held)** and not granted twice (verify the label on first run).
 
-**Status: [PARTIAL].** The bundle has no catalog entry page (T-P8-12 notes "bundle entry page missing"). The PO must type the URL. Card and wallet payment for bundles is blocked by step 4.
+The bundle also has a public entry at `/bundles/{slug}`. Verify the purchase from that entry on first run.
 
 ---
 
@@ -168,11 +166,11 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 **Steps**
 1. As admin, open `/admin/subscription-plans`. Expected: the monthly demo plan with its two subscription courses (`creative-sub` and `voice-dubbing`).
 2. Open `/admin/subscriptions`. Expected: Nour's active subscription from the paid plan order (`demo-order-005`).
-3. **Purchase:** there is no checkout entry for plans. The checkout product route (`/checkout/{type}/{id}`) accepts only `course` and `bundle`. Record: "plan purchase is not offered to learners yet (T-P8-08 notes; no learner subscription page)". Show the seeded order instead.
-4. **Renewal:** renewals reach the learner at `/checkout/orders/{order}` through the reminder link only. Run `php artisan subscriptions:process` (dry run on the demo). Expected: a renewal order is created for the next period when the period ends. The seed does not age the period, so this shows the code path, not a live renewal. Verify on first run.
-5. **Expiry:** run `php artisan entitlements:expire` and `php artisan subscriptions:process` with the demo subscription's period in the past (set in the database by the developer, not by the PO). Expected: the subscription moves to expired and Nour's plan access ends.
+3. **Purchase:** Open `/plans` as an eligible learner and follow the plan CTA to checkout. Pay through the local fake or manual path.
+4. **Renewal:** Sign in as Nour, open `/my/subscription` and use the manual renewal action when available. Expect a pending renewal order. Verify the next period after payment.
+5. **Expiry:** On a dedicated scratch fixture with an elapsed period, run `php artisan entitlements:expire` and `php artisan subscriptions:process`. Expect the subscription to expire and plan access to end.
 
-**Status: [PARTIAL].** Known gaps (PROGRESS T-P8-08): no first-purchase entry for plans, no learner subscription page, and **a refund does not revoke subscription access**. Do not show refund-revokes-access as working.
+Verify the purchase and manual renewal on first run. Expiry requires an elapsed-period fixture.
 
 ---
 
@@ -193,7 +191,7 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 **Status: [PARTIAL].** Caveats:
 - **Learners cannot request refunds.** Requests are staff-only (`ListRefunds` header action). Record it as a gap if the owner expects a learner request.
 - **PDF output** may return 503 when headless Chromium is missing (the statement PDF in T-P8-10 says so; the receipt PDF may behave the same). Record the status code and the reason.
-- **Refund does not revoke bundle or subscription access** (gap in GATE_READINESS, item 4).
+- For an eligible full refund with access revocation, verify that bundle entitlements and funded subscription periods end as specified.
 - Refund reversal of ledger entries runs on `RefundExecuted` (step 9).
 
 **AR:** the refund statuses, the receipt headings and the credit note label in Arabic.
@@ -220,14 +218,14 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 **URL:** `/finance/commission-rules`, `/finance/instructor-ledger`, `/instructor/my-earnings` (Sara).
 
 **Steps**
-1. As finance, open `/finance/commission-rules`. Expected: a rule per course (or none). **All rates are zero** until the owner sets them (O-008 to O-011 open). Note this.
-2. Open `/finance/instructor-ledger`. Expected: one entry per paid line (from steps 3 and 5), status **accrued**, amount **0**, with the rule source shown as the config default.
+1. As finance, open `/finance/commission-rules`. Expected: a rule per course (or none). O-008 through O-011 define the approved default splits and accounting base. Verify the effective rule for the selected course and order.
+2. Open `/finance/instructor-ledger`. Expected: one entry per paid line (from steps 3 and 5), status **accrued**, with the applicable rule source and recorded amount.
 3. Try to add a rule as **admin**. Expected: refused or not shown (admin cannot add rules; `settlement.manage` is finance only).
 4. Add a rule as finance: a course, an effective date, a percentage. Expected: the rule is saved. Rules are immutable; to change one, end it (`effective_to`) and add a new one.
 5. Pay one more demo order (or re-run `php artisan ledger:backfill`, which is idempotent). Expected: the new entry uses the new rule. Earlier entries do not change.
 6. As Sara, open `/instructor/my-earnings`. Expected: only her own lines. No other instructor's lines and no learner names.
 
-**Status: [PARTIAL].** Rates are not owner-approved, so do not present the amounts as real. The independent-instructor split for co-instructors is open.
+**Status: [PARTIAL].** Use demo amounts. Live VAT treatment depends on the confirmed seller and tax details.
 
 ---
 
@@ -240,12 +238,12 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 1. Generate statements for last month: `php artisan statements:generate YYYY-MM` (or use the finance page). Expected: one statement per instructor and currency for that month, with a frozen snapshot.
 2. As finance, open `/finance/instructor-statements`. Expected: statements listed with balance forward, net, settled and closing.
 3. Create a settlement batch from **accrued** entries (list header action on `/finance/settlements` or the ledger bulk action). Expected: entries move to **pending**.
-4. Approve the batch. Expected: status **approved**. Note there is **no four-eyes rule** (O-012 open): one finance user creates and approves.
+4. Approve the batch. Expected: status **approved**. Use a second authorized approver when four-eyes applies. O-012 gives super admins an exception.
 5. Record a payout for one instructor line (method, reference, date). Expected: entries become **paid**, and the batch becomes **paid** when all lines are paid.
 6. Check the negative and no-profile case. If an instructor has no payout profile (YG-GAP-INS-003), the line stays **accrued** and appears under carried-forward. Expected behaviour per the T-P8-10 notes; verify on first run.
 7. As Sara, open `/instructor/my-statements` and download the PDF `/my/statements/{id}/pdf`. Expected: her statement only. Another instructor's statement id returns 404.
 
-**Status: [PARTIAL].** A settlement is a record only. **The app does not move money.** Approval rules and frequency are open (O-012). PDF output may return 503 without headless Chromium.
+**Status: [PARTIAL].** A settlement is a record only. **The app does not move money.** O-012 sets monthly settlement and configurable minimum payouts of 500 EGP and 100 SAR. PDF output may return 503 without headless Chromium.
 
 ---
 
@@ -374,7 +372,7 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 6. **Anonymization (run last, on Laila only).** As Laila, submit a **deletion** request. As admin, approve and complete it. Expected: the account is anonymized **in place**. Financial, audit and certificate records are kept. Verify on first run which fields are blanked.
 7. After this step, run `php artisan demo:reset` to restore the demo data.
 
-**Status: [PARTIAL].** Retention periods are open (O-025, conservative defaults). Financial history links (`instructor_id`, `student_id`) are retained and not listed in exports yet (T-P9-08 follow-up). Anonymization does not delete rows.
+**Status: [PARTIAL].** O-025 approves keeping the configured defaults, with financial and learning-record retention rules. The learning-record lifecycle still needs verification. Financial history links (`instructor_id`, `student_id`) are retained and not listed in exports yet (T-P9-08 follow-up). Anonymization does not delete rows.
 
 **AR:** the request types and the status labels in Arabic.
 
@@ -410,7 +408,7 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 1. As admin, open `/admin/settings` (the settings hub). Expected: links to general settings, payment payee, retention policies, notification templates, marketing tags and the audit log.
 2. Open general settings. Expected: the form loads with the demo values. Change nothing.
 3. Open payment payee. Expected: the manual transfer payee shown on the checkout page (step 3). Do not enter real bank details. Use the demo values only.
-4. Open retention policies. Expected: the configured periods, marked as conservative defaults (O-025 open).
+4. Open retention policies. Expected: the configured periods, alongside the O-025 policy in the decision register.
 5. **Sidebar parity (admin).** The sidebar groups must be, in order: **Courses, Site, Sales, Finance, People, Inbox, Reports, AI, Settings, More**. Expected: every page in `docs/LEGACY_PARITY.md` for admin appears in one of these groups. Anything not in the catalog is under **More**, so nothing is dropped.
 6. **Sidebar parity (finance).** The finance sidebar shows only the classes the finance panel registers (`/finance` panel: dashboard, payment reconciliation, reports, and the finance resources such as coupons, bundles, plans, subscriptions, manual payments, refunds, payout profiles, commission rules, ledger, statements and settlements).
 7. **Sidebar parity (instructor).** The instructor sidebar shows only: dashboard, reports, AI pages (test console, insights, availability), instructor agreement, payout profile, courses, library, submission and essay review, help requests, announcements, my earnings, my statements.
@@ -431,13 +429,13 @@ Fill in the **Pass / Fail** column and the notes. Use **N/A** only when the step
 | 1 | Catalog filters and course CTA | Guest, Omar | | |
 | 2 | Checkout with coupon | Omar | | |
 | 3 | Manual proof upload and finance approval | Omar, finance | | |
-| 4 | Fake gateway payment | Laila | GAP | Redirect to unreachable host; no in-app completion |
-| 5 | Bundle purchase | Omar, finance | | Partial: no bundle entry page |
-| 6 | Subscription plan, renewal, expiry | Admin, Nour, finance | | Partial: no plan purchase entry; refund does not revoke access |
+| 4 | Fake gateway payment | Laila | | Local fake gateway; verify fail and retry |
+| 5 | Bundle purchase | Omar, finance | | Public bundle entry |
+| 6 | Subscription plan, renewal, expiry | Admin, Nour, finance | | Expiry needs an elapsed-period fixture |
 | 7 | Refund request, approval, receipts, credit note | Finance, admin, Omar | | Partial: learner cannot request; PDF may 503 |
 | 8 | Payment reconciliation | Finance | | Partial: Paymob unverified (B-07) |
-| 9 | Commission rules and instructor ledger | Finance, admin, Sara | | Partial: all rates zero (O-008..011) |
-| 10 | Statements and settlement batch | Finance, Sara | | Partial: no money moves; no four-eyes (O-012) |
+| 9 | Commission rules and instructor ledger | Finance, admin, Sara | | Verify the effective rule and accounting base |
+| 10 | Statements and settlement batch | Finance, Sara | | Verify threshold and second approval (O-012) |
 | 11 | Reports and CSV export | Admin, finance, Sara | | |
 | 12 | Role dashboards | Admin, finance, Sara | | KPIs cached 60 s |
 | 13 | Instructor application and agreement | Laila, admin, Karim | | Agreement wording not final (D-026) |
@@ -468,9 +466,8 @@ php artisan entitlements:expire
 
 ## Appendix: open owner decisions that affect the demo
 
-- O-008 to O-011: commission rates (all zero) and the base of the calculation.
-- O-012: settlement approval (no four-eyes rule).
-- O-025: retention periods.
+- O-007: legal seller, tax registration and VAT information.
+- O-023: accountant confirmation of ETA applicability. The adapter stays disabled.
 - O-013 and T-P12-01: Saudi market (disabled).
 - O-021: phone reminder provider (fake channel only).
 - O-027 and YG-GAP-PRV-004: consent wording.

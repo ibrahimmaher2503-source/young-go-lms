@@ -337,6 +337,15 @@ accounting confirmation before go-live. Rows in section C stay for traceability 
 O-019 certificate legal issuer wording; O-022 dates/budget; O-006 Paymob credentials;
 O-013 Saudi legal entity.
 
+**2026-11-19 owner follow-up.** The owner said they cannot provide the requested
+inputs at present. The legacy hostname/DNS and authoritative read-only source,
+database and storage (O-001/O-003), Paymob credentials and Egyptian seller/tax/VAT
+details (O-006/O-007), Saudi entity (O-013), OpenAI access, region and terms
+(O-014), certificate issuer wording (O-019), dates and budget (O-022), and the
+accountant's ETA determination (O-023) remain unavailable. Keep the affected
+activation and migration work pending. The approved ETA-off default and the
+O-025 retention policy above still apply.
+
 ## E. Decision change protocol
 
 When an open item is resolved, update this file with date, exact owner
