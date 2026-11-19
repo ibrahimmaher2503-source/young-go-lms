@@ -15,7 +15,7 @@ use RuntimeException;
 
 /**
  * Holds one seat for an unpaid order line (checkout). The cohort row is locked while seats and live holds are counted, so
- * two buyers cannot take the last seat; the loser gets CohortFullException. Idempotent per order line: asking again for the
+ * two buyers cannot take the last seat; the loser gets CohortFullException. Idempotent per order line and cohort: asking again for the
  * same line renews its hold (a hold that expired is taken again only if there is still room). A learner who already has a
  * seat needs no hold and gets null. The hold lasts `commerce.seat_hold_minutes`. This action never seats anyone.
  */
@@ -34,7 +34,8 @@ final class HoldCohortSeat
                 return null;
             }
 
-            $hold = CohortSeatHold::query()->where('order_item_id', $orderItemId)->lockForUpdate()->first();
+            $hold = CohortSeatHold::query()->where('order_item_id', $orderItemId)
+                ->where('cohort_id', $locked->getKey())->lockForUpdate()->first();
             if ($hold instanceof CohortSeatHold && $hold->status === CohortSeatHold::CONVERTED) {
                 return $hold;
             }

@@ -15,7 +15,7 @@
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div class="min-w-0 space-y-4">
             <x-ui.card :title="__('checkout.learner_title')" data-checkout-learner>
-                <form method="post" action="{{ route('checkout.start') }}" class="space-y-4" novalidate>
+                <form method="post" action="{{ route('checkout.start') }}" class="space-y-4" novalidate data-checkout-product>
                     @csrf
                     <input type="hidden" name="type" value="{{ $type }}">
                     <input type="hidden" name="product_id" value="{{ $id }}">
@@ -33,8 +33,33 @@
                         <p>{{ __('checkout.learner_self', ['name' => $nameOf($learners->first())]) }}</p>
                     @endif
 
+                    @foreach($learners as $learner)
+                        @if(($bundleCohorts[$learner->id] ?? []) !== [])
+                            <fieldset class="space-y-3" data-cohort-learner="{{ $learner->id }}" @disabled($selected !== $learner->id) @if($selected !== $learner->id) hidden @endif>
+                                <legend class="mb-2 font-semibold">{{ __('checkout.bundle_cohorts') }}</legend>
+                                @foreach($bundleCohorts[$learner->id] as $courseId => $choice)
+                                    @php
+                                        $selectId = 'cohort-'.$learner->id.'-'.$courseId;
+                                        $error = $errors->first('cohort_selections.'.$courseId);
+                                    @endphp
+                                    <x-ui.form-field :for="$selectId" :label="$choice['course']->title" :error="$error">
+                                        <x-ui.select :id="$selectId" name="cohort_selections[{{ $courseId }}]" :invalid="$error !== ''" required>
+                                            <option value="">{{ __('checkout.bundle_cohort_placeholder') }}</option>
+                                            @foreach($choice['cohorts'] as $cohort)
+                                                @php($full = $cohort->isFull($learner))
+                                                <option value="{{ $cohort->id }}" @disabled($full) @selected($selected === $learner->id && (string) old('cohort_selections.'.$courseId) === (string) $cohort->id)>{{ $cohort->localizedName() }}@if($cohort->starts_on) · {{ \App\Domain\Shared\Time\LocalizedDate::format($cohort->starts_on, $market, app()->getLocale(), 'd MMM yyyy') }}@endif @if($full) · {{ __('checkout.bundle_cohort_full') }}@endif</option>
+                                            @endforeach
+                                        </x-ui.select>
+                                    </x-ui.form-field>
+                                @endforeach
+                            </fieldset>
+                        @endif
+                    @endforeach
+
                     @if($allOwned)<x-ui.alert tone="info">{{ __($type === 'plan' ? 'checkout.all_subscribed' : 'checkout.all_enrolled') }}</x-ui.alert>@endif
                     @if($errors->has('order'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('order') }}</x-ui.alert>@endif
+                    @if($errors->has('cohort_selections'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('cohort_selections') }}</x-ui.alert>@endif
+                    @if($errors->has('cohort'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('cohort') }}</x-ui.alert>@endif
                     <div class="flex flex-wrap items-center gap-3">
                         <x-ui.button type="submit" size="lg" :disabled="$allOwned">{{ __('checkout.continue') }}</x-ui.button>
                         <x-ui.link :href="$back">{{ __('checkout.back') }}</x-ui.link>

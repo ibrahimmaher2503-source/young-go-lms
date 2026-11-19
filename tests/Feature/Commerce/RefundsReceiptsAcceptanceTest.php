@@ -290,7 +290,7 @@ it('the e-receipt adapter is the disabled null provider by default', function ()
     expect(config('e_receipts.driver'))->toBe('null')
         ->and(app(EReceiptProvider::class))->toBeInstanceOf(NullEReceiptProvider::class)
         ->and(app(EReceiptProvider::class)->isEnabled())->toBeFalse();
-})->group('T-P8-06', 'A3')->group('payments');
+})->group('T-P8-06', 'YG-GAP-PAY-005', 'A3')->group('payments');
 
 it('finance cannot submit an e-receipt while the adapter is disabled; the receipt stays not_submitted and nothing is audited', function (): void {
     $order = p806Paid(p806Order(p806Payer()));

@@ -10,6 +10,7 @@ use App\Domain\Cohorts\Actions\HoldCohortSeat;
 use App\Domain\Cohorts\Cohort;
 use App\Domain\Cohorts\CohortAvailability;
 use App\Domain\Cohorts\CohortFullException;
+use App\Domain\Cohorts\CohortMember;
 use App\Domain\Commerce\Bundle;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
@@ -26,6 +27,7 @@ use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -36,7 +38,7 @@ use RuntimeException;
  * The payer is the signed-in account; a parent may buy for a verified child (YG-GAP-FAM-005). Only active markets sell
  * (Saudi Arabia is off). The same payer and idempotency key return the same order; a different request under that key
  * is refused. A course that runs in cohorts holds a seat for its order line (HoldCohortSeat: locked, counted with the other live holds);
- * with no seat left the order is refused (`cohort_full`). Bundle and plan lines hold no seat. Courses, bundles (a bundle line stores its per-course allocation) and subscription plans (one period per line, T-P8-08) are sellable.
+ * with no seat left the order is refused (`cohort_full`). Bundle lines hold the buyer's selected cohorts and store per-course allocations.
  */
 final class CreateOrder
 {
@@ -140,6 +142,9 @@ final class CreateOrder
             if (! $line->type->isSellable()) {
                 $this->refuse('product_unavailable');
             }
+            if ($line->type !== ProductType::Bundle && $line->cohortSelections !== []) {
+                $this->refuse('bundle_cohort_invalid');
+            }
             $learner = $line->learner;
             $isSelf = $learner->getKey() === $payer->getKey();
             if (! $isSelf && ! GuardianAccess::parentCanAccessChild($payer, $learner)->allowed()) {
@@ -216,19 +221,47 @@ final class CreateOrder
         if ($candidates === []) {
             return;
         }
+        $isBundle = $item->product_type === ProductType::Bundle;
         foreach ($candidates as $cohortId) {
             try {
                 ($this->hold)(Cohort::query()->findOrFail($cohortId), $row['learner'], (int) $item->getKey());
-
-                return;
+                if (! $isBundle) {
+                    return;
+                }
             } catch (CohortFullException) {
-                continue;
+                if ($isBundle) {
+                    $this->refuse('cohort_full');
+                }
             }
         }
-        $this->refuse('cohort_full');
+        if (! $isBundle) {
+            $this->refuse('cohort_full');
+        }
     }
 
-    /** @return array{type: ProductType, product: Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>} */
+    /** @return array<int, array{course: Course, cohorts: Collection<int, Cohort>}> */
+    public function bundleCohorts(Bundle $bundle, User $learner): array
+    {
+        $bundle->loadMissing('items.course');
+        $choices = [];
+        foreach ($bundle->items as $item) {
+            $course = $item->course;
+            if (! $course instanceof Course || ! in_array($course->format, ['live', 'hybrid'], true)
+                || $this->entitlements->currentFor($learner, $course) !== null) {
+                continue;
+            }
+            $cohorts = CohortAvailability::enrollingFor($course->id);
+            if ($cohorts->isEmpty() || CohortMember::query()->where('learner_id', $learner->id)
+                ->where('status', CohortMember::SEATED)->whereIn('cohort_id', $course->cohorts()->select('id'))->exists()) {
+                continue;
+            }
+            $choices[$course->id] = ['course' => $course, 'cohorts' => $cohorts];
+        }
+
+        return $choices;
+    }
+
+    /** @return array{type: ProductType, product: Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>, cohorts: list<int>} */
     private function priceBundle(Market $market, OrderLine $line, User $learner): array
     {
         $bundle = Bundle::query()->with(['prices', 'items.course'])->find($line->productId);
@@ -248,9 +281,22 @@ final class CreateOrder
             $this->refuse('already_enrolled');
         }
 
+        $choices = $this->bundleCohorts($bundle, $learner);
+        if (array_diff_key($line->cohortSelections, $choices) !== [] || array_diff_key($choices, $line->cohortSelections) !== []) {
+            $this->refuse('bundle_cohort_invalid');
+        }
+        foreach ($choices as $courseId => $choice) {
+            if (! $choice['cohorts']->contains(static fn (Cohort $cohort): bool => $cohort->id === $line->cohortSelections[$courseId])) {
+                $this->refuse('bundle_cohort_invalid');
+            }
+        }
+        $cohortIds = array_values($line->cohortSelections);
+        sort($cohortIds);
+
         return [
             'type' => ProductType::Bundle, 'product' => $bundle, 'learner' => $learner, 'price' => $price->amount_minor,
             'allocations' => ($this->allocate)($bundle, $market, $price->amount_minor),
+            'cohorts' => $cohortIds,
         ];
     }
 
@@ -294,9 +340,15 @@ final class CreateOrder
     }
 
     /** @param  list<OrderLine>  $lines */
-    private function fingerprint(Market $market, array $lines): string
+    public function fingerprint(Market $market, array $lines): string
     {
-        $parts = array_map(static fn (OrderLine $l): string => $l->type->value.':'.$l->productId.':'.$l->learner->getKey(), $lines);
+        $parts = array_map(static function (OrderLine $line): string {
+            $part = $line->type->value.':'.$line->productId.':'.$line->learner->getKey();
+            $selections = $line->cohortSelections;
+            ksort($selections);
+
+            return $selections === [] ? $part : $part.'?'.http_build_query($selections);
+        }, $lines);
         sort($parts);
 
         return hash('sha256', $market->value.'|'.implode(',', $parts));

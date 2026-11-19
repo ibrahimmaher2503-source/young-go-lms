@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * T-P9-11: removes the demo dataset and nothing else. It starts from the registered roots (`demo_anchors`) and follows
@@ -58,6 +59,10 @@ final class ResetDemoData
 
         // Generated demo cover files leave with the courses (the rows go below; the files would otherwise pile up on every reset).
         $covers = DB::table('courses')->whereIn('id', $roots['courses'] ?? [])->pluck('cover_image')->filter()->all();
+        $demoPdfs = DB::table('lesson_curriculum_documents')->whereIn('id', $rows['lesson_curriculum_documents'] ?? [])
+            ->where('path', 'like', AttachDemoLessonPdf::DIRECTORY.'/%')->pluck('path')->all();
+        $demoVideos = DB::table('media_assets')->whereIn('id', $rows['media_assets'] ?? [])
+            ->where('path', 'like', 'media/demo/%')->pluck('path')->all();
 
         $removed = DB::transaction(function () use ($rows, $edges, $users): int {
             $removed = $this->entitlements->__invoke($users);
@@ -71,6 +76,9 @@ final class ResetDemoData
 
         foreach ($covers as $cover) {
             CourseMedia::deleteCover((string) $cover);
+        }
+        if ($demoPdfs !== [] || $demoVideos !== []) {
+            Storage::disk(Config::string('media.disk'))->delete([...$demoPdfs, ...$demoVideos]);
         }
 
         return $removed;

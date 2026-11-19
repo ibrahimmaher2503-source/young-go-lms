@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Commerce\Actions\ApplyCoupon;
+use App\Domain\Commerce\Actions\CreateOrder;
 use App\Domain\Commerce\Actions\RemoveCoupon;
 use App\Domain\Commerce\Actions\StartCheckout;
 use App\Domain\Commerce\Actions\StartCheckoutOrder;
@@ -46,7 +47,7 @@ final class CheckoutController
 {
     private const string MANUAL = 'manual';
 
-    public function product(Request $request, string $type, int $id, CheckoutOffers $offers, CheckoutLearners $learners, ActingLearner $acting, EntitlementService $access): View
+    public function product(Request $request, string $type, int $id, CheckoutOffers $offers, CheckoutLearners $learners, ActingLearner $acting, EntitlementService $access, CreateOrder $orders): View
     {
         $payer = $this->payer($request);
         $market = Market::Egypt;
@@ -55,11 +56,14 @@ final class CheckoutController
         $options = $learners($payer);
         $default = $acting->current();
         $owned = [];
+        $bundleCohorts = [];
         foreach ($options as $learner) {
             if ($product['course'] instanceof Course) {
                 $owned[$learner->getKey()] = $access->currentFor($learner, $product['course']) !== null;
             } elseif ($product['plan'] instanceof SubscriptionPlan) {
                 $owned[$learner->getKey()] = $offers->planCovered($product['plan']->getKey(), $learner);
+            } elseif ($product['bundle'] instanceof Bundle) {
+                $bundleCohorts[$learner->id] = $orders->bundleCohorts($product['bundle'], $learner);
             }
         }
 
@@ -67,6 +71,7 @@ final class CheckoutController
             'type' => $type, 'id' => $id, 'market' => $market, 'learners' => $options, 'owned' => $owned,
             'cover' => $product['course'] instanceof Course ? $this->coverUrl($product['course']) : null,
             'benefits' => $this->benefits($product),
+            'bundleCohorts' => $bundleCohorts,
             'selected' => (int) old('learner_id', $default instanceof User ? $default->getKey() : $payer->getKey()),
             'key' => 'co-'.bin2hex(random_bytes(12)),
         ]);
@@ -114,7 +119,12 @@ final class CheckoutController
             'type' => ['required', Rule::in([ProductType::Course->value, ProductType::Bundle->value, ProductType::Plan->value])],
             'product_id' => ['required', 'integer', 'min:1'],
             'learner_id' => ['required', 'integer', 'min:1'],
+            'cohort_selections' => ['sometimes', 'array'],
+            'cohort_selections.*' => ['required', 'integer', 'min:1'],
             'key' => ['required', 'string', 'regex:/^[A-Za-z0-9_\-:.]{8,64}$/'],
+        ], [
+            'cohort_selections.array' => __('commerce.bundle_cohort_invalid'),
+            'cohort_selections.*' => __('commerce.bundle_cohort_invalid'),
         ]);
 
         $learner = $learners($payer)->first(static fn (User $u): bool => $u->getKey() === (int) $data['learner_id']);
@@ -123,7 +133,8 @@ final class CheckoutController
         }
         $this->resolve((string) $data['type'], (int) $data['product_id'], $offers, Market::Egypt); // 404 when not sellable
 
-        $order = $start($payer, Market::Egypt, new OrderLine(ProductType::from((string) $data['type']), (int) $data['product_id'], $learner), (string) $data['key']);
+        $selections = array_map(static fn ($id): int => (int) $id, $data['cohort_selections'] ?? []);
+        $order = $start($payer, Market::Egypt, new OrderLine(ProductType::from((string) $data['type']), (int) $data['product_id'], $learner, $selections), (string) $data['key']);
 
         return redirect()->route('checkout.order', $order);
     }

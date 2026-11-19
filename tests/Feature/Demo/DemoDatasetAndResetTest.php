@@ -4,14 +4,27 @@
 
 declare(strict_types=1);
 
+use App\Domain\AI\Actions\AskLessonAssistant;
+use App\Domain\AI\Assistant\AssistantOutcome;
+use App\Domain\AI\Assistant\AssistantQuestion;
+use App\Domain\AI\Contracts\AiProviderInterface;
+use App\Domain\AI\Providers\FakeAiProvider;
+use App\Domain\Commerce\Bundle;
+use App\Domain\Commerce\Order;
+use App\Domain\Commerce\OrderStatus;
+use App\Domain\Commerce\PaymentAttempt;
+use App\Domain\Commerce\Queries\PublicBundles;
 use App\Domain\Demo\Actions\ResetDemoData;
 use App\Domain\Demo\DemoAnchors;
 use App\Domain\Demo\DemoRefused;
 use App\Domain\Entitlements\Actions\EnrollInFreeCourse;
+use App\Domain\Entitlements\EntitlementService;
+use App\Domain\Settings\PlatformFlag;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\LessonCurriculumDocument;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,12 +32,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Pennant\Feature;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->seed(RolePermissionSeeder::class);
     $this->withoutVite();
+    Storage::fake('public');
+    Storage::fake(config('media.disk'));
     app()->setLocale('en');
 });
 
@@ -225,3 +242,96 @@ it('keeps the seed audit rows after a reset by design', function (): void {
 
     expect(DB::table('activity_log')->count())->toBeGreaterThanOrEqual($audit);
 })->group('T-P9-11', 'A2');
+
+it('seeds a private approved lesson PDF with key terms and cleans it up on demo reset', function (): void {
+    Http::preventStrayRequests();
+    $disk = Storage::disk(config('media.disk'));
+    tp911Seed();
+    $document = LessonCurriculumDocument::query()->where('active', true)->sole();
+    expect($document->status)->toBe(LessonCurriculumDocument::STATUS_READY)
+        ->and($document->documentPages()->sole()->approved_text)->toContain('vanishing point')
+        ->and($document->keyTerms()->where('approved', true)->count())->toBeGreaterThanOrEqual(3);
+    $disk->assertExists($document->path);
+    expect($disk->get($document->path))->toStartWith('%PDF-');
+    expect($document->lesson->type)->toBe('video');
+    $videoPath = $document->lesson->media->path;
+    $disk->assertExists($videoPath);
+
+    Feature::for(null)->activate(PlatformFlag::AiAssistant->value);
+    $fake = (new FakeAiProvider)->respondWith([
+        'status' => 'answered', 'answer' => 'Parallel lines appear to meet on the horizon.',
+        'source_pages' => [1], 'support_quote' => 'A vanishing point is where parallel lines appear to meet on the horizon.',
+        'language' => 'en',
+    ]);
+    app()->instance(AiProviderInterface::class, $fake);
+    $adult = User::query()->where('email', 'learner.omar@demo.younggo.test')->sole();
+    $reply = app(AskLessonAssistant::class)($adult, $document->lesson, new AssistantQuestion('What is a vanishing point?', 'en'));
+    expect($reply->outcome)->toBe(AssistantOutcome::Answered)
+        ->and($reply->sourcePages)->toBe([1])
+        ->and($reply->quoteVerified)->toBeTrue();
+
+    $this->artisan('demo:reset', ['--remove-only' => true])->assertSuccessful();
+    $disk->assertMissing($document->path);
+    $disk->assertMissing($videoPath);
+    expect(LessonCurriculumDocument::query()->count())->toBe(0);
+})->group('T-P9-11', 'YG-GAP-OPS-003', 'ED-022', 'A2');
+
+it('rehearses the demo bundle checkout for a linked child with failed retry, order privacy and one fulfillment', function (string $locale): void {
+    Http::preventStrayRequests();
+    config(['payments.driver' => 'fake', 'payments.live_enabled' => false]);
+    tp911Seed();
+    $this->artisan('demo:reset')->assertSuccessful();
+
+    $payer = User::query()->where('email', 'parent@demo.younggo.test')->sole();
+    $child = User::query()->where('username', 'demo.adam')->sole();
+    $otherLearner = User::query()->where('email', 'learner.laila@demo.younggo.test')->sole();
+    $bundle = Bundle::query()->with('items.course')->sole();
+    $bundlePage = route('bundles.show', PublicBundles::keyFor($bundle, $locale));
+    $offer = route('checkout.product', ['type' => 'bundle', 'id' => $bundle->id]);
+    $stage = $bundle->items->sole(fn ($item): bool => $item->course->cohorts()->exists())->course;
+    $cohort = $stage->cohorts()->sole();
+    $purchase = [
+        'type' => 'bundle', 'product_id' => $bundle->id, 'learner_id' => $child->id, 'key' => 'demo-bundle-child-checkout',
+        'cohort_selections' => [$stage->id => $cohort->id],
+    ];
+    $access = app(EntitlementService::class);
+
+    $this->withSession(['locale' => $locale])->get($bundlePage)->assertOk();
+    $this->actingAs($payer)->get($offer)->assertOk();
+    $this->from($offer)->post(route('checkout.start'), array_replace($purchase, ['learner_id' => $otherLearner->id]))
+        ->assertSessionHasErrors('learner_id');
+    $start = $this->post(route('checkout.start'), $purchase)->assertRedirect();
+    $order = Order::query()->where('payer_id', $payer->id)->where('idempotency_key', $purchase['key'])->sole();
+    $orderUrl = route('checkout.order', $order);
+    $start->assertRedirect($orderUrl);
+    $this->post(route('checkout.start'), $purchase)->assertRedirect($orderUrl);
+    expect($order->items()->sole()->learner_id)->toBe($child->id);
+
+    foreach ($bundle->items as $item) {
+        expect($access->canAccessCourse($child, $item->course)->allowed)->toBeFalse();
+    }
+    $this->flushSession()->actingAs($otherLearner)->get($orderUrl)->assertNotFound();
+    $this->post(route('checkout.pay', $order), ['method' => 'card', 'terms' => '1'])->assertNotFound();
+
+    $this->flushSession()->withSession(['locale' => $locale])->actingAs($payer)
+        ->post(route('checkout.pay', $order), ['method' => 'card', 'terms' => '1'])->assertRedirect();
+    $attempt = PaymentAttempt::query()->where('order_id', $order->id)->sole();
+    $fakePage = route('fake-gateway.show', $attempt->reference);
+    $this->get($fakePage)->assertOk();
+    $this->post($fakePage, ['outcome' => 'fail'])->assertRedirect();
+    expect($order->refresh()->status)->toBe(OrderStatus::Pending);
+
+    $this->post(route('checkout.pay', $order), ['method' => 'card', 'terms' => '1'])->assertRedirect();
+    $retry = PaymentAttempt::query()->where('order_id', $order->id)->latest('sequence')->firstOrFail();
+    $retryPage = route('fake-gateway.complete', $retry->reference);
+    $this->post($retryPage, ['outcome' => 'pay'])->assertRedirect();
+    $this->post($retryPage, ['outcome' => 'pay'])->assertNotFound();
+    expect($order->refresh()->status)->toBe(OrderStatus::Paid)
+        ->and($order->items()->count())->toBe(1)
+        ->and($cohort->hasSeat($child))->toBeTrue();
+
+    foreach ($bundle->items as $item) {
+        expect($access->canAccessCourse($child, $item->course)->allowed)->toBeTrue()
+            ->and($access->canAccessCourse($payer, $item->course)->allowed)->toBeFalse();
+    }
+})->with(['ar', 'en'])->group('T-P9-11', 'T-P8-07', 'T-P8-12', 'A2', 'payments');

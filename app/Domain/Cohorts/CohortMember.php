@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $cohort_id
  * @property int $learner_id
+ * @property int|null $seat_order_item_id
  * @property string $status
  */
 final class CohortMember extends Model

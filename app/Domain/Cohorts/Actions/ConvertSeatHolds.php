@@ -36,7 +36,7 @@ final class ConvertSeatHolds
         return DB::transaction(function () use ($orderItemIds, $actor): int {
             $seated = 0;
             $holds = CohortSeatHold::query()->whereIn('order_item_id', $orderItemIds)->whereIn('status', [CohortSeatHold::HELD, CohortSeatHold::RELEASED])
-                ->orderBy('id')->lockForUpdate()->get();
+                ->orderBy('cohort_id')->orderBy('id')->lockForUpdate()->get();
             $actorId = $actor === null ? null : (int) $actor->getKey();
 
             foreach ($holds as $hold) {
@@ -58,7 +58,7 @@ final class ConvertSeatHolds
 
                 if ($member?->status !== CohortMember::SEATED) {
                     $member ??= new CohortMember(['cohort_id' => $cohort->getKey(), 'learner_id' => $hold->learner_id]);
-                    $member->fill(['status' => CohortMember::SEATED, 'seated_at' => now(), 'queued_at' => null, 'removed_at' => null])->save();
+                    $member->fill(['status' => CohortMember::SEATED, 'seated_at' => now(), 'seat_order_item_id' => $hold->order_item_id, 'queued_at' => null, 'removed_at' => null])->save();
                     $seated++;
                 }
                 $hold->forceFill(['status' => CohortSeatHold::CONVERTED, 'converted_at' => now(), 'release_reason' => null, 'released_at' => null])->save();
@@ -78,7 +78,7 @@ final class ConvertSeatHolds
         $member ??= new CohortMember(['cohort_id' => $cohort->getKey(), 'learner_id' => $hold->learner_id]);
         $member->fill([
             'status' => CohortMember::WAITLISTED, 'queued_at' => $first === null ? now() : Carbon::parse((string) $first)->subSecond(),
-            'seated_at' => null, 'removed_at' => null,
+            'seated_at' => null, 'removed_at' => null, 'seat_order_item_id' => $hold->order_item_id,
         ])->save();
     }
 

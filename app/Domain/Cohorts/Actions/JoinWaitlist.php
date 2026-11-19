@@ -34,7 +34,7 @@ final class JoinWaitlist
             }
 
             $member ??= new CohortMember(['cohort_id' => $locked->getKey(), 'learner_id' => $learner->getKey()]);
-            $member->fill(['status' => CohortMember::WAITLISTED, 'queued_at' => now(), 'seated_at' => null, 'removed_at' => null])->save();
+            $member->fill(['status' => CohortMember::WAITLISTED, 'queued_at' => now(), 'seated_at' => null, 'removed_at' => null, 'seat_order_item_id' => null])->save();
 
             if ($this->audit->record('cohort.waitlisted', $locked, null, null, ['learner_id' => $learner->getKey()]) === null) {
                 throw new RuntimeException('Unable to record cohort audit.');

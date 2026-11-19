@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Cohorts\Actions\ReleaseRefundedCohortSeats;
 use App\Domain\Commerce\Contracts\PaymentGateway;
 use App\Domain\Commerce\Events\RefundExecuted;
 use App\Domain\Commerce\Order;
@@ -43,6 +44,7 @@ final class ExecuteRefund
         private readonly RevokeEntitlementsForSource $revoke,
         private readonly IssueReceipt $receipts,
         private readonly EndSubscriptionForRefund $endSubscription,
+        private readonly ReleaseRefundedCohortSeats $releaseRefundedSeats,
     ) {}
 
     public function __invoke(User $actor, Refund $refund, ?string $externalReference = null): Refund
@@ -109,7 +111,11 @@ final class ExecuteRefund
             $fully = $this->executedSum($order) >= $order->total_minor;
             ($this->transition)($order, $fully ? OrderStatus::Refunded : OrderStatus::PartiallyRefunded, $actor);
 
-            $revoked = $revoke ? $this->revokeAccess($actor, $order, 'refund '.$locked->reference) : 0;
+            $revoked = 0;
+            if ($revoke) {
+                $revokeAccess = fn (): int => $this->revokeAccess($actor, $order, 'refund '.$locked->reference);
+                $revoked = $fully ? ($this->releaseRefundedSeats)($actor, $order, $revokeAccess) : $revokeAccess();
+            }
             $this->receipts->__invoke($order, $locked);
 
             $recorded = $this->audit->record('refund.executed', $locked, (int) $actor->getKey(), ['status' => RefundStatus::Approved->value], [

@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Domain\Instructors\Actions\AcceptInstructorAgreement;
-use App\Domain\Instructors\Actions\PublishInstructorAgreement;
-use App\Domain\Instructors\Models\InstructorAgreement;
-
 use App\Domain\AI\Help\Actions\RecordAssistantFeedback;
 use App\Domain\AI\Help\Actions\ReplyToHelpRequest;
 use App\Domain\Assessment\Actions\ConfigureQuiz;
@@ -39,6 +35,7 @@ use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
 use App\Domain\Curriculum\Actions\SetCurriculumStatus;
+use App\Domain\Demo\Actions\AttachDemoLessonPdf;
 use App\Domain\Demo\DemoAnchors;
 use App\Domain\Demo\DemoGuard;
 use App\Domain\Engagement\Actions\ApproveCourseReview;
@@ -47,7 +44,11 @@ use App\Domain\Entitlements\Actions\EnrollInFreeCourse;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\Actions\CreateChildAccount;
 use App\Domain\InstructorFinance\Actions\RecordOrderEarnings;
+use App\Domain\Instructors\Actions\AcceptInstructorAgreement;
+use App\Domain\Instructors\Actions\PublishInstructorAgreement;
 use App\Domain\Instructors\Actions\SaveInstructorProfile;
+use App\Domain\Instructors\Models\InstructorAgreement;
+use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Domain\Progress\Actions\RecordProgress;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Subscriptions\Actions\SavePlan;
@@ -69,6 +70,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * T-P9-11 (ED-022): deterministic bilingual demo dataset for local and staging demos. Run only by `demo:seed` and
@@ -119,6 +122,7 @@ final class DemoSeeder extends Seeder
             $this->commerce();
             $this->learning();
             $this->engagement();
+            app(AttachDemoLessonPdf::class)($this->admin, Lesson::query()->findOrFail($this->lessonItems['drawing-basics'][0]->itemable_id));
         });
     }
 
@@ -173,6 +177,7 @@ final class DemoSeeder extends Seeder
         $this->indie = $this->person('instructor.indie', 'كريم المستقل', 'Karim (independent instructor)', ['instructor_independent']);
         $this->learners['nour'] = $this->person('learner.nour', 'نور', 'Nour Demo', ['student']);
         $this->learners['omar'] = $this->person('learner.omar', 'عمر', 'Omar Demo', ['student'], 'en');
+        $this->learners['omar']->forceFill(['birth_year' => now()->year - 28, 'birth_month' => 1])->save();
         $this->learners['laila'] = $this->person('learner.laila', 'ليلى', 'Layla Demo', ['student']);
         $this->learners['parent'] = $this->person('parent', 'منى (ولي أمر)', 'Mona (parent)', ['parent']);
 
@@ -319,12 +324,22 @@ final class DemoSeeder extends Seeder
 
         $items = [];
         foreach ([1, 2, 3] as $n) {
-            $items[] = $lessons->add($instructor, $section, [
+            $recorded = $key === 'drawing-basics' && $n === 1;
+            $item = $lessons->add($instructor, $section, [
                 'title' => ['ar' => 'الدرس '.$n, 'en' => 'Lesson '.$n],
-                'type' => 'text',
+                'type' => $recorded ? 'video' : 'text',
                 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Demo lesson '.$n.' - '.$course->getTranslation('title', 'en')]]]]],
                 'duration_seconds' => 300,
             ]);
+            if ($recorded) {
+                $path = 'media/demo/'.Str::uuid().'.mp4';
+                $sample = file_get_contents(database_path('seeders/fixtures/demo-playback.mp4'));
+                if ($sample === false || ! Storage::disk(Config::string('media.disk'))->put($path, $sample)) {
+                    throw new RuntimeException('Unable to store the demo playback fixture.');
+                }
+                app(AttachLessonMedia::class)($instructor, Lesson::query()->findOrFail($item->itemable_id), ['provider' => 'signed_storage', 'path' => $path]);
+            }
+            $items[] = $item;
         }
         $publish = array_map(static fn (CurriculumItem $item): int => (int) $item->getKey(), $items);
 
@@ -423,7 +438,9 @@ final class DemoSeeder extends Seeder
         $this->paid('demo-order-001', $nour, [new OrderLine(ProductType::Course, (int) $this->courses['acting-101']->getKey(), $nour)]);
         $this->paid('demo-order-002', $omar, [new OrderLine(ProductType::Course, (int) $this->courses['stage-workshop']->getKey(), $omar)], 'DEMO-WELCOME10');
         $this->paid('demo-order-003', $parent, [new OrderLine(ProductType::Course, (int) $this->courses['indie-comics']->getKey(), $this->learners['adam'])]);
-        $this->paid('demo-order-004', $laila, [new OrderLine(ProductType::Bundle, (int) $bundle->getKey(), $laila)]);
+        $stage = $this->courses['stage-workshop'];
+        $stageCohort = $stage->cohorts()->sole();
+        $this->paid('demo-order-004', $laila, [new OrderLine(ProductType::Bundle, $bundle->id, $laila, [$stage->id => $stageCohort->id])]);
         $this->paid('demo-order-005', $nour, [new OrderLine(ProductType::Plan, (int) $plan->getKey(), $nour)]);
 
         // Other states: waiting for payment, cancelled, failed.

@@ -16,6 +16,7 @@ return [
     'already_subscribed' => 'This subscription is already paid for the coming days. You can renew when it is close to ending.',
     'already_enrolled' => 'This learner already has access to this course.',
     'cohort_full' => 'This cohort is full, so we could not hold a seat. You can join the waitlist from the course page.',
+    'bundle_cohort_invalid' => 'Choose one available cohort for each listed bundle course.',
     'transition_invalid' => 'The order cannot move to that status.',
     'reason_invalid' => 'Enter a reason of 3 to 500 characters.',
     'order_closed' => 'A failed or cancelled order cannot be adjusted.',

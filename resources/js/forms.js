@@ -2,6 +2,17 @@
 const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const message = (key) => document.body.dataset[key] ?? '';
 
+document.addEventListener('change', (event) => {
+    const learner = event.target;
+    if (!learner.matches?.('form[data-checkout-product] select[name="learner_id"]')) return;
+
+    for (const fields of learner.form.querySelectorAll('[data-cohort-learner]')) {
+        const inactive = fields.dataset.cohortLearner !== learner.value;
+        fields.hidden = inactive;
+        fields.disabled = inactive;
+    }
+});
+
 function show(form, tone, text) {
     const box = form.querySelector('[data-form-status]');
     if (!box) return;
