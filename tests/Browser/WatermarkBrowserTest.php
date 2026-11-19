@@ -18,7 +18,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->seed(RolePermissionSeeder::class);
-    Storage::fake('local');
+    config(['media.disk' => 'watermark-browser']);
+    Storage::fake('watermark-browser');
 });
 
 function watermarkPlayer(string $locale): array
@@ -28,7 +29,7 @@ function watermarkPlayer(string $locale): array
     $course->instructors()->attach($instructor->id, ['role' => 'instructor', 'scope' => 'manage']);
     $section = app(ManageSections::class)->add($instructor, $course, ['title' => ['ar' => 'البداية', 'en' => 'Start']]);
     $section->update(['published' => true]);
-    Storage::disk('local')->put('media/clip.mp4', file_get_contents(base_path('tests/Fixtures/lesson-player.mp4')));
+    Storage::disk('watermark-browser')->put('media/clip.mp4', file_get_contents(base_path('tests/Fixtures/lesson-player.mp4')));
     $lesson = app(ManageLessons::class)->add($instructor, $section, ['title' => ['ar' => 'التعرف على الأدوات', 'en' => 'Know your tools'], 'type' => 'video']);
     app(AttachLessonMedia::class)($instructor, $lesson->itemable, ['provider' => 'signed_storage', 'path' => 'media/clip.mp4']);
     app(SetCurriculumStatus::class)($instructor, $course, [$lesson->id], 'published');
@@ -50,12 +51,12 @@ it('shows the masked watermark inside the player stage on desktop and phone', fu
     expect($page->script("() => { const mark = document.querySelector('[data-watermark]'); const stage = document.querySelector('[data-player-stage]'); const r = mark.getBoundingClientRect(); const s = stage.getBoundingClientRect(); return stage.contains(mark) && r.width > 0 && r.left >= s.left - 1 && r.right <= s.right + 1 && mark.dataset.spot !== undefined; }"))->toBeTrue()
         ->and($page->script("() => document.querySelector('[data-watermark]').textContent.includes('sa') && !document.querySelector('[data-watermark]').textContent.includes('sara.ahmed@example.com')"))->toBeTrue();
 
-    $directory = base_path('tests/Browser/screenshots/T-P4-07');
+    $directory = base_path('storage/app/review-media');
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: false, filename: "T-P4-07/watermark-{$locale}-{$width}");
-})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P4-07', 'A3');
+    $page->screenshot(fullPage: false, filename: "../../../storage/app/review-media/watermark-{$locale}-{$width}");
+})->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->group('browser', 'T-P4-07', 'A3', 'YG-GAP-VID-003');
 
 it('keeps the protected watermark above the video when the whole stage enters fullscreen', function (string $locale, int $width, int $height, string $theme): void {
     [$course, $lesson, $learner] = watermarkPlayer($locale);
@@ -68,16 +69,24 @@ it('keeps the protected watermark above the video when the whole stage enters fu
     if (! is_dir($path)) {
         mkdir($path, 0755, true);
     }
-    $page->refresh()->assertVisible('[data-watermark]')
-        ->screenshot(fullPage: false, filename: "../../../storage/app/review-media/player-{$locale}-{$theme}-{$width}")
-        ->click('[data-player-fullscreen]');
+    $page->refresh()->assertVisible('[data-watermark]')->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('async () => {
-        if (!document.fullscreenElement) {
-            await new Promise((resolve) => {
-                document.addEventListener("fullscreenchange", resolve, {once: true});
-                setTimeout(resolve, 1500);
-            });
-        }
+        const video = document.querySelector("[data-player-media]");
+        video.muted = true;
+        await video.play();
+        video.pause();
+        return video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0;
+    }'))->toBeTrue()
+        ->and($page->script('() => document.documentElement.dataset.theme'))->toBe($theme)
+        ->and($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue()
+        ->and($page->script('() => document.querySelector("[data-watermark]").textContent.trim()'))
+        ->toBe('ID '.str_pad((string) $learner->getKey(), 6, '0', STR_PAD_LEFT).' · sa********@ex*********');
+
+    $page
+        ->screenshot(fullPage: false, filename: "../../../storage/app/review-media/player-{$locale}-{$theme}-{$width}")
+        ->click('[data-player-fullscreen]')
+        ->assertVisible('[data-player-stage]:fullscreen');
+    expect($page->script('() => {
         const mark = document.querySelector("[data-watermark]");
         const stage = document.fullscreenElement;
         if (!stage?.matches("[data-player-stage]") || !stage.contains(mark)) return false;
@@ -87,11 +96,10 @@ it('keeps the protected watermark above the video when the whole stage enters fu
         const imageHeight = Math.min(video.height, video.width * player.videoHeight / player.videoWidth);
         const imageTop = video.top + (video.height - imageHeight) / 2;
         return bounds.width > 0 && bounds.left >= video.left && bounds.right <= video.right
-            && bounds.top >= imageTop && bounds.bottom <= imageTop + imageHeight && getComputedStyle(mark).zIndex === "10";
+            && bounds.top >= imageTop && bounds.bottom <= imageTop + imageHeight && getComputedStyle(mark).zIndex === "10"
+            && document.elementsFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2).includes(stage);
     }'))->toBeTrue();
 
     $page->screenshot(fullPage: false, filename: "../../../storage/app/review-media/fullscreen-{$locale}-{$theme}-{$width}");
-})->with([
-    ['ar', 390, 844, 'light'], ['ar', 1568, 1003, 'light'], ['en', 390, 844, 'light'], ['en', 1568, 1003, 'light'],
-    ['ar', 390, 844, 'dark'], ['ar', 1568, 1003, 'dark'], ['en', 390, 844, 'dark'], ['en', 1568, 1003, 'dark'],
-])->group('browser', 'T-P4-07', 'A3', 'YG-GAP-VID-003');
+})->with(['ar', 'en'])->with([[390, 844], [1440, 900], [1568, 1003]])->with(['light', 'dark'])
+    ->group('browser', 'T-P4-07', 'A3', 'YG-GAP-VID-003');
