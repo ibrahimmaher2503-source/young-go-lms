@@ -8,10 +8,11 @@ use App\Domain\AI\AiProviderNotConfigured;
 use App\Domain\AI\Dto\AiCompletionRequest;
 use App\Domain\AI\Providers\OpenAiProvider;
 use App\Domain\AI\Resilience\ProviderRegistry;
-use App\Domain\Settings\AiSettings;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Http;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 function decisionsOpenAiRequest(string $prefix = 'SYSTEM RULES'): AiCompletionRequest
 {
@@ -111,8 +112,8 @@ it('returns one vector per text and throws when the count does not match', funct
 
     expect($provider->embed(['one', 'two']))->toHaveCount(2);
 
-    Http::swap(new \Illuminate\Http\Client\Factory);
-    Http::fake(["api.openai.com/*" => Http::response(["data" => [["index" => 0, "embedding" => [0.1]]]])]);
+    Http::swap(new Factory);
+    Http::fake(['api.openai.com/*' => Http::response(['data' => [['index' => 0, 'embedding' => [0.1]]]])]);
     expect(fn () => $provider->embed(['one', 'two']))->toThrow(RuntimeException::class);
 })->group('T-DECISIONS-2026-11-18', 'O-014', 'A1');
 

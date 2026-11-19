@@ -14,12 +14,12 @@ use App\Domain\Commerce\CoursePrice;
 use App\Domain\Content\RichContent;
 use App\Domain\Media\ImageReencoder;
 use App\Domain\Media\LessonPublishRule;
+use App\Domain\Media\MediaProviders;
 use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
 use App\Models\CurriculumItem;
-use App\Models\User;
 use App\Models\MediaAsset;
-use App\Domain\Media\MediaProviders;
+use App\Models\User;
 use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile as ThumbnailUpload;
@@ -95,7 +95,7 @@ final class SaveCourseWizard
         $newCover = $cover['file'] === null ? null : CourseMedia::storeCover($cover['file']);
 
         try {
-            $saved = $this->persist($actor, $clean, $course, $step, $complete, $pricing, $custom, $promo, $newCover, $cover['remove']);
+            $saved = $this->persist($actor, $clean, $course, $step, $complete, $pricing, $custom, $promo, $newCover, $cover['remove'], $data);
         } catch (Throwable $exception) {
             CourseMedia::deleteCover($newCover);
 
@@ -111,12 +111,13 @@ final class SaveCourseWizard
     }
 
     /**
+     * @param  array<string, mixed>  $data
      * @param  array{attributes: array<string, mixed>, slugs: array<string, string>}  $clean
      * @param  array<string, mixed>  $pricing
      * @param  array<string, mixed>|null  $custom
      * @param  array{value: array<string, mixed>|null}|null  $promo
      */
-    private function persist(User $actor, array $clean, ?Course $course, int $step, bool $complete, array $pricing, ?array $custom, ?array $promo, ?string $newCover, bool $removeCover): Course
+    private function persist(User $actor, array $clean, ?Course $course, int $step, bool $complete, array $pricing, ?array $custom, ?array $promo, ?string $newCover, bool $removeCover, array $data): Course
     {
         return DB::transaction(function () use ($actor, $clean, $course, $step, $complete, $pricing, $custom, $promo, $newCover, $removeCover, $data): Course {
             $record = $course === null ? new Course : Course::query()->lockForUpdate()->findOrFail($course->getKey());

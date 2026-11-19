@@ -56,24 +56,13 @@ Do not approve to make the numbers move. A REJECT with a precise list is a good 
 A task's fix is usually mixed with other agents' uncommitted work in shared files. Do **not** `git add -A` or `git commit -a`.
 
 1. **List the task's files**: the files its tests, criteria and fixes touch (`git status --short -- <paths>`, `git diff -- <paths>`). Read every hunk. If a file mixes this task's hunks with another task's work, stop: report it as "entangled" and do not commit.
-2. **Prove it stands alone**: build a throwaway worktree from HEAD and copy only those files into it:
-   ```bash
-   git worktree add --detach <scratch>/wt-<task> HEAD
-   # copy each listed file into the worktree at the same path
-   robocopy vendor <scratch>/wt-<task>/vendor /E /MT:16   # do NOT junction vendor; autoload would resolve to the main tree
-   cp .env <scratch>/wt-<task>/.env
-   cd <scratch>/wt-<task> && php -d memory_limit=1G vendor/bin/pest <task test files>
-   vendor/bin/pint --test <files> && vendor/bin/phpstan analyse <files>
-   ```
-   Any failure means the task depends on other uncommitted work. Do not commit. Report which test failed and the missing dependency.
-   (Example: T-P5-04's six files on top of HEAD gave 21 passed, 1 failed at `LiveNoticesTest.php:157`. The phone reminder needs uncommitted T-P9-04 work, so it was not committed.)
+2. **Verify in the canonical workspace.** Run the task tests, Pint and Larastan on the reviewed files here. Inspect their dependencies against HEAD. If a required change belongs to another pending task, record the dependency and hold the scoped commit until it lands.
 3. **Commit only those paths** in the real repo:
    ```bash
    git add -- <listed files>
    git commit -m "T-Px-yy: <short what was fixed>" -m "Review: <APPROVE|APPROVE-WITH-NOTES>; tests <files> <n> passed; notes <O-ids>" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
    ```
    Check `git show --stat HEAD` contains only those files. Never push, never amend, never `--no-verify`.
-4. Remove the worktree: `git worktree remove --force <scratch>/wt-<task>`.
 
 ## 5. Report back
 

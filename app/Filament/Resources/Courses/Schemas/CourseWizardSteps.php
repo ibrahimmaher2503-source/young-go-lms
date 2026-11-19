@@ -107,6 +107,7 @@ final class CourseWizardSteps
         ]);
     }
 
+    /** @return list<Section> */
     private static function videoAndThumbnailFields(): array
     {
         $providers = array_combine(

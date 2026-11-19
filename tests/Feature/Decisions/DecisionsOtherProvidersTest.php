@@ -8,9 +8,9 @@ use App\Domain\Live\ManualMeetingProvider;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Media\PlaybackDescriptor;
 use App\Domain\Shared\Markets\Market;
+use App\Domain\Shared\Observability\ErrorReporter;
 use App\Domain\Shared\Observability\LogErrorReporter;
 use App\Domain\Shared\Observability\SentryErrorReporter;
-use App\Domain\Shared\Observability\ErrorReporter;
 use App\Models\MediaAsset;
 use Illuminate\Validation\ValidationException;
 

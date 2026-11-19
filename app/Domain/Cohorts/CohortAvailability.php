@@ -6,8 +6,8 @@ namespace App\Domain\Cohorts;
 
 use App\Models\Course;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Public availability of courses that run in cohorts (T-P2-04): the catalog filter and the badges on the course cards.

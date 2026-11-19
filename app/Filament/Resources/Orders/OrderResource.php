@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
 /**
+ * @extends resource<Order>
+ *
  * Staff orders list (read only, permission payment.view): reference, learner/payer, amount, gateway and status, with the
  * order lines in a view dialog. Refunds, manual proofs and reconciliation keep their own queues; nothing here edits an order.
  */
@@ -68,7 +70,7 @@ final class OrderResource extends Resource
         return false;
     }
 
-    /** @return Builder<Model> */
+    /** @return Builder<Order> */
     public static function getEloquentQuery(): Builder
     {
         return OrderDirectory::query();

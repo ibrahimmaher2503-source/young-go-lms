@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 // T-SIDEBAR-V2 | cases 1, 2, 3, 5, 6 | StaffNavigation, HasQueueBadge, OrderResource
 
+use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\Coupons\CouponResource;
 use App\Filament\Resources\Courses\CourseResource;
-use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\HelpRequests\HelpRequestResource;
 use App\Filament\Resources\ManualPayments\ManualPaymentProofResource;
 use App\Filament\Resources\Orders\OrderResource;

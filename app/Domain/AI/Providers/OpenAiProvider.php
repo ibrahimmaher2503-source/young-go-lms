@@ -11,6 +11,7 @@ use App\Domain\AI\Dto\AiCompletionResult;
 use App\Domain\AI\Dto\AiUsage;
 use App\Domain\AI\Dto\OcrResult;
 use App\Domain\AI\Dto\ProviderHealth;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
@@ -136,7 +137,7 @@ final class OpenAiProvider implements AiProviderInterface
         }
     }
 
-    /** @return \Illuminate\Http\Client\PendingRequest */
+    /** @return PendingRequest */
     private function client(int $timeout)
     {
         $client = Http::baseUrl(rtrim($this->baseUrl, '/'))->withToken((string) $this->apiKey)->acceptJson()->asJson()->timeout($timeout)->connectTimeout(min(5, $timeout));

@@ -100,7 +100,7 @@ final class PublicCatalogController
                 'category' => Category::query()->where('status', 'active')->orderBy('sort')->orderBy('id')->get()
                     ->mapWithKeys(static fn (Category $category): array => [$category->id => (string) $category->name])->all(),
                 'age_band' => AgeBand::query()->orderBy('sort')->orderBy('id')->get()
-                    ->mapWithKeys(static fn (AgeBand $band): array => [$band->id => (string) $band->label])->all(),
+                    ->pluck('label', 'id')->all(),
                 'level' => array_combine($levels, array_map(static fn (string $level): string => trans()->has('catalog.'.$level) ? __('catalog.'.$level) : $level, $levels)),
                 'language' => array_combine($languages, array_map(static fn (string $language): string => trans()->has('catalog.'.$language) ? __('catalog.'.$language) : $language, $languages)),
                 'instructor' => User::query()->where('status', 'active')->whereIn('id', $catalog->published()

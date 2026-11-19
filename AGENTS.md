@@ -20,6 +20,15 @@ lesson-PDF AI assistant. **No packaged LMS core** (D-001).
 If two sources conflict, follow the higher one and record the conflict in
 `agents/PROGRESS.md` → "Notes".
 
+## Local workspace
+
+All local implementation, testing, reviews and commits for this project run in
+`C:/projects/young-go-lms-pack-v3.2/young-go-lms-pack-v3.2` on `feat/lms-build`.
+Check `git rev-parse --show-toplevel` and `git branch --show-current` before
+starting. If launched in an old Codex worktree or the Downloads copy, switch
+to this checkout first. Use the same directory for delegated work and serialize
+edits to shared files. Do not create another local checkout or worktree.
+
 ## 3. How work is executed
 - The **orchestrator** follows `agents/ORCHESTRATOR.md` and the loop in
   `agents/LOOP_PROMPT.md`.

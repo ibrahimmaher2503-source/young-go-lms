@@ -129,6 +129,7 @@ final class StaffNavigation
 
         return [...$first, ...array_values(array_diff(array_keys(self::GROUPS), $first))];
     }
+
     public static function build(NavigationBuilder $builder): NavigationBuilder
     {
         $panel = Filament::getCurrentOrDefaultPanel();

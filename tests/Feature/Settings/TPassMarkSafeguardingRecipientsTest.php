@@ -138,7 +138,7 @@ it('resolver includes a saved active address once, excludes inactive users, and 
     $inactive = tprUser('support', 'inactive', 'gone@x.test');
     $member = tprUser('student', 'active', 'new@x.test');
 
-    app(SaveSafeguardingRecipients::class)($admin, "new@x.test, gone@x.test, boss@x.test");
+    app(SaveSafeguardingRecipients::class)($admin, 'new@x.test, gone@x.test, boss@x.test');
 
     $ids = app(SafeguardingRecipients::class)->all()->pluck('id')->all();
 

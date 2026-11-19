@@ -6,7 +6,6 @@ declare(strict_types=1);
 
 use App\Domain\Assessment\Actions\ConfigureQuiz;
 use App\Domain\Assessment\QuizPassMark;
-use App\Domain\Assessment\QuizScoring;
 use App\Domain\Assessment\QuizSnapshot;
 use App\Domain\Completion\Actions\SaveCompletionRules;
 use App\Domain\Curriculum\Actions\ManageAssessmentItems;

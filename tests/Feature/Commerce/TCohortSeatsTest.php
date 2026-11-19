@@ -22,6 +22,7 @@ use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -298,7 +299,7 @@ it('releases an expired hold through the command once, and leaves a converted ho
 })->group('T-COHORT-SEATS', 'A7');
 
 it('is scheduled every minute without overlap', function (): void {
-    $events = collect(app(Illuminate\Console\Scheduling\Schedule::class)->events())
+    $events = collect(app(Schedule::class)->events())
         ->filter(fn ($event) => str_contains((string) $event->command, 'orders:release-expired-seat-holds'));
 
     expect($events)->toHaveCount(1);
