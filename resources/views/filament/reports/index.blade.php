@@ -7,7 +7,7 @@
             $type === 'money' => number_format((float) $cell, 2),
             $type === 'percent' => rtrim(rtrim(number_format((float) $cell, 1), '0'), '.').'%',
             $type === 'int' => number_format((int) $cell),
-            $type === 'datetime' => \App\Domain\Reports\ReportLabels::display((string) $cell, true),
+            $type === 'datetime' => \App\Domain\Reports\ReportLabels::display(\Carbon\CarbonImmutable::parse((string) $cell, 'UTC')->setTimezone($timezone)->format('Y-m-d H:i'), true),
             default => \App\Domain\Reports\ReportLabels::display((string) $cell),
         };
     @endphp
@@ -18,8 +18,8 @@
             @if($ownOnly)
                 <p class="yg-rv-meta" data-own-only>{{ __('reports.own_only') }}</p>
             @endif
-            <div class="yg-ai-filters">
-                <div class="yg-ai-field">
+            <div class="yg-ai-filters yg-rv-filters">
+                <div class="yg-ai-field" data-field="report">
                     <label for="report-key">{{ __('reports.report') }}</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select id="report-key" wire:model.live="report">
@@ -29,16 +29,10 @@
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
                 </div>
-                <div class="yg-ai-field">
-                    <label for="report-from">{{ __('reports.from') }}</label>
-                    <x-filament::input.wrapper><x-filament::input type="date" id="report-from" wire:model.live="from" /></x-filament::input.wrapper>
-                </div>
-                <div class="yg-ai-field">
-                    <label for="report-to">{{ __('reports.to') }}</label>
-                    <x-filament::input.wrapper><x-filament::input type="date" id="report-to" wire:model.live="to" /></x-filament::input.wrapper>
-                </div>
+                @include('filament.reports.date-field', ['prop' => 'from', 'id' => 'report-from', 'label' => __('reports.from')])
+                @include('filament.reports.date-field', ['prop' => 'to', 'id' => 'report-to', 'label' => __('reports.to')])
                 @if($key->supports('course'))
-                    <div class="yg-ai-field">
+                    <div class="yg-ai-field" data-field="course">
                         <label for="report-course">{{ __('reports.course') }}</label>
                         <x-filament::input.wrapper>
                             <x-filament::input.select id="report-course" wire:model.live="course">
@@ -75,8 +69,8 @@
                         </x-filament::input.wrapper>
                     </div>
                 @endif
-                <span class="yg-rv-meta">{{ __('reports.showing', ['from' => \App\Domain\Reports\ReportLabels::display($range[0]), 'to' => \App\Domain\Reports\ReportLabels::display($range[1])]) }}</span>
             </div>
+            <p class="yg-rv-meta" data-range-caption>{{ __('reports.showing', ['from' => \App\Domain\Reports\ReportLabels::display($range[0]), 'to' => \App\Domain\Reports\ReportLabels::display($range[1])]) }}</p>
         </section>
 
         @if($totals !== [])
@@ -107,7 +101,7 @@
                     <table class="yg-ai-table" data-report-table>
                         <thead><tr>
                             @foreach($columns as $column => $type)
-                                <th scope="col">{{ __('reports.columns.'.$column) }}</th>
+                                <th scope="col">{{ str_replace('UTC', $timezone, __('reports.columns.'.$column)) }}</th>
                             @endforeach
                         </tr></thead>
                         <tbody>

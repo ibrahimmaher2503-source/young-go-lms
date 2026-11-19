@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Demo\Actions;
 
+use App\Domain\Catalog\CourseMedia;
 use App\Domain\Demo\DemoAnchors;
 use App\Domain\Demo\DemoGuard;
 use App\Domain\Demo\DemoRefused;
@@ -55,7 +56,10 @@ final class ResetDemoData
             throw new DemoRefused(__('demo.real_data_blocks_reset', ['table' => PurgeDemoEntitlements::TABLE]));
         }
 
-        return DB::transaction(function () use ($rows, $edges, $users): int {
+        // Generated demo cover files leave with the courses (the rows go below; the files would otherwise pile up on every reset).
+        $covers = DB::table('courses')->whereIn('id', $roots['courses'] ?? [])->pluck('cover_image')->filter()->all();
+
+        $removed = DB::transaction(function () use ($rows, $edges, $users): int {
             $removed = $this->entitlements->__invoke($users);
             $removed += $this->deleteKeyless($rows, $edges);
             $removed += $this->deletePolymorphic($users);
@@ -64,6 +68,12 @@ final class ResetDemoData
 
             return $removed;
         });
+
+        foreach ($covers as $cover) {
+            CourseMedia::deleteCover((string) $cover);
+        }
+
+        return $removed;
     }
 
     /** @return list<array{child: string, column: string, parent: string}> */

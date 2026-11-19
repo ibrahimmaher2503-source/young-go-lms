@@ -153,4 +153,10 @@ return [
     'sending' => 'يرجى الانتظار…',
     'nav_learning' => 'تعلّمي',
     'nav_courses' => 'دوراتي',
+    'tab_learning' => 'تعلّمي',
+    'tab_courses' => 'دوراتي',
+    'tab_link' => 'الربط',
+    'tab_family' => 'عائلتي',
+    'tab_children' => 'أبنائي',
+    'tab_profile' => 'ملفي',
 ];

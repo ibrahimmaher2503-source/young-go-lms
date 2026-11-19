@@ -16,6 +16,8 @@ return [
     'all' => 'All',
     'markets' => ['EG' => 'Egypt', 'SA' => 'Saudi Arabia'],
     'showing' => 'Showing :from to :to',
+    'date_hint' => 'dd/mm/yyyy',
+    'pick_date' => 'Pick a date',
     'export' => 'Export CSV',
     'empty' => 'No rows for these filters.',
     'own_only' => 'You see your own courses and earnings only.',

@@ -1,5 +1,5 @@
 {{-- Props: lines (list of [title, learner|null, kind, cover (url|null, optional)]), subtotal, discount (Money|null), total (Money), market. Read-only order summary shared by both checkout steps. --}}
-<x-ui.card :title="__('checkout.summary')" class="space-y-4 lg:sticky lg:top-4 lg:self-start" data-checkout-summary>
+<x-ui.card :title="__('checkout.summary')" class="order-first space-y-4 lg:order-none lg:sticky lg:top-4 lg:self-start" data-checkout-summary>
     <ul class="space-y-3">
         @foreach($lines as $line)
             <li class="flex min-w-0 items-start gap-3" data-summary-line>

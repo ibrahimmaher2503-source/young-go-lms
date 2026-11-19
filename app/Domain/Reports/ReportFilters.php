@@ -90,6 +90,12 @@ final class ReportFilters
         return $this->to->setTimezone(self::zoneFor($this->market))->toDateString();
     }
 
+    /** The IANA timezone of the report range (the market's, Egypt when no market is set): what on-screen times are shown in. */
+    public function timezoneName(): string
+    {
+        return self::zoneFor($this->market);
+    }
+
     private static function zoneFor(?string $market): string
     {
         return ($market === null ? Market::Egypt : Market::from($market))->timezone();

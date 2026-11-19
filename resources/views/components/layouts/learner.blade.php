@@ -10,17 +10,17 @@
     $unread = $user ? $user->unreadNotifications()->exists() : false;
     $isParent = $user && $user->hasRole('parent');
     $items = $isParent ? [
-        ['/parent', 'users', __('parent.nav'), request()->is('parent')],
-        ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('my/courses') || request()->is('learn/*')],
-        ['/family', 'user', __('pages.nav_family'), request()->is('family')],
-        ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
+        ['/parent', 'users', __('parent.nav'), request()->is('parent'), __('pages.tab_children')],
+        ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('my/courses') || request()->is('learn/*'), __('pages.tab_learning')],
+        ['/family', 'user', __('pages.nav_family'), request()->is('family'), __('pages.tab_family')],
+        ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*'), __('refunds.nav_payments')],
+        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile'), __('pages.tab_profile')],
     ] : [
-        ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('learn/*')],
-        ['/my/courses', 'layers', __('pages.nav_courses'), request()->is('my/courses')],
-        ['/link', 'user', __('pages.nav_link'), request()->is('link')],
-        ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
+        ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('learn/*'), __('pages.tab_learning')],
+        ['/my/courses', 'layers', __('pages.nav_courses'), request()->is('my/courses'), __('pages.tab_courses')],
+        ['/link', 'user', __('pages.nav_link'), request()->is('link'), __('pages.tab_link')],
+        ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*'), __('refunds.nav_payments')],
+        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile'), __('pages.tab_profile')],
     ];
 @endphp
 <!doctype html>
@@ -87,11 +87,11 @@
 </main>
 <nav aria-label="{{ __('pages.main_nav') }}" class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-2 py-1 shadow-floating lg:hidden" data-bottom-nav>
     <ul class="mx-auto grid max-w-md grid-flow-col auto-cols-fr gap-0.5">
-        @foreach($items as [$href, $icon, $label, $active])
+        @foreach($items as [$href, $icon, $label, $active, $short])
             <li class="min-w-0">
                 <a href="{{ url($href) }}" @if($active) aria-current="page" @endif title="{{ $label }}"
                     class="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-xs font-semibold {{ $active ? 'bg-nav-active-bg text-nav-active-text' : 'text-body' }}">
-                    <x-ui.icon :name="$icon" class="size-6" /> <span class="w-full truncate text-center">{{ $label }}</span>
+                    <x-ui.icon :name="$icon" class="size-6" /> <span class="w-full text-center leading-tight">{{ $short }}</span>
                 </a>
             </li>
         @endforeach

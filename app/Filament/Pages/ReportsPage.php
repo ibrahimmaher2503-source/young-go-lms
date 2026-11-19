@@ -120,6 +120,7 @@ final class ReportsPage extends Page
             'cap' => $cap,
             'exportUrl' => route('reports.export', ['report' => $key->value] + array_filter($input, static fn (string $value): bool => $value !== '')),
             'range' => [$filters->localFromDate(), $filters->localToDate()],
+            'timezone' => $filters->timezoneName(),
         ];
     }
 

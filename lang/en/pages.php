@@ -153,4 +153,10 @@ return [
     'sending' => 'Please wait…',
     'nav_learning' => 'My learning',
     'nav_courses' => 'My courses',
+    'tab_learning' => 'Learning',
+    'tab_courses' => 'Courses',
+    'tab_link' => 'Link',
+    'tab_family' => 'Family',
+    'tab_children' => 'Children',
+    'tab_profile' => 'Profile',
 ];

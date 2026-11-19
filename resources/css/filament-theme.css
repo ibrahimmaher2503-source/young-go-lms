@@ -467,7 +467,7 @@
 .fi-body { font-size: var(--yg-font-body); line-height: 1.6; }
 .fi-header-heading { font-weight: 600; letter-spacing: -0.025em; }
 .fi-header-subheading { font-size: var(--yg-font-body); }
-.fi-sidebar-item-label { min-inline-size: 0; white-space: normal; overflow-wrap: anywhere; font-size: var(--yg-font-sidebar); font-weight: 600; }
+.fi-sidebar-item-label { min-inline-size: 0; white-space: normal; overflow-wrap: break-word; font-size: var(--yg-font-sidebar); font-weight: 600; }
 .fi-sidebar-nav { padding-inline: 1.125rem; }
 .fi-sidebar-header { min-block-size: var(--yg-topbar-height); }
 .fi-topbar, .fi-topbar > nav { min-block-size: var(--yg-topbar-height); }
@@ -566,17 +566,17 @@
     .fi-topbar-end .fi-user-menu-trigger { display: grid; place-items: center; min-inline-size: 2.75rem; min-block-size: 2.75rem; }
     .yg-account-name { display: none; }
     .yg-summary-strip, .yg-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .yg-summary-item { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; padding: 0.875rem 0.75rem; overflow-wrap: anywhere; }
+    .yg-summary-item { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; padding: 0.75rem; }
     .yg-summary-strip > :last-child:nth-child(odd), .yg-kpi-strip > :last-child:nth-child(odd) { grid-column: 1 / -1; }
     .yg-summary-icon { grid-row: auto; inline-size: 2rem; block-size: 2rem; padding: 0.375rem; }
     .yg-summary-label { font-size: 0.8125rem; }
-    .yg-summary-value { font-size: 1.25rem; overflow-wrap: anywhere; }
+    .yg-summary-value { font-size: 1.25rem; }
     .yg-summary-item + .yg-summary-item { border: 0; }
     .yg-summary-item + .yg-summary-item::before { inset-block: 15%; }
     .yg-summary-item:nth-child(odd)::before { display: none; }
     .yg-summary-strip > .yg-summary-item:nth-child(n+3), .yg-kpi-strip > .yg-summary-item:nth-child(n+3) { border-block-start: 1px solid var(--yg-color-border); }
     .yg-toolbar-filter { flex: 1 1 8rem; inline-size: auto; }
-    .yg-workspace-main .fi-ta-search-field { flex-basis: 100%; order: -1; }
+    .yg-workspace-main .fi-ta-search-field { flex: 1 1 9rem; order: -1; }
     .yg-auth-layout { grid-template-columns: minmax(0, 1fr); }
     .yg-auth-story { display: none; }
     .yg-auth-main { min-block-size: 100dvh; padding: 5.5rem 1rem 2rem; }
@@ -624,7 +624,7 @@
 .yg-permission-options label { min-block-size: 2.75rem; align-items: center; }
 @media (max-width: 47.999rem) {
     .yg-workspace-content { margin-block-start: 0; }
-    .yg-workspace-main .fi-ta-search-field { flex-basis: 100%; order: 1; }
+    .yg-workspace-main .fi-ta-search-field { flex: 1 1 9rem; order: 1; }
     .yg-toolbar-filter { order: 2; }
     .yg-permission-options { max-block-size: 20rem; }
 }
@@ -656,7 +656,7 @@
     .yg-workspace-main .fi-tabs { margin-inline: 1rem; max-inline-size: calc(100% - 2rem); }
     .yg-workspace-main .fi-tabs-item { padding-inline: 0.5rem; flex: 1 0 auto; }
     .yg-workspace-main .fi-tabs-item-label { font-size: var(--yg-font-small); white-space: nowrap; overflow: visible; }
-    .yg-role-name { inline-size: 8rem; max-inline-size: 8rem; white-space: normal; overflow-wrap: anywhere; }
+    .yg-role-name { inline-size: 8rem; max-inline-size: 8rem; white-space: normal; overflow-wrap: break-word; }
 }
 
 .yg-workspace-main .fi-ta-text-item:not(.fi-ta-text-has-badges) { font-size: var(--yg-font-label); }
@@ -701,9 +701,11 @@
 }
 .yg-empty-state-icon svg { inline-size: 1.5rem; block-size: 1.5rem; }
 
-/* G7-P8 fixes C: equal-height KPI tiles with 2-line labels, wrapping table headers, compact mobile pagination. */
+/* G7-P8 fixes D: KPI tiles that never split a number or a label, tables that wrap prose only, compact mobile toolbars. */
 .yg-summary-strip, .yg-kpi-strip { grid-auto-rows: 1fr; }
-.yg-summary-item { align-content: center; min-block-size: 5.5rem; }
+.yg-summary-item { align-content: center; min-block-size: 5.5rem; container-type: inline-size; }
+/* The note used to land in the narrow icon column, which widened it and squeezed the label and value next to it. */
+.yg-summary-item > .yg-workspace-note { grid-column: 2; min-inline-size: 0; overflow-wrap: break-word; }
 .yg-summary-label {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -711,22 +713,58 @@
     line-clamp: 2;
     overflow: hidden;
     min-inline-size: 0;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
-.yg-summary-item .yg-workspace-note { min-inline-size: 0; overflow-wrap: anywhere; }
-.yg-summary-value { min-inline-size: 0; overflow-wrap: anywhere; }
+.yg-summary-value {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.375rem;
+    min-inline-size: 0;
+    font-size: clamp(1.125rem, 8cqi, 1.75rem);
+    font-weight: 600;
+    overflow-wrap: normal;
+}
+.yg-summary-value bdi { white-space: nowrap; }
+@media (min-width: 48rem) {
+    .yg-kpi-strip {
+        grid-template-columns: repeat(auto-fit, minmax(max(11rem, 32%), 1fr));
+        gap: 0.75rem;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    .yg-kpi-strip > .yg-summary-item {
+        border: 1px solid var(--yg-color-border);
+        border-radius: var(--yg-radius-control);
+        background-color: var(--yg-color-surface);
+    }
+    .yg-summary-strip:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 47.999rem) {
+    .yg-summary-item > .yg-workspace-note { grid-column: auto; }
+    .yg-kpi-strip { gap: 0.5rem; border: 0; background: transparent; box-shadow: none; }
+    .yg-kpi-strip > .yg-summary-item {
+        border: 1px solid var(--yg-color-border);
+        border-radius: var(--yg-radius-control);
+        background-color: var(--yg-color-surface);
+    }
+}
+@media (max-width: 22.5rem) {
+    .yg-kpi-strip { grid-template-columns: minmax(0, 1fr); }
+}
 
+/* Tables: wrap between words only; money, numbers and references keep one line; the container scrolls instead. */
 .fi-ta-header-cell-label,
 .fi-ta-header-cell > button,
-.fi-ta-header-cell > span { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; overflow: visible; }
+.fi-ta-header-cell > span { white-space: normal; overflow-wrap: break-word; text-overflow: clip; overflow: visible; }
 .yg-workspace-main .fi-ta-header-cell { min-inline-size: 5.5rem; vertical-align: middle; }
 .fi-ta-content-ctn { overflow-x: auto; max-inline-size: 100%; -webkit-overflow-scrolling: touch; }
-.fi-ta-cell, .fi-ta-text-item-label { min-inline-size: 0; overflow-wrap: anywhere; }
-.fi-ta-header-toolbar .fi-badge:empty,
-.fi-ta-filters-trigger-action-ctn .fi-badge { min-inline-size: 1.25rem; justify-content: center; }
+.fi-ta-cell, .fi-ta-text-item-label { min-inline-size: 0; overflow-wrap: break-word; word-break: normal; }
+.fi-ta-cell:has([dir="ltr"]), .fi-ta-cell:has(.yg-nowrap) { white-space: nowrap; }
 .fi-ta-ctn, .fi-ta { min-inline-size: 0; max-inline-size: 100%; }
 @media (max-width: 47.999rem) {
-    .fi-ta-table { min-inline-size: 36rem; }
+    .fi-ta-table { min-inline-size: 40rem; }
     .fi-ta-header-toolbar { flex-wrap: wrap; row-gap: 0.5rem; }
     .yg-workspace-pagination.fi-pagination { justify-content: center; padding-inline: 0.5rem; }
     .yg-workspace-pagination.fi-pagination .fi-pagination-items { flex-wrap: nowrap; gap: 0.25rem; justify-content: center; }
@@ -734,7 +772,36 @@
     .fi-pagination-items .fi-pagination-item-label { font-size: var(--yg-font-small); }
 }
 .fi-ta-text-item-label, .fi-ta-text-item { max-inline-size: 100%; text-overflow: clip; unicode-bidi: plaintext; }
-.fi-ta-cell .fi-ta-text { min-inline-size: 6rem; white-space: normal; }
-@media (min-width: 48rem) {
-    .yg-summary-strip:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fi-ta-cell .fi-ta-text { min-inline-size: 6rem; }
+.fi-ta-cell .fi-ta-text.fi-wrapped { white-space: normal; min-inline-size: 12rem; max-inline-size: 26rem; }
+
+/* Toolbar: no "0" badge when nothing is filtered; icons share one compact row on phones. */
+.fi-ta:has(.yg-filter-state[data-active-filters="0"]) .fi-ta-header-toolbar .fi-icon-btn-badge-ctn,
+.fi-ta:has(.yg-filter-state[data-active-filters="0"]) .fi-ta-filters-trigger-action-ctn .fi-badge { display: none; }
+.fi-ta-header-toolbar .fi-icon-btn-badge-ctn .fi-badge { min-inline-size: 1.25rem; justify-content: center; }
+@media (max-width: 47.999rem) {
+    .yg-workspace-main .fi-ta-header-toolbar { flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; padding-block: 0.5rem; padding-inline: 0.75rem; }
+}
+
+/* Reports filters: one compact row on wide screens, a two-column grid on phones; d/m/Y text dates with a native picker behind. */
+.yg-rv-filters { align-items: end; gap: 0.75rem; }
+.yg-rv-filters > .yg-ai-field { min-inline-size: 0; flex: 1 1 8rem; }
+.yg-rv-filters > .yg-ai-field[data-field="report"] { flex: 2 1 12rem; }
+.yg-rv-filters > .yg-ai-field[data-field="from"], .yg-rv-filters > .yg-ai-field[data-field="to"] { flex: 0 0 11rem; }
+.yg-date-field .fi-input { padding-inline: 0.625rem 0.25rem; min-inline-size: 0; font-variant-numeric: tabular-nums; }
+.yg-date-field .fi-input-wrp-suffix { padding-inline-end: 0.25rem; }
+.yg-rv-filters label { font-size: var(--yg-font-label); }
+.yg-rv-filters .fi-input-wrp { min-block-size: 2.5rem; }
+.yg-rv-filters .fi-input, .yg-rv-filters .fi-select-input { font-size: var(--yg-font-label); }
+.yg-date-field { position: relative; }
+.yg-date-native { position: absolute; inset-block-end: 0; inset-inline-end: 0; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
+.yg-date-pick { display: inline-grid; place-items: center; min-inline-size: 2rem; min-block-size: 2rem; color: var(--yg-color-muted); }
+.yg-date-pick > svg { inline-size: 1.125rem; block-size: 1.125rem; }
+@media (min-width: 80rem) {
+    .yg-rv-filters { flex-wrap: nowrap; }
+}
+@media (max-width: 47.999rem) {
+    .yg-rv-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .yg-rv-filters > .yg-ai-field[data-field="from"], .yg-rv-filters > .yg-ai-field[data-field="to"] { flex: none; }
+    .yg-rv-filters > .yg-ai-field[data-field="report"], .yg-rv-filters > .yg-ai-field[data-field="course"] { grid-column: 1 / -1; }
 }

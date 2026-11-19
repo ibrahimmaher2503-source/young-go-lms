@@ -90,7 +90,13 @@ final class RefundResource extends Resource
     {
         $market = collect(Market::cases())->first(static fn (Market $m): bool => $m->currency() === $currency) ?? Market::Egypt;
 
-        return (new PriceFormatter)->format(Money::ofMinor($minor, $currency), $market, app()->getLocale());
+        $formatter = new PriceFormatter;
+        $money = Money::ofMinor($minor, $currency);
+
+        // Negative amounts (reversals, debit adjustments) render as one LTR-isolated run so the sign stays next to the number in Arabic.
+        return $minor < 0
+            ? $formatter->formatDeduction($money, $market, app()->getLocale())
+            : $formatter->format($money, $market, app()->getLocale());
     }
 
     public static function table(Table $table): Table

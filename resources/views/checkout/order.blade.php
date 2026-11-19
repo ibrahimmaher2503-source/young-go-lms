@@ -30,7 +30,10 @@
     <div class="mx-auto max-w-5xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h1 class="text-2xl font-bold">{{ __('checkout.title') }}</h1>
-            <p class="text-sm text-muted">{{ __('checkout.order_ref') }}: <x-ui.ltr>{{ $order->reference }}</x-ui.ltr></p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+                <p class="inline-flex items-center gap-2" data-secure-order><x-ui.icon name="check" />{{ __('checkout.secure') }}</p>
+                <p>{{ __('checkout.order_ref') }}: <x-ui.ltr>{{ $order->reference }}</x-ui.ltr></p>
+            </div>
         </div>
         <x-ui.stepper :steps="[__('checkout.step_learner'), __('checkout.step_pay'), __('checkout.step_done')]" :current="$step" />
 

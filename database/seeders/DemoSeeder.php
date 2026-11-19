@@ -64,6 +64,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * T-P9-11 (ED-022): deterministic bilingual demo dataset for local and staging demos. Run only by `demo:seed` and
@@ -199,6 +200,58 @@ final class DemoSeeder extends Seeder
         ];
     }
 
+    /**
+     * Realistic bilingual catalog copy. Demo markers live in the demo_anchors table, never in the visible text.
+     *
+     * @return array{ar: string, en: string}
+     */
+    private function description(string $key): array
+    {
+        return match ($key) {
+            'drawing-basics' => ['ar' => 'تعلّم الخطوط والظلال والتكوين خطوة بخطوة، مع تمارين قصيرة تناسب المبتدئين.', 'en' => 'Learn line, shading and composition step by step, with short exercises for complete beginners.'],
+            'kids-art' => ['ar' => 'أنشطة فنية ممتعة للأطفال لاكتشاف الألوان وصناعة أول لوحاتهم بثقة.', 'en' => 'Playful art activities that help children discover colour and finish their first paintings with confidence.'],
+            'acting-101' => ['ar' => 'أساسيات الأداء أمام الكاميرا وعلى المسرح: الإحساس بالمشهد والصوت وحركة الجسد.', 'en' => 'The basics of performing on camera and on stage: reading a scene, using your voice and moving with intent.'],
+            'voice-dubbing' => ['ar' => 'درّب صوتك على الأداء والدبلجة، من ضبط النبرة إلى مزامنة الحوار مع الصورة.', 'en' => 'Train your voice for performance and dubbing, from tone control to syncing dialogue with picture.'],
+            'stage-workshop' => ['ar' => 'ورشة مباشرة مع مدرّب لبناء مشهد مسرحي كامل وتقديمه أمام زملائك.', 'en' => 'A live workshop with your instructor to build a complete stage scene and perform it for your peers.'],
+            'animation-lab' => ['ar' => 'من الفكرة إلى الحركة: ارسم شخصيتك وحرّكها وجهّز عرضك الأول.', 'en' => 'From idea to motion: design a character, animate it and prepare your first showreel.'],
+            'creative-sub' => ['ar' => 'مكتبة مهارات إبداعية متجددة تصلك مع اشتراكك، من الرسم إلى السرد البصري.', 'en' => 'A growing library of creative skills included with your subscription, from drawing to visual storytelling.'],
+            default => ['ar' => 'اصنع قصتك المصورة من أول لوحة حتى الغلاف النهائي مع مدرّب مستقل.', 'en' => 'Build your own comic from the first panel to the final cover with an independent instructor.'],
+        };
+    }
+
+    /**
+     * A generated 16:9 abstract cover (GD only, no outside file or request) at a fixed per-course path, so a repeated seed overwrites
+     * the file instead of piling up copies. `demo:reset` removes the files with the courses.
+     */
+    private function attachPlaceholderCover(Course $course, string $key, int $index): void
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            return;
+        }
+
+        // Flat tones close to the brand palette (deep, mid and soft teal, warm accent).
+        $tones = [[0, 112, 110], [0, 76, 75], [60, 150, 142], [176, 104, 78], [34, 92, 110]];
+        [$r, $g, $b] = $tones[$index % count($tones)];
+        $image = imagecreatetruecolor(1280, 720);
+        $fill = static fn (int $red, int $green, int $blue, int $alpha = 0): int => (int) imagecolorallocatealpha($image, $red, $green, $blue, $alpha);
+        imagefilledrectangle($image, 0, 0, 1280, 720, $fill($r, $g, $b));
+        imagealphablending($image, true);
+        $shift = ($index * 97) % 240;
+        imagefilledellipse($image, 220 + $shift, 640, 760, 760, $fill(255, 255, 255, 105));
+        imagefilledellipse($image, 1040 - $shift, 140, 520, 520, $fill(255, 255, 255, 98));
+        imagefilledellipse($image, 640, 360, 220, 220, $fill(255, 255, 255, 80));
+
+        ob_start();
+        imagepng($image);
+        $bytes = (string) ob_get_clean();
+
+        $path = 'courses/demo-'.$key.'.png';
+        if (Storage::disk('public')->put($path, $bytes, 'public')) {
+            Course::query()->whereKey($course->getKey())->update(['cover_image' => $path]);
+            $course->refresh();
+        }
+    }
+
     private function catalog(): void
     {
         $categories = Category::query()->orderBy('id')->pluck('id')->all();
@@ -208,7 +261,7 @@ final class DemoSeeder extends Seeder
             $instructor = $owner === 'academy' ? $this->academy : $this->indie;
             $course = app(SaveCourseWizard::class)($instructor, [
                 'title' => ['ar' => $titleAr, 'en' => $titleEn],
-                'short_description' => ['ar' => 'دورة تجريبية: '.$titleAr, 'en' => 'Demo course: '.$titleEn],
+                'short_description' => $this->description($key),
                 'category_id' => $categories[$index % count($categories)], 'level' => $level, 'content_language' => 'both', 'format' => $format,
                 'min_age' => $key === 'kids-art' ? 6 : null, 'max_age' => $key === 'kids-art' ? 14 : null,
             ], null, 1, true);
@@ -220,6 +273,7 @@ final class DemoSeeder extends Seeder
                 $pricing['market_prices'] = [Market::Egypt->value => $price];
             }
             $course = app(SaveCourseWizard::class)($this->admin, $pricing, $course, 3, true);
+            $this->attachPlaceholderCover($course, $key, $index - 1);
             DemoAnchors::mark($course);
             $this->courses[$key] = $course;
             $this->curriculum($key, $course, $instructor);
