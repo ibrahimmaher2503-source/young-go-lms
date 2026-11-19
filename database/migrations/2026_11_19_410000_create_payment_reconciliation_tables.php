@@ -32,7 +32,7 @@ return new class extends Migration
 
         Schema::create('payment_reconciliation_mismatches', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('payment_reconciliation_id')->constrained('payment_reconciliations')->restrictOnDelete();
+            $table->foreignId('payment_reconciliation_id')->constrained('payment_reconciliations', indexName: 'pay_reconciliation_mismatch_run_fk')->restrictOnDelete();
             $table->string('gateway', 24);
             $table->string('type', 32);
             $table->string('mismatch_key', 140);
