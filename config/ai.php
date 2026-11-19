@@ -11,7 +11,7 @@ return [
     // known birth month nobody is treated as an adult. Minors additionally need guardian consent and the minors flag.
     'adult_age' => env('AI_ADULT_AGE') === null ? 18 : (int) env('AI_ADULT_AGE'),
 
-    // OpenAI adapter (app/Domain/AI/Providers/OpenAiProvider.php). Inert while api_key is empty. A super admin's model choice
+    // OpenAI adapter (app/Support/AI/OpenAiProvider.php). Inert while api_key is empty. A super admin's model choice
     // (AiSettings) wins over `model`. allow_minors must stay false until legal approves sending data of minors (O-014, O-015).
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),

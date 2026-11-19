@@ -22,7 +22,6 @@ use App\Models\MediaAsset;
 use App\Models\User;
 use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\UploadedFile as ThumbnailUpload;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -240,7 +239,7 @@ final class SaveCourseWizard
 
         $path = match (true) {
             $input === null, $input === $oldPath => $input,
-            $input instanceof ThumbnailUpload => $this->storeThumbnail($input),
+            $input instanceof UploadedFile => $this->storeThumbnail($input),
             default => throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_path')]),
         };
 
@@ -255,7 +254,7 @@ final class SaveCourseWizard
         return $path;
     }
 
-    private function storeThumbnail(ThumbnailUpload $file): string
+    private function storeThumbnail(UploadedFile $file): string
     {
         $maxBytes = self::THUMBNAIL_MAX_KILOBYTES * 1024;
         if (! $file->isValid()) {
@@ -264,8 +263,8 @@ final class SaveCourseWizard
         if ($file->getSize() > $maxBytes) {
             throw ValidationException::withMessages(['thumbnail_path' => __('media.too_large')]);
         }
-        $bytes = $file->get();
-        if (! is_string($bytes) || $bytes === '') {
+        $bytes = $file->getContent();
+        if ($bytes === '') {
             throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_type')]);
         }
         if (strlen($bytes) > $maxBytes) {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\AI\Providers;
+namespace App\Support\AI;
 
 use App\Domain\AI\AiProviderNotConfigured;
 use App\Domain\AI\Contracts\AiProviderInterface;
@@ -137,8 +137,7 @@ final class OpenAiProvider implements AiProviderInterface
         }
     }
 
-    /** @return PendingRequest */
-    private function client(int $timeout)
+    private function client(int $timeout): PendingRequest
     {
         $client = Http::baseUrl(rtrim($this->baseUrl, '/'))->withToken((string) $this->apiKey)->acceptJson()->asJson()->timeout($timeout)->connectTimeout(min(5, $timeout));
         if ($this->organization !== null && $this->organization !== '') {

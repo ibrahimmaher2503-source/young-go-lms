@@ -7,8 +7,8 @@ namespace App\Domain\AI\Resilience;
 use App\Domain\AI\Contracts\AiProviderInterface;
 use App\Domain\AI\Providers\FakeAiProvider;
 use App\Domain\AI\Providers\NullAiProvider;
-use App\Domain\AI\Providers\OpenAiProvider;
 use App\Domain\Settings\AiSettings;
+use App\Support\AI\OpenAiProvider;
 
 /**
  * The provider keys the platform knows: the refusing "unconfigured" provider, "openai" (decided 2026-11-18, O-014; inert without

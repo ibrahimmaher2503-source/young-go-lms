@@ -6,8 +6,8 @@ declare(strict_types=1);
 
 use App\Domain\AI\AiProviderNotConfigured;
 use App\Domain\AI\Dto\AiCompletionRequest;
-use App\Domain\AI\Providers\OpenAiProvider;
 use App\Domain\AI\Resilience\ProviderRegistry;
+use App\Support\AI\OpenAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Http;

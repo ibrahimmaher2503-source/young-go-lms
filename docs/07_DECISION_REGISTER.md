@@ -324,7 +324,7 @@ accounting confirmation before go-live. Rows in section C stay for traceability 
 | O-018 | Migration scope: courses + content mandatory; users, enrollments, progress, certificates, quiz results, order history yes; AI chat history no | Legacy source still needed (O-003 OPEN) | Owner |
 | O-006 | Methods: cards and mobile wallets via Paymob EG; Instapay by manual proof. Credentials still to be supplied | Adapter inert without credentials | Owner (credentials) |
 | O-013 | Saudi gateway is Paymob KSA; market stays disabled; entity/tax facts to be supplied | `Market::isActive` unchanged | Legal, accountant (verify) |
-| O-014 | AI provider is OpenAI (model configurable); adapter inert without a key; no minor data until legal approval; data region and terms still to confirm | `app/Domain/AI/Providers/OpenAiProvider.php` | Legal (verify), owner |
+| O-014 | AI provider is OpenAI (model configurable); adapter inert without a key; no minor data until legal approval; data region and terms still to confirm | `app/Support/AI/OpenAiProvider.php` | Legal (verify), owner |
 | O-005 | Video provider: Bunny Stream | `MediaProviders` `bunny` | Owner (account) |
 | O-021 | Email: Amazon SES; live sessions: Google Meet | `ses` mailer inert without keys; meet.google.com links accepted | Owner (credentials) |
 | O-029 | Error tracking: Sentry SaaS | ED-021 reporter `sentry`, inert without DSN | Owner (DSN) |
