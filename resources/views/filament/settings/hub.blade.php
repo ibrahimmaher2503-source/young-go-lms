@@ -1,17 +1,14 @@
 <x-filament-panels::page>
     <p class="text-sm">{{ __('settings.hub.intro') }}</p>
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-settings-hub>
+    <div class="yg-hub-grid" data-settings-hub>
         @forelse ($entries as $entry)
-            <a href="{{ $entry['url'] }}" class="block" data-settings-entry="{{ $entry['key'] }}">
-                <x-filament::section>
-                    <div class="flex items-start gap-3">
-                        <x-filament::icon :icon="$entry['icon']" class="h-6 w-6 shrink-0" aria-hidden="true" />
-                        <div>
-                            <div class="font-medium">{{ $entry['label'] }}</div>
-                            <div class="text-sm">{{ $entry['description'] }}</div>
-                        </div>
-                    </div>
-                </x-filament::section>
+            <a href="{{ $entry['url'] }}" class="yg-hub-card" data-settings-entry="{{ $entry['key'] }}">
+                <span class="yg-hub-icon"><x-filament::icon :icon="$entry['icon']" aria-hidden="true" /></span>
+                <span class="yg-hub-text">
+                    <span class="yg-hub-title">{{ $entry['label'] }}</span>
+                    <span class="yg-hub-desc">{{ $entry['description'] }}</span>
+                </span>
+                <x-filament::icon icon="heroicon-m-chevron-right" class="yg-hub-chevron" aria-hidden="true" />
             </a>
         @empty
             <p data-settings-empty>{{ __('settings.hub.empty') }}</p>

@@ -63,6 +63,8 @@ return [
     'cancelled_note' => 'Cancelled. Access stays until the end of the paid period. You can renew to reactivate it.',
     'expired_note' => 'This subscription has ended. Renew to get access again; your progress is kept.',
     'my_cancel_done' => 'Your subscription was cancelled. Access stays until the end of the paid period.',
+    'next_renewal' => 'Next renewal:',
+    'benefits_title' => 'Included in your plan (:count courses)',
     'my_payments_link' => 'Payment history',
     'plans_page_title' => 'Subscription plans',
     'plans_page_intro' => 'One price, many courses. Pay for a month or a year and renew when you want.',

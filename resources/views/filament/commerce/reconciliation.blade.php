@@ -54,7 +54,7 @@
                         <tbody>
                         @foreach($mismatches as $mismatch)
                             <tr data-mismatch="{{ $mismatch->id }}" data-status="{{ $mismatch->status->value }}">
-                                <td class="yg-ai-num">{{ $mismatch->created_at->isoFormat('lll') }}</td>
+                                <td class="yg-ai-num"><x-ui.ltr>{{ $mismatch->created_at->isoFormat('lll') }}</x-ui.ltr></td>
                                 <td>{{ __('payment_reconciliation.types.'.$mismatch->type->value) }}</td>
                                 <td>{{ __('payment_reconciliation.reasons.'.$mismatch->reason) }}</td>
                                 <td class="yg-ai-num">{{ $mismatch->attempt_reference ?? '-' }}<br><span class="yg-rv-meta">{{ $mismatch->provider_transaction_id }}</span></td>

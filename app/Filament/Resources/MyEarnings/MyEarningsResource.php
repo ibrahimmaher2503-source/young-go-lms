@@ -71,7 +71,7 @@ final class MyEarningsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')->emptyState(EmptyStateView::make('heroicon-o-banknotes', 'ledger.ledger_empty_title', 'ledger.ledger_empty_hint'))->columns(LedgerTable::columns(false))->filters(LedgerTable::filters());
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')->emptyState(EmptyStateView::make('heroicon-o-banknotes', 'ledger.ledger_empty_title', 'ledger.ledger_empty_hint'))->columns(LedgerTable::columns(false))->filters(LedgerTable::filters());
     }
 
     public static function getPages(): array

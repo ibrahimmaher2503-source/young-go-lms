@@ -12,6 +12,7 @@ use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\Course;
 use App\Models\HelpRequest;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Auth;
  */
 final class HelpRequestResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = HelpRequest::class;
 
     protected static ?string $slug = 'help-requests';
@@ -115,6 +118,11 @@ final class HelpRequestResource extends Resource
                 Filter::make('overdue')->label(__('help.queue.overdue'))->toggle()
                     ->query(static fn (Builder $query): Builder => $query->whereIn('status', HelpRequestStatus::awaitingValues())->whereNotNull('due_at')->where('due_at', '<', now())),
             ]);
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->whereIn('status', HelpRequestStatus::awaitingValues())->count();
     }
 
     public static function getPages(): array

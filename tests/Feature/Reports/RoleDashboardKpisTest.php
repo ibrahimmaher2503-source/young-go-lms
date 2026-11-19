@@ -307,7 +307,7 @@ it('renders empty states on a new database and gives no data to students or susp
 
     $this->actingAs($admin)->get('/admin')->assertOk()
         ->assertSee('data-role-dashboard', false)
-        ->assertSee('data-kpi-empty', false)
+        ->assertDontSee('data-kpi="ai_cost"', false) // N3 (G7 review 4): an AI tile with no data is hidden, not shown as a dash (was: assertSee data-kpi-empty)
         ->assertSee('data-queue-empty', false);
 })->group('T-P9-07', 'A1');
 

@@ -17,6 +17,8 @@ return [
     'attendance_help' => 'Present and late count; excused sessions are left out. Leave empty to turn this rule off.',
     'manual_approval' => 'Staff approve completion',
     'manual_approval_help' => 'Learners who meet the rules wait for approval instead of completing by themselves.',
+    'quiz_pass_mark' => 'Default quiz pass mark (%)',
+    'quiz_pass_mark_help' => 'Applies to quizzes of this course that set no pass mark of their own. Leave empty for the platform default (:percent%).',
     'rule_on' => 'On',
     'rule_off' => 'Off',
     'no_rules' => 'No rule is on, so nothing completes by itself. Use manual approval.',

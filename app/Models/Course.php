@@ -24,6 +24,7 @@ use Spatie\Translatable\HasTranslations;
  * @property list<array<string, mixed>>|null $requirements
  * @property list<array<string, mixed>>|null $outcomes
  * @property int|null $access_duration_days
+ * @property int|null $quiz_pass_mark_percent
  * @property bool $bundle_eligible
  * @property bool $manual_access_allowed
  * @property string|null $cover_image
@@ -73,7 +74,7 @@ final class Course extends Model
         'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
         'overview_video_provider', 'overview_video_url', 'preview_video_provider', 'preview_video_url',
         'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
-        'access_duration_days', 'bundle_eligible', 'manual_access_allowed', 'cover_image', 'promo_video', 'custom_values',
+        'access_duration_days', 'bundle_eligible', 'manual_access_allowed', 'cover_image', 'promo_video', 'custom_values', 'quiz_pass_mark_percent',
     ];
 
     protected $attributes = [
@@ -102,6 +103,7 @@ final class Course extends Model
             'requirements' => 'array',
             'outcomes' => 'array',
             'access_duration_days' => 'integer',
+            'quiz_pass_mark_percent' => 'integer',
             'bundle_eligible' => 'boolean',
             'manual_access_allowed' => 'boolean',
             'promo_video' => 'array',

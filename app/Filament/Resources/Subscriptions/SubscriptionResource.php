@@ -8,6 +8,7 @@ use App\Domain\Subscriptions\Actions\CancelSubscription;
 use App\Domain\Subscriptions\Subscription;
 use App\Domain\Subscriptions\SubscriptionStatus;
 use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -75,14 +76,14 @@ final class SubscriptionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('learner.name')->label(__('subscriptions.learner'))->searchable(),
-                TextColumn::make('payer.name')->label(__('subscriptions.payer'))->searchable(),
+                TextColumn::make('payer.name')->visibleFrom('md')->label(__('subscriptions.payer'))->searchable(),
                 TextColumn::make('plan')->label(__('subscriptions.plan'))->state(static fn (Subscription $s): string => (string) $s->plan?->name),
-                TextColumn::make('period_end')->label(__('subscriptions.period_end'))
+                TextColumn::make('period_end')->visibleFrom('md')->label(__('subscriptions.period_end'))
                     ->state(static fn (Subscription $s): ?string => $s->latestPeriod()?->ends_at->toDateString()),
-                TextColumn::make('access_until')->label(__('subscriptions.access_until'))
+                TextColumn::make('access_until')->visibleFrom('md')->label(__('subscriptions.access_until'))
                     ->state(static function (Subscription $s): ?string {
                         $latest = $s->latestPeriod();
 
@@ -97,7 +98,7 @@ final class SubscriptionResource extends Resource
                     SubscriptionStatus::Active->value => __('subscriptions.state_active'), SubscriptionStatus::Expired->value => __('subscriptions.state_expired'),
                 ]),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('cancel')->label(__('subscriptions.cancel'))->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->modalDescription(__('subscriptions.cancel_confirm'))
                     ->visible(static fn (Subscription $record): bool => Gate::allows('payment.approve_manual') && $record->cancelled_at === null && $record->status === SubscriptionStatus::Active)
@@ -111,7 +112,7 @@ final class SubscriptionResource extends Resource
                         }
                         Notification::make()->success()->title(__('subscriptions.cancelled'))->send();
                     }),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

@@ -4,7 +4,7 @@
     $date = fn ($d) => $d?->copy()->locale(app()->getLocale())->isoFormat('LL');
 @endphp
 <x-layouts.learner :title="__('subscriptions.my_title')">
-    <div class="mx-auto max-w-3xl space-y-4">
+    <div class="mx-auto max-w-4xl space-y-4">
         <h1 class="text-2xl font-bold">{{ __('subscriptions.my_title') }}</h1>
         <p class="text-muted">{{ __('subscriptions.my_intro') }}</p>
 
@@ -26,6 +26,8 @@
                     $opens = $subscription->renewalOpensAt();
                     $renewable = $opens === null || $opens->lte(now());
                     $nameOf = $subscription->learner?->display_name ?: $subscription->learner?->name;
+                    $included = $subscription->plan === null ? collect() : $subscription->plan->courses->map(fn ($row) => $row->course)->filter(fn ($course) => $course?->status === \App\Domain\Catalog\CourseStatus::Published)->values();
+                    $nextRenewal = in_array($state, ['active', 'grace'], true) ? $latest?->ends_at : null;
                 @endphp
                 <x-ui.card data-subscription="{{ $subscription->getKey() }}" data-state="{{ $state }}">
                     <div class="flex flex-wrap items-start justify-between gap-2">
@@ -44,6 +46,22 @@
                             <div><dt class="text-muted">{{ __('subscriptions.period_end') }}</dt><dd class="font-semibold">{{ $date($latest->ends_at) }}</dd></div>
                             <div><dt class="text-muted">{{ __('subscriptions.grace_until') }}</dt><dd class="font-semibold">{{ $date($latest->grace_ends_at) }}</dd></div>
                         </dl>
+                    @endif
+                    @if($nextRenewal)
+                        <p class="mt-3 flex flex-wrap items-center gap-x-2 rounded-lg bg-page px-3 py-2 text-sm" data-next-renewal><x-ui.icon name="calendar" class="size-4 text-primary" /><span class="text-muted">{{ __('subscriptions.next_renewal') }}</span> <strong>{{ $date($nextRenewal) }}</strong></p>
+                    @endif
+                    @if($included->isNotEmpty())
+                        <div class="mt-4" data-plan-benefits>
+                            <h3 class="font-semibold">{{ __('subscriptions.benefits_title', ['count' => $included->count()]) }}</h3>
+                            <ul class="mt-2 grid gap-2 sm:grid-cols-2">
+                                @foreach($included as $course)
+                                    <li class="flex min-w-0 items-center gap-2">
+                                        <span class="grid size-5 shrink-0 place-items-center rounded-full bg-success text-on-success" aria-hidden="true"><x-ui.icon name="check" class="size-3" /></span>
+                                        <x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" class="min-w-0 break-words" dir="auto">{{ $course->title }}</x-ui.link>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     @endif
                     @if($price)
                         <p class="mt-2 text-sm text-muted">{{ __('subscriptions.price_column') }}: <x-ui.price :money="\App\Domain\Shared\Money\Money::ofMinor($price->amount_minor, $price->currency)" :market="$market" /> / {{ __('subscriptions.term_'.$subscription->plan->term->value) }}</p>

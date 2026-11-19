@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Commerce\Actions\ApplyCoupon;
 use App\Domain\Commerce\Actions\RemoveCoupon;
 use App\Domain\Commerce\Actions\StartCheckout;
@@ -65,9 +66,45 @@ final class CheckoutController
         return view('checkout.product', $product + [
             'type' => $type, 'id' => $id, 'market' => $market, 'learners' => $options, 'owned' => $owned,
             'cover' => $product['course'] instanceof Course ? $this->coverUrl($product['course']) : null,
+            'benefits' => $this->benefits($product),
             'selected' => (int) old('learner_id', $default instanceof User ? $default->getKey() : $payer->getKey()),
             'key' => 'co-'.bin2hex(random_bytes(12)),
         ]);
+    }
+
+    /**
+     * "What you get" for step 1, from the stored product data only: lessons and minutes, access period and certificate for a
+     * course; the courses of a bundle or plan. Nothing here is a promise the product does not already carry.
+     *
+     * @param  array{course: Course|null, bundle: Bundle|null, plan: SubscriptionPlan|null}  $product
+     * @return list<array{icon: string, text: string}>
+     */
+    private function benefits(array $product): array
+    {
+        $rows = [];
+        if ($product['course'] instanceof Course) {
+            $course = $product['course'];
+            $outline = app(PublicCourseDetail::class)->curriculum($course);
+            if ($outline['lessons'] > 0) {
+                $rows[] = ['icon' => 'play-circle', 'text' => __('curriculum.lessons_count', ['count' => $outline['lessons']]).($outline['minutes'] > 0 ? ' · '.__('curriculum.minutes', ['count' => $outline['minutes']]) : '')];
+            }
+            $rows[] = ['icon' => 'clock', 'text' => $course->access_duration_days === null ? __('checkout.benefit_access_lifetime') : __('checkout.benefit_access_days', ['days' => $course->access_duration_days])];
+            $rows[] = ['icon' => 'award', 'text' => __('checkout.benefit_certificate')];
+        } elseif ($product['bundle'] instanceof Bundle) {
+            $titles = $product['bundle']->items()->with('course')->get()->map(static fn ($item): string => (string) $item->course?->title)->filter()->values();
+            $rows[] = ['icon' => 'layers', 'text' => __('checkout.benefit_bundle_courses', ['count' => $titles->count()])];
+            foreach ($titles as $title) {
+                $rows[] = ['icon' => 'check', 'text' => $title];
+            }
+            $rows[] = ['icon' => 'award', 'text' => __('checkout.benefit_certificate')];
+        } elseif ($product['plan'] instanceof SubscriptionPlan) {
+            $plan = $product['plan'];
+            $rows[] = ['icon' => 'layers', 'text' => __('checkout.benefit_plan_courses', ['count' => $plan->courses()->count()])];
+            $rows[] = ['icon' => 'calendar', 'text' => __('checkout.benefit_plan_term_'.$plan->term->value)];
+            $rows[] = ['icon' => 'check', 'text' => __('checkout.benefit_plan_manual')];
+        }
+
+        return $rows;
     }
 
     public function start(Request $request, CheckoutOffers $offers, CheckoutLearners $learners, StartCheckoutOrder $start): RedirectResponse

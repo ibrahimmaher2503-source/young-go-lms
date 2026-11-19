@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'home' => 'الرئيسية',
     'courses' => 'الدورات',
+    'badge_waiting' => 'بانتظار الإجراء',
     'dashboard' => 'لوحة التحكم',
     'profile' => 'الملف الشخصي',
     // T-P9-09: مجموعات القائمة الجانبية للفريق (docs/LEGACY_PARITY.md).

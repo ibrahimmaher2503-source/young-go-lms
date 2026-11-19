@@ -11,6 +11,7 @@ use App\Filament\Resources\EssayReview\Pages\ReviewEssayAttempt;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Models\Course;
 use App\Models\QuizAttempt;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -26,6 +27,8 @@ use Illuminate\Support\Facades\Auth;
  */
 final class EssayReviewResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = QuizAttempt::class;
 
     protected static ?string $slug = 'essay-review';
@@ -119,6 +122,11 @@ final class EssayReviewResource extends Resource
                         default => $query->where('needs_review', true),
                     }),
             ]);
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->count();
     }
 
     public static function getPages(): array

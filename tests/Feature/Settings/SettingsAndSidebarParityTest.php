@@ -121,7 +121,7 @@ it('lists every registered class of each staff panel in exactly one catalog grou
 
 it('orders the sidebar groups as the catalog lists them and drops empty groups', function (): void {
     $sidebar = tp909Sidebar(tp909Staff('admin'), 'admin');
-    $expected = ['courses', 'site', 'sales', 'finance', 'people', 'inbox', 'reports', 'ai', 'settings'];
+    $expected = StaffNavigation::order('admin');
     $labels = array_map(static fn (string $key): string => (string) __('navigation.groups.'.$key), $expected);
 
     $present = array_values(array_filter($labels, static fn (string $label): bool => array_key_exists($label, $sidebar)));

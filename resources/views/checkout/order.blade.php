@@ -32,7 +32,7 @@
             <h1 class="text-2xl font-bold">{{ __('checkout.title') }}</h1>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                 <p class="inline-flex items-center gap-2" data-secure-order><x-ui.icon name="check" />{{ __('checkout.secure') }}</p>
-                <p>{{ __('checkout.order_ref') }}: <x-ui.ltr>{{ $order->reference }}</x-ui.ltr></p>
+                <p>{{ __('checkout.order_ref') }}: <x-ui.ltr class="whitespace-nowrap">{{ $order->reference }}</x-ui.ltr></p>
             </div>
         </div>
         <x-ui.stepper :steps="[__('checkout.step_learner'), __('checkout.step_pay'), __('checkout.step_done')]" :current="$step" />
@@ -110,7 +110,7 @@
                                 <span class="inline-flex items-center gap-2 text-sm text-muted">{{ __('checkout.transfer_status') }}: <x-ui.badge :tone="$transferTone" data-transfer-status="{{ $transferKey }}">{{ __('checkout.transfer_status_'.$transferKey) }}</x-ui.badge></span>
                             </div>
                             <p class="mt-2" dir="auto">{{ $payee ?? __('checkout.manual_payee_pending') }}</p>
-                            <p class="mt-3 text-sm text-muted">{{ __('checkout.transfer_reference') }}: <bdi dir="ltr" class="font-semibold text-body">{{ $order->reference }}</bdi></p>
+                            <p class="mt-3 flex flex-wrap items-baseline gap-x-2 text-sm text-muted">{{ __('checkout.transfer_reference') }}: <x-ui.ltr class="whitespace-nowrap font-semibold text-body">{{ $order->reference }}</x-ui.ltr></p>
                             <a href="{{ route('manual-payments.create', $order) }}" class="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 font-semibold text-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" data-transfer-upload><x-ui.icon name="download" class="rotate-180" />{{ __('checkout.transfer_upload') }}</a>
                         </x-ui.card>
 

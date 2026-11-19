@@ -28,6 +28,7 @@ final class SettingsHub extends Page
         'notifications' => NotificationTemplateResource::class,
         'marketing' => MarketingTags::class,
         'privacy' => RetentionSettings::class,
+        'safeguarding' => SafeguardingRecipientsSettings::class,
         'data_requests' => DataRequestResource::class,
         'ai' => AssistantControls::class,
         'roles' => RolePermissionResource::class,

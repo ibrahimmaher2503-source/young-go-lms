@@ -18,6 +18,7 @@ use App\Filament\Pages\PaymentPayeeSettings;
 use App\Filament\Pages\PaymentReconciliationPage;
 use App\Filament\Pages\ReportsPage;
 use App\Filament\Pages\RetentionSettings;
+use App\Filament\Pages\SafeguardingRecipientsSettings;
 use App\Filament\Pages\SettingsHub;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Announcements\AnnouncementResource;
@@ -49,6 +50,7 @@ use App\Filament\Resources\MyEarnings\MyEarningsResource;
 use App\Filament\Resources\MyStatements\MyStatementsResource;
 use App\Filament\Resources\NewsletterSubscribers\NewsletterSubscriberResource;
 use App\Filament\Resources\NotificationTemplates\NotificationTemplateResource;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\PayoutProfiles\PayoutProfileResource;
 use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Refunds\RefundResource;
@@ -71,37 +73,62 @@ use Filament\Navigation\NavigationItem;
  */
 final class StaffNavigation
 {
-    /** @var array<string, list<class-string>> */
+    /**
+     * Items within a group run most-used first (queues before catalogues, catalogues before taxonomies).
+     *
+     * @var array<string, list<class-string>>
+     */
     public const array GROUPS = [
         'courses' => [
-            CourseResource::class, CategoryResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class,
-            CourseReviewResource::class, CourseRevisionResource::class, LearnerDeviceResource::class,
+            CourseResource::class, SubmissionReviewResource::class, EssayReviewResource::class, CourseReviewResource::class, CourseRevisionResource::class,
+            LibraryResource::class, CategoryResource::class, LearnerDeviceResource::class,
         ],
         'site' => [
-            HomepageBlockResource::class, CmsPageResource::class, BlogPostResource::class, BlogCategoryResource::class, BlogTagResource::class, InstructorProfileResource::class,
+            BlogPostResource::class, CmsPageResource::class, HomepageBlockResource::class, InstructorProfileResource::class, BlogCategoryResource::class, BlogTagResource::class,
         ],
         'sales' => [
-            PlanResource::class, SubscriptionResource::class, BundleResource::class, CouponResource::class, ManualGrantResource::class,
-            ManualPaymentProofResource::class, PaymentReconciliationPage::class, RefundResource::class,
+            OrderResource::class, ManualPaymentProofResource::class, RefundResource::class, PaymentReconciliationPage::class, SubscriptionResource::class,
+            PlanResource::class, BundleResource::class, CouponResource::class, ManualGrantResource::class,
         ],
         'finance' => [
-            CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class, PayoutProfileResource::class,
+            SettlementResource::class, StatementResource::class, LedgerEntryResource::class, CommissionRuleResource::class, PayoutProfileResource::class,
             MyEarningsResource::class, MyStatementsResource::class, MyPayoutProfile::class, InstructorAgreementPage::class,
         ],
         'people' => [
-            StaffUserResource::class, RolePermissionResource::class, LearnerThreeSixtyPage::class, InstructorApplicationResource::class, InstructorAgreementResource::class,
+            LearnerThreeSixtyPage::class, InstructorApplicationResource::class, StaffUserResource::class, InstructorAgreementResource::class, RolePermissionResource::class,
         ],
         'inbox' => [
-            HelpRequestResource::class, AnnouncementResource::class, ContactEnquiryResource::class, NewsletterSubscriberResource::class,
+            HelpRequestResource::class, ContactEnquiryResource::class, AnnouncementResource::class, NewsletterSubscriberResource::class,
         ],
         'reports' => [ReportsPage::class],
         'ai' => [AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, AssistantUsageReport::class, AssistantControls::class],
         'settings' => [
-            SettingsHub::class, GeneralSettingsPage::class, PaymentPayeeSettings::class, NotificationTemplateResource::class, MarketingTags::class,
-            RetentionSettings::class, DataRequestResource::class, AuditLogResource::class,
+            SettingsHub::class, GeneralSettingsPage::class, PaymentPayeeSettings::class, NotificationTemplateResource::class, DataRequestResource::class,
+            MarketingTags::class, RetentionSettings::class, SafeguardingRecipientsSettings::class, AuditLogResource::class,
         ],
     ];
 
+    /**
+     * Daily-use order of the groups per panel (Dashboard is always first, ungrouped). A group missing here follows in catalog order.
+     *
+     * @var array<string, list<string>>
+     */
+    public const array PANEL_ORDER = [
+        'admin' => ['inbox', 'sales', 'courses', 'finance', 'reports', 'people', 'site', 'ai', 'settings'],
+        'finance' => ['sales', 'finance', 'reports', 'inbox', 'people', 'settings'],
+        'instructor' => ['courses', 'inbox', 'finance', 'reports', 'ai', 'sales'],
+    ];
+
+    /** The work-queue group each panel keeps open next to the active one. */
+    public const array QUEUE_GROUP = ['admin' => 'inbox', 'finance' => 'sales', 'instructor' => 'inbox'];
+
+    /** @return list<string> group keys in sidebar order for a panel */
+    public static function order(string $panelId): array
+    {
+        $first = self::PANEL_ORDER[$panelId] ?? [];
+
+        return [...$first, ...array_values(array_diff(array_keys(self::GROUPS), $first))];
+    }
     public static function build(NavigationBuilder $builder): NavigationBuilder
     {
         $panel = Filament::getCurrentOrDefaultPanel();
@@ -111,11 +138,23 @@ final class StaffNavigation
         $builder->items(self::items([WorkspaceDashboard::class], $registered));
 
         $groups = [];
-        foreach (self::GROUPS as $key => $classes) {
+        $queue = self::QUEUE_GROUP[$panel->getId()] ?? 'inbox';
+        foreach (self::order($panel->getId()) as $key) {
+            $classes = self::GROUPS[$key];
             $placed = [...$placed, ...$classes];
             $items = self::items($classes, $registered);
             if ($items !== []) {
-                $groups[] = NavigationGroup::make(self::label($key))->items($items);
+                $group = NavigationGroup::make(self::label($key))->items($items);
+                $active = $group->isActive();
+                $group->collapsed($key !== $queue && ! $active)->collapsible();
+
+                if ($active) {
+                    $group->extraSidebarAttributes([
+                        'x-init' => '$store.sidebar.groupIsCollapsed(label) && $store.sidebar.toggleCollapsedGroup(label)',
+                    ]);
+                }
+
+                $groups[] = $group;
             }
         }
 

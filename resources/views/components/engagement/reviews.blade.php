@@ -41,9 +41,10 @@
             @if(session('review_notice'))<x-ui.alert tone="success" role="status" data-review-notice>{{ session('review_notice') }}</x-ui.alert>@endif
 
             @if($canReview)
-                <form method="post" action="{{ route('reviews.store', ['course' => $course->getKey()]) }}" class="space-y-4 border-t border-border pt-4" data-review-form novalidate>
+                <details class="border-t border-border pt-4" data-review-disclosure @if($errors->hasAny(['review', 'rating', 'body']) || old('body') !== null) open @endif>
+                <summary class="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg border border-primary px-4 font-semibold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden" data-review-toggle><x-ui.icon name="send" class="size-4" />{{ $own === null ? __('engagement.write') : __('engagement.edit') }}</summary>
+                <form method="post" action="{{ route('reviews.store', ['course' => $course->getKey()]) }}" class="mt-4 space-y-4" data-review-form novalidate>
                     @csrf
-                    <h3 class="font-bold">{{ $own === null ? __('engagement.write') : __('engagement.edit') }}</h3>
                     @if($own?->status === \App\Domain\Engagement\ReviewStatus::Pending)
                         <x-ui.alert tone="info" data-review-state="pending">{{ __('engagement.state_pending') }}</x-ui.alert>
                     @elseif($own?->status === \App\Domain\Engagement\ReviewStatus::Published)
@@ -71,6 +72,7 @@
                     <p class="text-sm text-muted">{{ __('engagement.moderation_note') }}</p>
                     <x-ui.button type="submit">{{ $own === null ? __('engagement.submit') : __('engagement.resubmit') }}</x-ui.button>
                 </form>
+                </details>
             @endif
         </x-ui.card>
     @endif

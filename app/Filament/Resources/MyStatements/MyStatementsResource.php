@@ -68,7 +68,7 @@ final class MyStatementsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('period', 'desc')->emptyState(EmptyStateView::make('heroicon-o-document-text', 'settlements.statements_empty_title', 'settlements.statements_empty_hint'))->columns(StatementTable::columns(false))->recordActions([StatementTable::downloadAction()]);
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('period', 'desc')->emptyState(EmptyStateView::make('heroicon-o-document-text', 'settlements.statements_empty_title', 'settlements.statements_empty_hint'))->columns(StatementTable::columns(false))->recordActions([StatementTable::downloadAction()]);
     }
 
     public static function getPages(): array

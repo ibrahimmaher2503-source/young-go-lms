@@ -70,7 +70,7 @@ final class ManageQuiz extends Page
         return Action::make('settings')->label(__('quiz.settings'))->icon('heroicon-o-cog-6-tooth')->color('gray')->modalHeading(__('quiz.settings'))
             ->schema([
                 TextInput::make('time_limit_minutes')->label(__('quiz.time_limit'))->helperText(__('quiz.time_limit_help'))->numeric()->minValue(1)->maxValue(1440),
-                TextInput::make('pass_mark_percent')->label(__('quiz.pass_mark'))->helperText(__('quiz.pass_mark_help', ['percent' => QuizPassMark::default()]))->placeholder((string) QuizPassMark::default())->numeric()->minValue(1)->maxValue(100),
+                TextInput::make('pass_mark_percent')->label(__('quiz.pass_mark'))->helperText(__('quiz.pass_mark_help', ['percent' => QuizPassMark::inherited($this->quiz())]))->placeholder((string) QuizPassMark::inherited($this->quiz()))->numeric()->minValue(1)->maxValue(100),
                 TextInput::make('max_attempts')->label(__('quiz.max_attempts'))->helperText(__('quiz.max_attempts_help'))->numeric()->minValue(1)->maxValue(100),
                 Select::make('result_visibility')->label(__('quiz.result_visibility'))->native(false)->required()
                     ->options(collect(Quiz::RESULT_VISIBILITY)->mapWithKeys(fn (string $v): array => [$v => __('quiz.visibility.'.$v)])->all()),

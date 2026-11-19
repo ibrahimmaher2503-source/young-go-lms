@@ -13,6 +13,7 @@
         <x-ui.stepper :steps="[__('checkout.step_learner'), __('checkout.step_pay'), __('checkout.step_done')]" :current="1" />
 
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div class="min-w-0 space-y-4">
             <x-ui.card :title="__('checkout.learner_title')" data-checkout-learner>
                 <form method="post" action="{{ route('checkout.start') }}" class="space-y-4" novalidate>
                     @csrf
@@ -40,6 +41,20 @@
                     </div>
                 </form>
             </x-ui.card>
+
+            @if($benefits !== [])
+                <x-ui.card :title="__('checkout.benefits_title')" data-checkout-benefits>
+                    <ul class="grid gap-3 sm:grid-cols-2">
+                        @foreach($benefits as $benefit)
+                            <li class="flex min-w-0 items-start gap-3 rounded-lg bg-page p-3">
+                                <span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-assistant text-primary"><x-ui.icon :name="$benefit['icon']" class="size-4" /></span>
+                                <span class="min-w-0 break-words pt-1" dir="auto">{{ $benefit['text'] }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </x-ui.card>
+            @endif
+            </div>
 
             @include('checkout._summary', ['lines' => $lines, 'subtotal' => $price, 'discount' => null, 'total' => $price, 'market' => $market])
         </div>

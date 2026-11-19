@@ -14,6 +14,7 @@ use App\Filament\Resources\DataRequests\Pages\ListDataRequests;
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -37,6 +38,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class DataRequestResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = DataRequest::class;
 
     protected static ?string $slug = 'privacy-requests';
@@ -158,6 +161,11 @@ final class DataRequestResource extends Resource
             throw new Halt;
         }
         Notification::make()->success()->title(__('privacy.'.$successKey))->send();
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->where('status', DataRequestStatus::Requested->value)->count();
     }
 
     public static function getPages(): array

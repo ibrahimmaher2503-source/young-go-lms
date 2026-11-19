@@ -9,13 +9,13 @@ use App\Domain\Commerce\ManualPaymentProof;
 use App\Domain\Commerce\ManualPaymentProofAccess;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderStatus;
+use App\Http\Requests\SubmitManualPaymentProofRequest;
 use App\Models\User;
 use Brick\Math\Exception\MathException;
 use Brick\Money\Money as BrickMoney;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -43,17 +43,10 @@ final class ManualPaymentProofController
         ]);
     }
 
-    public function store(Request $request, Order $order): RedirectResponse
+    public function store(SubmitManualPaymentProofRequest $request, Order $order): RedirectResponse
     {
         $payer = $this->payer($request, $order);
-        $data = $request->validate([
-            'payer_name' => ['required', 'string', 'min:2', 'max:120'],
-            'sender_account' => ['required', 'string', 'min:5', 'max:64'],
-            'transfer_reference' => ['required', 'string', 'min:4', 'max:64'],
-            'amount' => ['required', 'regex:/^\d{1,9}(\.\d{1,2})?$/'],
-            'transferred_at' => ['required', 'date'],
-            'proof' => ['required', 'file'],
-        ]);
+        $data = $request->validated();
 
         try {
             $minor = BrickMoney::of((string) $data['amount'], $order->currency)->getMinorAmount()->toInt();
@@ -64,7 +57,7 @@ final class ManualPaymentProofController
         $this->submit->__invoke($payer, $order, [
             'payer_name' => (string) $data['payer_name'], 'sender_account' => (string) $data['sender_account'],
             'transfer_reference' => (string) $data['transfer_reference'], 'amount_minor' => $minor,
-            'transferred_at' => Carbon::parse((string) $data['transferred_at'], (string) Config::get('app.timezone')),
+            'transferred_at' => $request->transferredAt(),
         ], $request->file('proof'));
 
         return redirect()->route('manual-payments.create', $order)->with('manual_payment_notice', __('manual_payment.submitted'));

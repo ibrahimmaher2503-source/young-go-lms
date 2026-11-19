@@ -14,9 +14,9 @@ use InvalidArgumentException;
 
 final class LocalizedDateColumn extends TextColumn
 {
-    public static function make(?string $name = null, string $pattern = 'd MMMM yyyy HH:mm'): static
+    public static function make(?string $name = null, string $pattern = 'dd/MM/yyyy HH:mm'): static
     {
-        return parent::make($name)->formatStateUsing(static function (mixed $state) use ($pattern): ?string {
+        return parent::make($name)->extraAttributes(['class' => 'yg-date', 'dir' => 'ltr'])->formatStateUsing(static function (mixed $state) use ($pattern): ?string {
             if ($state === null || $state === '') {
                 return null;
             }
@@ -43,6 +43,7 @@ final class LocalizedDateColumn extends TextColumn
                 $timezone = $market->timezone();
             }
 
+            // B1: the cell is an LTR-isolated run (class yg-date), so Arabic month names no longer reorder the digits.
             return LocalizedDate::format($instant, $market, app()->getLocale(), pattern: $pattern, timezone: $timezone);
         });
     }

@@ -14,6 +14,7 @@ use App\Filament\Resources\Reviews\Pages\ListCourseReviews;
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -38,6 +39,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class CourseReviewResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = CourseReview::class;
 
     protected static ?string $slug = 'course-reviews';
@@ -164,6 +167,11 @@ final class CourseReviewResource extends Resource
         }
 
         return new HtmlString($html.'</dl>');
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->where('status', ReviewStatus::Pending->value)->count();
     }
 
     public static function getPages(): array

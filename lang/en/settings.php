@@ -25,11 +25,24 @@ return [
             'notifications' => 'Email and in-app notification wording.',
             'marketing' => 'Google Analytics and Meta Pixel IDs.',
             'privacy' => 'How long each kind of data is kept.',
+            'safeguarding' => 'Extra people told when a child safeguarding case is raised.',
             'data_requests' => 'Export and deletion requests from users.',
             'ai' => 'Lesson assistant switch, provider, quotas and budgets.',
             'roles' => 'Which permissions each role has.',
             'audit' => 'Who changed what and when.',
         ],
+    ],
+
+    'safeguarding' => [
+        'nav' => 'Safeguarding recipients',
+        'title' => 'Safeguarding recipients',
+        'intro' => 'Safeguarding notices cannot be switched off. Besides the roles below, these email addresses are told too. Each address must belong to an active user.',
+        'roles_note' => 'Always told: every active user with the role :roles.',
+        'emails' => 'Extra email addresses',
+        'emails_help' => 'Up to :max addresses. Type an address and press Enter.',
+        'none' => 'No extra addresses.',
+        'error_email' => ':email is not a valid email address.',
+        'error_max' => 'You can add at most :max addresses.',
     ],
 
     'general' => [

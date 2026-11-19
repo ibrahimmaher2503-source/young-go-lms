@@ -25,17 +25,24 @@ final class SaveCompletionRules
 
         $input['lesson_percent'] = ($input['lesson_percent'] ?? null) === '' ? null : ($input['lesson_percent'] ?? null);
         $input['attendance_percent'] = ($input['attendance_percent'] ?? null) === '' ? null : ($input['attendance_percent'] ?? null);
+        $withPassMark = array_key_exists('quiz_pass_mark_percent', $input);
+        $input['quiz_pass_mark_percent'] = ($input['quiz_pass_mark_percent'] ?? null) === '' ? null : ($input['quiz_pass_mark_percent'] ?? null);
         $data = Validator::make($input, [
+            'quiz_pass_mark_percent' => ['nullable', 'integer', 'between:1,100'],
             'lesson_percent' => ['nullable', 'integer', 'between:1,100'],
             'attendance_percent' => ['nullable', 'integer', 'between:1,100'],
             'require_quizzes' => ['boolean'],
             'require_assignments' => ['boolean'],
             'manual_approval' => ['boolean'],
         ], [], [
-            'lesson_percent' => __('completion.lesson_percent'), 'attendance_percent' => __('completion.attendance_percent'),
+            'quiz_pass_mark_percent' => __('completion.quiz_pass_mark'), 'lesson_percent' => __('completion.lesson_percent'), 'attendance_percent' => __('completion.attendance_percent'),
         ])->validate();
 
-        return DB::transaction(function () use ($actor, $course, $data): CourseCompletionRule {
+        return DB::transaction(function () use ($actor, $course, $data, $withPassMark): CourseCompletionRule {
+            if ($withPassMark) {
+                $this->savePassMark($actor, $course, $data['quiz_pass_mark_percent'] === null ? null : (int) $data['quiz_pass_mark_percent']);
+            }
+
             $rule = CourseCompletionRule::forCourse($course);
             $before = $rule->values();
             $rule->forceFill([
@@ -50,5 +57,18 @@ final class SaveCompletionRules
 
             return $rule;
         });
+    }
+
+    /** O-020: the course default pass mark for its quizzes. Audited on its own so the completion-rules audit payload is unchanged. */
+    private function savePassMark(User $actor, Course $course, ?int $mark): void
+    {
+        $before = $course->quiz_pass_mark_percent;
+        if ($before === $mark) {
+            return;
+        }
+        $course->forceFill(['quiz_pass_mark_percent' => $mark])->save();
+        if ($this->audit->record('course.quiz_pass_mark_saved', $course, (int) $actor->getKey(), ['quiz_pass_mark_percent' => $before], ['quiz_pass_mark_percent' => $mark]) === null) {
+            throw new RuntimeException('Unable to record quiz pass mark audit.');
+        }
     }
 }

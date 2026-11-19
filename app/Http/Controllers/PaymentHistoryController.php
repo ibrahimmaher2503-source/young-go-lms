@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Domain\Commerce\Actions\IssueReceipt;
 use App\Domain\Commerce\EReceipt;
 use App\Domain\Commerce\Order;
+use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\Queries\PaymentHistory;
 use App\Domain\Commerce\ReceiptPdf;
 use App\Domain\Commerce\Refund;
@@ -28,7 +29,9 @@ final class PaymentHistoryController
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
-        return view('learner.payments', ['orders' => PaymentHistory::for($user)]);
+        $status = OrderStatus::tryFrom((string) $request->query('status'));
+
+        return view('learner.payments', ['orders' => PaymentHistory::for($user, 10, $status)->withQueryString(), 'summary' => PaymentHistory::summary($user), 'status' => $status]);
     }
 
     public function receipt(Request $request, Order $order, IssueReceipt $issue, ReceiptPdf $pdf): Response

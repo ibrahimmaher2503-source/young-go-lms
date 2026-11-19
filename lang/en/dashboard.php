@@ -10,6 +10,7 @@ return [
     'queues_description' => 'Live counts of work waiting in your queues.',
     'empty_period' => 'Nothing recorded in this period yet.',
     'queue_clear' => 'All clear',
+    'queues_all_clear' => 'Nothing needs attention.',
     'empty_title' => 'No figures for your role yet',
     'empty_description' => 'Key figures and queues appear here when your role can see them.',
     'kpi' => [

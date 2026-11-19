@@ -13,9 +13,11 @@ use App\Domain\InstructorFinance\SettlementItem;
 use App\Domain\InstructorFinance\SettlementStatus;
 use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Resources\Settlements\Pages\ListSettlements;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\EmptyStateView;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -40,6 +42,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class SettlementResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = Settlement::class;
 
     protected static ?string $slug = 'settlements';
@@ -84,15 +88,15 @@ final class SettlementResource extends Resource
         $manage = static fn (): bool => Gate::allows('settlement.manage');
         $colors = ['draft' => 'info', 'approved' => 'warning', 'paid' => 'success', 'cancelled' => 'gray'];
 
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->emptyState(EmptyStateView::make('heroicon-o-clipboard-document-check', 'settlements.settlements_empty_title', 'settlements.settlements_empty_hint'))
             ->columns([
                 TextColumn::make('reference')->label(__('settlements.reference'))->fontFamily('mono')->searchable(),
-                TextColumn::make('instructor_count')->label(__('settlements.instructors')),
-                TextColumn::make('entry_count')->label(__('settlements.entries')),
+                TextColumn::make('instructor_count')->visibleFrom('md')->label(__('settlements.instructors')),
+                TextColumn::make('entry_count')->visibleFrom('md')->label(__('settlements.entries')),
                 TextColumn::make('total_minor')->label(__('settlements.total'))->state(static fn (Settlement $s): string => RefundResource::money($s->total_minor, $s->currency))->extraAttributes(['dir' => 'ltr']),
-                TextColumn::make('creator')->label(__('settlements.created_by'))->state(static fn (Settlement $s): string => (string) $s->creator?->getAttribute('display_name')),
-                LocalizedDateColumn::make('created_at')->label(__('settlements.created'))->sortable(),
+                TextColumn::make('creator')->visibleFrom('md')->label(__('settlements.created_by'))->state(static fn (Settlement $s): string => (string) $s->creator?->getAttribute('display_name')),
+                LocalizedDateColumn::make('created_at')->visibleFrom('md')->label(__('settlements.created'))->sortable(),
                 StatusBadgeColumn::make('status', $colors)->label(__('ledger.status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('settlements.status_'.($state instanceof SettlementStatus ? $state->value : (string) $state))),
             ])
@@ -100,7 +104,7 @@ final class SettlementResource extends Resource
                 SelectFilter::make('status')->label(__('ledger.status'))
                     ->options(collect(SettlementStatus::cases())->mapWithKeys(static fn (SettlementStatus $s): array => [$s->value => __('settlements.status_'.$s->value)])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('details')->label(__('settlements.details'))->icon('heroicon-o-eye')->modalSubmitAction(false)->modalCancelActionLabel(__('settlements.close'))
                     ->modalHeading(static fn (Settlement $s): string => $s->reference)
                     ->modalContent(static fn (Settlement $s) => view('filament.settlements.details', ['settlement' => $s->load('items.instructor')])),
@@ -129,7 +133,7 @@ final class SettlementResource extends Resource
                     ->modalDescription(__('settlements.cancel_help'))
                     ->schema([Textarea::make('reason')->label(__('ledger.reason'))->required()->minLength(5)->maxLength(500)])
                     ->action(static fn (Settlement $s, array $data) => self::guarded(static fn (User $u) => app(CancelSettlement::class)($u, $s, (string) $data['reason']), 'cancelled_ok')),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     /** @param  Closure(User): mixed  $run */
@@ -146,6 +150,11 @@ final class SettlementResource extends Resource
             throw new Halt;
         }
         Notification::make()->success()->title(__('settlements.'.$doneKey))->send();
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->where('status', SettlementStatus::Draft->value)->count();
     }
 
     public static function getPages(): array

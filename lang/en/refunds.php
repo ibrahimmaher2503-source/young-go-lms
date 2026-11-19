@@ -5,6 +5,13 @@ declare(strict_types=1);
 return [
     'nav_payments' => 'Payments',
     'history_title' => 'Payment history',
+    'sum_orders' => 'Orders',
+    'sum_paid' => 'Total paid',
+    'sum_last' => 'Last payment',
+    'sum_none' => 'No payment yet',
+    'filter_label' => 'Filter by status',
+    'filter_all' => 'All',
+    'filter_empty' => 'No orders with this status.',
     'history_intro' => 'Your orders, receipts and refunds.',
     'history_empty' => 'No payments yet',
     'history_empty_help' => 'Orders you pay for will appear here with their receipts.',

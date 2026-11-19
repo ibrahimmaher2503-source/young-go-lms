@@ -40,11 +40,11 @@
                     <x-ui.form-field for="amount" :label="__('manual_payment.amount_sent', ['currency' => $order->currency])" :error="$field('amount')">
                         <x-ui.input id="amount" name="amount" dir="ltr" inputmode="decimal" :value="old('amount')" required :invalid="$errors->has('amount')" />
                     </x-ui.form-field>
-                    <x-ui.form-field for="transferred_at" :label="__('manual_payment.transferred_at')" :error="$field('transferred_at')">
-                        <x-ui.input id="transferred_at" type="datetime-local" name="transferred_at" dir="ltr" :value="old('transferred_at')" required :invalid="$errors->has('transferred_at')" />
+                    <x-ui.form-field for="transferred_at" :label="__('manual_payment.transferred_at')" :help="__('manual_payment.transferred_at_hint')" :error="$field('transferred_at')">
+                        <x-ui.input id="transferred_at" type="text" name="transferred_at" dir="ltr" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="{{ __('manual_payment.date_placeholder') }}" aria-describedby="transferred_at-help" :value="old('transferred_at')" required :invalid="$errors->has('transferred_at')" />
                     </x-ui.form-field>
                     <x-ui.file-upload id="proof" name="proof" accept="image/png,image/jpeg,image/webp,application/pdf" :label="__('manual_payment.file')" :hint="__('manual_payment.file_hint', ['max' => $maxMegabytes])" required />
-                    @if($errors->has('proof'))<p class="border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('proof') }}</p>@endif
+                    @if($errors->has('proof'))<p id="proof-error" class="border-s-4 border-danger ps-2 text-sm font-semibold text-body">{{ $errors->first('proof') }}</p>@endif
                     @if($errors->has('order'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('order') }}</x-ui.alert>@endif
                     <x-ui.button type="submit" variant="primary">{{ __('manual_payment.submit') }}</x-ui.button>
                 </form>

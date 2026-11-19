@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 return [
     'required' => 'حقل :attribute مطلوب.',
+    'regex' => 'صيغة :attribute غير صالحة.',
+    'file' => 'يجب أن يكون :attribute ملفًا.',
     'email' => 'حقل :attribute يجب أن يكون عنوان بريد إلكتروني صالحًا.',
     'in' => 'قيمة :attribute المحددة غير صالحة.',
     'string' => 'حقل :attribute يجب أن يكون نصًا.',

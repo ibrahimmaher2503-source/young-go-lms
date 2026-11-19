@@ -1,4 +1,9 @@
 {{-- T-P9-07: role KPIs (report-backed) and live work queues. Rows are prepared by WorkspaceDashboard: label, lines, empty, secondary, url. --}}
+@php
+    // N3: a tile for a feature that is off or has no data yet (AI) is hidden, not shown as a dash.
+    $kpis = array_values(array_filter($kpis, static fn (array $kpi): bool => ! ($kpi['empty'] && str_starts_with($kpi['key'], 'ai_'))));
+    $allClear = $queues !== [] && collect($queues)->every(static fn (array $queue): bool => $queue['empty']);
+@endphp
 <div data-role-dashboard>
     @if ($kpis !== [])
         <section class="yg-dashboard-tools" aria-labelledby="yg-kpi-title">
@@ -27,6 +32,12 @@
     @if ($queues !== [])
         <section class="yg-dashboard-tools" aria-labelledby="yg-queue-title">
             <header><h2 id="yg-queue-title">{{ __('dashboard.queues_title') }}</h2><p>{{ __('dashboard.queues_description') }}</p></header>
+            @if ($allClear)
+                <div class="yg-dashboard-clear" data-queues-clear>
+                    <x-filament::icon icon="heroicon-o-check-circle" aria-hidden="true" />
+                    <p><strong data-queue-empty>{{ __('dashboard.queues_all_clear') }}</strong> <span>{{ collect($queues)->pluck('label')->implode(' · ') }}</span></p>
+                </div>
+            @else
             <div class="yg-dashboard-links">
                 @foreach ($queues as $queue)
                     @php($tag = $queue['url'] ? 'a' : 'div')
@@ -48,6 +59,7 @@
                     </{{ $tag }}>
                 @endforeach
             </div>
+            @endif
         </section>
     @endif
 

@@ -25,16 +25,16 @@ final class LedgerTable
     {
         $columns = [LocalizedDateColumn::make('earned_at')->label(__('ledger.col_date'))->sortable()];
         if ($withInstructor) {
-            $columns[] = TextColumn::make('instructor')->label(__('ledger.instructor'))->state(static fn (LedgerEntry $e): string => (string) $e->instructor?->getAttribute('display_name'));
+            $columns[] = TextColumn::make('instructor')->visibleFrom('md')->label(__('ledger.instructor'))->state(static fn (LedgerEntry $e): string => (string) $e->instructor?->getAttribute('display_name'));
         }
 
         return [...$columns,
-            TextColumn::make('course')->label(__('ledger.course'))->state(static fn (LedgerEntry $e): string => $e->course === null ? '-' : (string) $e->course->title)->limit(40),
-            TextColumn::make('type')->label(__('ledger.type'))->badge()->state(static fn (LedgerEntry $e): string => __('ledger.type_'.$e->type->value)),
-            TextColumn::make('sale_type')->label(__('ledger.sale_type'))->state(static fn (LedgerEntry $e): string => $e->sale_type === null ? '-' : __('ledger.sale_'.$e->sale_type->value)),
-            TextColumn::make('order.reference')->label(__('ledger.order'))->fontFamily('mono')->placeholder('-'),
-            TextColumn::make('base_minor')->label(__('ledger.base'))->state(static fn (LedgerEntry $e): string => $e->base_minor === null ? '-' : RefundResource::money($e->base_minor, $e->currency)),
-            TextColumn::make('rate')->label(__('ledger.rate'))->state(static fn (LedgerEntry $e): string => match (true) {
+            TextColumn::make('course')->visibleFrom('md')->label(__('ledger.course'))->state(static fn (LedgerEntry $e): string => $e->course === null ? '-' : (string) $e->course->title)->limit(40),
+            TextColumn::make('type')->visibleFrom('md')->label(__('ledger.type'))->badge()->state(static fn (LedgerEntry $e): string => __('ledger.type_'.$e->type->value)),
+            TextColumn::make('sale_type')->visibleFrom('md')->label(__('ledger.sale_type'))->state(static fn (LedgerEntry $e): string => $e->sale_type === null ? '-' : __('ledger.sale_'.$e->sale_type->value)),
+            TextColumn::make('order.reference')->visibleFrom('md')->label(__('ledger.order'))->fontFamily('mono')->placeholder('-'),
+            TextColumn::make('base_minor')->visibleFrom('md')->label(__('ledger.base'))->state(static fn (LedgerEntry $e): string => $e->base_minor === null ? '-' : RefundResource::money($e->base_minor, $e->currency)),
+            TextColumn::make('rate')->visibleFrom('md')->label(__('ledger.rate'))->state(static fn (LedgerEntry $e): string => match (true) {
                 $e->fixed_amount_minor !== null => RefundResource::money($e->fixed_amount_minor, $e->currency),
                 $e->rate_bps !== null => rtrim(rtrim(number_format($e->rate_bps / 100, 2, '.', ''), '0'), '.').'%',
                 default => '-',

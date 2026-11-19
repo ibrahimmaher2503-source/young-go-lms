@@ -9,6 +9,7 @@ use App\Domain\Commerce\CouponRedemptionStatus;
 use App\Domain\Commerce\CouponType;
 use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use Brick\Money\Money as BrickMoney;
@@ -90,26 +91,26 @@ final class CouponResource extends Resource
     {
         $colors = ['active' => 'success', 'scheduled' => 'info', 'inactive' => 'gray', 'expired' => 'gray', 'exhausted' => 'warning'];
 
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('code')->label(__('commerce.coupon_code'))->searchable()->fontFamily('mono'),
                 TextColumn::make('name')->label(__('commerce.coupon_name'))->searchable(),
-                TextColumn::make('value')->label(__('commerce.coupon_type'))->state(static fn (Coupon $c): string => $c->discount_type === CouponType::Percent
+                TextColumn::make('value')->visibleFrom('md')->label(__('commerce.coupon_type'))->state(static fn (Coupon $c): string => $c->discount_type === CouponType::Percent
                     ? $c->percent.'%' : BrickMoney::ofMinor((int) $c->amount_minor, (string) $c->currency)->formatToLocale('en-US')),
                 StatusBadgeColumn::make('state', $colors)->label(__('commerce.coupon_status'))->state(static fn (Coupon $c): string => self::state($c))
                     ->formatStateUsing(static fn (mixed $state): string => __('commerce.coupon_state_'.$state)),
-                TextColumn::make('uses')->label(__('commerce.coupon_used'))->state(static fn (Coupon $c): string => $c->getAttribute('redeemed_count').' / '.($c->max_redemptions ?? __('commerce.coupon_unlimited'))),
-                TextColumn::make('reserved_count')->label(__('commerce.coupon_reserved')),
-                TextColumn::make('discount')->label(__('commerce.coupon_discount_given'))->state(static fn (Coupon $c): string => BrickMoney::ofMinor((int) $c->getAttribute('discount_sum'), $c->currency ?? Market::Egypt->currency())->formatToLocale('en-US')),
-                LocalizedDateColumn::make('starts_at')->label(__('commerce.coupon_starts'))->placeholder('-'),
-                LocalizedDateColumn::make('ends_at')->label(__('commerce.coupon_ends'))->placeholder('-'),
+                TextColumn::make('uses')->visibleFrom('md')->label(__('commerce.coupon_used'))->state(static fn (Coupon $c): string => $c->getAttribute('redeemed_count').' / '.($c->max_redemptions ?? __('commerce.coupon_unlimited'))),
+                TextColumn::make('reserved_count')->visibleFrom('md')->label(__('commerce.coupon_reserved')),
+                TextColumn::make('discount')->visibleFrom('md')->label(__('commerce.coupon_discount_given'))->state(static fn (Coupon $c): string => BrickMoney::ofMinor((int) $c->getAttribute('discount_sum'), $c->currency ?? Market::Egypt->currency())->formatToLocale('en-US')),
+                LocalizedDateColumn::make('starts_at')->visibleFrom('md')->label(__('commerce.coupon_starts'))->placeholder('-'),
+                LocalizedDateColumn::make('ends_at')->visibleFrom('md')->label(__('commerce.coupon_ends'))->placeholder('-'),
             ])
             ->filters([TernaryFilter::make('is_active')->label(__('commerce.coupon_active'))])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 CouponForm::configure(Action::make('edit')->label(__('commerce.coupon_edit'))->icon('heroicon-o-pencil-square')
                     ->visible(static fn (): bool => Gate::allows('payment.approve_manual'))
                     ->modalHeading(__('commerce.coupon_edit'))),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

@@ -8,6 +8,7 @@ use App\Domain\Commerce\Actions\AllocateBundlePrice;
 use App\Domain\Commerce\Bundle;
 use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Bundles\Pages\ListBundles;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
@@ -74,11 +75,11 @@ final class BundleResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')->label(__('bundles.name'))->state(static fn (Bundle $b): string => (string) $b->name)
                     ->searchable(query: static fn (Builder $query, string $search): Builder => $query->whereLike('name', '%'.$search.'%')),
-                TextColumn::make('items_count')->label(__('bundles.courses')),
+                TextColumn::make('items_count')->visibleFrom('md')->label(__('bundles.courses')),
                 TextColumn::make('price_egp')->label(__('bundles.price_column'))->state(static function (Bundle $b): string {
                     $price = $b->priceFor(Market::Egypt);
 
@@ -89,13 +90,13 @@ final class BundleResource extends Resource
                     ->formatStateUsing(static fn (mixed $state): string => __('bundles.state_'.$state)),
             ])
             ->filters([TernaryFilter::make('is_active')->label(__('bundles.active'))])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('allocation')->label(__('bundles.allocation'))->icon('heroicon-o-calculator')->modalSubmitAction(false)
                     ->modalHeading(__('bundles.allocation'))->modalContent(static fn (Bundle $record): HtmlString => self::allocationPreview($record)),
                 BundleForm::configure(Action::make('edit')->label(__('bundles.edit'))->icon('heroicon-o-pencil-square')
                     ->visible(static fn (): bool => Gate::allows('payment.approve_manual'))
                     ->modalHeading(__('bundles.edit'))),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

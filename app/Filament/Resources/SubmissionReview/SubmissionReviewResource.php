@@ -12,6 +12,7 @@ use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\AssignmentSubmission;
 use App\Models\Course;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Auth;
  */
 final class SubmissionReviewResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = AssignmentSubmission::class;
 
     protected static ?string $slug = 'submission-review';
@@ -121,6 +124,11 @@ final class SubmissionReviewResource extends Resource
                     ->query(static fn (Builder $query): Builder => $query->whereIn('status', SubmissionReview::AWAITING)
                         ->whereHas('assignment', static fn (Builder $a): Builder => $a->whereNotNull('due_at')->where('due_at', '<', now()))),
             ]);
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->whereIn('status', [AssignmentSubmission::SUBMITTED, AssignmentSubmission::RESUBMITTED])->count();
     }
 
     public static function getPages(): array

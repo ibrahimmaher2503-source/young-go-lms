@@ -19,6 +19,7 @@ use App\Filament\Pages\PaymentPayeeSettings;
 use App\Filament\Pages\PaymentReconciliationPage;
 use App\Filament\Pages\ReportsPage;
 use App\Filament\Pages\RetentionSettings;
+use App\Filament\Pages\SafeguardingRecipientsSettings;
 use App\Filament\Pages\SettingsHub;
 use App\Filament\Pages\WorkspaceDashboard;
 use App\Filament\Resources\Announcements\AnnouncementResource;
@@ -50,6 +51,7 @@ use App\Filament\Resources\MyEarnings\MyEarningsResource;
 use App\Filament\Resources\MyStatements\MyStatementsResource;
 use App\Filament\Resources\NewsletterSubscribers\NewsletterSubscriberResource;
 use App\Filament\Resources\NotificationTemplates\NotificationTemplateResource;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\PayoutProfiles\PayoutProfileResource;
 use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Refunds\RefundResource;
@@ -108,7 +110,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages(match ($id) {
                     'finance' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class],
-                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, LearnerThreeSixtyPage::class, RetentionSettings::class, SettingsHub::class, GeneralSettingsPage::class, PaymentPayeeSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
+                    'admin' => [WorkspaceDashboard::class, PaymentReconciliationPage::class, ReportsPage::class, MarketingTags::class, LearnerThreeSixtyPage::class, RetentionSettings::class, SafeguardingRecipientsSettings::class, SettingsHub::class, GeneralSettingsPage::class, PaymentPayeeSettings::class, AssistantTestConsole::class, AssistantControls::class, AssistantUsageReport::class, AssistantInsights::class, AssistantAvailability::class],
                     default => [WorkspaceDashboard::class, ReportsPage::class, AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, InstructorAgreementPage::class, MyPayoutProfile::class],
                 })
                 ->renderHook(TablesRenderHook::TOOLBAR_START, static fn () => view('filament.staff.users-toolbar', ['options' => Role::query()->where('guard_name', 'web')->get()->mapWithKeys(static fn (Role $role): array => [$role->id => __('roles.'.$role->name)])->all()]), scopes: [ListStaffUsers::class])
@@ -123,10 +125,10 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                         CourseReviewResource::class, CourseRevisionResource::class,
                         InstructorApplicationResource::class, InstructorAgreementResource::class,
                         NotificationTemplateResource::class, AnnouncementResource::class,
-                        DataRequestResource::class,
+                        DataRequestResource::class, OrderResource::class,
                     ],
                     'instructor' => [CourseResource::class, LibraryResource::class, SubmissionReviewResource::class, EssayReviewResource::class, HelpRequestResource::class, AnnouncementResource::class, MyEarningsResource::class, MyStatementsResource::class],
-                    default => [ManualGrantResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, PayoutProfileResource::class, CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class], // finance
+                    default => [OrderResource::class, ManualGrantResource::class, CouponResource::class, BundleResource::class, PlanResource::class, SubscriptionResource::class, ManualPaymentProofResource::class, RefundResource::class, PayoutProfileResource::class, CommissionRuleResource::class, LedgerEntryResource::class, StatementResource::class, SettlementResource::class], // finance
                 })
                 ->middleware(['web', DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
                 ->authMiddleware([Authenticate::class, EnsureActiveAccount::class, AuthenticateSession::class, EnforceTwoFactor::class], isPersistent: true));

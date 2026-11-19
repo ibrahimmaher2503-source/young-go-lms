@@ -12,6 +12,7 @@ use App\Filament\Resources\InstructorApplications\Pages\ListInstructorApplicatio
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -33,6 +34,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class InstructorApplicationResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = InstructorApplication::class;
 
     protected static ?string $slug = 'instructor-applications';
@@ -147,6 +150,11 @@ final class InstructorApplicationResource extends Resource
         }
 
         return new HtmlString($html.'</ul></dd></div></dl>');
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->where('status', ApplicationStatus::Pending->value)->count();
     }
 
     public static function getPages(): array

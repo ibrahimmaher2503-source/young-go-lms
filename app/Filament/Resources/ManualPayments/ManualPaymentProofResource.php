@@ -13,8 +13,10 @@ use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Resources\ManualPayments\Pages\ListManualPaymentProofs;
 use App\Filament\Shared\Actions\ApproveRejectAction;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
+use App\Filament\Shared\HasQueueBadge;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
@@ -37,6 +39,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class ManualPaymentProofResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = ManualPaymentProof::class;
 
     protected static ?string $slug = 'manual-payments';
@@ -101,19 +105,19 @@ final class ManualPaymentProofResource extends Resource
             static fn (Model $record, User $actor, ?string $reason) => self::guarded(static fn () => app(RejectManualPaymentProof::class)($actor, self::proof($record), (string) $reason), 'rejected_ok'),
         );
 
-        return $table->defaultSort('sla_due_at')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('sla_due_at')
             ->columns([
                 TextColumn::make('order.reference')->label(__('manual_payment.col_order'))->fontFamily('mono')->searchable(),
-                TextColumn::make('payer')->label(__('manual_payment.col_payer'))->state(static fn (ManualPaymentProof $r): string => $r->maskedPayerName()),
-                TextColumn::make('sender')->label(__('manual_payment.col_sender'))->state(static fn (ManualPaymentProof $r): string => $r->maskedSender())->fontFamily('mono'),
-                TextColumn::make('transfer_reference')->label(__('manual_payment.col_reference'))->fontFamily('mono')->searchable(),
+                TextColumn::make('payer')->visibleFrom('md')->label(__('manual_payment.col_payer'))->state(static fn (ManualPaymentProof $r): string => $r->maskedPayerName()),
+                TextColumn::make('sender')->visibleFrom('md')->label(__('manual_payment.col_sender'))->state(static fn (ManualPaymentProof $r): string => $r->maskedSender())->fontFamily('mono'),
+                TextColumn::make('transfer_reference')->visibleFrom('md')->label(__('manual_payment.col_reference'))->fontFamily('mono')->searchable(),
                 TextColumn::make('amount_minor')->label(__('manual_payment.col_amount'))->state(static fn (ManualPaymentProof $r): string => self::money($r->amount_minor, $r->currency))
                     ->color(static fn (ManualPaymentProof $r): ?string => $r->amountMismatch() ? 'danger' : null)
                     ->description(static fn (ManualPaymentProof $r): ?string => $r->amountMismatch() ? __('manual_payment.mismatch') : null),
-                TextColumn::make('expected')->label(__('manual_payment.col_expected'))->state(static fn (ManualPaymentProof $r): string => self::money((int) $r->order?->total_minor, $r->currency)),
-                LocalizedDateColumn::make('transferred_at')->label(__('manual_payment.col_transferred')),
-                LocalizedDateColumn::make('created_at')->label(__('manual_payment.col_submitted')),
-                TextColumn::make('sla')->label(__('manual_payment.col_sla'))->badge()
+                TextColumn::make('expected')->visibleFrom('md')->label(__('manual_payment.col_expected'))->state(static fn (ManualPaymentProof $r): string => self::money((int) $r->order?->total_minor, $r->currency)),
+                LocalizedDateColumn::make('transferred_at')->visibleFrom('md')->label(__('manual_payment.col_transferred')),
+                LocalizedDateColumn::make('created_at')->visibleFrom('md')->label(__('manual_payment.col_submitted')),
+                TextColumn::make('sla')->visibleFrom('md')->label(__('manual_payment.col_sla'))->badge()
                     ->state(static fn (ManualPaymentProof $r): ?string => $r->isPending() ? ($r->isOverdue() ? __('manual_payment.overdue') : $r->sla_due_at->diffForHumans()) : null)
                     ->color(static fn (ManualPaymentProof $r): string => $r->isOverdue() ? 'danger' : 'gray'),
                 StatusBadgeColumn::make('status', $colors)->label(__('manual_payment.col_status'))
@@ -123,7 +127,7 @@ final class ManualPaymentProofResource extends Resource
                 SelectFilter::make('status')->label(__('manual_payment.filter_status'))->default(ManualPaymentStatus::Pending->value)
                     ->options(collect(ManualPaymentStatus::cases())->mapWithKeys(static fn (ManualPaymentStatus $s): array => [$s->value => __('manual_payment.state_'.$s->value)])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('details')->label(__('manual_payment.details'))->icon('heroicon-o-eye')->visible($canReview)
                     ->modalHeading(__('manual_payment.proof'))->modalSubmitAction(false)
                     ->modalContent(static fn (ManualPaymentProof $record): HtmlString => self::details($record)),
@@ -131,7 +135,7 @@ final class ManualPaymentProofResource extends Resource
                     ->url(static fn (ManualPaymentProof $record): string => route('manual-payments.file', $record), shouldOpenInNewTab: true),
                 $approve->visible(static fn (ManualPaymentProof $r): bool => $r->isPending() && $canReview()),
                 $reject->visible(static fn (ManualPaymentProof $r): bool => $r->isPending() && $canReview()),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function proof(Model $record): ManualPaymentProof
@@ -169,6 +173,11 @@ final class ManualPaymentProofResource extends Resource
         }
 
         return new HtmlString($html.'</dl>');
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->where('status', ManualPaymentStatus::Pending->value)->count();
     }
 
     public static function getPages(): array

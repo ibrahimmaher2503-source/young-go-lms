@@ -15,6 +15,8 @@ use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Resources\Refunds\Pages\ListRefunds;
 use App\Filament\Shared\Actions\ApproveRejectAction;
+use App\Filament\Shared\HasQueueBadge;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\EmptyStateView;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
@@ -41,6 +43,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class RefundResource extends Resource
 {
+    use HasQueueBadge;
+
     protected static ?string $model = Refund::class;
 
     protected static ?string $slug = 'refunds';
@@ -125,17 +129,17 @@ final class RefundResource extends Resource
                 self::guarded(static fn () => app(ExecuteRefund::class)($actor, $record, is_string($reference) ? $reference : null), 'executed_ok');
             });
 
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->emptyState(EmptyStateView::make('heroicon-o-arrow-uturn-left', 'refunds.queue_empty_title', 'refunds.queue_empty_hint'))
             ->columns([
-                TextColumn::make('reference')->label(__('refunds.col_reference'))->fontFamily('mono')->searchable(),
-                TextColumn::make('order.reference')->label(__('refunds.col_order'))->fontFamily('mono')->searchable(),
+                TextColumn::make('reference')->visibleFrom('md')->label(__('refunds.col_reference'))->fontFamily('mono')->searchable(),
+                TextColumn::make('order.reference')->visibleFrom('md')->label(__('refunds.col_order'))->fontFamily('mono')->searchable(),
                 TextColumn::make('payer')->label(__('refunds.col_payer'))->state(static fn (Refund $r): string => (string) $r->order?->payer?->getAttribute('display_name')),
                 TextColumn::make('amount_minor')->label(__('refunds.col_amount'))->state(static fn (Refund $r): string => self::money($r->amount_minor, $r->currency)),
-                TextColumn::make('method')->label(__('refunds.col_method'))->badge()->state(static fn (Refund $r): string => __('refunds.method_'.$r->method->value)),
-                TextColumn::make('reason')->label(__('refunds.col_reason'))->limit(60)->wrap()->extraAttributes(['dir' => 'auto'])->tooltip(static fn (Refund $r): string => $r->reason),
-                TextColumn::make('requested_by')->label(__('refunds.col_requested_by'))->state(static fn (Refund $r): string => (string) $r->requester?->getAttribute('display_name')),
-                LocalizedDateColumn::make('created_at')->label(__('refunds.col_requested')),
+                TextColumn::make('method')->visibleFrom('md')->label(__('refunds.col_method'))->badge()->state(static fn (Refund $r): string => __('refunds.method_'.$r->method->value)),
+                TextColumn::make('reason')->label(__('refunds.col_reason'))->visibleFrom('md')->toggleable(isToggledHiddenByDefault: true)->limit(60)->wrap()->extraAttributes(['dir' => 'auto'])->tooltip(static fn (Refund $r): string => $r->reason),
+                TextColumn::make('requested_by')->label(__('refunds.col_requested_by'))->visibleFrom('md')->toggleable(isToggledHiddenByDefault: true)->state(static fn (Refund $r): string => (string) $r->requester?->getAttribute('display_name')),
+                LocalizedDateColumn::make('created_at')->label(__('refunds.col_requested'))->visibleFrom('md')->toggleable(isToggledHiddenByDefault: true),
                 StatusBadgeColumn::make('status', $colors)->label(__('refunds.col_status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('refunds.state_'.($state instanceof RefundStatus ? $state->value : (string) $state))),
             ])
@@ -143,11 +147,11 @@ final class RefundResource extends Resource
                 SelectFilter::make('status')->label(__('refunds.filter_status'))
                     ->options(collect(RefundStatus::cases())->mapWithKeys(static fn (RefundStatus $s): array => [$s->value => __('refunds.state_'.$s->value)])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 $approve->visible(static fn (Refund $r): bool => $r->status === RefundStatus::Requested && $canRefund()),
                 $reject->visible(static fn (Refund $r): bool => in_array($r->status, [RefundStatus::Requested, RefundStatus::Approved], true) && $canRefund()),
                 $execute,
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function refund(Model $record): Refund
@@ -168,6 +172,11 @@ final class RefundResource extends Resource
             throw new Halt;
         }
         Notification::make()->success()->title(__('refunds.'.$successKey))->send();
+    }
+
+    protected static function queueCount(): int
+    {
+        return self::getEloquentQuery()->whereIn('status', [RefundStatus::Requested->value, RefundStatus::Approved->value])->count();
     }
 
     public static function getPages(): array

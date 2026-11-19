@@ -16,7 +16,7 @@
         <div><dt class="text-sm text-muted">{{ __('quiz.questions_count') }}</dt><dd class="text-xl font-bold" data-card-questions>{{ $overview['questions'] }}</dd></div>
         <div><dt class="text-sm text-muted">{{ __('quiz.total_marks') }}</dt><dd class="text-xl font-bold">{{ $fmt($overview['total_marks']) }}</dd></div>
         <div><dt class="text-sm text-muted">{{ __('quiz.time_limit') }}</dt><dd class="text-xl font-bold">{{ $quiz->time_limit_minutes ? __('curriculum.minutes', ['count' => $quiz->time_limit_minutes]) : __('quiz.none') }}</dd></div>
-        <div><dt class="text-sm text-muted">{{ __('quiz.pass_mark') }}</dt><dd class="text-xl font-bold">{{ \App\Domain\Assessment\QuizPassMark::effective($quiz->pass_mark_percent) }}%</dd></div>
+        <div><dt class="text-sm text-muted">{{ __('quiz.pass_mark') }}</dt><dd class="text-xl font-bold">{{ \App\Domain\Assessment\QuizPassMark::forQuiz($quiz) }}%</dd></div>
         <div><dt class="text-sm text-muted">{{ __('quiz.attempt.attempts_left') }}</dt><dd class="text-xl font-bold" data-card-attempts-left>{{ $overview['left'] === null ? __('quiz.unlimited') : $overview['left'] }}</dd></div>
     </dl>
     @if($quiz->progression === 'require_pass')<p class="font-semibold text-primary" data-require-pass>{{ __('quiz.attempt.require_pass_note') }}</p>@endif

@@ -7,7 +7,7 @@
 @endphp
 <article @class([
     'min-w-0 rounded-xl border border-border bg-surface',
-    'space-y-3 p-4' => ! $compact,
+    'flex h-full flex-col gap-3 p-4' => ! $compact,
     'p-2.5 shadow-sm' => $compact,
     'grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3' => $compact && $cover,
 ])>
@@ -19,19 +19,19 @@
     @elseif($placeholder)
         <div class="grid aspect-video w-full place-items-center rounded-lg bg-assistant text-primary" data-card-cover-placeholder><x-ui.icon name="book" class="size-10"/></div>
     @endif
-    <div @class(['min-w-0', 'space-y-3' => ! $compact, 'flex flex-col items-start gap-1 px-1 py-1.5' => $compact])>
-    <h3 class="break-words text-lg font-bold">{{ $course->title }}</h3>
+    <div @class(['min-w-0', 'flex flex-1 flex-col gap-2' => ! $compact, 'flex flex-col items-start gap-1 px-1 py-1.5' => $compact])>
+    <h3 @class(['break-words font-bold', 'text-base leading-snug line-clamp-2' => ! $compact, 'text-lg' => $compact])>{{ $course->title }}</h3>
     @if($instructors !== '')
-        <p @class(['break-words', 'text-sm text-muted' => $compact])><bdi>{{ $instructors }}</bdi></p>
+        <p class="break-words text-sm text-muted"><bdi>{{ $instructors }}</bdi></p>
     @endif
     @if(! $compact && $lessons !== null && $lessons > 0)
-        <p class="flex items-center gap-1.5 text-sm text-muted" data-card-lessons><x-ui.icon name="layers" class="size-4"/>{{ __('curriculum.lessons_count', ['count' => $lessons]) }}</p>
+        <p class="flex items-center gap-1.5 text-xs text-muted" data-card-lessons><x-ui.icon name="layers" class="size-4"/>{{ __('curriculum.lessons_count', ['count' => $lessons]) }}</p>
     @endif
     @if(! $compact && filled($course->short_description))
-        <p class="break-words">{{ $course->short_description }}</p>
+        <p class="break-words text-sm text-muted line-clamp-2">{{ $course->short_description }}</p>
     @endif
     @if(! $compact || $availability !== null || ($price === null && $course->access_mode !== App\Models\Course::ACCESS_FREE))
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-1.5 [&_span]:px-2.5 [&_span]:py-0.5 [&_span]:text-xs">
         <x-ui.badge>{{ __('courses.'.$course->format) }}</x-ui.badge>
         @if($course->access_mode === App\Models\Course::ACCESS_FREE)
             <x-ui.badge>{{ __('courses.free') }}</x-ui.badge>
@@ -52,7 +52,7 @@
     @elseif($compact && $course->access_mode === App\Models\Course::ACCESS_FREE)
         <p class="text-lg font-bold text-primary">{{ __('courses.free') }}</p>
     @endif
-    <div @class(['flex flex-wrap items-center justify-between gap-2', 'mt-auto pt-2' => $compact])>
+    <div @class(['flex flex-wrap items-center justify-between gap-2', 'mt-auto pt-2' => true])>
         <div class="min-w-0">{{ $slot }}</div>
         @if($wishlist)<x-engagement.wishlist-toggle :course="$course"/>@endif
     </div>

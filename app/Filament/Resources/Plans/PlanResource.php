@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Plans;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Filament\Resources\Plans\Pages\ListPlans;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
@@ -71,12 +72,12 @@ final class PlanResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')->label(__('subscriptions.plan_name'))->state(static fn (SubscriptionPlan $p): string => (string) $p->name)
                     ->searchable(query: static fn (Builder $query, string $search): Builder => $query->whereLike('name', '%'.$search.'%')),
-                TextColumn::make('term')->label(__('subscriptions.term'))->state(static fn (SubscriptionPlan $p): string => __('subscriptions.term_'.$p->term->value)),
-                TextColumn::make('courses_count')->label(__('subscriptions.courses')),
+                TextColumn::make('term')->visibleFrom('md')->label(__('subscriptions.term'))->state(static fn (SubscriptionPlan $p): string => __('subscriptions.term_'.$p->term->value)),
+                TextColumn::make('courses_count')->visibleFrom('md')->label(__('subscriptions.courses')),
                 TextColumn::make('price_egp')->label(__('subscriptions.price_column'))->state(static function (SubscriptionPlan $p): string {
                     $price = $p->priceFor(Market::Egypt);
 
@@ -87,11 +88,11 @@ final class PlanResource extends Resource
                     ->formatStateUsing(static fn (mixed $state): string => __('subscriptions.state_'.$state)),
             ])
             ->filters([TernaryFilter::make('is_active')->label(__('subscriptions.active'))])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 PlanForm::configure(Action::make('edit')->label(__('subscriptions.edit'))->icon('heroicon-o-pencil-square')
                     ->visible(static fn (): bool => Gate::allows('payment.approve_manual'))
                     ->modalHeading(__('subscriptions.edit'))),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

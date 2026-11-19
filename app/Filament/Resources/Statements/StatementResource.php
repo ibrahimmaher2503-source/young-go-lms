@@ -69,7 +69,7 @@ final class StatementResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('id', 'desc')
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->emptyState(EmptyStateView::make('heroicon-o-document-text', 'settlements.statements_empty_title', 'settlements.statements_empty_hint'))
             ->columns(StatementTable::columns(true))
             ->filters([

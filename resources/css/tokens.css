@@ -119,7 +119,8 @@
     --yg-line-height-body: 1.6;
     --yg-font-small: 0.9375rem;
     --yg-font-label: 1rem;
-    --yg-font-sidebar: 1.25rem;
+    --yg-font-sidebar: 0.875rem;
+    --yg-font-sidebar-group: 0.8125rem;
     --yg-workspace-main-track: 2.22fr;
     --yg-space-columns: 1rem;
     --yg-sidebar-width: 16.75rem;

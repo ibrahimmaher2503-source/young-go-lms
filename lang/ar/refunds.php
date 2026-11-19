@@ -5,6 +5,13 @@ declare(strict_types=1);
 return [
     'nav_payments' => 'المدفوعات',
     'history_title' => 'سجل المدفوعات',
+    'sum_orders' => 'الطلبات',
+    'sum_paid' => 'إجمالي المدفوع',
+    'sum_last' => 'آخر دفعة',
+    'sum_none' => 'لا توجد دفعة بعد',
+    'filter_label' => 'تصفية حسب الحالة',
+    'filter_all' => 'الكل',
+    'filter_empty' => 'لا توجد طلبات بهذه الحالة.',
     'history_intro' => 'طلباتك وإيصالاتك واستردادات المبالغ.',
     'history_empty' => 'لا توجد مدفوعات بعد',
     'history_empty_help' => 'ستظهر هنا الطلبات التي تدفعها مع إيصالاتها.',

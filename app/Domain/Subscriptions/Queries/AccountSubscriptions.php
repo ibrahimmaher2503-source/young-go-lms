@@ -19,12 +19,12 @@ final class AccountSubscriptions
     /** @return Collection<int, Subscription> newest first, with plan (prices), learner and periods loaded */
     public function for(User $user): Collection
     {
-        return $this->scope($user)->with(['plan.prices', 'learner', 'periods'])->latest('id')->get();
+        return $this->scope($user)->with(['plan.prices', 'plan.courses.course', 'learner', 'periods'])->latest('id')->get();
     }
 
     public function find(User $user, int $id): ?Subscription
     {
-        return $this->scope($user)->with(['plan.prices', 'learner', 'periods'])->find($id);
+        return $this->scope($user)->with(['plan.prices', 'plan.courses.course', 'learner', 'periods'])->find($id);
     }
 
     /** @return Builder<Subscription> */

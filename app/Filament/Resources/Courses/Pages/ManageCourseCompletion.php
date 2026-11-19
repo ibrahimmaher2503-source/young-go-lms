@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Pages;
 
+use App\Domain\Assessment\QuizPassMark;
 use App\Domain\Certificates\Actions\ReissueCertificate;
 use App\Domain\Certificates\Actions\RevokeCertificate;
 use App\Domain\Certificates\Actions\SaveCertificateTemplates;
@@ -82,8 +83,10 @@ final class ManageCourseCompletion extends Page
                 Toggle::make('require_assignments')->label(__('completion.require_assignments'))->helperText(__('completion.assignments_help')),
                 TextInput::make('attendance_percent')->label(__('completion.attendance_percent'))->helperText(__('completion.attendance_help'))->numeric()->minValue(1)->maxValue(100),
                 Toggle::make('manual_approval')->label(__('completion.manual_approval'))->helperText(__('completion.manual_approval_help')),
+                TextInput::make('quiz_pass_mark_percent')->label(__('completion.quiz_pass_mark'))->helperText(__('completion.quiz_pass_mark_help', ['percent' => QuizPassMark::default()]))
+                    ->placeholder((string) QuizPassMark::default())->numeric()->minValue(1)->maxValue(100),
             ])
-            ->fillForm(fn (): array => CourseCompletionRule::forCourse($this->course())->values())
+            ->fillForm(fn (): array => [...CourseCompletionRule::forCourse($this->course())->values(), 'quiz_pass_mark_percent' => $this->course()->quiz_pass_mark_percent])
             ->action(function (array $data, Action $action): void {
                 try {
                     app(SaveCompletionRules::class)($this->actor(), $this->course(), $data);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'home' => 'Home',
     'courses' => 'Courses',
+    'badge_waiting' => 'Waiting for action',
     'dashboard' => 'Dashboard',
     'profile' => 'Profile',
     // T-P9-09: staff sidebar groups (docs/LEGACY_PARITY.md).

@@ -465,9 +465,11 @@
 
 /* D-026 applies to the complete staff surface, including forms and dialogs. */
 .fi-body { font-size: var(--yg-font-body); line-height: 1.6; }
-.fi-header-heading { font-weight: 600; letter-spacing: -0.025em; }
+.fi-header-heading { font-weight: 700; letter-spacing: -0.025em; }
 .fi-header-subheading { font-size: var(--yg-font-body); }
-.fi-sidebar-item-label { min-inline-size: 0; white-space: normal; overflow-wrap: break-word; font-size: var(--yg-font-sidebar); font-weight: 600; }
+.fi-sidebar-item-label { min-inline-size: 0; white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: manual; font-size: var(--yg-font-sidebar); font-weight: 500; line-height: 1.35; }
+.fi-sidebar-group-label { font-size: var(--yg-font-sidebar-group); font-weight: 600; text-transform: none; letter-spacing: 0; overflow-wrap: normal; }
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label { font-weight: 600; }
 .fi-sidebar-nav { padding-inline: 1.125rem; }
 .fi-sidebar-header { min-block-size: var(--yg-topbar-height); }
 .fi-topbar, .fi-topbar > nav { min-block-size: var(--yg-topbar-height); }
@@ -508,7 +510,8 @@
 .yg-workspace-main .fi-tabs-item.fi-active .fi-tabs-item-label { color: var(--yg-color-primary); }
 .yg-role-row { border: 0; font-size: var(--yg-font-label); font-weight: 500; }
 .yg-role-meter { overflow: hidden; background: var(--yg-color-hover); block-size: 0.375rem; }
-.yg-role-meter > span { margin-inline-start: auto; display: block; inline-size: var(--yg-meter-value); block-size: 100%; background: var(--yg-color-primary); border-radius: inherit; }
+.yg-role-meter > span { display: block; inline-size: var(--yg-meter-value); block-size: 100%; background: var(--yg-color-primary); border-radius: inherit; }
+[dir="rtl"] .yg-role-meter > span { margin-inline-start: auto; }
 .yg-person-cell { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; min-inline-size: 10rem; }
 .yg-person-avatar { inline-size: 2.5rem; block-size: 2.5rem; font-size: var(--yg-font-small); background-color: var(--yg-brand-100); color: var(--yg-brand-800); }
 .yg-person-name { font-size: var(--yg-font-body); font-weight: 600; white-space: nowrap; }
@@ -606,6 +609,9 @@
 .fi-topbar .fi-global-search-ctn { display: none; }
 .yg-role-name { font-size: var(--yg-font-label); font-weight: 500; min-inline-size: 0; line-height: 1.4; }
 .yg-role-row { grid-template-columns: minmax(0, 1.3fr) minmax(4.5rem, 1fr) 1.5rem; padding-block: 0.625rem; gap: 0.75rem; }
+@media (min-width: 80rem) {
+    .yg-role-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr) 1.5rem; }
+}
 .yg-role-measure { display: flex; align-items: center; gap: 0.75rem; direction: ltr; color: var(--yg-color-muted); font-size: var(--yg-font-small); }
 .yg-role-measure .yg-role-meter { flex: 1; min-inline-size: 1rem; }
 .yg-role-percentage { inline-size: 2.25rem; }
@@ -643,8 +649,10 @@
 .yg-workspace-main .fi-ta-text:not(.fi-inline) { padding-inline: 0.5rem; }
 .yg-workspace-main .yg-person-cell { padding-inline: 0.5rem; }
 .yg-workspace-main .fi-ta-pagination { border: 0; }
-.yg-workspace-sidebar .fi-section-header { margin-inline: var(--yg-space-card); padding-inline: 0; border-block-end: 0; }
+.yg-workspace-sidebar .fi-section-header { margin-inline: var(--yg-space-card); padding-inline: 0; padding-block-end: 0.75rem; border-block-end: 1px solid var(--yg-color-border); }
 .yg-workspace-sidebar .fi-section-header-content { flex-wrap: nowrap; }
+.yg-workspace-sidebar .fi-section-header-heading { font-size: var(--yg-font-label); font-weight: 700; }
+.yg-workspace-sidebar .fi-section-content { padding-block-start: 0.5rem; }
 .yg-workspace-sidebar .fi-section-content-ctn { border: 0; }
 
 .yg-email > span { display: block; max-inline-size: 10rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -690,6 +698,7 @@
     border-radius: var(--yg-radius-card);
 }
 .yg-empty-state .text-muted { color: var(--yg-color-muted); }
+.yg-workspace-main .fi-ta-empty-state-description { color: var(--yg-color-muted); }
 .yg-empty-state-icon {
     display: inline-grid;
     place-items: center;
@@ -781,6 +790,17 @@
 .fi-ta-header-toolbar .fi-icon-btn-badge-ctn .fi-badge { min-inline-size: 1.25rem; justify-content: center; }
 @media (max-width: 47.999rem) {
     .yg-workspace-main .fi-ta-header-toolbar { flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; padding-block: 0.5rem; padding-inline: 0.75rem; }
+    .yg-workspace-page:has(.yg-role-breakdown) .yg-summary-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .yg-workspace-page:has(.yg-role-breakdown) .yg-summary-strip > .yg-summary-item {
+        grid-column: auto;
+        grid-template-rows: auto 1fr auto;
+        align-items: start;
+        border-block-start: 0;
+    }
+    .yg-workspace-page:has(.yg-role-breakdown) .yg-summary-item + .yg-summary-item::before { display: block; }
+    .yg-workspace-main .fi-ta-header-toolbar:has(.yg-toolbar-filter) .fi-ta-search-field { flex: 1 0 100%; }
+    .fi-resource-role-permissions .fi-ta-table { min-inline-size: 0; }
+    .fi-resource-role-permissions .fi-ta-cell .fi-ta-text { min-inline-size: 0; }
 }
 
 /* Reports filters: one compact row on wide screens, a two-column grid on phones; d/m/Y text dates with a native picker behind. */
@@ -804,4 +824,59 @@
     .yg-rv-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .yg-rv-filters > .yg-ai-field[data-field="from"], .yg-rv-filters > .yg-ai-field[data-field="to"] { flex: none; }
     .yg-rv-filters > .yg-ai-field[data-field="report"], .yg-rv-filters > .yg-ai-field[data-field="course"] { grid-column: 1 / -1; }
+}
+
+/* P8 fix 5: settings hub cards, dashboard all-clear row, reports at 390, staff tables at 390. */
+.yg-hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--yg-space-columns); }
+.yg-hub-card { display: flex; align-items: flex-start; gap: 0.875rem; padding: 1.25rem; border: 1px solid var(--yg-color-border); border-radius: var(--yg-radius-control); background-color: var(--yg-color-surface); color: var(--yg-color-body); min-block-size: 6.5rem; }
+.yg-hub-card:hover { background-color: var(--yg-color-nav-active-bg); border-color: var(--yg-brand-200); }
+.yg-hub-card:focus-visible { outline: 2px solid var(--yg-color-primary); outline-offset: 2px; }
+.yg-hub-icon { display: grid; place-items: center; flex: 0 0 auto; inline-size: 2.75rem; block-size: 2.75rem; border-radius: var(--yg-radius-control); background-color: var(--yg-color-assistant); color: var(--yg-color-primary); }
+.yg-hub-icon > svg { inline-size: 1.5rem; block-size: 1.5rem; }
+.yg-hub-text { display: flex; flex-direction: column; gap: 0.25rem; min-inline-size: 0; flex: 1; }
+.yg-hub-title { font-weight: 700; font-size: 1rem; }
+.yg-hub-desc { font-size: var(--yg-font-small); color: var(--yg-color-muted); line-height: 1.5; }
+.yg-hub-chevron { flex: 0 0 auto; inline-size: 1.25rem; block-size: 1.25rem; margin-block-start: 0.75rem; color: var(--yg-color-muted); }
+[dir="rtl"] .yg-hub-chevron { transform: scaleX(-1); }
+
+.yg-dashboard-clear { display: flex; align-items: center; gap: 0.75rem; margin-block-start: var(--yg-space-card); padding: 0.75rem 1rem; border: 1px solid var(--yg-color-border); border-radius: var(--yg-radius-control); background-color: var(--yg-color-surface); }
+.yg-dashboard-clear > svg { flex: 0 0 auto; inline-size: 1.5rem; block-size: 1.5rem; color: var(--yg-color-primary); }
+.yg-dashboard-clear p { margin: 0; min-inline-size: 0; }
+.yg-dashboard-clear p span { color: var(--yg-color-muted); font-size: var(--yg-font-small); }
+
+.yg-rv .yg-ai-scroll { overflow-x: auto; max-inline-size: 100%; -webkit-overflow-scrolling: touch; }
+.yg-rv .yg-ai-table th, .yg-rv .yg-ai-table td { white-space: nowrap; }
+@media (max-width: 47.999rem) {
+    .yg-rv-filters > .yg-ai-field[data-field="from"], .yg-rv-filters > .yg-ai-field[data-field="to"] { grid-column: 1 / -1; min-inline-size: 0; }
+    .yg-rv-filters > .yg-ai-field { min-inline-size: 0; }
+    .yg-date-field, .yg-date-field .fi-input-wrp { max-inline-size: 100%; min-inline-size: 0; }
+    /* staff lists: three priority columns plus the action menu fit at 390, so the table no longer needs a wide minimum */
+    .yg-compact-table .fi-ta-table { min-inline-size: 0; }
+}
+.fi-ta-actions-cell .fi-dropdown-trigger, .fi-ta-actions-cell .fi-icon-btn { min-inline-size: 2.5rem; min-block-size: 2.5rem; }
+.yg-rv [data-mismatch-table] td:nth-child(3) { white-space: normal; min-inline-size: 14rem; }
+@media (max-width: 47.999rem) {
+    .yg-compact-table .yg-workspace-main .fi-ta-header-cell, .yg-compact-table .fi-ta-header-cell { min-inline-size: 0; padding-inline: 0.375rem; }
+    .yg-compact-table .fi-ta-cell { padding-inline: 0.125rem; }
+    .yg-compact-table .fi-ta-cell .fi-ta-text, .yg-compact-table .fi-ta-cell .fi-ta-text-item { min-inline-size: 0; padding-inline: 0.25rem; }
+    .yg-compact-table .fi-ta-text-item, .yg-compact-table .fi-ta-col { white-space: normal; text-align: start; }
+    .yg-compact-table .fi-ta-text-item.fi-font-mono, .yg-compact-table .fi-ta-cell:has([dir="ltr"]) .fi-ta-text-item { white-space: nowrap; }
+    .yg-compact-table .fi-ta-actions-cell, .yg-compact-table .fi-ta-header-cell:first-child { inline-size: 2.5rem; padding-inline: 0; }
+}
+@media (max-width: 47.999rem) {
+    .yg-compact-table .fi-ta-cell:has([dir="ltr"]) .fi-ta-text-item.yg-date, .yg-compact-table .fi-ta-cell .fi-ta-text-item.yg-date { white-space: normal; }
+}
+@media (max-width: 47.999rem) {
+    .yg-compact-table .fi-ta-text-item.fi-font-mono { font-size: 0.8125rem; letter-spacing: -0.01em; }
+}
+/* B1: datetime cells read as one left-to-right run (digits and Arabic month names no longer reorder). */
+.fi-ta .yg-date { direction: ltr; unicode-bidi: isolate; text-align: start; }
+[dir="rtl"] .fi-ta .yg-date { text-align: right; }
+@media (max-width: 47.999rem) {
+    .yg-rv .yg-ai-filters.yg-rv-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .yg-rv .yg-ai-filters.yg-rv-filters > .yg-ai-field { flex: none; min-inline-size: 0; inline-size: auto; }
+    .yg-rv .yg-ai-filters.yg-rv-filters > .yg-ai-field[data-field="report"],
+    .yg-rv .yg-ai-filters.yg-rv-filters > .yg-ai-field[data-field="from"],
+    .yg-rv .yg-ai-filters.yg-rv-filters > .yg-ai-field[data-field="to"],
+    .yg-rv .yg-ai-filters.yg-rv-filters > .yg-ai-field[data-field="course"] { grid-column: 1 / -1; }
 }
