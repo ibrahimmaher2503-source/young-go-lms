@@ -26,4 +26,7 @@ return [
     'facebook' => 'Facebook',
     'instagram' => 'Instagram',
     'youtube' => 'YouTube',
+    'tiktok' => 'TikTok',
+    'x' => 'X',
+    'linkedin' => 'LinkedIn',
 ];

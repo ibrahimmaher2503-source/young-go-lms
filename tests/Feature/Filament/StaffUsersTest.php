@@ -28,13 +28,16 @@ it('shows the searchable and filterable users list only to users with view permi
 
     $viewer->givePermissionTo('user.view');
 
-    $first = User::factory()->create(['name' => 'Nora Mahmoud', 'email' => 'nora@example.test']);
-    $second = User::factory()->create(['name' => 'Omar Hassan', 'email' => 'omar@example.test']);
+    $first = User::factory()->create(['name' => 'Nora Mahmoud', 'email' => 'nora@example.test', 'created_at' => now()->subDays(2)]);
+    $second = User::factory()->create(['name' => 'Omar Hassan', 'email' => 'omar@example.test', 'created_at' => now()->subDay()]);
 
     $this->get(route('filament.admin.resources.staff-users.index'))->assertOk();
 
     Livewire::test(ListStaffUsers::class)
-        ->assertCanSeeTableRecords([$first, $second])
+        ->sortTable('created_at', 'asc')
+        ->assertCanSeeTableRecords([$first, $second], inOrder: true)
+        ->sortTable('created_at', 'desc')
+        ->assertCanSeeTableRecords([$second, $first], inOrder: true)
         ->assertTableFilterExists('status')
         ->searchTable('nora@example.test')
         ->assertCanSeeTableRecords([$first])

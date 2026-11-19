@@ -81,7 +81,7 @@ final class RolePermissionResource extends Resource
 
                     return $query->where(static fn (Builder $roles): Builder => $roles->where('name', 'like', '%'.$search.'%')->orWhereIn('name', $names));
                 }),
-            TextColumn::make('permissions_count')->counts('permissions')->label(__('staff.permission_count')),
+            TextColumn::make('permissions_count')->counts('permissions')->label(__('staff.permission_count'))->sortable(),
         ])->recordActions([
             Action::make('permissions')->label(__('staff.permissions'))->modalWidth(Width::FourExtraLarge)->modalDescription(__('staff.permissions_help'))->modalSubmitActionLabel(__('staff.save_changes'))
                 ->visible(static fn (): bool => self::canViewAny())->extraAttributes(static fn (Role $record): array => ['data-workspace-permission-action' => (string) $record->id])

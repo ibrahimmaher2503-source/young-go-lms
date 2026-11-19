@@ -124,7 +124,7 @@
                 @foreach($publicPages as $pageLink)
                     <x-ui.link :href="\App\Domain\Seo\PublicUrl::page($pageLink, $locale)">{{ $pageLink->title }}</x-ui.link>
                 @endforeach
-                @foreach(config('public-site.social_links', []) as $platform => $destination)
+                @foreach($siteSettings->socialLinks() as $platform => $destination)
                     @if(is_string($destination) && str_starts_with($destination, 'https://') && filter_var($destination, FILTER_VALIDATE_URL))
                         <x-ui.link :href="$destination">{{ __('public-site.'.$platform) }}</x-ui.link>
                     @endif

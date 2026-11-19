@@ -51,11 +51,28 @@ it('renders staff workspace resources in both directions and themes', function (
             expect($page->script('() => { const avatar = document.querySelector(".fi-topbar .fi-user-menu-trigger").getBoundingClientRect(); return avatar.left >= 8 && avatar.right <= innerWidth - 8; }'))->toBeTrue();
         }
         $page->assertVisible('.yg-workspace-page');
+        expect($page->script('() => getComputedStyle(document.querySelector(".fi-topbar")).minBlockSize'))->toBe('70px');
         if ($screen === 'staff-users') {
             $page->assertVisible('.yg-summary-strip')->assertVisible('.yg-workspace-sidebar');
             expect($page->script('() => document.querySelectorAll(".yg-summary-item").length'))->toBe(3);
             expect($page->script('() => new Set([...document.querySelectorAll(".yg-role-meter")].map(meter => meter.getBoundingClientRect().width)).size'))->toBe(1);
+            $inactive = $locale === 'ar' ? 'غير نشط' : 'Inactive';
+            $page->assertSee($inactive);
+            expect($page->script('() => document.querySelector(".yg-summary-item:last-child .yg-summary-value").textContent.trim()'))->toBe('1');
+            if ($width >= 1440) {
+                expect($page->script('() => {
+                    const heading = document.querySelector(".yg-workspace-sidebar .fi-section-header-heading");
+                    const range = document.createRange();
+                    range.selectNodeContents(heading);
+                    return range.getClientRects().length;
+                }'))->toBe(1);
+            }
             if ($width === 1568) {
+                expect($page->script('() => {
+                    const first = document.querySelector(".yg-summary-item");
+                    const icon = first.querySelector(".yg-summary-icon");
+                    return Math.round(first.getBoundingClientRect().right - icon.getBoundingClientRect().right);
+                }'))->toBeGreaterThanOrEqual(56);
                 expect($page->script('() => document.querySelector(".yg-role-meter").getBoundingClientRect().width'))->toBeGreaterThanOrEqual(140);
                 expect($page->script('() => {
                     const sidebar = document.querySelector(".fi-sidebar-nav").getBoundingClientRect();
@@ -73,10 +90,15 @@ it('renders staff workspace resources in both directions and themes', function (
             if ($width === 390) {
                 expect($page->script('() => [...document.querySelectorAll(".fi-tabs-item-label")].every(label => label.scrollWidth <= label.clientWidth + 1)'))->toBeTrue();
                 $page->assertVisible('.yg-table-scroll-hint');
+                expect($page->script('() => new Set([...document.querySelectorAll(".yg-summary-item")].map(item => item.offsetTop)).size'))->toBe(1);
                 expect($page->script('() => document.querySelector(".yg-workspace-sidebar").getBoundingClientRect().top >= document.querySelector(".yg-workspace-main").getBoundingClientRect().bottom'))->toBeTrue();
             }
         }
+        if ($width === 390 && in_array($screen, ['staff-users', 'role-permissions'], true)) {
+            expect($page->script('() => { const buttons = [...document.querySelectorAll(".yg-workspace-pagination .fi-pagination-item-btn")]; return buttons.length >= 3 && buttons.every(button => button.offsetWidth >= 44 && button.offsetHeight >= 44); }'))->toBeTrue();
+        }
         if ($width === 390 && $screen === 'role-permissions') {
+            expect($page->script('() => [...document.querySelectorAll("[data-workspace-permission-action]")].every(button => button.offsetWidth >= 44 && button.offsetHeight >= 44)'))->toBeTrue();
             expect($page->script('() => { const table = document.querySelector(".fi-ta-content-ctn"); return table.scrollWidth <= table.clientWidth + 1; }'))->toBeTrue();
         }
         $filename = str_replace('/', '-', $screen);

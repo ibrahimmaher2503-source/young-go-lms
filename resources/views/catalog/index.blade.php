@@ -7,7 +7,7 @@
 <x-layouts.base :title="__('catalog.title')" variant="public" indexable>
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
     <div class="space-y-6">
-        <header class="space-y-4 rounded-card border border-border bg-assistant p-4 sm:p-6" data-catalog-hero>
+        <header id="catalog-filters" class="space-y-4 rounded-card border border-border bg-assistant p-4 sm:p-6" data-catalog-hero>
             <div class="space-y-1">
                 <h1 class="text-3xl font-bold">{{ __('catalog.hero_title') }}</h1>
                 <p class="text-muted">{{ __('catalog.hero_subtitle') }}</p>
