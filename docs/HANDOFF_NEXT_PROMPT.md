@@ -28,7 +28,7 @@ You are the orchestrator/PO for the Young Go LMS (Laravel 13, Pest, Filament, Li
 
 ## Next work in dependency order (after gates are satisfied)
 P10 legacy import (T-P10-01 inventory is prepared in `docs/migration/INVENTORY.md`, awaiting source access), then P11 (regression and security review, performance, backups/restore, production config, training guides, cutover), then P12 (Saudi activation: `Market::isActive` currently hard-codes Saudi inactive; this task owns activation).
-Known unimplemented items: cohort chooser at checkout, bundle/plan cohort seats, seat release on refund, course-level pass-mark admin UI in the wizard, and the approved O-025 learning-record lifecycle.
+Bundle checkout supports the cohort selection in D-031. The refund flow releases commerce-sourced seats when a full refund removes the last current access grant. Plan cohort reservations and the course-level pass-mark admin UI in the wizard remain open. The approved O-025 learning-record lifecycle runs through `privacy:prune`.
 
 ## Rules that matter
 - Layered Domain under `app/Domain/*` (final Actions/Queries); the entitlements table is touched only through the Entitlements module (Invariant I01); Arch tests must pass.

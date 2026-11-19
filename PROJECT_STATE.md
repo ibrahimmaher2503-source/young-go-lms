@@ -8,6 +8,11 @@ criteria and independent evidence are tracked in the [gate readiness record](doc
 The post-fix catalog passes the measured lab LCP and CLS budget. See the
 [performance report](docs/reviews/PERF_BUDGET_P8_2026-11-19.md) for page results and limits.
 
+The latest P8/P9 work adds eligible bundle cohort selection, full-refund seat
+release, scheduled learning reminders, three reports and account-closure
+retention. The local demo includes private media fixtures and a fake checkout.
+See the [continuation evidence](docs/reviews/GATE_READINESS_P8_P9.md#learning-and-checkout-continuation).
+
 P10 candidate inventory is prepared. The owner confirmed the authoritative
 legacy source, database and media are unavailable, along with the other release
 facts listed in the [decision register](docs/07_DECISION_REGISTER.md#d-decisions-approved-2026-11-18-po).

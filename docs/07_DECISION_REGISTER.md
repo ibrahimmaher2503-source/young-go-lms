@@ -125,6 +125,10 @@ recommendations and open dependencies.
 
 **D-029 · 2026-11-19 · One local workspace.** The owner requested that all project work use one checkout. The canonical path and branch are recorded in [AGENTS.md](../AGENTS.md#local-workspace). This applies to local development, delegated work and reviews.
 
+**D-030 · 2026-11-19 · Learning reminders.** The owner approved notifications 7, 3 and 1 days before access expires or an assignment is due. Existing recipient scope, mandatory access notices and optional assignment reminder preferences apply.
+
+**D-031 · 2026-11-19 · Bundle cohort selection.** The owner approved buyers choosing a cohort for each live course in a bundle. Apply the same rule to the live component of hybrid courses with open cohorts. Selection uses the intended learner's eligibility. Individual course checkout keeps its existing automatic cohort selection.
+
 ## B. Technical recommendations (not owner-locked)
 
 **O-015 · Educational catalog defaults (2026-11-18).** The owner asked for research-based defaults. Seed 0–9, 10–17 and 18+ as editable educational bands for Egypt. WHO defines adolescence as 10–19. CRC Article 1 defines childhood as under 18, subject to its stated exception. The LMS split is an educational grouping. Guardian verification, privacy, consent and AI eligibility still require the applicable reviewed policy. [WHO adolescent health](https://www.who.int/health-topics/adolescent-health) · [CRC Article 1](https://www.unicef.org/child-rights-convention/convention-text)

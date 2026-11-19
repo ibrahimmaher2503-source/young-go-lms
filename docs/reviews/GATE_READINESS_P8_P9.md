@@ -102,3 +102,34 @@ the P10 dependency chain.
   T-P4-07 A3 still needs periodic motion and explicit T2 render evidence.
 - Sol independent test writers and code review were used in this Codex session.
   The requested Haiku model is unavailable here.
+
+### Learning and checkout continuation
+
+- D-030 wires access grant, expiry and revocation, assignment publication,
+  submission and due reminders, and certificate revocation. The scheduler
+  registers both reminder commands. Tests cover 7/3/1-day windows, recipient
+  isolation, preferences and idempotency.
+- T-P9-06 serves platform overview, student progress and content reports in
+  the existing permission-scoped catalog and audited CSV workflow.
+- D-031 adds choice per eligible live bundle course. An unpaid order with no
+  payment history can be replaced within one transaction. Orders with a
+  payment attempt or proof resume their existing checkout. Full refunds that
+  revoke access release funded seats and funded waitlist entries where no
+  other active grant remains. Seats and waitlist entries without recorded
+  payment provenance are preserved.
+- O-025 prunes learning records two years after account closure, subject to
+  longer applicable retention. Account anonymization removes uploaded bytes
+  and identifying attachment fields. Sanitized metadata is retained until
+  pruning. If the storage adapter fails during existing post-commit cleanup,
+  correcting orphaned uploads requires storage reconciliation.
+- Independent Sol re-review passed 34 focused tests with 170 assertions.
+  The browser ran AR/EN at 390px and 1440px with axe, reaching an order in
+  each case and completing a fake payment in the Arabic mobile case
+  (4 tests, 42 assertions). Captures are in
+  `storage/app/review-media/bundle-checkout/`. The reference depicts the
+  payment step for a single course. These captures depict the bundle's
+  learner and cohort selection step. Visual acceptance stays open.
+- The complete J01–J12 independent demo rehearsal, production services and
+  P10 legacy migration still need their own acceptance evidence. A rollback
+  to a single hold per order line requires resolving any existing multi-hold
+  lines first. T-P8-MG and T-P9-MG remain open.

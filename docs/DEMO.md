@@ -35,4 +35,5 @@ All demo accounts use the password from `config/demo.php` (`demo.password`): `De
 - Coupons `DEMO-WELCOME10` (10%) and `DEMO-FLAT50` (50 EGP), a bundle (acting + stage workshop), a monthly plan (2 subscription courses).
 - Orders: five paid (course, course with coupon, course for a child, bundle, plan), one pending, one cancelled, one failed.
 - Learning: free enrollments, Adam 1 of 3 lessons and Yara 3 of 3 (a certificate), Nour finished the acting course (quiz attempt, completion, certificate), a cohort seat, two approved reviews, one help request with an instructor reply (a recorded demo assistant exchange; no AI provider is called).
-- Not included: approved lesson PDFs with key terms (needs the PDF ingestion pipeline and a provider), refunded orders and settlements.
+- The first Drawing Basics lesson has a private sample recording, an approved perspective-drawing PDF and approved key terms. Demo reset removes both generated private files. Automated checks use a scripted fake answer with a verified PDF citation for the adult Omar demo account.
+- Refunded orders and settlements can be exercised from the seeded paid orders and ledger.

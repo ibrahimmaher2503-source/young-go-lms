@@ -9,6 +9,14 @@ Owner G7 acceptance and outstanding functional criteria are recorded in
 See the [performance report](docs/reviews/PERF_BUDGET_P8_2026-11-19.md)
 for the lab method and measured pages.
 
+D-030 schedules access-expiry and assignment reminders at 7, 3 and 1 days.
+D-031 adds a buyer-selected cohort per eligible live bundle course. Rehearse
+this path with the [demo script](docs/DEMO_SCRIPT.md). Before rolling back the
+multi-hold migration, check whether any order line already has multiple holds.
+The previous schema cannot store those selections. Use the
+[gate readiness record](docs/reviews/GATE_READINESS_P8_P9.md#learning-and-checkout-continuation)
+for automated and independent evidence.
+
 The owner confirmed the [requested release facts](docs/07_DECISION_REGISTER.md)
 are unavailable. P10 depends on T-P10-01, which needs authoritative read-only
 legacy source, DB and media plus T-P3-MG. Keep live payments, ETA submission,

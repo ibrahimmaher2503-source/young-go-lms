@@ -150,7 +150,7 @@ Verify on first run. B-07 remains open for real Paymob.
 
 **Steps**
 1. As admin, open `/admin/bundles`. Expected: the bundle with its AR and EN names and its per-market price. Note the bundle id.
-2. As Omar, open `/checkout/bundle/{id}`. Expected: the bundle checkout page with the two courses listed and the total.
+2. As Omar, open `/checkout/bundle/{id}`. Expected: the bundle checkout page with the two courses listed and the total. The buyer chooses a cohort for each eligible live course. To see the chooser, use Mona buying for Adam, who has no existing seat in the workshop.
 3. Choose manual transfer, submit a placeholder proof (as in step 3), and have finance approve it.
 4. Expected: the order is paid. Access is granted for both courses. `acting-101` is already held by Omar from step 3, so the allocation is recorded as **skipped (already held)** and not granted twice (verify the label on first run).
 
@@ -191,7 +191,7 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 **Status: [PARTIAL].** Caveats:
 - **Learners cannot request refunds.** Requests are staff-only (`ListRefunds` header action). Record it as a gap if the owner expects a learner request.
 - **PDF output** may return 503 when headless Chromium is missing (the statement PDF in T-P8-10 says so; the receipt PDF may behave the same). Record the status code and the reason.
-- For an eligible full refund with access revocation, verify that bundle entitlements and funded subscription periods end as specified.
+- For an eligible full refund with access revocation, verify that bundle entitlements and funded subscription periods end as specified. For a paid order with a recorded cohort seat source, verify the seat becomes available if the learner has no other current grant for that course.
 - Refund reversal of ledger entries runs on `RefundExecuted` (step 9).
 
 **AR:** the refund statuses, the receipt headings and the credit note label in Arabic.
@@ -253,14 +253,14 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 **URL:** `/admin/reports`, `/finance/reports`, `/instructor/reports`; export link `/reports/{report}/export`.
 
 **Steps**
-1. As admin, open `/admin/reports`. Expected: 10 report definitions (sales, refunds, enrollments, attendance, assessments, certificates, instructor earnings, AI usage, help SLA, reconciliation). Choose the sales report with the last 30 days.
+1. As admin, open `/admin/reports`. Select Sales for the last 30 days. Also exercise Platform overview, Student progress and Content with the same period.
 2. Expected: rows and totals per currency. Totals are never mixed across currencies.
 3. Click **Export CSV**. Expected: a download with a UTF-8 BOM, translated headings and money as numbers in major units. Cells starting with `=`, `+`, `-` or `@` are prefixed with `'`. Open the file in a text editor to confirm.
 4. Try a report above the row cap (`reports.max_rows`, 50 000). Expected: refused with 422 (never truncated).
 5. As Sara, open `/instructor/reports`. Expected: enrollments, attendance, assessments, certificates, help SLA and own earnings for her courses only. No sales or refund reports.
 6. Check the audit log: the export is recorded as `report.exported` with filters and row count.
 
-**Status: [SHOW].** Gaps: no queued or background export, no platform overview, student progress or content reports, no PDF output (PROGRESS T-P9-06).
+**Status: [SHOW].** The current export delivers CSV from the selected scope and report period. Migration exceptions require a counted legacy import and its report.
 
 **AR:** headings, number formats and the BOM check (Arabic text opens correctly in a spreadsheet tool).
 
@@ -352,7 +352,7 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 4. As Sara, open `/instructor/announcements`. Expected: the announcement, read only.
 5. Run one notification source: the order-paid or manual-proof approval from step 3 should have queued the sale notice (check the mail log with the array mailer, or the in-app list).
 
-**Status: [PARTIAL].** Pending sources not wired yet (T-P9-05): access and payment fail or refund notices, assignment publish-due, certificate revoke, and settlement notices (wired for statement and payout only). Phone reminders (WhatsApp/SMS) use the fake channel only (T-P9-04 audit: CHANGES REQUIRED).
+**Status: [PARTIAL].** Access and assignment due reminders are scheduled 7, 3 and 1 days before the deadline. Use a scratch fixture with an eligible deadline to demonstrate them. Phone reminder delivery depends on the actual channel provider.
 
 **AR:** template text and preference labels in Arabic.
 
@@ -372,7 +372,7 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 6. **Anonymization (run last, on Laila only).** As Laila, submit a **deletion** request. As admin, approve and complete it. Expected: the account is anonymized **in place**. Financial, audit and certificate records are kept. Verify on first run which fields are blanked.
 7. After this step, run `php artisan demo:reset` to restore the demo data.
 
-**Status: [PARTIAL].** O-025 approves keeping the configured defaults, with financial and learning-record retention rules. The learning-record lifecycle still needs verification. Financial history links (`instructor_id`, `student_id`) are retained and not listed in exports yet (T-P9-08 follow-up). Anonymization does not delete rows.
+**Status: [PARTIAL].** O-025 keeps learning records while the account is active and for two years after documented account closure. Rehearse `privacy:prune` with a scratch fixture older than that cutoff. The finance and certificate evidence survives anonymization and pruning.
 
 **AR:** the request types and the status labels in Arabic.
 
