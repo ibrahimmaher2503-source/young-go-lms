@@ -115,7 +115,17 @@ final class StaffNavigation
             $placed = [...$placed, ...$classes];
             $items = self::items($classes, $registered);
             if ($items !== []) {
-                $groups[] = NavigationGroup::make(self::label($key))->items($items);
+                $group = NavigationGroup::make(self::label($key))->items($items);
+                $active = $group->isActive();
+                $group->collapsed($key !== 'people' && ! $active)->collapsible();
+
+                if ($active) {
+                    $group->extraSidebarAttributes([
+                        'x-init' => '$store.sidebar.groupIsCollapsed(label) && $store.sidebar.toggleCollapsedGroup(label)',
+                    ]);
+                }
+
+                $groups[] = $group;
             }
         }
 

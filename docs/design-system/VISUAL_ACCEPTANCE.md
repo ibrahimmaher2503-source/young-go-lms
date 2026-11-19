@@ -8,6 +8,10 @@ Every user-facing change must be compared visually with its reference at the sam
 
 For new page archetypes, establish a reference consistent with D-026 before implementation; implement through shared tokens/native components, then inspect actual browser screenshots against it. Root owns final visual judgment. Do not turn the current output into its own reference just to pass. Record intentional design changes in the Decision Register before changing reference or baselines.
 
+## Owner decision D-028, 2026-11-19
+
+Tasks with verified functionality can support downstream implementation while visual fidelity remains open. Record `G7 VISUAL DEFERRED` in PROGRESS.md with technical evidence, screenshots and remaining visual differences. The deferred task stays in review. Keep functional browser and accessibility checks and use the unchanged reference at visual acceptance.
+
 ## Fixed shared measurements
 
 See visual-contract.json: reference viewport1568x1003; operational sidebar268px; topbar70px; page inset30px; main/aside tracks2.22:1; table/card gap16px; heading36px; body18px / table16px; white cards16px radius, subtle boundaries; functional controls44px minimum. The users reference geometry is checked from actual browser bounding boxes, not just CSS variable values.

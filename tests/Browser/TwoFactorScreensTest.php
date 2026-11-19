@@ -32,35 +32,38 @@ function tfShot($page, string $name): void
     $page->screenshot(fullPage: true, filename: "T-P1-11/{$name}");
 }
 
-it('enrolls in two-factor authentication through the browser and shows recovery codes once', function (): void {
-    $this->withSession(['locale' => 'en']);
-    $this->actingAs(tfBrowserUser('student'));
+it('requires staff enrollment through the admin panel and shows recovery codes once', function (string $locale): void {
+    config(['identity.two_factor_enforced' => true]);
+    $this->withSession(['locale' => $locale]);
+    $this->actingAs(tfBrowserUser('admin', ['locale' => $locale]));
 
-    $page = $this->visit('/security/two-factor')->assertPresent('[data-two-factor-secret]');
+    $page = $this->visit('/admin')->assertPathIs('/security/two-factor')->assertPresent('[data-two-factor-secret]');
     expect($page->script("() => !!document.querySelector('[role=img] svg')"))->toBeTrue();
     $secret = trim((string) $page->text('[data-two-factor-secret]'));
     expect($secret)->not->toBeEmpty();
 
     $page->type('#code', app(Google2FA::class)->getCurrentOtp($secret))->type('#enroll-password', 'Password1!secure')
         ->click('main form button[type="submit"]')
-        ->waitForText(__('pages.tf_recovery_title'))
+        ->waitForText(__('pages.tf_recovery_title', [], $locale))
         ->assertNoJavaScriptErrors();
     expect($page->script('() => document.querySelectorAll("[data-result-list] li").length'))->toBe(8);
 
-    $page->refresh()->assertSee(__('pages.tf_enabled'))->assertNotPresent('[data-two-factor-secret]')
+    $page->refresh()->assertSee(__('pages.tf_enabled', [], $locale))->assertNotPresent('[data-two-factor-secret]')
         ->assertNotPresent('#recovery-codes:not([hidden])');
     expect($page->script('() => document.querySelectorAll("[data-result-list] li").length'))->toBe(0);
-})->group('browser', 'T-P1-11', 'A1', 'YG-GAP-SEC-003');
+    $page->navigate('/admin')->assertPathIs('/admin')->assertVisible('[data-dashboard-manage-courses]');
+})->with(['ar', 'en'])->group('browser', 'T-P1-11', 'A1', 'YG-GAP-SEC-003');
 
-it('completes the two-step challenge with a code', function (): void {
-    $this->withSession(['locale' => 'en']);
-    $user = tfBrowserUser('student', ['two_factor_secret' => 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()]);
+it('blocks an enrolled staff session until it completes the two-factor challenge', function (string $locale): void {
+    config(['identity.two_factor_enforced' => true]);
+    $this->withSession(['locale' => $locale]);
+    $user = tfBrowserUser('admin', ['locale' => $locale, 'two_factor_secret' => 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()]);
     $this->actingAs($user);
 
-    $this->visit('/two-factor-challenge')->type('#code', app(Google2FA::class)->getCurrentOtp('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'))
+    $this->visit('/admin')->assertPathIs('/two-factor-challenge')->type('#code', app(Google2FA::class)->getCurrentOtp('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'))
         ->click('main form[action$="/two-factor-challenge"] button[type="submit"]')
-        ->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')->assertNoJavaScriptErrors();
-})->group('browser', 'T-P1-11', 'A1');
+        ->assertVisible('[data-dashboard-manage-courses]')->assertPathIs('/admin')->assertNoJavaScriptErrors();
+})->with(['ar', 'en'])->group('browser', 'T-P1-11', 'A1', 'YG-GAP-SEC-003');
 
 it('lets a parent reset the child password in the browser and the child signs in with it', function (): void {
     $this->withSession(['locale' => 'en']);
@@ -94,14 +97,15 @@ it('renders the two-factor and child-reset screens accessibly in both directions
     $enrolled = ['two_factor_secret' => 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()];
 
     if ($screen === 'setup') {
-        $this->actingAs(tfBrowserUser('student', ['name_en' => 'Omar', 'display_name' => 'Omar']));
+        $this->actingAs(tfBrowserUser('admin', ['locale' => $locale, 'name_en' => 'Omar', 'display_name' => 'Omar']));
         $page = $this->visit('/security/two-factor');
     } elseif ($screen === 'enabled') {
-        $user = tfBrowserUser('student', ['name_en' => 'Omar', 'display_name' => 'Omar', ...$enrolled]);
-        $this->withSession(['locale' => $locale, TwoFactorSession::KEY => $user->id])->actingAs($user);
+        $user = tfBrowserUser('admin', ['locale' => $locale, 'name_en' => 'Omar', 'display_name' => 'Omar', ...$enrolled]);
+        $this->actingAs($user);
+        TwoFactorSession::markVerified($user);
         $page = $this->visit('/security/two-factor');
     } elseif ($screen === 'challenge') {
-        $this->actingAs(tfBrowserUser('student', $enrolled));
+        $this->actingAs(tfBrowserUser('admin', ['locale' => $locale, ...$enrolled]));
         $page = $this->visit('/two-factor-challenge');
     } else {
         $parent = tfBrowserUser('parent', ['name_en' => 'Mona', 'display_name' => 'Mona']);

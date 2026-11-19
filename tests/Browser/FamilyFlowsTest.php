@@ -26,30 +26,33 @@ function browserUser(string $role, array $attributes = []): User
     return $user;
 }
 
-it('registers, verifies and signs in through the browser forms', function (): void {
-    $this->withSession(['locale' => 'en']);
+it('registers, verifies and signs in through the browser forms', function (string $locale, string $name): void {
+    $this->withCookie('locale', $locale)->withSession(['locale' => $locale]);
     $page = $this->visit('/register');
-    $page->type('#name_en', 'Browser Learner')->type('#email', 'browser@example.test')
+    $page->assertSee(__('pages.register_title', [], $locale))
+        ->type("#name_{$locale}", $name)->type('#email', 'browser@example.test')
         ->type('#password', 'BrowserPass1!')->type('#password_confirmation', 'BrowserPass1!')
         ->check('#accept_terms')->check('#accept_privacy')
         ->click('main form button[type="submit"]')
-        ->waitForText(__('pages.verify_title'))
+        ->waitForText(__('pages.verify_title', [], $locale))
         ->assertPathIs('/email/verify');
 
     $user = User::where('email', 'browser@example.test')->firstOrFail();
-    expect($user->hasRole('student'))->toBeTrue();
+    expect($user->hasRole('student'))->toBeTrue()
+        ->and($user->locale)->toBe($locale);
 
     $link = URL::temporarySignedRoute('verification.verify', now()->addMinute(), ['id' => $user->id, 'hash' => sha1('browser@example.test')]);
-    $page = $this->visit($link)->assertPathIs('/my')->assertSee(__('learner.my_enrolled'));
+    $page = $this->visit($link)->assertPathIs('/my')->assertSee(__('learner.my_enrolled', [], $locale));
     expect($user->refresh()->hasVerifiedEmail())->toBeTrue();
 
     $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
-    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'))->assertPathIs('/login');
+    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')
+        ->waitForText(__('pages.login_title', [], $locale))->assertPathIs('/login');
 
     $page->type('#login', 'browser@example.test')->type('#password', 'BrowserPass1!')
-        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
+        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
         ->assertNoJavaScriptErrors();
-})->group('browser', 'T-P1-10', 'A1', 'J01');
+})->with([['ar', 'طالب تجريبي'], ['en', 'Browser Learner']])->group('browser', 'T-P1-10', 'A1', 'J01');
 
 it('shows field errors in the page when a form is invalid', function (): void {
     $this->withSession(['locale' => 'en']);
@@ -57,27 +60,30 @@ it('shows field errors in the page when a form is invalid', function (): void {
         ->waitForText('valid email')->assertPresent('#email[aria-invalid="true"]')->assertNoJavaScriptErrors();
 })->group('browser', 'T-P1-10', 'A1', 'A3');
 
-it('lets a parent create a child who then signs in with the username', function (): void {
-    $this->withSession(['locale' => 'en']);
-    $parent = browserUser('parent');
+it('lets a parent create a child who then signs in with the username', function (string $locale, string $name): void {
+    $this->withCookie('locale', $locale)->withSession(['locale' => $locale]);
+    $parent = browserUser('parent', ['locale' => $locale]);
     $this->actingAs($parent);
 
     $page = $this->visit('/family');
-    $page->type('#child_name_en', 'Little Browser')->type('#child_username', 'little-browser')
+    $page->assertSee(__('pages.family_title', [], $locale))
+        ->type("#child_name_{$locale}", $name)->type('#child_username', 'little-browser')
         ->type('#child_birth_year', '2016')->select('#child_birth_month', '4')
         ->type('#child_password', 'ChildBrowser1!')->type('#child_password_confirmation', 'ChildBrowser1!')
         ->click('main form[action$="/guardian/children"] button[type="submit"]')
-        ->waitForText('Little Browser')->assertSee('little-browser');
+        ->waitForText($name)->assertSee('little-browser');
 
     $child = User::where('username', 'little-browser')->firstOrFail();
-    expect($child->email)->toBeNull()->and($child->hasRole('student'))->toBeTrue();
+    expect($child->email)->toBeNull()->and($child->hasRole('student'))->toBeTrue()
+        ->and($child->locale)->toBe($locale);
 
     $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
-    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'));
+    $page->click('#account-menu form[action$="/logout"] button[type="submit"]')
+        ->waitForText(__('pages.login_title', [], $locale))->assertPathIs('/login');
     $page->type('#login', 'little-browser')->type('#password', 'ChildBrowser1!')
-        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
-        ->assertSee('Little Browser');
-})->group('browser', 'T-P1-10', 'A1', 'J02', 'YG-GAP-FAM-001');
+        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
+        ->assertSee($name);
+})->with([['ar', 'طفل تجريبي'], ['en', 'Little Browser']])->group('browser', 'T-P1-10', 'A1', 'J02', 'YG-GAP-FAM-001');
 
 it('switches into a child context with the password and exits again', function (): void {
     $this->withSession(['locale' => 'en']);

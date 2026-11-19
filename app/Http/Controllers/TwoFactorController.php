@@ -36,9 +36,8 @@ final class TwoFactorController
     public function challenge(Request $request, VerifyTwoFactorChallenge $verify): Response
     {
         $data = $request->validate(['code' => ['required', 'string', 'max:32']]);
-        $user = $this->user($request);
-        $verify->handle($user, $data['code']);
-        TwoFactorSession::markVerified($user);
+        $verified = $verify->handle($this->user($request), $data['code']);
+        TwoFactorSession::markVerified($verified);
         $request->session()->regenerate();
 
         return response()->noContent();
@@ -66,8 +65,10 @@ final class TwoFactorController
         $user = $this->user($request);
         // Re-authenticate so a hijacked session cannot enroll the attacker's own authenticator.
         $this->confirmPassword($request, $user);
-        $codes = $confirm->handle($user, $data['code']);
-        TwoFactorSession::markVerified($user->refresh());
+        ['user' => $verified, 'recoveryCodes' => $codes] = $confirm->handle($user, $data['code']);
+        // Sync the authenticated model to the enrollment that accepted the code.
+        $user->setRawAttributes($verified->getAttributes(), true);
+        TwoFactorSession::markVerified($verified);
         $request->session()->regenerate();
 
         return response()->json(['recovery_codes' => $codes])->header('Cache-Control', 'no-store');

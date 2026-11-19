@@ -45,6 +45,14 @@ it('lists editable web roles without exposing super admin or CRUD operations', f
         ->and(RolePermissionResource::canEdit($role))->toBeFalse()
         ->and(RolePermissionResource::canDelete($role))->toBeFalse()
         ->and(RolePermissionResource::canDeleteAny())->toBeFalse();
+
+    $this->withoutVite();
+    $role->syncPermissions([]);
+    $populatedRole = Role::findByName('admin', 'web');
+
+    Livewire::test(ListRolePermissions::class)
+        ->sortTable('permissions_count', 'desc')
+        ->assertCanSeeTableRecords([$populatedRole, $role], inOrder: true);
 })->group('T-P1-08', 'roles-permissions-ui');
 
 it('protects the route and audits the permissions dialog submission', function () {

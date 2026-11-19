@@ -29,8 +29,9 @@ section it cites (read only those sections), `docs/REUSE_REGISTRY.md`,
 
 ## 2. Task selection
 - Statuses: `todo` · `in_progress` · `review` · `done` · `blocked` · `skipped`.
-- Resume any `in_progress`/`review` task first.
-- Else the first `todo` (phase order, then ID order) whose deps are all `done`.
+- Resume `in_progress` work and `review` tasks with open functional requirements first. Leave visual-only review deferred under D-028 while an eligible implementation task is available.
+- Else the first `todo` (phase order, then ID order) whose dependencies are ready under the rules below.
+- Under D-028, a prerequisite marked `G7 VISUAL DEFERRED` in the board can satisfy task-start dependencies. Require evidence of functional acceptance, technical browser checks where applicable, and independent PRD/QA and high-risk review when required. Check prerequisite chains and record any affected downstream scope. Keep the deferred task in `review`. The marker does not satisfy milestone or release acceptance.
 - Missing credentials/OPEN/owner gates block only dependent items. Record each
   blocked slice and continue independent authorized items. A dependency requiring
   only the completed slice may proceed if that boundary is explicit in the task

@@ -43,4 +43,7 @@ labeled `ui`, G8 with fake provider on PRs labeled `ai`, G9 on PRs labeled
 
 ## G7 reference matching
 
+D-028 permits deferring reference comparison and the UX fidelity verdict for dependent implementation. Apply `G7 VISUAL DEFERRED` only where required functional and technical verification has passed. Run the task's browser assertions, accessibility checks and screenshot captures. Record the deferred comparison and known differences in PROGRESS.md. Milestone and release gates retain visual acceptance.
+
+
 Compare each changed screen against the PNG listed in its task at comparable viewport, language and theme. Save the actual screenshot and record the matched reference, checked regions and remaining differences alongside the task evidence. Check page layout, type, spacing, colors, components and visible states. Resolve unexplained differences before marking the task done. Keep the existing AR/EN, responsive, dark mode and accessibility checks. See the [implementation and matching guide](../docs/design-system/reference-pack-2026-11-17/IMPLEMENTATION.md).

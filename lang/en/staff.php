@@ -12,7 +12,7 @@ return ['user' => 'User', 'table_user' => 'User', 'table_role' => 'Role', 'users
     'manage_users' => 'Manage users',
     'users_description' => 'Manage accounts and roles in one place',
     'total_users' => 'Total users',
-    'inactive_users' => 'Pending activation',
+    'inactive_users' => 'Inactive',
     'all_users' => 'All users',
     'students' => 'Students',
     'instructors' => 'Instructors',

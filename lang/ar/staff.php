@@ -12,7 +12,7 @@ return ['user' => 'مستخدم', 'table_user' => 'المستخدم', 'table_rol
     'manage_users' => 'إدارة المستخدمين',
     'users_description' => 'إدارة الحسابات والأدوار من مكان واحد',
     'total_users' => 'إجمالي المستخدمين',
-    'inactive_users' => 'بانتظار التفعيل',
+    'inactive_users' => 'غير نشط',
     'all_users' => 'كل المستخدمين',
     'students' => 'الطلاب',
     'instructors' => 'المدرّبون',

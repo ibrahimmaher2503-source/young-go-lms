@@ -15,7 +15,7 @@ final class ConfirmTwoFactorEnrollment
 {
     public function __construct(private readonly TwoFactor $twoFactor, private readonly AuditLogger $audit) {}
 
-    /** @return list<string> the plain recovery codes, shown exactly once */
+    /** @return array{user: User, recoveryCodes: list<string>} recovery codes are shown exactly once */
     public function handle(User $user, string $code): array
     {
         return DB::transaction(function () use ($user, $code): array {
@@ -41,7 +41,7 @@ final class ConfirmTwoFactorEnrollment
                 throw new RuntimeException('Unable to record two-factor audit.');
             }
 
-            return $codes;
+            return ['user' => $locked, 'recoveryCodes' => $codes];
         });
     }
 }

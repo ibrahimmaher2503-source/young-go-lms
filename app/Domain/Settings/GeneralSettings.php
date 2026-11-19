@@ -51,6 +51,19 @@ final class GeneralSettings extends Settings
 
     public ?string $mail_reply_to;
 
+    /** @return array<string, string|null> */
+    public function socialLinks(): array
+    {
+        return [
+            'facebook' => $this->social_facebook ?? config('public-site.social_links.facebook'),
+            'instagram' => $this->social_instagram ?? config('public-site.social_links.instagram'),
+            'youtube' => $this->social_youtube ?? config('public-site.social_links.youtube'),
+            'tiktok' => $this->social_tiktok,
+            'x' => $this->social_x,
+            'linkedin' => $this->social_linkedin,
+        ];
+    }
+
     public static function group(): string
     {
         return 'general';

@@ -84,7 +84,7 @@ final class StaffUserResource extends Resource
                 ->label(__('staff.status'))
                 ->extraAttributes(['class' => 'yg-user-status'])
                 ->formatStateUsing(static fn (string $state): string => __('staff.'.$state)),
-            LocalizedDateColumn::make('created_at', pattern: 'yyyy-MM-dd')->label(__('staff.joined'))->extraAttributes(['dir' => 'ltr']),
+            LocalizedDateColumn::make('created_at', pattern: 'yyyy-MM-dd')->label(__('staff.joined'))->sortable()->extraAttributes(['dir' => 'ltr']),
         ])->filters([
             SelectFilter::make('role')->label(__('staff.roles'))->relationship('roles', 'name')->getOptionLabelFromRecordUsing(static fn (Role $role): string => __('roles.'.$role->name)),
             SelectFilter::make('status')->label(__('staff.status'))->options([
