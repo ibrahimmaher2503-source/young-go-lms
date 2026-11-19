@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Reports\Queries;
 
+use App\Domain\Engagement\ReviewStatus;
 use App\Domain\Entitlements\EnrollmentReport;
 use App\Domain\Reports\QueryTools;
 use App\Domain\Reports\ReportDefinition;
@@ -31,6 +32,8 @@ final class EnrollmentsReport implements ReportDefinition
         return [
             'course' => 'text', 'new_enrollments' => 'int', 'active_learners' => 'int', 'total_learners' => 'int',
             'new_completions' => 'int', 'total_completions' => 'int', 'completion_rate' => 'percent',
+            'average_progress' => 'percent', 'approved_reviews' => 'int', 'average_rating' => 'text',
+            'attempts' => 'int', 'passed' => 'int',
         ];
     }
 
@@ -39,7 +42,8 @@ final class EnrollmentsReport implements ReportDefinition
         $after = 0;
         $chunk = Config::integer('reports.chunk');
         do {
-            $courses = $this->courses($filters)->where('courses.id', '>', $after)->orderBy('courses.id')->limit($chunk)->get();
+            $courses = $this->withPerformance($this->courses($filters), $filters)
+                ->where('courses.id', '>', $after)->orderBy('courses.id')->limit($chunk)->get();
             $ids = $courses->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all();
             $enrolled = EnrollmentReport::forCourses($ids, $filters->from, $filters->to);
             $completed = $this->completions($ids, $filters);
@@ -52,6 +56,9 @@ final class EnrollmentsReport implements ReportDefinition
                 yield [
                     ReportLabels::translated((string) $course->title, '#'.$id), $enrollment['new'], $enrollment['active'], $enrollment['total'],
                     $done['new'], $done['total'], $enrollment['total'] === 0 ? 0.0 : round($done['total'] * 100 / $enrollment['total'], 1),
+                    $course->average_progress === null ? null : round((float) $course->average_progress, 1),
+                    (int) $course->approved_reviews, $course->average_rating === null ? null : round((float) $course->average_rating, 1),
+                    (int) $course->attempts, (int) $course->passed,
                 ];
                 $after = $id;
             }
@@ -72,6 +79,24 @@ final class EnrollmentsReport implements ReportDefinition
     {
         return DB::table('courses')->select('courses.id', 'courses.title')
             ->when($filters->courseIds !== null, static fn (Builder $query): Builder => $query->whereIn('courses.id', $filters->courseIds ?? []));
+    }
+
+    private function withPerformance(Builder $courses, ReportFilters $filters): Builder
+    {
+        $range = [$filters->from, $filters->to];
+        $reviews = DB::table('course_reviews')->whereColumn('course_id', 'courses.id')
+            ->where('status', ReviewStatus::Published->value)->whereBetween('created_at', $range);
+        $attempts = DB::table('curriculum_items')->join('quiz_attempts', 'quiz_attempts.quiz_id', '=', 'curriculum_items.itemable_id')
+            ->whereColumn('curriculum_items.course_id', 'courses.id')->where('itemable_type', 'quiz')
+            ->where('quiz_attempts.status', 'submitted')->whereBetween('quiz_attempts.submitted_at', $range);
+
+        return $courses
+            ->selectSub(DB::table('course_progress')->selectRaw('avg(percent)')->whereColumn('course_id', 'courses.id')
+                ->whereBetween('last_activity_at', $range), 'average_progress')
+            ->selectSub($reviews->clone()->selectRaw('count(*)'), 'approved_reviews')
+            ->selectSub($reviews->selectRaw('avg(rating)'), 'average_rating')
+            ->selectSub($attempts->clone()->selectRaw('count(distinct quiz_attempts.id)'), 'attempts')
+            ->selectSub($attempts->where('quiz_attempts.passed', true)->selectRaw('count(distinct quiz_attempts.id)'), 'passed');
     }
 
     /**

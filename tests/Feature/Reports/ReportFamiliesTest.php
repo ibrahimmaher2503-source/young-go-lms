@@ -117,6 +117,66 @@ it('counts missing persisted lesson assets and localizes the content report', fu
     }
 })->group('T-P9-06', 'PRD-21');
 
+it('summarizes course progress and approved ratings without exposing learner review content', function (): void {
+    $course = reportTestCourse('course-performance');
+    $admin = User::factory()->create()->assignRole('admin');
+    foreach ([['published', 4, 75], ['pending', 1, 25]] as [$status, $rating, $progress]) {
+        $learner = User::factory()->create();
+        DB::table('course_progress')->insert([
+            'course_id' => $course->id, 'learner_id' => $learner->id, 'percent' => $progress, 'last_activity_at' => '2026-11-12 10:00:00',
+        ]);
+        DB::table('course_reviews')->insert([
+            'course_id' => $course->id, 'learner_id' => $learner->id, 'rating' => $rating, 'body' => 'Private review text',
+            'author_name' => 'Private author', 'status' => $status, 'created_at' => '2026-11-12 10:00:00',
+        ]);
+    }
+
+    $catalog = app(ReportCatalog::class);
+    $report = $catalog->definition(ReportKey::Enrollments);
+    $filters = ReportFilters::fromInput(['from' => '2026-11-10', 'to' => '2026-11-15', 'course' => $course->id]);
+    $row = array_combine(array_keys($report->columns()), iterator_to_array($report->rows($catalog->scope($admin, ReportKey::Enrollments, $filters)))[0]);
+    expect($row)->toMatchArray(['average_progress' => 50.0, 'approved_reviews' => 1, 'average_rating' => 4.0])
+        ->and(json_encode($row))->not->toContain('Private');
+})->group('T-P9-06', 'PRD-21');
+
+it('attributes discounted bundle sales to each course without exposing revenue to instructors', function (): void {
+    $first = reportTestCourse('first-course-revenue');
+    $second = reportTestCourse('second-course-revenue');
+    $finance = User::factory()->create()->assignRole('finance');
+    $payer = User::factory()->create();
+    $instructor = User::factory()->create()->assignRole('instructor_academy');
+    $first->instructors()->attach($instructor, ['role' => 'instructor', 'scope' => 'manage']);
+    $order = DB::table('orders')->insertGetId([
+        'reference' => 'REPORT-COURSE-REVENUE', 'payer_id' => $payer->id, 'market' => 'EG', 'currency' => 'EGP',
+        'subtotal_minor' => 1200, 'discount_minor' => 200, 'total_minor' => 1000, 'status' => 'paid', 'paid_at' => '2026-11-12 10:00:00',
+        'idempotency_key' => 'report-course-revenue', 'request_hash' => hash('sha256', 'report-course-revenue'),
+    ]);
+    $bundleItem = DB::table('order_items')->insertGetId([
+        'order_id' => $order, 'product_type' => 'bundle', 'product_id' => 1, 'learner_id' => $payer->id,
+        'unit_price_minor' => 1000, 'discount_minor' => 200, 'allocated_minor' => 800, 'currency' => 'EGP',
+    ]);
+    DB::table('order_items')->insert([
+        'order_id' => $order, 'product_type' => 'course', 'product_id' => $first->id, 'learner_id' => $payer->id,
+        'unit_price_minor' => 200, 'allocated_minor' => 200, 'currency' => 'EGP',
+    ]);
+    DB::table('order_item_allocations')->insert([
+        ['order_item_id' => $bundleItem, 'course_id' => $first->id, 'allocated_minor' => 600, 'weight' => 60],
+        ['order_item_id' => $bundleItem, 'course_id' => $second->id, 'allocated_minor' => 400, 'weight' => 40],
+    ]);
+    $catalog = app(ReportCatalog::class);
+    $key = ReportKey::tryFrom('course_sales');
+    expect($key)->not->toBeNull();
+    expect($catalog->canView($instructor, $key))->toBeFalse();
+    $report = $catalog->definition($key);
+    $filters = $catalog->scope($finance, $key, reportTestFilters());
+    expect(iterator_to_array($report->rows($filters)))->toBe([
+        ['first-course-revenue', 'EGP', 6.8],
+        ['second-course-revenue', 'EGP', 3.2],
+    ])->and(array_column($report->totals($filters), 'value'))->toBe([10.0]);
+    $filtered = ReportFilters::fromInput(['from' => '2026-11-10', 'to' => '2026-11-15', 'course' => $second->id]);
+    expect(iterator_to_array($report->rows($catalog->scope($finance, $key, $filtered))))->toBe([['second-course-revenue', 'EGP', 3.2]]);
+})->group('T-P9-06', 'PRD-21', 'A1', 'A2');
+
 function reportTestLesson(Course $course): int
 {
     $section = DB::table('course_sections')->insertGetId(['course_id' => $course->id, 'title' => '{}']);

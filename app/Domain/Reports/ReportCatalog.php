@@ -11,9 +11,11 @@ use App\Domain\Reports\Queries\AssessmentResultsReport;
 use App\Domain\Reports\Queries\CertificatesReport;
 use App\Domain\Reports\Queries\CohortAttendanceReport;
 use App\Domain\Reports\Queries\ContentReport;
+use App\Domain\Reports\Queries\CourseSalesReport;
 use App\Domain\Reports\Queries\EnrollmentsReport;
 use App\Domain\Reports\Queries\HelpSlaReport;
 use App\Domain\Reports\Queries\InstructorEarningsReport;
+use App\Domain\Reports\Queries\InstructorOperationsReport;
 use App\Domain\Reports\Queries\PlatformOverviewReport;
 use App\Domain\Reports\Queries\ReconciliationMismatchReport;
 use App\Domain\Reports\Queries\RefundsReport;
@@ -30,9 +32,8 @@ use Illuminate\Support\Facades\DB;
  *
  * Access (documented defaults, PRD 6/21):
  * - `report.view` (admin, super admin): every report; the AI report also needs `ai.view_usage`.
- * - `report.finance.view` (finance): the financial reports only (sales, refunds, instructor earnings, reconciliation).
- * - An instructor (no report permission): enrollments, attendance, assessments, certificates, help SLA of the courses they are
- *   assigned to, and their own earnings. Never sales, refunds, reconciliation or AI usage.
+ * - `report.finance.view` (finance): the financial reports only.
+ * - Instructors see non-financial course reports for their assignments and their own earnings.
  * Reports are aggregates or identifier-only rows: no student name, email, phone, payer or message text is in any report.
  */
 final class ReportCatalog
@@ -75,12 +76,14 @@ final class ReportCatalog
         return match ($key) {
             ReportKey::PlatformOverview => app(PlatformOverviewReport::class),
             ReportKey::Sales => app(SalesReport::class),
+            ReportKey::CourseSales => app(CourseSalesReport::class),
             ReportKey::Refunds => app(RefundsReport::class),
             ReportKey::Enrollments => app(EnrollmentsReport::class),
             ReportKey::CohortAttendance => app(CohortAttendanceReport::class),
             ReportKey::AssessmentResults => app(AssessmentResultsReport::class),
             ReportKey::Certificates => app(CertificatesReport::class),
             ReportKey::InstructorEarnings => app(InstructorEarningsReport::class),
+            ReportKey::InstructorOperations => app(InstructorOperationsReport::class),
             ReportKey::AiUsage => app(AiUsageReport::class),
             ReportKey::HelpSla => app(HelpSlaReport::class),
             ReportKey::Reconciliation => app(ReconciliationMismatchReport::class),

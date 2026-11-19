@@ -8,6 +8,7 @@ use App\Domain\Shared\Money\Money;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use LogicException;
 
 /**
@@ -62,6 +63,12 @@ final class OrderItem extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /** @return HasMany<OrderItemAllocation, $this> */
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(OrderItemAllocation::class)->orderBy('id');
     }
 
     /** @return BelongsTo<User, $this> */

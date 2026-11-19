@@ -441,12 +441,12 @@ Fill in the **Pass / Fail** column and the notes. Use **N/A** only when the step
 | 13 | Instructor application and agreement | Laila, admin, Karim | | Agreement wording not final (D-026) |
 | 14 | Wishlist and review moderation | Omar, admin | | |
 | 15 | Consent banner and marketing tags | Guest, admin | | Counsel wording open (YG-GAP-PRV-004) |
-| 16 | Notification templates, preferences, announcement | Admin, Omar, Sara | | Partial: pending sources (T-P9-05) |
+| 16 | Notification templates, preferences, announcement | Admin, Omar, Sara | | Check 7/3/1-day reminders in a dated fixture. Phone delivery requires a provider. |
 | 17 | Privacy export and anonymization | Omar, admin, Laila | | Run anonymization last, then demo:reset |
 | 18 | Learner 360 and view-as banner | Admin | | Lazy expiry; no screenshots yet |
 | 19 | Settings hub and sidebar parity | Admin, finance, Sara | | locale and market not read at runtime |
 | AR | RTL and Arabic labels across steps | All | | Check each step's AR column |
-| Setup | Finance account created | PO | | Required for steps 3, 7 to 10 |
+| Setup | Finance account seeded | PO | | Confirm login before steps 3 and 7–10 |
 
 ---
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Reports\Queries;
 
+use App\Domain\Commerce\CouponRedemptionStatus;
+use App\Domain\Commerce\ManualPaymentStatus;
+use App\Domain\Commerce\PaymentAttemptStatus;
 use App\Domain\Reports\QueryTools;
 use App\Domain\Reports\ReportDefinition;
 use App\Domain\Reports\ReportFilters;
@@ -31,18 +34,29 @@ final class SalesReport implements ReportDefinition
         return [
             'reference' => 'text', 'paid_at' => 'datetime', 'market' => 'text', 'currency' => 'text', 'status' => 'text',
             'subtotal' => 'money', 'discount' => 'money', 'total' => 'money', 'refunded' => 'money', 'net' => 'money',
+            'method' => 'text', 'manual_approved_at' => 'datetime', 'coupon_code' => 'text',
         ];
     }
 
     public function rows(ReportFilters $filters): iterable
     {
-        foreach ($this->query($filters)->orderBy('orders.id')->lazyById(Config::integer('reports.chunk'), 'orders.id', 'id') as $order) {
+        $orders = $this->query($filters)
+            ->selectSub(DB::table('payment_attempts')->select('gateway')->whereColumn('order_id', 'orders.id')
+                ->where('status', PaymentAttemptStatus::Succeeded->value)->orderBy('sequence')->limit(1), 'gateway')
+            ->selectSub(DB::table('manual_payment_proofs')->select('reviewed_at')->whereColumn('order_id', 'orders.id')
+                ->where('status', ManualPaymentStatus::Approved->value)->orderBy('id')->limit(1), 'manual_approved_at')
+            ->selectSub(DB::table('coupon_redemptions')->join('coupons', 'coupons.id', '=', 'coupon_redemptions.coupon_id')
+                ->select('coupons.code')->whereColumn('coupon_redemptions.order_id', 'orders.id')
+                ->where('coupon_redemptions.status', CouponRedemptionStatus::Redeemed->value), 'coupon_code');
+        foreach ($orders->lazyById(Config::integer('reports.chunk'), 'orders.id', 'id') as $order) {
             $total = (int) $order->total_minor;
             $refunded = (int) $order->refunded_minor;
 
             yield [
                 (string) $order->reference, ReportLabels::datetime((string) $order->paid_at), (string) $order->market, (string) $order->currency, ReportLabels::status((string) $order->status),
                 ReportLabels::major($order->subtotal_minor), ReportLabels::major($order->discount_minor), ReportLabels::major($total), ReportLabels::major($refunded), ReportLabels::major($total - $refunded),
+                ReportLabels::status($order->manual_approved_at === null ? $order->gateway : 'instapay_transfer'),
+                ReportLabels::datetime($order->manual_approved_at), (string) $order->coupon_code,
             ];
         }
     }

@@ -86,7 +86,7 @@ it('gives finance exactly the four financial reports and nothing else', function
         expect(t906cCatalog()->scopeOf($finance, $key))->toBe(ReportScope::None, $key->value);
     }
     expect(array_map(static fn (ReportKey $k): string => $k->value, t906cCatalog()->available($finance)))
-        ->toEqualCanonicalizing(['sales', 'refunds', 'instructor_earnings', 'reconciliation']);
+        ->toEqualCanonicalizing(['sales', 'course_sales', 'refunds', 'instructor_earnings', 'reconciliation']);
 })->group('T-P9-06', 'A2');
 
 it('gives no report to students, parents, support, marketing, content managers or a suspended admin', function (): void {
@@ -108,9 +108,9 @@ it('gives no report to students, parents, support, marketing, content managers o
 })->group('T-P9-06', 'A2');
 
 it('shows the report page to admin, finance and instructors only, with the matching report counts', function (): void {
-    expect(t906cCatalog()->available(t906cUser('admin')))->toHaveCount(13)
-        ->and(t906cCatalog()->available(t906cUser('finance')))->toHaveCount(4)
-        ->and(t906cCatalog()->available(t906cUser('instructor_academy')))->toHaveCount(8);
+    expect(t906cCatalog()->available(t906cUser('admin')))->toHaveCount(15)
+        ->and(t906cCatalog()->available(t906cUser('finance')))->toHaveCount(5)
+        ->and(t906cCatalog()->available(t906cUser('instructor_academy')))->toHaveCount(9);
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
     $this->actingAs(t906cUser('student'));

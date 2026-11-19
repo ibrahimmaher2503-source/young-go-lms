@@ -73,6 +73,24 @@ it('reconciles finance report rows and totals per currency to paid orders and ex
             'requested_by' => $finance->id, 'executed_at' => $executedAt,
         ]);
     }
+    $coupon = DB::table('coupons')->insertGetId(['code' => 'REPORT25', 'name' => 'Report discount', 'discount_type' => 'percent', 'percent' => 25]);
+    DB::table('coupon_redemptions')->insert([
+        'coupon_id' => $coupon, 'order_id' => $orders['EG-01'], 'user_id' => $payer->id, 'discount_minor' => 3000,
+        'currency' => 'EGP', 'status' => 'redeemed', 'reserved_at' => '2026-11-11', 'redeemed_at' => '2026-11-12',
+    ]);
+    foreach (['failed', 'succeeded'] as $sequence => $status) {
+        DB::table('payment_attempts')->insert([
+            'order_id' => $orders['EG-01'], 'gateway' => 'paymob', 'sequence' => $sequence + 1, 'reference' => 'REPORT-'.$status,
+            'status' => $status, 'amount_minor' => 10000, 'currency' => 'EGP', 'expires_at' => '2026-11-12 12:00:00',
+        ]);
+    }
+    DB::table('manual_payment_proofs')->insert([
+        'order_id' => $orders['EG-02'], 'payer_id' => $payer->id, 'payer_name' => 'Private payer',
+        'sender_account' => 'Private sender', 'transfer_reference' => 'PRIVATE-REPORT-PROOF',
+        'amount_minor' => 5050, 'currency' => 'EGP', 'transferred_at' => '2026-11-11', 'file_path' => 'private-slip.pdf',
+        'file_mime' => 'application/pdf', 'file_size' => 10, 'file_sha256' => hash('sha256', 'report-fixture'),
+        'status' => 'approved', 'sla_due_at' => '2026-11-13', 'reviewed_at' => '2026-11-12 10:00:00',
+    ]);
 
     $catalog = app(ReportCatalog::class);
     $filters = ReportFilters::fromInput($input);
@@ -92,9 +110,14 @@ it('reconciles finance report rows and totals per currency to paid orders and ex
         ->and(array_column($refundRows, 0))->toBe(['REF-01', 'REF-04'])
         ->and(array_column($refundRows, 7))->toBe([15.0, 2.5])
         ->and(array_column($refunds->totals($refundFilters), 'value'))->toBe([1, 15.0, 1, 2.5]);
+    expect(array_combine(array_keys($sales->columns()), $salesRows[0]))
+        ->toMatchArray(['method' => 'Paymob', 'coupon_code' => 'REPORT25'])
+        ->and(array_combine(array_keys($sales->columns()), $salesRows[1]))
+        ->toMatchArray(['method' => 'Instapay / manual transfer', 'manual_approved_at' => '2026-11-12 10:00:00']);
 
     $csv = $this->actingAs($finance)->get(route('reports.export', ['report' => 'sales'] + $input))
         ->assertOk()->streamedContent();
+    expect($csv)->toContain('REPORT25')->not->toContain('PRIVATE-REPORT-PROOF', 'Private payer', 'private-slip.pdf');
     $lines = explode("\n", trim($csv));
     $rows = array_map(static fn (string $line): array => str_getcsv($line, escape: ''), array_slice($lines, 1));
 
@@ -124,7 +147,8 @@ it('enforces assigned course scope even with another instructor or course in rep
         ->and(array_column($report->totals($forged), 'value'))->toBe([0, 0, 0, 0])
         ->and($catalog->available($instructor))->toBe([
             ReportKey::Enrollments, ReportKey::CohortAttendance, ReportKey::AssessmentResults,
-            ReportKey::Certificates, ReportKey::InstructorEarnings, ReportKey::HelpSla, ReportKey::StudentProgress, ReportKey::Content,
+            ReportKey::Certificates, ReportKey::InstructorEarnings, ReportKey::InstructorOperations,
+            ReportKey::HelpSla, ReportKey::StudentProgress, ReportKey::Content,
         ]);
 
     Filament::setCurrentPanel(Filament::getPanel('instructor'));
@@ -140,7 +164,7 @@ it('enforces assigned course scope even with another instructor or course in rep
         ->assertOk()->streamedContent();
     expect(explode("\n", trim($csv)))->toHaveCount(1);
 
-    foreach (['sales', 'refunds', 'reconciliation', 'ai_usage', 'platform_overview'] as $restricted) {
+    foreach (['sales', 'course_sales', 'refunds', 'reconciliation', 'ai_usage', 'platform_overview'] as $restricted) {
         $this->get(route('reports.export', ['report' => $restricted]))->assertForbidden();
     }
 })->group('T-P9-06', 'A2');

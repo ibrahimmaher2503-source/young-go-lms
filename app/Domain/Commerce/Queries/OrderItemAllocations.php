@@ -6,7 +6,6 @@ namespace App\Domain\Commerce\Queries;
 
 use App\Domain\Commerce\Actions\AllocateBundlePrice;
 use App\Domain\Commerce\OrderItem;
-use App\Domain\Commerce\OrderItemAllocation;
 use App\Domain\Commerce\ProductType;
 use InvalidArgumentException;
 
@@ -30,7 +29,7 @@ final class OrderItemAllocations
             return [$item->product_id => $net];
         }
 
-        $rows = OrderItemAllocation::query()->where('order_item_id', $item->getKey())->orderBy('id')->get();
+        $rows = $item->relationLoaded('allocations') ? $item->allocations : $item->allocations()->get();
         if ($rows->isEmpty()) {
             return [];
         }
