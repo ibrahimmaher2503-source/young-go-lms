@@ -89,6 +89,8 @@ return [
         'accept_confirm' => 'Your acceptance is recorded with the version, the time and your IP address.',
         'accepted_ok' => 'Agreement accepted. You can create courses.',
         'none_published' => 'No agreement is published yet.',
+        'none_published_help' => 'You do not need to do anything yet. Creating new courses stays open until the first agreement version is published; after that you will be asked to read and accept it here. We will notify you when it is ready.',
+        'none_published_contact' => 'Contact the team',
         'draft_notice' => 'Draft wording, pending owner approval.',
         'already_accepted' => 'You accepted this version.',
         'required_notice' => 'Accept this version to keep creating courses.',

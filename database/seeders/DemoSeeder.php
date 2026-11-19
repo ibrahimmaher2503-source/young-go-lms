@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Instructors\Actions\AcceptInstructorAgreement;
+use App\Domain\Instructors\Actions\PublishInstructorAgreement;
+use App\Domain\Instructors\Models\InstructorAgreement;
+
 use App\Domain\AI\Help\Actions\RecordAssistantFeedback;
 use App\Domain\AI\Help\Actions\ReplyToHelpRequest;
 use App\Domain\Assessment\Actions\ConfigureQuiz;
@@ -110,11 +114,29 @@ final class DemoSeeder extends Seeder
 
         DB::transaction(function (): void {
             $this->people();
+            $this->agreement();
             $this->catalog();
             $this->commerce();
             $this->learning();
             $this->engagement();
         });
+    }
+
+    /**
+     * Publishes the placeholder instructor agreement (demo only; the real wording is an owner/counsel decision) so the
+     * agreement page has text to show, and records the independent demo instructor's acceptance so the demo instructor
+     * can still create courses.
+     */
+    private function agreement(): void
+    {
+        $this->call(InstructorAgreementSeeder::class);
+        $agreement = InstructorAgreement::query()->where('version', (string) config('instructor_onboarding.placeholder_agreement_version'))->first();
+        if ($agreement === null) {
+            return;
+        }
+
+        $published = app(PublishInstructorAgreement::class)($this->admin, $agreement);
+        app(AcceptInstructorAgreement::class)($this->indie, $published, null);
     }
 
     private function email(string $key): string

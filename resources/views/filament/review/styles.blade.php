@@ -17,6 +17,6 @@
     @media (max-width: 47.999rem) { .yg-rv-terms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .yg-rv-terms dt { color: var(--yg-color-muted); font-size: .875rem; }
     .yg-rv-terms dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; min-inline-size: 0; }
-    .yg-rv .yg-ai-table td[data-source] { white-space: normal; }
-    .yg-rv [data-access-reference] { display: block; max-inline-size: 11rem; white-space: normal; overflow-wrap: anywhere; }
+    .yg-rv [data-access-reference] { display: block; white-space: nowrap; }
+    @media (max-width: 47.999rem) { .yg-rv .yg-ai-table th { white-space: normal; vertical-align: bottom; min-inline-size: 5rem; } }
 </style>

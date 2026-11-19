@@ -17,7 +17,7 @@
 @if($learner instanceof \App\Models\User)
     <form method="post" action="{{ route('wishlist.toggle', ['course' => $course->getKey()]) }}" id="wishlist-{{ $course->getKey() }}" {{ $attributes }} data-wishlist>
         @csrf
-        <button type="submit" class="{{ $button }} {{ $saved ? 'text-danger' : 'text-body' }}" aria-pressed="{{ $saved ? 'true' : 'false' }}"
+        <button type="submit" class="{{ $button }} {{ $saved ? 'border-on-danger bg-danger text-on-danger' : 'text-body' }}" aria-pressed="{{ $saved ? 'true' : 'false' }}"
             aria-label="{{ $saved ? __('engagement.wishlist_remove', ['title' => $title]) : __('engagement.wishlist_add', ['title' => $title]) }}" data-wishlist-button data-saved="{{ $saved ? '1' : '0' }}">
             <x-ui.icon name="heart" :class="$saved ? 'fill-current' : ''"/>
         </button>

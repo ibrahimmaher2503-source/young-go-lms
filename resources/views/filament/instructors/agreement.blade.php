@@ -1,7 +1,11 @@
 <x-filament-panels::page>
     <x-filament::section :heading="__('instructor_onboarding.agreement.page_title')" data-instructor-agreement>
         @if($agreement === null)
-            <p>{{ __('instructor_onboarding.agreement.none_published') }}</p>
+            <div class="space-y-2" data-agreement-empty>
+                <p class="font-semibold">{{ __('instructor_onboarding.agreement.none_published') }}</p>
+                <p class="text-sm">{{ __('instructor_onboarding.agreement.none_published_help') }}</p>
+                <p><a class="font-semibold underline" href="{{ route('contact.show') }}">{{ __('instructor_onboarding.agreement.none_published_contact') }}</a></p>
+            </div>
         @else
             <p class="text-sm" data-agreement-version>{{ __('instructor_onboarding.agreement.version') }}: <bdi dir="ltr">{{ $agreement->version }}</bdi></p>
             @if(str_contains($agreement->version, 'draft'))

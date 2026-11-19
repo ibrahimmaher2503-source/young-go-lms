@@ -1,0 +1,34 @@
+# T-G7-FIXES-F: tests prompt (for another model)
+
+Write Pest tests only; do not change application code. Repo rules: `AGENTS.md`. Group `T-G7-FIXES-F`. Context: `docs/reviews/PERF_BUDGET_P8_2026-11-19.md` (section "Fix batch F") and `docs/reviews/G7_P9_REVIEW_2026-11-19.md` (Status notes).
+
+## Under test
+- Fonts: `resources/css/tokens.css` (`@font-face` x2 with `unicode-range`, two size-adjust fallback faces, `--yg-font-family-fallback`), `config/brand.php` (`font.web_files`, `font.fallback_family`, `font.fallback_token`, `font.stack`), `app/Console/Commands/CheckBrandTokens.php` (parity), `resources/views/components/layouts/base.blade.php` (preload), `docs/brand/CHANGING_THE_BRAND.md`.
+- Images: `components/learning/course-card.blade.php` (`priority` prop), `catalog/index.blade.php`, `learner/wishlist.blade.php`, `checkout/_summary.blade.php`, `catalog/show.blade.php`.
+- Catalog facets: `PublicCatalogController::facets()` (cache key `catalog:facets:{locale}:EG`, 5 min).
+- Validation names: `lang/{ar,en}/validation.php` `attributes` (full_name, phone, discipline, experience_years, bio, portfolio_links, id_document, privacy) via `POST /teach`.
+- Learner 360: `Learner360Record` (`reference_label`, `noticeLabel`), `lang/{ar,en}/support.php` (`source_refs`, `notice_kinds`), view `filament/support/learner-360.blade.php`, styles `filament/review/styles.blade.php`.
+- Stars: `components/engagement/stars.blade.php`, tokens `--yg-color-star`, `--yg-color-star-empty`.
+- Learner chrome: `components/layouts/learner.blade.php`, `pages/notification-preferences.blade.php`, `pages/privacy.blade.php`, `components/layouts/base.blade.php` (student nav).
+- Agreement: `filament/instructors/agreement.blade.php`, `DemoSeeder::agreement()`.
+- Wishlist: `WishlistController::index`, `components/engagement/wishlist-toggle.blade.php`.
+
+## Cases
+1. Brand guard: `app:check-brand-tokens` passes; fails when `brand.font.fallback_family` differs from tokens.css; fails when a `font.web_files` entry is missing on disk; fails when a tokens.css `@font-face` url is not listed in `font.web_files`. `brand.font.file` (TTF) still exists and PDFs (certificate, receipt, statement) still render with the embedded TTF.
+2. Font files: both woff2 files exist, are under 160 KB each, and the combined size is under 200 KB; the old TTF is not referenced by any CSS served to browsers (`public/build` CSS contains no `.ttf`).
+3. Preload: `GET /en/courses` has exactly one `<link rel="preload" as="font" type="font/woff2" crossorigin>` pointing to the latin file; `GET /ar/courses` points to the arabic file. Pages using `layouts.learner` do not need it (not asserted).
+4. First card: on `/courses` with several published courses, the first `<img>` in a course card has `loading="eager"` and `fetchpriority="high"`, every other card image has `loading="lazy"`; all card images carry `width` and `height`. Wishlist page: same rule. Checkout order summary: first thumbnail eager + `fetchpriority="high"` with width/height, later ones lazy. Course page hero has `fetchpriority="high"` and width/height.
+5. Facet cache: with `Cache::flush()` first, request `/courses` twice and count queries on `categories`, `age_bands`, `course_instructors` (via `DB::listen`): the second request issues none of them. A new active category appears after `Cache::flush()` or after travelling 5 minutes. Keys differ for `ar` and `en`. Cached value is a plain array (`Cache::get('catalog:facets:en:EG')` is an array whose values are arrays of strings, no models). The personal "learner band" option is still shown to a signed-in learner with a birth year (not cached).
+6. `POST /teach` empty (signed-in verified adult), AR and EN: every error message contains the localized attribute name and none contains a raw field token (`full_name`, `discipline`, `portfolio_links`, `id_document`, `bio`, `privacy` as a bare word with underscore or Latin letters in AR). Assert the AR messages contain "الاسم الكامل", "وثيقة الهوية", "روابط الأعمال".
+7. Learner 360 (staff with `learner.record.sensitive`): access rows with `source_ref` `subscription_period:1` and `order:YG-ORD-1` render "Subscription period 1" / "Order YG-ORD-1" (AR: "فترة الاشتراك 1" / "الطلب YG-ORD-1"); the raw token `subscription_period:` never appears in the HTML. Unknown prefix renders the ref only. A viewer without the reference permission sees no reference label. Notices: dispatch rows with `notification` = `ReviewDecisionNotice`, `CertificateIssuedNotice`, `TemplatedNotice`, `SomethingNewNotice` render localized labels (AR page has no "Review Decision" or "Certificate Issued"; unknown falls back to "Notice" / "إشعار").
+8. Stars: rendering `x-engagement.stars` with value 5 gives five spans with class `text-star` and none with `text-star-empty`; value 3 gives 3 and 2. `tokens.css` defines `--yg-color-star` and `--yg-color-star-empty` in both the light and dark blocks. The review author is wrapped in `<bdi>`.
+9. Learner chrome: signed-in adult learner: `/profile/notifications` and `/profile/privacy` render the learner shell (`data-bottom-nav` present, same `max-w-6xl` main container as `/my/payments`), the profile tab has `aria-current="page"` on both, and the nav has no link to `/link`. A learner under the adult age (or guardian-linked child, or no email) still sees the `/link` item. Parent role keeps the parent tabs.
+10. Agreement: independent instructor with no published agreement sees `[data-agreement-empty]` with the explanation text and a link to the contact page (AR and EN). After `demo:seed` the placeholder agreement is published and the demo independent instructor has an acceptance row; the agreement page shows the version and "already accepted". `DemoDatasetAndResetTest` counts must be re-checked (see notes).
+11. Wishlist: with saved courses, each card has a cover or placeholder block, a price (`[data-course-price]`) for priced courses, and the heart button has `aria-pressed="true"` with classes `bg-danger text-on-danger`; an unsaved heart has `aria-pressed="false"` and `text-body`.
+12. Translations/RTL: `app:check-translations`, `app:check-rtl`, `app:check-brand-tokens` pass; new keys exist in AR and EN with the same placeholders.
+13. Browser (group `browser`, optional): at 390 in AR on `/admin/reports` the From/To inputs sit inside the card and the table header is not clipped; `/admin/learner-360/{id}` has no element with `scrollWidth > clientWidth` outside `.yg-ai-scroll`; `/courses` CLS under throttling is below 0.1 (lab, tolerant).
+
+## Notes
+- Existing assertions that encode old markup and may need adjusting are listed in the Status notes of the P9 review doc.
+- Use `Cache::flush()` in `beforeEach` for the facet tests; the test cache driver is `array`.
+- Screenshots from the implementation run: `tests/Browser/screenshots/G7-P9-fix1/` (scratch SQLite, server on port 8199 because 8099 was occupied by other agents' stale servers).

@@ -69,3 +69,20 @@ Overall: **CLS fails on the catalog (2 of 2 variants), LCP is marginal on catalo
 ## Raw data
 
 Scratch files (not in the repo): `pw.json`, `pw_noopcache.json`, `q.json`, `perf.cjs`, `router.php`, `perfcls.cjs` in the session scratchpad directory. Server on 8097 stopped; scratch DB `perf.sqlite` left in the scratchpad.
+
+## Fix batch F (2026-11-19): after numbers
+
+Changes: (a) the 845 KB TTF is no longer served to browsers. Two woff2 subsets (Arabic 146 KB, Latin 29 KB; axes pinned to wdth 100 and wght 300-800) are declared with `unicode-range` in `tokens.css`, the page-language subset is preloaded in `layouts/base.blade.php`, and two `size-adjust` fallback faces (Arial for Latin at 107.7%, Tahoma/Geeza Pro for Arabic at 102.1%, ascent/descent overrides) sit in the font stack. The TTF stays only for PDFs. (b) The first card cover (catalog, wishlist), the first checkout summary thumbnail and the course hero are `fetchpriority="high"` (first two also `loading="eager"`), all card and thumbnail images have width/height, other cards stay lazy. (c) Catalog facet options (categories, age bands, levels, languages, instructors) are cached 5 minutes under `catalog:facets:{locale}:EG` as plain arrays.
+
+Method: same as above (Playwright Chromium, 390x844, DPR 3, mobile UA, CDP 150 ms RTT / 1.6 Mbps / 750 Kbps, CPU 4x, cache disabled, 4 cold loads, median), scratch SQLite with `demo:seed`, `php -S` with opcache on port 8199 (8099 was occupied by other agents' servers), file cache store. Local machine, other agents running; indicative only. The "before" column is the table above (measured on 8097 with the same method).
+
+| Page | Metric | Before | After | Budget |
+|---|---|---|---|---|
+| /courses | LCP | 2564 ms | 1760 ms (runs 1748 to 2012) | <= 2500 ms, PASS |
+| /courses | CLS | 0.107 | 0 (all 4 runs) | <= 0.1, PASS |
+| /courses?format=live&access=paid&sort=price_asc | LCP | 1808 ms | 1576 ms | PASS |
+| same | CLS | 0.135 | 0 | PASS |
+| /ar/courses (not measured before) | LCP / CLS | n/a | 2172 ms / 0 | PASS (thin margin) |
+| /courses | transfer per page | about 1.0 MB (font 845 KB) | about 350 KB, of which fonts 174 KB (Latin 29 KB + Arabic 146 KB; the Arabic subset is also fetched on EN pages because the language switcher shows Arabic text) | info |
+
+Not re-measured: course detail and checkout LCP (changes there are the hero `fetchpriority` and the summary thumbnail eager/priority), INP and JS (unchanged, 8.4 KB gzip). Catalog queries: the five facet queries are skipped on a warm cache; the per-request count was not re-recorded. Note: a first run of this measurement used a router that did not serve static files (fonts returned the 404 page) and gave meaningless numbers; it was discarded and redone with Laravel's `server.php` router.
