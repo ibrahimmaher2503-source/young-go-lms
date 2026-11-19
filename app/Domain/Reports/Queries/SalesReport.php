@@ -35,16 +35,13 @@ final class SalesReport implements ReportDefinition
             'reference' => 'text', 'paid_at' => 'datetime', 'market' => 'text', 'currency' => 'text', 'status' => 'text',
             'subtotal' => 'money', 'discount' => 'money', 'total' => 'money', 'refunded' => 'money', 'net' => 'money',
             'method' => 'text', 'manual_approved_at' => 'datetime', 'coupon_code' => 'text',
+            'recorded_collections' => 'money', 'collection_currency' => 'text',
         ];
     }
 
     public function rows(ReportFilters $filters): iterable
     {
-        $orders = $this->query($filters)
-            ->selectSub(DB::table('payment_attempts')->select('gateway')->whereColumn('order_id', 'orders.id')
-                ->where('status', PaymentAttemptStatus::Succeeded->value)->orderBy('sequence')->limit(1), 'gateway')
-            ->selectSub(DB::table('manual_payment_proofs')->select('reviewed_at')->whereColumn('order_id', 'orders.id')
-                ->where('status', ManualPaymentStatus::Approved->value)->orderBy('id')->limit(1), 'manual_approved_at')
+        $orders = $this->withCollections($this->query($filters))
             ->selectSub(DB::table('coupon_redemptions')->join('coupons', 'coupons.id', '=', 'coupon_redemptions.coupon_id')
                 ->select('coupons.code')->whereColumn('coupon_redemptions.order_id', 'orders.id')
                 ->where('coupon_redemptions.status', CouponRedemptionStatus::Redeemed->value), 'coupon_code');
@@ -55,8 +52,10 @@ final class SalesReport implements ReportDefinition
             yield [
                 (string) $order->reference, ReportLabels::datetime((string) $order->paid_at), (string) $order->market, (string) $order->currency, ReportLabels::status((string) $order->status),
                 ReportLabels::major($order->subtotal_minor), ReportLabels::major($order->discount_minor), ReportLabels::major($total), ReportLabels::major($refunded), ReportLabels::major($total - $refunded),
-                ReportLabels::status($order->manual_approved_at === null ? $order->gateway : 'instapay_transfer'),
+                ReportLabels::status($order->proof_currency === null ? $order->gateway : 'instapay_transfer'),
                 ReportLabels::datetime($order->manual_approved_at), (string) $order->coupon_code,
+                $order->proof_currency === null && $order->gateway === null ? null : ReportLabels::major($order->proof_minor ?? $total),
+                $order->proof_currency ?? ($order->gateway === null ? null : $order->currency),
             ];
         }
     }
@@ -83,7 +82,29 @@ final class SalesReport implements ReportDefinition
             $totals[] = ['key' => 'net', 'currency' => $currency, 'value' => ReportLabels::major($gross - $refunded), 'money' => true];
         }
 
+        $sources = DB::query()->fromSub($this->withCollections($this->query($filters)), 'collection_sources')
+            ->selectRaw('coalesce(proof_currency, currency) as received_currency, coalesce(proof_minor, total_minor) as received_minor')
+            ->where(static fn (Builder $query) => $query->whereNotNull('proof_currency')->orWhereNotNull('gateway'));
+        $collections = DB::query()->fromSub($sources, 'collections')
+            ->selectRaw('received_currency, sum(received_minor) as received_minor')->groupBy('received_currency')->orderBy('received_currency')->get();
+        foreach ($collections as $row) {
+            $totals[] = ['key' => 'recorded_collections', 'currency' => (string) $row->received_currency, 'value' => ReportLabels::major($row->received_minor), 'money' => true];
+        }
+
         return $totals;
+    }
+
+    private function withCollections(Builder $orders): Builder
+    {
+        $proof = DB::table('manual_payment_proofs')->whereColumn('order_id', 'orders.id')
+            ->where('status', ManualPaymentStatus::Approved->value)->orderBy('id')->limit(1);
+
+        return $orders
+            ->selectSub(DB::table('payment_attempts')->select('gateway')->whereColumn('order_id', 'orders.id')
+                ->where('status', PaymentAttemptStatus::Succeeded->value)->orderBy('sequence')->limit(1), 'gateway')
+            ->selectSub($proof->clone()->select('reviewed_at'), 'manual_approved_at')
+            ->selectSub($proof->clone()->select('amount_minor'), 'proof_minor')
+            ->selectSub($proof->select('currency'), 'proof_currency');
     }
 
     private function query(ReportFilters $filters): Builder

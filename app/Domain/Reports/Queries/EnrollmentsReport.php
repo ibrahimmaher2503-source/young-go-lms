@@ -11,6 +11,7 @@ use App\Domain\Reports\ReportDefinition;
 use App\Domain\Reports\ReportFilters;
 use App\Domain\Reports\ReportKey;
 use App\Domain\Reports\ReportLabels;
+use App\Models\SubmissionDecision;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ final class EnrollmentsReport implements ReportDefinition
             'new_completions' => 'int', 'total_completions' => 'int', 'completion_rate' => 'percent',
             'average_progress' => 'percent', 'approved_reviews' => 'int', 'average_rating' => 'text',
             'attempts' => 'int', 'passed' => 'int',
+            'graded_assignments' => 'int', 'accepted_assignments' => 'int', 'rejected_assignments' => 'int',
         ];
     }
 
@@ -59,6 +61,7 @@ final class EnrollmentsReport implements ReportDefinition
                     $course->average_progress === null ? null : round((float) $course->average_progress, 1),
                     (int) $course->approved_reviews, $course->average_rating === null ? null : round((float) $course->average_rating, 1),
                     (int) $course->attempts, (int) $course->passed,
+                    (int) $course->graded_assignments, (int) $course->accepted_assignments, (int) $course->rejected_assignments,
                 ];
                 $after = $id;
             }
@@ -89,6 +92,13 @@ final class EnrollmentsReport implements ReportDefinition
         $attempts = DB::table('curriculum_items')->join('quiz_attempts', 'quiz_attempts.quiz_id', '=', 'curriculum_items.itemable_id')
             ->whereColumn('curriculum_items.course_id', 'courses.id')->where('itemable_type', 'quiz')
             ->where('quiz_attempts.status', 'submitted')->whereBetween('quiz_attempts.submitted_at', $range);
+        $latest = DB::table('submission_decisions as latest')->selectRaw('max(latest.id)')
+            ->whereColumn('latest.submission_id', 'submissions.id')->whereColumn('latest.revision_number', 'submissions.current_revision');
+        $decisions = DB::table('curriculum_items')->join('assignment_submissions as submissions', 'submissions.assignment_id', '=', 'curriculum_items.itemable_id')
+            ->join('submission_decisions as decisions', 'decisions.submission_id', '=', 'submissions.id')
+            ->whereColumn('curriculum_items.course_id', 'courses.id')->where('itemable_type', 'assignment')
+            ->where('decisions.id', '=', $latest)->whereBetween('decisions.created_at', $range)
+            ->selectRaw('count(distinct submissions.id)');
 
         return $courses
             ->selectSub(DB::table('course_progress')->selectRaw('avg(percent)')->whereColumn('course_id', 'courses.id')
@@ -96,7 +106,10 @@ final class EnrollmentsReport implements ReportDefinition
             ->selectSub($reviews->clone()->selectRaw('count(*)'), 'approved_reviews')
             ->selectSub($reviews->selectRaw('avg(rating)'), 'average_rating')
             ->selectSub($attempts->clone()->selectRaw('count(distinct quiz_attempts.id)'), 'attempts')
-            ->selectSub($attempts->where('quiz_attempts.passed', true)->selectRaw('count(distinct quiz_attempts.id)'), 'passed');
+            ->selectSub($attempts->where('quiz_attempts.passed', true)->selectRaw('count(distinct quiz_attempts.id)'), 'passed')
+            ->selectSub($decisions->clone()->where('decisions.decision', SubmissionDecision::GRADED), 'graded_assignments')
+            ->selectSub($decisions->clone()->where('decisions.decision', SubmissionDecision::ACCEPTED), 'accepted_assignments')
+            ->selectSub($decisions->where('decisions.decision', SubmissionDecision::REJECTED), 'rejected_assignments');
     }
 
     /**

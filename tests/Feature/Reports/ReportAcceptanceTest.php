@@ -87,7 +87,7 @@ it('reconciles finance report rows and totals per currency to paid orders and ex
     DB::table('manual_payment_proofs')->insert([
         'order_id' => $orders['EG-02'], 'payer_id' => $payer->id, 'payer_name' => 'Private payer',
         'sender_account' => 'Private sender', 'transfer_reference' => 'PRIVATE-REPORT-PROOF',
-        'amount_minor' => 5050, 'currency' => 'EGP', 'transferred_at' => '2026-11-11', 'file_path' => 'private-slip.pdf',
+        'amount_minor' => 4500, 'currency' => 'EGP', 'transferred_at' => '2026-11-11', 'file_path' => 'private-slip.pdf',
         'file_mime' => 'application/pdf', 'file_size' => 10, 'file_sha256' => hash('sha256', 'report-fixture'),
         'status' => 'approved', 'sla_due_at' => '2026-11-13', 'reviewed_at' => '2026-11-12 10:00:00',
     ]);
@@ -100,20 +100,26 @@ it('reconciles finance report rows and totals per currency to paid orders and ex
     $refundFilters = $catalog->scope($finance, ReportKey::Refunds, $filters);
     $salesRows = iterator_to_array($sales->rows($salesFilters));
     $refundRows = iterator_to_array($refunds->rows($refundFilters));
+    $salesTotals = collect($sales->totals($salesFilters));
+    $bookedTotals = $salesTotals->where('key', '!=', 'recorded_collections')->values()->all();
 
     expect(array_column($salesRows, 0))->toBe(['EG-01', 'EG-02', 'SA-01'])
         ->and(array_column($salesRows, 7))->toBe([100.0, 50.5, 25.0])
         ->and(array_column($salesRows, 8))->toBe([20.0, 0.0, 2.5])
         ->and(array_column($salesRows, 9))->toBe([80.0, 50.5, 22.5])
-        ->and(array_column($sales->totals($salesFilters), 'value'))->toBe([2, 150.5, 20.0, 130.5, 1, 25.0, 2.5, 22.5])
-        ->and(array_column($sales->totals($salesFilters), 'currency'))->toBe(['EGP', 'EGP', 'EGP', 'EGP', 'SAR', 'SAR', 'SAR', 'SAR'])
+        ->and(array_column($bookedTotals, 'value'))->toBe([2, 150.5, 20.0, 130.5, 1, 25.0, 2.5, 22.5])
+        ->and(array_column($bookedTotals, 'currency'))->toBe(['EGP', 'EGP', 'EGP', 'EGP', 'SAR', 'SAR', 'SAR', 'SAR'])
         ->and(array_column($refundRows, 0))->toBe(['REF-01', 'REF-04'])
         ->and(array_column($refundRows, 7))->toBe([15.0, 2.5])
         ->and(array_column($refunds->totals($refundFilters), 'value'))->toBe([1, 15.0, 1, 2.5]);
     expect(array_combine(array_keys($sales->columns()), $salesRows[0]))
-        ->toMatchArray(['method' => 'Paymob', 'coupon_code' => 'REPORT25'])
+        ->toMatchArray(['method' => 'Paymob', 'coupon_code' => 'REPORT25', 'recorded_collections' => 100.0, 'collection_currency' => 'EGP'])
         ->and(array_combine(array_keys($sales->columns()), $salesRows[1]))
-        ->toMatchArray(['method' => 'Instapay / manual transfer', 'manual_approved_at' => '2026-11-12 10:00:00']);
+        ->toMatchArray([
+            'method' => 'Instapay / manual transfer', 'manual_approved_at' => '2026-11-12 10:00:00',
+            'total' => 50.5, 'recorded_collections' => 45.0, 'collection_currency' => 'EGP',
+        ])
+        ->and($salesTotals->where('key', 'recorded_collections')->pluck('value', 'currency')->all())->toBe(['EGP' => 145.0]);
 
     $csv = $this->actingAs($finance)->get(route('reports.export', ['report' => 'sales'] + $input))
         ->assertOk()->streamedContent();

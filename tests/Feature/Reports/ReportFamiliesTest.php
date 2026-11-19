@@ -130,12 +130,28 @@ it('summarizes course progress and approved ratings without exposing learner rev
             'author_name' => 'Private author', 'status' => $status, 'created_at' => '2026-11-12 10:00:00',
         ]);
     }
+    $section = DB::table('course_sections')->insertGetId(['course_id' => $course->id, 'title' => '{}']);
+    $assignment = DB::table('assignments')->insertGetId(['title' => '{}']);
+    DB::table('curriculum_items')->insert([
+        'course_id' => $course->id, 'section_id' => $section, 'itemable_type' => 'assignment', 'itemable_id' => $assignment,
+    ]);
+    $submission = DB::table('assignment_submissions')->insertGetId([
+        'assignment_id' => $assignment, 'learner_id' => $learner->id, 'status' => 'graded', 'current_revision' => 1,
+    ]);
+    foreach (['accepted', 'graded'] as $decision) {
+        DB::table('submission_decisions')->insert([
+            'submission_id' => $submission, 'revision_number' => 1, 'decision' => $decision, 'created_at' => '2026-11-12 12:00:00',
+        ]);
+    }
 
     $catalog = app(ReportCatalog::class);
     $report = $catalog->definition(ReportKey::Enrollments);
     $filters = ReportFilters::fromInput(['from' => '2026-11-10', 'to' => '2026-11-15', 'course' => $course->id]);
     $row = array_combine(array_keys($report->columns()), iterator_to_array($report->rows($catalog->scope($admin, ReportKey::Enrollments, $filters)))[0]);
-    expect($row)->toMatchArray(['average_progress' => 50.0, 'approved_reviews' => 1, 'average_rating' => 4.0])
+    expect($row)->toMatchArray([
+        'average_progress' => 50.0, 'approved_reviews' => 1, 'average_rating' => 4.0,
+        'graded_assignments' => 1, 'accepted_assignments' => 0, 'rejected_assignments' => 0,
+    ])
         ->and(json_encode($row))->not->toContain('Private');
 })->group('T-P9-06', 'PRD-21');
 

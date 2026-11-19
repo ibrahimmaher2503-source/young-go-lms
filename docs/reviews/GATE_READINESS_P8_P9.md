@@ -111,10 +111,10 @@ the P10 dependency chain.
   isolation, preferences and idempotency.
 - T-P9-06 serves platform overview, student progress and content reports in
   the existing permission-scoped catalog and audited CSV workflow. Course
-  performance adds progress, published ratings and quiz counts. The instructor
+  performance adds progress, published ratings and quiz and assignment outcomes. The instructor
   operations report counts assigned-course learners, sessions and queues.
   Finance reports show payment methods, approved transfer timestamps, redeemed
-  coupons and discounted per-course shares from paid course and bundle lines.
+  coupons, recorded collection values and discounted per-course shares from paid course and bundle lines.
   Course shares are measured before refunds. Subscription collections stay
   in the sales report. Legacy exceptions depend on the P10 import.
 - D-031 adds choice per eligible live bundle course. An unpaid order with no
