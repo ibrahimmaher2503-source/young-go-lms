@@ -132,6 +132,7 @@ final class SaveCourseWizard
                 $record->cover_image = null;
             }
             $before = $record->exists ? Arr::only($record->getAttributes(), ['owner_type', 'owner_instructor_id', 'status', 'featured']) : null;
+            $beforePassMark = $record->exists ? $record->quiz_pass_mark_percent : null;
             $videos = $step >= self::MEDIA_STEP ? $this->validateVideos($record, $data, $complete) : [];
             if ($step >= self::MEDIA_STEP && array_key_exists('thumbnail_path', $data)) {
                 $record->thumbnail_path = $this->saveThumbnail($record, $data['thumbnail_path']);
@@ -168,6 +169,16 @@ final class SaveCourseWizard
             }
 
             $this->auditChange($actor, $record, $created, $before);
+            if ($record->quiz_pass_mark_percent !== $beforePassMark
+                && $this->audit->record(
+                    'course.quiz_pass_mark_saved',
+                    $record,
+                    (int) $actor->getKey(),
+                    ['quiz_pass_mark_percent' => $beforePassMark],
+                    ['quiz_pass_mark_percent' => $record->quiz_pass_mark_percent],
+                ) === null) {
+                throw new RuntimeException('Unable to record quiz pass mark audit.');
+            }
             if ($liveChanges !== [] && $this->audit->record('course.updated_live', $record, (int) $actor->getKey(), $liveBefore, $liveChanges) === null) {
                 throw new RuntimeException('Unable to record course audit.');
             }
@@ -501,6 +512,10 @@ final class SaveCourseWizard
         $required = static fn (bool $on): array => $on ? ['required'] : ['nullable'];
         $row = static fn (int $max): array => ['nullable', 'string', 'max:'.$max];
 
+        if (array_key_exists('quiz_pass_mark_percent', $data) && is_string($data['quiz_pass_mark_percent']) && trim($data['quiz_pass_mark_percent']) === '') {
+            $data['quiz_pass_mark_percent'] = null;
+        }
+
         $rules = [
             'title' => ['nullable', 'array'],
             'title.ar' => $row(200), 'title.en' => $row(200),
@@ -515,6 +530,7 @@ final class SaveCourseWizard
             'content_language' => [...$required($strict1), Rule::in(self::CONTENT_LANGUAGES)],
             'format' => [...$required($strict1), Rule::in(self::FORMATS)],
             'sequence_mode' => ['sometimes', Rule::in([Course::SEQUENCE_FREE, Course::SEQUENCE_SEQUENTIAL])],
+            'quiz_pass_mark_percent' => ['nullable', 'integer', 'between:1,100'],
             'min_age' => ['nullable', 'integer', 'between:0,120'],
             'max_age' => ['nullable', 'integer', 'between:0,120', 'gte:min_age'],
             'owner_type' => ['sometimes', Rule::in([Course::OWNER_ACADEMY, Course::OWNER_INDEPENDENT])],
@@ -534,7 +550,7 @@ final class SaveCourseWizard
             'outcomes.*.text.ar' => $row(500), 'outcomes.*.text.en' => $row(500),
         ];
 
-        $validator = Validator::make($data, $rules);
+        $validator = Validator::make($data, $rules, [], ['quiz_pass_mark_percent' => __('completion.quiz_pass_mark')]);
         $validator->after(function ($validator) use ($data, $strict1): void {
             $title = (array) ($data['title'] ?? []);
             if ($strict1 && blank($title['ar'] ?? null) && blank($title['en'] ?? null)) {
@@ -556,9 +572,12 @@ final class SaveCourseWizard
 
         $attributes = Arr::only($validated, [
             'title', 'short_description', 'description', 'category_id', 'level', 'content_language', 'format',
-            'min_age', 'max_age', 'owner_type', 'owner_instructor_id', 'status', 'featured', 'sequence_mode',
+            'min_age', 'max_age', 'owner_type', 'owner_instructor_id', 'status', 'featured', 'sequence_mode', 'quiz_pass_mark_percent',
             'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
         ]);
+        if (array_key_exists('quiz_pass_mark_percent', $attributes)) {
+            $attributes['quiz_pass_mark_percent'] = $attributes['quiz_pass_mark_percent'] === null ? null : (int) $attributes['quiz_pass_mark_percent'];
+        }
         if (array_key_exists('canonical_url', $attributes)) {
             $attributes['canonical_url'] = blank($attributes['canonical_url']) ? null : trim((string) $attributes['canonical_url']);
         }

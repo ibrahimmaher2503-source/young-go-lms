@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Courses\Schemas;
 
+use App\Domain\Assessment\QuizPassMark;
 use App\Domain\Catalog\Actions\SaveCourseWizard;
 use App\Domain\Catalog\CourseCustomValues;
 use App\Domain\Catalog\CourseMedia;
@@ -231,6 +232,14 @@ final class CourseWizardSteps
                     Select::make('format')->label(__('courses.format'))->markAsRequired()->options(self::labelled('formats', SaveCourseWizard::FORMATS)),
                     Select::make('sequence_mode')->label(__('courses.sequence_mode'))->helperText(__('courses.sequence_mode_help'))->default('free')->native(false)
                         ->options(['free' => __('courses.sequence.free'), 'sequential' => __('courses.sequence.sequential')]),
+                    TextInput::make('quiz_pass_mark_percent')
+                        ->label(__('completion.quiz_pass_mark'))
+                        ->helperText(__('completion.quiz_pass_mark_help', ['percent' => QuizPassMark::default()]))
+                        ->placeholder((string) QuizPassMark::default())
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(100),
                     TextInput::make('min_age')->label(__('courses.min_age'))->numeric()->minValue(0)->maxValue(120),
                     TextInput::make('max_age')->label(__('courses.max_age'))->numeric()->minValue(0)->maxValue(120),
                     Select::make('owner_type')->label(__('courses.ownership'))->visible($canOwnership)->live()
