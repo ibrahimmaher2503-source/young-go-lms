@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Commerce\Events\ManualPaymentRejected;
 use App\Domain\Commerce\ManualPaymentProof;
 use App\Domain\Commerce\ManualPaymentStatus;
 use App\Domain\Shared\Actions\RecordReviewDecision;
@@ -50,6 +51,8 @@ final class RejectManualPaymentProof
             if ($recorded === null) {
                 throw new RuntimeException('Unable to record manual payment audit.');
             }
+
+            DB::afterCommit(static fn () => event(new ManualPaymentRejected($locked)));
 
             return $locked;
         });

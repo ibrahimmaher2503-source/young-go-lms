@@ -6,7 +6,11 @@ namespace App\Domain\Notifications\Listeners;
 
 use App\Domain\Commerce\Events\ManualPaymentApproved;
 use App\Domain\Commerce\Events\ManualPaymentProofSubmitted;
+use App\Domain\Commerce\Events\ManualPaymentRejected;
+use App\Domain\Commerce\Events\PaymentAttemptDeclined;
+use App\Domain\Commerce\Events\PaymentCheckoutStarted;
 use App\Domain\Commerce\Events\PaymentVerified;
+use App\Domain\Commerce\Events\RefundExecuted;
 use App\Domain\Commerce\Order;
 use App\Domain\Notifications\NotificationDispatcher;
 use App\Domain\Notifications\Notifications\TemplatedNotice;
@@ -14,8 +18,7 @@ use App\Models\User;
 use Throwable;
 
 /**
- * T-P8-03 / T-P8-04 hand-off: tells the payer that a payment was received for review or approved. Never breaks the payment:
- * the money and access are already committed, so a failure is reported. One notice per order (approved) or proof (review).
+ * T-P9-05: sends payment notices to the payer after the state change commits.
  */
 final class NotifyPayerOfPayment
 {
@@ -34,6 +37,30 @@ final class NotifyPayerOfPayment
     public function proofSubmitted(ManualPaymentProofSubmitted $event): void
     {
         $this->send($event->proof->payer, new TemplatedNotice('payment.review', ['order' => $event->proof->order->reference], 'payment-review:'.$event->proof->getKey(), route('learner.courses')));
+    }
+
+    public function checkoutStarted(PaymentCheckoutStarted $event): void
+    {
+        $order = $event->attempt->order;
+        $this->send($order->payer, new TemplatedNotice('payment.pending', ['order' => $order->reference], 'payment-pending:'.$order->getKey(), route('checkout.order', $order)));
+    }
+
+    public function declined(PaymentAttemptDeclined $event): void
+    {
+        $order = $event->attempt->order;
+        $this->send($order->payer, new TemplatedNotice('payment.failed', ['order' => $order->reference], 'payment-failed:'.$event->attempt->getKey(), route('checkout.order', $order)));
+    }
+
+    public function proofRejected(ManualPaymentRejected $event): void
+    {
+        $order = $event->proof->order;
+        $this->send($order->payer, new TemplatedNotice('payment.review_rejected', ['order' => $order->reference], 'payment-review-rejected:'.$event->proof->getKey(), route('manual-payments.create', $order)));
+    }
+
+    public function refunded(RefundExecuted $event): void
+    {
+        $order = $event->refund->order;
+        $this->send($order->payer, new TemplatedNotice('payment.refunded', ['order' => $order->reference], 'payment-refunded:'.$event->refund->getKey(), route('payments.history')));
     }
 
     private function approved(Order $order): void

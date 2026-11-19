@@ -26,6 +26,9 @@ use App\Domain\Commerce\Contracts\EReceiptProvider;
 use App\Domain\Commerce\Contracts\PaymentGateway;
 use App\Domain\Commerce\Events\ManualPaymentApproved;
 use App\Domain\Commerce\Events\ManualPaymentProofSubmitted;
+use App\Domain\Commerce\Events\ManualPaymentRejected;
+use App\Domain\Commerce\Events\PaymentAttemptDeclined;
+use App\Domain\Commerce\Events\PaymentCheckoutStarted;
 use App\Domain\Commerce\Events\PaymentVerified;
 use App\Domain\Commerce\Events\RefundExecuted;
 use App\Domain\Commerce\Payments\PaymentGatewayResolver;
@@ -143,6 +146,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PaymentVerified::class, [NotifyPayerOfPayment::class, 'verified']);
         Event::listen(ManualPaymentApproved::class, [NotifyPayerOfPayment::class, 'manualApproved']);
         Event::listen(ManualPaymentProofSubmitted::class, [NotifyPayerOfPayment::class, 'proofSubmitted']);
+        Event::listen(PaymentCheckoutStarted::class, [NotifyPayerOfPayment::class, 'checkoutStarted']);
+        Event::listen(PaymentAttemptDeclined::class, [NotifyPayerOfPayment::class, 'declined']);
+        Event::listen(ManualPaymentRejected::class, [NotifyPayerOfPayment::class, 'proofRejected']);
         // T-P3-03: instructors hear the course review outcome (never undoes the decision).
         Event::listen(CourseReviewed::class, [NotifyInstructorsOfCourseReview::class, 'handle']);
         // T-P3-07: reviewers hear a submitted revision; the author and instructors hear its outcome.
@@ -152,6 +158,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PaymentVerified::class, [AccrueInstructorEarnings::class, 'verified']);
         Event::listen(ManualPaymentApproved::class, [AccrueInstructorEarnings::class, 'manualApproved']);
         Event::listen(RefundExecuted::class, [AccrueInstructorEarnings::class, 'refunded']);
+        Event::listen(RefundExecuted::class, [NotifyPayerOfPayment::class, 'refunded']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class], 'course.history');

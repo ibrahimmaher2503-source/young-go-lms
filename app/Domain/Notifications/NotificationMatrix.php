@@ -62,12 +62,12 @@ final class NotificationMatrix
             self::fresh('access.expiring', 'access', true, ['course', 'date'], 'T-P4-02'),
             self::fresh('access.revoked', 'access', true, ['course'], 'T-P4-02'),
 
-            self::fresh('payment.pending', 'payment', true, ['order'], 'T-P8-12'),
+            self::fresh('payment.pending', 'payment', true, ['order']),
             self::fresh('payment.review', 'payment', true, ['order']),
             self::fresh('payment.approved', 'payment', true, ['order']),
-            self::fresh('payment.review_rejected', 'payment', true, ['order'], 'T-P8-04'),
-            self::fresh('payment.failed', 'payment', true, ['order'], 'T-P8-12'),
-            self::fresh('payment.refunded', 'payment', true, ['order'], 'T-P8-06'),
+            self::fresh('payment.review_rejected', 'payment', true, ['order']),
+            self::fresh('payment.failed', 'payment', true, ['order']),
+            self::fresh('payment.refunded', 'payment', true, ['order']),
 
             self::fresh('subscription.renewal_due', 'subscription', false, ['plan', 'date', 'days']),
 

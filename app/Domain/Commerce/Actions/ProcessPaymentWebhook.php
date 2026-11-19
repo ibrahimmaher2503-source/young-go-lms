@@ -6,6 +6,7 @@ namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Commerce\Contracts\PaymentGateway;
+use App\Domain\Commerce\Events\PaymentAttemptDeclined;
 use App\Domain\Commerce\Events\PaymentFlagged;
 use App\Domain\Commerce\Events\PaymentVerified;
 use App\Domain\Commerce\Order;
@@ -103,8 +104,9 @@ final class ProcessPaymentWebhook
         if ($outcome === PaymentEventOutcome::Fulfilled && $order !== null) {
             $this->record('payment.verified', $event, ['status' => OrderStatus::Pending->value], ['status' => OrderStatus::Paid->value]);
             DB::afterCommit(static fn () => event(new PaymentVerified($order, $event)));
-        } elseif ($outcome === PaymentEventOutcome::AttemptFailed) {
+        } elseif ($outcome === PaymentEventOutcome::AttemptFailed && $attempt !== null) {
             $this->record('payment.attempt_failed', $event, ['status' => PaymentAttemptStatus::Created->value], ['status' => PaymentAttemptStatus::Failed->value]);
+            DB::afterCommit(static fn () => event(new PaymentAttemptDeclined($attempt)));
         } elseif ($outcome->needsReview()) {
             $this->record('payment.flagged', $event, null, ['outcome' => $outcome->value, 'reason' => $reason]);
             DB::afterCommit(static fn () => event(new PaymentFlagged($event)));
@@ -124,13 +126,13 @@ final class ProcessPaymentWebhook
             // Refunds are T-P8-06; finance handles a refund or void by hand until then, so it must not pass silently.
             'refunded', 'voided' => [PaymentEventOutcome::Flagged, 'refund_or_void_received'],
             'pending' => [PaymentEventOutcome::Ignored, 'pending'],
-            'failed' => $this->failure($attempt, $order),
+            'failed' => $this->failure($verified, $attempt, $order),
             default => $this->success($verified, $event, $attempt, $order),
         };
     }
 
     /** @return array{0: PaymentEventOutcome, 1: string|null} */
-    private function failure(PaymentAttempt $attempt, Order $order): array
+    private function failure(VerifiedPaymentEvent $verified, PaymentAttempt $attempt, Order $order): array
     {
         if ($order->status !== OrderStatus::Pending) {
             return [PaymentEventOutcome::Ignored, 'order_not_pending'];
@@ -138,6 +140,9 @@ final class ProcessPaymentWebhook
         if (! $attempt->status->isOpen()) {
             // Out of order: the attempt already succeeded, failed, expired or was cancelled.
             return [PaymentEventOutcome::Ignored, 'attempt_'.$attempt->status->value];
+        }
+        if ($verified->amountMinor !== $attempt->amount_minor || strtoupper($verified->currency) !== $attempt->currency) {
+            return [PaymentEventOutcome::Flagged, 'amount_mismatch'];
         }
 
         $attempt->forceFill(['status' => PaymentAttemptStatus::Failed, 'failure_code' => 'declined', 'active_order_id' => null, 'signature_valid' => true])->save();

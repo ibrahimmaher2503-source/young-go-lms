@@ -15,12 +15,12 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `access.granted` | access | mandatory | pending | `:course` | `notification_events.templates.access_granted.title` | T-P4-02 |
 | `access.expiring` | access | mandatory | pending | `:course` `:date` | `notification_events.templates.access_expiring.title` | T-P4-02 |
 | `access.revoked` | access | mandatory | pending | `:course` | `notification_events.templates.access_revoked.title` | T-P4-02 |
-| `payment.pending` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_pending.title` | T-P8-12 |
+| `payment.pending` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_pending.title` | |
 | `payment.review` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_review.title` |  |
 | `payment.approved` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_approved.title` |  |
-| `payment.review_rejected` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_review_rejected.title` | T-P8-04 |
-| `payment.failed` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_failed.title` | T-P8-12 |
-| `payment.refunded` | payment | mandatory | pending | `:order` | `notification_events.templates.payment_refunded.title` | T-P8-06 |
+| `payment.review_rejected` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_review_rejected.title` | |
+| `payment.failed` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_failed.title` | |
+| `payment.refunded` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_refunded.title` | |
 | `subscription.renewal_due` | subscription | optional | wired | `:plan` `:date` `:days` | `notification_events.templates.subscription_renewal_due.title` | T-P8-08 (7/3/1 days before period end, sent to the payer) |
 | `live.scheduled` | live | mandatory | wired | `:title` `:time` | `live.notice.scheduled.title` |  |
 | `live.reminder` | live | optional | wired | `:title` `:time` | `live.notice.reminder.title` |  |
@@ -51,6 +51,6 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 ## Wiring notes
 
 - Preferences gate in `NotificationDispatcher::send` (via `LocalizedNotification::event()`; null = mandatory). The email switch on the profile page (`notification_preferences.email`) now only affects optional notices; mandatory notices keep their email copy.
-- Template overrides apply in: live (4), certificate.issued, help (4), assignment graded/accepted/rejected/revision, quiz.result, payment.review, payment.approved, course.announcement.
-- Payer notices: `NotifyPayerOfPayment` listens to `PaymentVerified`, `ManualPaymentApproved`, `ManualPaymentProofSubmitted`.
-- Pending: access.*, payment.pending/failed/refunded/review_rejected, assignment.published/due/submitted, certificate.revoked, (settlement.* are wired by T-P8-10; each owner task calls `NotificationDispatcher::send(user, new TemplatedNotice(event, values, dedupeKey, url))`).
+- Payer notices use `NotifyPayerOfPayment` and the editable payment templates. Checkout creation sends pending once per order. Verified declines send once per attempt. Manual review and rejection send once per proof and outcome. Approval sends once per order. An executed refund sends once per refund. Links use the payer's own order, proof form or payment history.
+- YG-GAP-FAM-008 applies when the payer is a child without email. The verified guardian receives a localized email copy with the private action link removed.
+- Pending sources: access.*, assignment.published/due/submitted, certificate.revoked.
