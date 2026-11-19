@@ -501,7 +501,7 @@ it('refuses a coupon on a bundle-only order with coupon_ineligible', function ()
     expect(Order::query()->whereKey($order->id)->value('discount_minor'))->toBe(0);
 })->group('T-P8-07', 'A2')->group('payments');
 
-it('discounts only the course line of a mixed course and bundle order when a coupon applies', function (): void {
+it('uses only the course price for a coupon on a mixed course and bundle order', function (array $coupon, bool $restricted): void {
     $admin = bndStaff('admin');
     $a = bndCourse(10000);
     $b = bndCourse(10000);
@@ -516,22 +516,34 @@ it('discounts only the course line of a mixed course and bundle order when a cou
     app(SaveCoupon::class)($admin, [
         'code' => 'BNDMIX1000',
         'name' => 'Mixed coupon',
-        'discount_type' => 'fixed',
-        'amount_minor' => 1000,
-        'currency' => 'EGP',
         'max_redemptions' => 5,
         'max_per_user' => 1,
         'starts_at' => now()->subHour(),
         'ends_at' => now()->addDay(),
         'is_active' => true,
-        'course_ids' => [$a->id],
+        'course_ids' => $restricted ? [$a->id] : [],
+        ...$coupon,
     ]);
 
+    $courseLine = $order->items()->where('product_type', ProductType::Course->value)->sole();
+    $bundleLine = $order->items()->where('product_type', ProductType::Bundle->value)->sole();
+    $bundleAllocations = OrderItemAllocation::query()->where('order_item_id', $bundleLine->id)->orderBy('course_id');
+    $before = $bundleAllocations->pluck('allocated_minor', 'course_id')->all();
+
     $discounted = app(ApplyCoupon::class)($order, $learner, 'BNDMIX1000');
-    expect($discounted->discount_minor)->toBe(1000)
+    expect($discounted->subtotal_minor)->toBe(25000)
+        ->and($discounted->discount_minor)->toBe(1000)
         ->and($discounted->total_minor)->toBe(24000)
-        ->and(OrderItem::query()->where('order_id', $order->id)->where('product_type', 'bundle')->value('unit_price_minor'))->toBe(15000);
-})->group('T-P8-07', 'A2')->group('payments');
+        ->and($courseLine->refresh()->discount_minor)->toBe(1000)
+        ->and($courseLine->allocated_minor)->toBe(9000)
+        ->and($bundleLine->refresh()->discount_minor)->toBe(0)
+        ->and($bundleLine->unit_price_minor)->toBe(15000)
+        ->and($bundleLine->allocated_minor)->toBe(15000)
+        ->and($bundleAllocations->pluck('allocated_minor', 'course_id')->all())->toBe($before);
+})->with([
+    'unrestricted ten percent' => [['discount_type' => 'percent', 'percent' => 10], false],
+    'fixed and restricted to the single course' => [['discount_type' => 'fixed', 'amount_minor' => 1000, 'currency' => 'EGP'], true],
+])->group('T-P8-07', 'PRD-17.1', 'A2', 'payments');
 
 // ---------------------------------------------------------------- language and architecture
 

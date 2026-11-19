@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-// T-COHORT-SEATS | PRD 29.3 (YG-GAP-COH-002), 17.3 | A1 A2 A3 A4 A5 A6 A7 A10
+// T-COHORT-SEATS | PRD 29.3 (YG-GAP-COH-002), 17.3 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Cohorts\Actions\ConvertSeatHolds;
+use App\Domain\Cohorts\Actions\JoinWaitlist;
 use App\Domain\Cohorts\Actions\ManageCohorts;
 use App\Domain\Cohorts\Actions\ReserveCohortSeat;
 use App\Domain\Cohorts\Cohort;
@@ -12,12 +14,16 @@ use App\Domain\Cohorts\CohortFullException;
 use App\Domain\Cohorts\CohortMember;
 use App\Domain\Cohorts\CohortSeatHold;
 use App\Domain\Commerce\Actions\CreateOrder;
+use App\Domain\Commerce\Actions\GrantOrderEntitlements;
+use App\Domain\Commerce\Actions\StartCheckoutOrder;
 use App\Domain\Commerce\Actions\TransitionOrder;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderLine;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\ProductType;
+use App\Domain\Entitlements\EntitlementService;
+use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Shared\Markets\Market;
 use App\Models\Course;
 use App\Models\User;
@@ -307,6 +313,115 @@ it('is scheduled every minute without overlap', function (): void {
     expect($event->expression)->toBe('* * * * *')
         ->and($event->withoutOverlapping)->toBeTrue();
 })->group('T-COHORT-SEATS', 'A7');
+
+it('seats a late-paying learner after expiry when the last seat is still free', function (): void {
+    [$course, $admin] = tcsCourse();
+    $cohort = tcsCohort($admin, $course, 1);
+    $buyer = tcsBuyer();
+    [$order, $hold] = tcsOrder($buyer, $course, 'tcs-key-a8-free');
+
+    Carbon::setTestNow(now()->addMinutes(31));
+    $this->artisan('orders:release-expired-seat-holds')->assertSuccessful();
+    expect($hold->refresh()->release_reason)->toBe('expired');
+
+    $paid = app(TransitionOrder::class)($order, OrderStatus::Paid);
+
+    expect($paid->status)->toBe(OrderStatus::Paid)
+        ->and($hold->refresh()->status)->toBe(CohortSeatHold::CONVERTED)
+        ->and($hold->release_reason)->toBeNull()
+        ->and($cohort->hasSeat($buyer))->toBeTrue();
+})->group('T-COHORT-SEATS', 'YG-GAP-COH-002', 'A8');
+
+it('keeps the late payment and puts its learner first on the waitlist when someone else took the seat', function (): void {
+    [$course, $admin] = tcsCourse();
+    $cohort = tcsCohort($admin, $course, 1);
+    $buyer = tcsBuyer();
+    [$order, $hold] = tcsOrder($buyer, $course, 'tcs-key-a8-full');
+
+    Carbon::setTestNow(now()->addMinutes(31));
+    $this->artisan('orders:release-expired-seat-holds')->assertSuccessful();
+    expect($hold->refresh()->release_reason)->toBe('expired');
+    $seat = app(ReserveCohortSeat::class)($cohort, tcsBuyer());
+    $firstQueued = app(JoinWaitlist::class)($cohort, tcsBuyer());
+    Carbon::setTestNow(now()->addMinute());
+
+    $paid = app(TransitionOrder::class)($order, OrderStatus::Paid);
+    app(GrantOrderEntitlements::class)($paid, EntitlementSource::Purchase);
+    $lateMember = CohortMember::query()->where('cohort_id', $cohort->id)->where('learner_id', $buyer->id)->sole();
+
+    expect($paid->status)->toBe(OrderStatus::Paid)
+        ->and(app(EntitlementService::class)->canAccessCourse($buyer, $course)->allowed)->toBeTrue()
+        ->and($seat->refresh()->status)->toBe(CohortMember::SEATED)
+        ->and($cohort->seatedCount())->toBe(1)
+        ->and($lateMember->status)->toBe(CohortMember::WAITLISTED)
+        ->and($lateMember->queued_at->lt($firstQueued->queued_at))->toBeTrue()
+        ->and($hold->refresh()->status)->toBe(CohortSeatHold::RELEASED)
+        ->and($hold->release_reason)->toBe('full_at_payment')
+        ->and(Activity::query()->where('event', 'cohort.seat_conversion_failed')->count())->toBe(1);
+})->group('T-COHORT-SEATS', 'YG-GAP-COH-002', 'A8');
+
+it('leaves a permanently released hold alone when payment attempts seat conversion', function (OrderStatus $status): void {
+    [$course, $admin] = tcsCourse();
+    $cohort = tcsCohort($admin, $course, 1);
+    $buyer = tcsBuyer();
+    [$order, $hold] = tcsOrder($buyer, $course, 'tcs-key-a8-final');
+    app(TransitionOrder::class)($order, $status);
+
+    $converted = app(ConvertSeatHolds::class)([$hold->order_item_id]);
+
+    expect($converted)->toBe(0)
+        ->and($hold->refresh()->status)->toBe(CohortSeatHold::RELEASED)
+        ->and($hold->release_reason)->toBe($status->value)
+        ->and($cohort->seatsLeft())->toBe(1)
+        ->and(CohortMember::query()->count())->toBe(0);
+})->with([OrderStatus::Cancelled, OrderStatus::Failed])->group('T-COHORT-SEATS', 'YG-GAP-COH-002', 'A8');
+
+it('reuses the pending order and renews its hold when the buyer returns and there is room', function (int $minutes, ?string $releaseReason): void {
+    [$course, $admin] = tcsCourse();
+    tcsCohort($admin, $course, 1);
+    $buyer = tcsBuyer();
+    [$order, $hold] = tcsOrder($buyer, $course, 'tcs-key-a9-order');
+
+    Carbon::setTestNow(now()->addMinutes($minutes));
+    $this->artisan('orders:release-expired-seat-holds')->assertSuccessful();
+    expect($hold->refresh()->release_reason)->toBe($releaseReason);
+
+    $reopened = app(StartCheckoutOrder::class)($buyer, Market::Egypt, new OrderLine(ProductType::Course, $course->id, $buyer), 'tcs-key-a9-return');
+
+    expect($reopened->id)->toBe($order->id)
+        ->and($reopened->status)->toBe(OrderStatus::Pending)
+        ->and(Order::query()->count())->toBe(1)
+        ->and(CohortSeatHold::query()->count())->toBe(1)
+        ->and($hold->refresh()->status)->toBe(CohortSeatHold::HELD)
+        ->and($hold->release_reason)->toBeNull()
+        ->and($hold->expires_at->equalTo(now()->addMinutes(30)))->toBeTrue();
+})->with([
+    'live hold' => [10, null],
+    'expired and released hold' => [31, 'expired'],
+])->group('T-COHORT-SEATS', 'YG-GAP-COH-002', 'A9');
+
+it('refuses to renew an expired hold once someone else took the seat', function (): void {
+    [$course, $admin] = tcsCourse();
+    $cohort = tcsCohort($admin, $course, 1);
+    $buyer = tcsBuyer();
+    [$order, $hold] = tcsOrder($buyer, $course, 'tcs-key-a9-full');
+
+    Carbon::setTestNow(now()->addMinutes(31));
+    $this->artisan('orders:release-expired-seat-holds')->assertSuccessful();
+    app(ReserveCohortSeat::class)($cohort, tcsBuyer());
+    $before = $hold->refresh()->getAttributes();
+
+    try {
+        app(StartCheckoutOrder::class)($buyer, Market::Egypt, new OrderLine(ProductType::Course, $course->id, $buyer), 'tcs-key-a9-refused');
+        $this->fail('Expected cohort_full refusal');
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe(['order' => [__('commerce.cohort_full')]]);
+    }
+
+    expect($order->refresh()->status)->toBe(OrderStatus::Pending)
+        ->and(Order::query()->count())->toBe(1)
+        ->and($hold->refresh()->getAttributes())->toBe($before);
+})->group('T-COHORT-SEATS', 'YG-GAP-COH-002', 'A9');
 
 it('refuses a manual seat on the last seat held by a live hold, and lets the holder take it', function (): void {
     [$course, $admin] = tcsCourse();
