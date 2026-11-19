@@ -15,6 +15,8 @@ return [
     'col_status' => 'Status',
     'filter_status' => 'Status',
     'gateway_manual' => 'Bank transfer',
+    'gateway_paymob' => 'Paymob',
+    'gateway_fake' => 'Test gateway',
     'view' => 'View',
     'lines' => 'Items',
     'summary_pending' => 'Awaiting payment',

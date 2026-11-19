@@ -82,7 +82,7 @@ it('lists only the signed-in parent’s linked children with a switcher', functi
 })->group('T-P1-10', 'A1', 'J02');
 
 it('limits the family and link screens to their roles', function (): void {
-    asUser($this, pageUser('student'))->get('/family')->assertForbidden();
+    asUser($this, pageUser('student'))->get('/family')->assertOk()->assertSee('data-family-unavailable', false);
     asUser($this, pageUser('parent'))->get('/link')->assertForbidden();
     asUser($this, pageUser('super_admin'))->get('/family')->assertForbidden();
 })->group('T-P1-10', 'A1', 'D-006');
@@ -162,7 +162,7 @@ it('renders branded translated error pages', function (int $status, string $loca
 
 it('serves the 404 page for unknown routes and 403 for denied pages', function (): void {
     $this->get('/definitely-missing')->assertNotFound()->assertSee(__('errors.404_title'));
-    asUser($this, pageUser('student'))->get('/family')->assertForbidden()->assertSee(__('errors.403_title'));
+    asUser($this, pageUser('super_admin'))->get('/family')->assertForbidden()->assertSee(__('errors.403_title'));
 })->group('T-P1-10', 'A1', 'YG-GAP-OPS-004');
 
 it('audits child creation through the page flow', function (): void {

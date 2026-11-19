@@ -1,4 +1,4 @@
-<x-layouts.base variant="parent" :title="__('pages.family_title')">
+<x-layouts.learner :title="__('pages.family_title')">
     <h1 class="text-3xl font-bold">{{ __('pages.family_title') }}</h1>
     <p class="mb-6 mt-1 text-muted">{{ __('pages.family_intro') }}</p>
 
@@ -93,4 +93,4 @@
             </x-ui.ajax-form>
         </x-ui.card>
     </div>
-</x-layouts.base>
+</x-layouts.learner>

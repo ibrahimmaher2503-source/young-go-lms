@@ -96,6 +96,6 @@ final class SafeguardingRecipientsSettings extends Page
     /** @return array<string, mixed> */
     protected function getViewData(): array
     {
-        return ['emails' => app(SaveSafeguardingRecipients::class)->emails(), 'roles' => (array) config('safeguarding.recipient_roles', [])];
+        return ['emails' => app(SaveSafeguardingRecipients::class)->emails(), 'roles' => collect((array) config('safeguarding.recipient_roles', []))->map(static fn (mixed $role): string => trans()->has('roles.'.$role) ? (string) __('roles.'.$role) : (string) $role)->values()->all()];
     }
 }

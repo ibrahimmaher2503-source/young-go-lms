@@ -8,10 +8,12 @@ use App\Domain\Commerce\ManualPaymentProof;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\PaymentAttempt;
+use App\Domain\Commerce\PaymentEvent;
+use App\Domain\Commerce\PaymentEventOutcome;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Staff read model of orders: each row carries the gateway of its latest payment attempt and whether a manual transfer
+ * Staff read model of orders: each row carries the gateway that fulfilled it (`paid_gateway`), the gateway of its latest attempt and whether a manual transfer
  * proof exists. Read only; it never writes an order, payment or entitlement.
  */
 final class OrderDirectory
@@ -22,6 +24,7 @@ final class OrderDirectory
         return Order::query()->addSelect([
             'orders.*',
             'last_gateway' => PaymentAttempt::query()->select('gateway')->whereColumn('payment_attempts.order_id', 'orders.id')->orderByDesc('sequence')->limit(1),
+            'paid_gateway' => PaymentEvent::query()->select('gateway')->whereColumn('payment_events.order_id', 'orders.id')->where('outcome', PaymentEventOutcome::Fulfilled->value)->orderBy('id')->limit(1),
             'has_manual_proof' => ManualPaymentProof::query()->selectRaw('1')->whereColumn('manual_payment_proofs.order_id', 'orders.id')->limit(1),
         ])->with('payer');
     }

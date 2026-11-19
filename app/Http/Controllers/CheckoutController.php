@@ -141,6 +141,7 @@ final class CheckoutController
             'order' => $order,
             'payer' => $this->payer($request),
             'covers' => $this->covers($order),
+            'formats' => $this->formats($order),
             'market' => Market::tryFrom($order->market) ?? Market::Egypt,
             'methods' => ($methods)(),
             'coupon' => $redemption?->coupon,
@@ -251,6 +252,24 @@ final class CheckoutController
         }
 
         return $covers;
+    }
+
+    /**
+     * The delivery format (recorded, live, hybrid) of each course line, keyed by order item id, so the summary names what is sold.
+     *
+     * @return array<int, string|null>
+     */
+    private function formats(Order $order): array
+    {
+        $courseIds = $order->items->filter(static fn ($item): bool => $item->product_type === ProductType::Course)->pluck('product_id')->all();
+        $courses = Course::query()->whereIn('id', $courseIds)->get()->keyBy('id');
+        $formats = [];
+        foreach ($order->items as $item) {
+            $course = $item->product_type === ProductType::Course ? $courses->get($item->product_id) : null;
+            $formats[$item->getKey()] = $course instanceof Course ? (string) $course->format : null;
+        }
+
+        return $formats;
     }
 
     private function coverUrl(Course $course): ?string

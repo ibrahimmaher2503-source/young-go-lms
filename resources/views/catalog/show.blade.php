@@ -36,7 +36,7 @@
         'instructor' => $instructors->isNotEmpty() ? __('course_page.instructor') : null,
         'faq' => $faqs->isNotEmpty() ? __('course_page.faq') : null,
     ]);
-    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $price !== null];
+    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $price !== null, 'seats' => $seats];
     $linkClass = 'rounded-md font-semibold text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 @endphp
 <x-layouts.base :title="$seo['title']" variant="public" full indexable>
@@ -192,6 +192,18 @@
                     @endif
                     <p @class(['text-sm text-muted' => $price !== null, 'text-xl font-bold' => $price === null]) data-access-mode>{{ $accessLabel }}</p>
                 </div>
+                @if($seats['cohorts'] && ($seats['full'] || $seats['seats_left'] !== null))
+                    <div class="text-center" data-seat-state="{{ $seats['full'] ? 'full' : 'seats' }}">
+                        @if($seats['full'])
+                            <x-ui.badge tone="warning">{{ __('cohorts.full_label') }}</x-ui.badge>
+                            @if($signedIn && ! $entitled && ! $seats["waitlisted"])<p class="mt-2 text-sm text-muted">{{ __('cohorts.waitlist_hint') }}</p>@endif
+                        @else
+                            <x-ui.badge tone="info">{{ __('cohorts.seats_left', ['count' => $seats['seats_left']]) }}</x-ui.badge>
+                        @endif
+                    </div>
+                @endif
+                @if(session('waitlist_notice'))<x-ui.alert tone="success" role="status">{{ session('waitlist_notice') }}</x-ui.alert>@endif
+                @if($errors->has('cohort'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('cohort') }}</x-ui.alert>@endif
                 @include('catalog._cta', $cta)
                 <x-engagement.wishlist-toggle :course="$course" class="flex justify-center"/>
                 @if($previewUrl)

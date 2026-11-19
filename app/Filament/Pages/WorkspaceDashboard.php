@@ -19,6 +19,7 @@ use App\Filament\Resources\Reviews\CourseReviewResource;
 use App\Filament\Resources\Settlements\SettlementResource;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
 use App\Filament\Resources\SubmissionReview\SubmissionReviewResource;
+use App\Filament\Shared\StaffNavigation;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -30,6 +31,10 @@ use Filament\Support\Components\Attributes\Unexposed;
 
 final class WorkspaceDashboard extends Dashboard
 {
+    private const int QUICK_ACCESS_MAX = 8;
+
+    private const int QUICK_ACCESS_PER_GROUP = 3;
+
     #[Unexposed]
     public function getHeading(): string
     {
@@ -109,6 +114,58 @@ final class WorkspaceDashboard extends Dashboard
         ];
     }
 
+    /**
+     * D1: a short, grouped list of shortcuts in the sidebar's own order and groups. A section that is already a work queue above,
+     * or listed twice, is left out; at most three per group and eight in all. Everything else stays one click away in the menu.
+     *
+     * @param  array<int|string, string>  $queueUrls
+     * @return list<array{label: string, links: list<array{label: string, url: string, icon: mixed}>}>
+     */
+    private static function quickAccess(array $queueUrls): array
+    {
+        $panel = Filament::getCurrentOrDefaultPanel();
+        $registered = [...$panel->getPages(), ...$panel->getResources()];
+        $seen = array_flip(array_values($queueUrls));
+        $total = 0;
+        $groups = [];
+
+        foreach (StaffNavigation::order($panel->getId()) as $key) {
+            $links = [];
+            foreach (StaffNavigation::GROUPS[$key] as $class) {
+                if ($total >= self::QUICK_ACCESS_MAX || count($links) >= self::QUICK_ACCESS_PER_GROUP) {
+                    break;
+                }
+                if (! in_array($class, $registered, true) || ! $class::shouldRegisterNavigation() || ! $class::canAccess()) {
+                    continue;
+                }
+                $url = $class::getUrl();
+                if (isset($seen[$url])) {
+                    continue;
+                }
+                $seen[$url] = true;
+                $links[] = ['label' => (string) $class::getNavigationLabel(), 'url' => $url, 'icon' => $class::getNavigationIcon()];
+                $total++;
+            }
+            if ($links !== []) {
+                $groups[] = ['label' => (string) __('navigation.groups.'.$key), 'links' => $links];
+            }
+        }
+
+        return $groups;
+    }
+
+    /** The queue block lists its links only while at least one queue has work; when all are clear it is one summary line. */
+    private function queueLinksShown(array $queues): bool
+    {
+        foreach ($queues as $queue) {
+            if (! $queue['empty']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function isAdminOverview(): bool
     {
         return Filament::getCurrentOrDefaultPanel()->getId() === 'admin';
@@ -123,13 +180,12 @@ final class WorkspaceDashboard extends Dashboard
     #[Unexposed]
     public function content(Schema $schema): Schema
     {
-        $resources = [];
         $summary = [];
+        $role = $this->roleDashboardData();
         foreach (Filament::getCurrentOrDefaultPanel()->getResources() as $resource) {
             if (! $resource::canViewAny()) {
                 continue;
             }
-            $resources[] = ['label' => $resource::getNavigationLabel(), 'url' => $resource::getUrl(), 'icon' => $resource::getNavigationIcon()];
             if ($resource === StaffUserResource::class) {
                 $query = StaffUserResource::getEloquentQuery();
                 $summary = [...$summary, ...($this->isAdminOverview() ? [
@@ -151,8 +207,8 @@ final class WorkspaceDashboard extends Dashboard
         return $schema->components([
             View::make('filament.staff.dashboard-intro')->viewData(['panel' => $this->getTitle()])->visible(! $this->isAdminOverview()),
             View::make('filament.shared.summary-strip')->viewData(['items' => $summary])->visible($summary !== []),
-            View::make('filament.staff.dashboard-kpis')->viewData($this->roleDashboardData()),
-            View::make('filament.staff.dashboard-links')->viewData(['resources' => $resources]),
+            View::make('filament.staff.dashboard-kpis')->viewData($role),
+            View::make('filament.staff.dashboard-links')->viewData(['groups' => self::quickAccess($this->queueLinksShown($role['queues']) ? array_filter(array_column($role['queues'], 'url')) : [])]),
         ]);
     }
 }

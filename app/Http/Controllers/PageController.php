@@ -94,6 +94,10 @@ final class PageController
     public function family(Request $request): View
     {
         $parent = $this->user($request);
+        if ($parent->hasRole('student') && ! $parent->hasRole('parent')) {
+            // A learner has no family area: explain it instead of a bare 403 (other roles keep the 403).
+            return view('pages.family-unavailable');
+        }
         abort_unless($parent->hasRole('parent') && $parent->can('guardian.child.manage'), 403);
 
         $links = GuardianChildLink::query()->with('child')->where('guardian_id', $parent->getKey())->orderBy('id')->get();

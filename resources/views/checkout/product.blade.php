@@ -2,7 +2,7 @@
 @php
     $allOwned = $learners->isNotEmpty() && $learners->every(fn ($l) => ($owned[$l->getKey()] ?? false));
     $nameOf = fn ($u) => $u->display_name ?: $u->name;
-    $lines = [['title' => $title, 'learner' => null, 'kind' => $type, 'cover' => $cover ?? null]];
+    $lines = [['title' => $title, 'learner' => null, 'kind' => $type, 'cover' => $cover ?? null, 'format' => $course?->format]];
 @endphp
 <x-layouts.learner :title="__('checkout.title')">
     <div class="mx-auto max-w-5xl space-y-4">

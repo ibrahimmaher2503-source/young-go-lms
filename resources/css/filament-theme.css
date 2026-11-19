@@ -907,3 +907,41 @@
 
 [data-workspace-permission-action].fi-link { min-inline-size: 2.75rem; min-block-size: 2.75rem; align-items: center; }
 [data-workspace-permission-action].fi-link > .fi-link-label { align-self: center; }
+
+/* G7-P9 fix2 D1: KPI tiles fill every row evenly (no ragged last row), quick access is a short grouped list, compact on phones. */
+@media (min-width: 48rem) {
+    .yg-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .yg-kpi-strip > .yg-summary-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 64rem) {
+    .yg-kpi-strip { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .yg-kpi-strip > .yg-summary-item,
+    .yg-kpi-strip > .yg-summary-item:last-child:nth-child(odd) { grid-column: span 4; }
+    .yg-kpi-strip[data-count="1"] > .yg-summary-item { grid-column: span 12; }
+    .yg-kpi-strip[data-count="2"] > .yg-summary-item { grid-column: span 6; }
+    .yg-kpi-strip[data-count="4"] > .yg-summary-item,
+    .yg-kpi-strip[data-count="8"] > .yg-summary-item,
+    .yg-kpi-strip[data-count="7"] > .yg-summary-item:nth-child(-n+4) { grid-column: span 3; }
+    .yg-kpi-strip[data-count="5"] > .yg-summary-item:nth-child(n+4) { grid-column: span 6; }
+}
+.yg-dashboard-group + .yg-dashboard-group { margin-block-start: 1rem; }
+.yg-dashboard-group-title { margin-block-start: var(--yg-space-card); color: var(--yg-color-muted); font-size: var(--yg-font-small); font-weight: 600; }
+.yg-dashboard-group-title + .yg-dashboard-links { margin-block-start: 0.5rem; }
+@media (max-width: 47.999rem) {
+    .yg-dashboard-intro, .yg-dashboard-tools { padding: 1rem; }
+    .yg-dashboard-links { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .yg-dashboard-link { gap: 0.5rem; padding: 0.75rem; font-size: 0.875rem; min-block-size: 3.25rem; }
+    .yg-dashboard-link > .yg-directional-icon { display: none; }
+}
+@media (max-width: 47.999rem) {
+    /* Phones: tiles take the height of their content (the shared 1fr rows left tall empty tiles). */
+    .yg-kpi-strip { grid-auto-rows: auto; }
+    .yg-kpi-strip > .yg-summary-item { min-block-size: 0; }
+    .yg-dashboard-group-title { margin-block-start: 0.75rem; }
+    .yg-dashboard-group + .yg-dashboard-group { margin-block-start: 0; }
+}
+.yg-kpi-strip > .yg-summary-item::before { display: none; }
+@media (max-width: 47.999rem) {
+    [data-quick-access] > header p { display: none; }
+    [data-quick-access] > header h2 { margin-block-end: 0; }
+}

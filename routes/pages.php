@@ -6,6 +6,7 @@ use App\Http\Controllers\AssignmentSubmissionController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseReviewController;
+use App\Http\Controllers\CourseWaitlistController;
 use App\Http\Controllers\FakeGatewayController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\InstructorStatementController;
@@ -85,6 +86,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, 'auth.session', EnforceTw
     Route::get('/reports/{report}/export', ReportExportController::class)->middleware('throttle:20,1')->name('reports.export');
     Route::get('/my/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/my/wishlist/{course}', [WishlistController::class, 'toggle'])->whereNumber('course')->middleware('throttle:30,1')->name('wishlist.toggle');
+    Route::post('/courses/{course}/waitlist', CourseWaitlistController::class)->whereNumber('course')->middleware('throttle:10,1')->name('catalog.waitlist');
     Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store'])->whereNumber('course')->middleware('throttle:6,1')->name('reviews.store');
     Route::get('/email/verify', [PageController::class, 'verifyNotice'])->name('verification.notice');
     Route::get('/profile', [PageController::class, 'profile'])->name('profile.page');

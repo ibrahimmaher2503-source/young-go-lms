@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Catalog\CourseSeo;
+use App\Domain\Cohorts\CohortAvailability;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Commerce\Queries\CheckoutOffers;
 use App\Domain\Entitlements\EntitlementService;
@@ -38,6 +39,7 @@ final class PublicCourseController
             'key' => $key,
             'entitled' => $learner instanceof User && $access->currentFor($learner, $found) !== null,
             'signedIn' => $learner instanceof User,
+            'seats' => CohortAvailability::stateFor($found, $learner instanceof User ? $learner : null),
             'market' => $market,
             'price' => $offers->coursePrice($found, $market),
         ]);

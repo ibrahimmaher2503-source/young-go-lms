@@ -38,7 +38,7 @@ return ['user' => 'مستخدم', 'table_user' => 'المستخدم', 'table_rol
     'workspace_title' => 'مساحة عملك، في نظرة واحدة',
     'workspace_description' => 'ابدأ من الأدوات المتاحة لحسابك، وتابع عملك من مكان واحد.',
     'quick_access' => 'الوصول السريع',
-    'quick_access_description' => 'الأدوات التي يمكنك استخدامها في هذه المساحة',
+    'quick_access_description' => 'اختصارات قليلة. كل الأقسام في القائمة.',
     'workspace_empty_title' => 'مساحتك جاهزة',
     'workspace_empty_description' => 'ستظهر هنا الأدوات المتاحة لدورك عند إضافتها إلى هذه المساحة.',
     'all_roles' => 'كل الأدوار',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Cohorts;
 
 use App\Models\Course;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -64,6 +65,32 @@ final class CohortAvailability
     {
         return Cohort::query()->where('course_id', $courseId)->orderByRaw('starts_on is null')->orderBy('starts_on')->orderBy('id')->get()
             ->filter(static fn (Cohort $cohort): bool => $cohort->enrollmentIsOpen())->values();
+    }
+
+    /**
+     * Seat state of one course for its page (X2): `seats_left` of the cohort a buyer would be held in (null: no limit or no cohort),
+     * `full` when cohorts take enrolment but none has room for this learner, `waitlist_cohort` the first full enrolling cohort
+     * the learner can queue for, `waitlisted` when they already wait in one. A learner who already holds a seat is never "full".
+     *
+     * @return array{cohorts: bool, seats_left: int|null, full: bool, waitlist_cohort: int|null, waitlisted: bool}
+     */
+    public static function stateFor(Course $course, ?User $learner): array
+    {
+        $enrolling = self::enrollingFor((int) $course->getKey());
+        $none = ['cohorts' => false, 'seats_left' => null, 'full' => false, 'waitlist_cohort' => null, 'waitlisted' => false];
+        if ($enrolling->isEmpty() || ($learner !== null && $enrolling->contains(static fn (Cohort $cohort): bool => $cohort->hasSeat($learner)))) {
+            return $none;
+        }
+
+        $withRoom = $enrolling->first(static fn (Cohort $cohort): bool => ! $cohort->isFull($learner));
+        if ($withRoom instanceof Cohort) {
+            return ['cohorts' => true, 'seats_left' => $withRoom->capacity === null ? null : max(0, (int) $withRoom->capacity - $withRoom->seatedCount() - $withRoom->heldCount($learner)), 'full' => false, 'waitlist_cohort' => null, 'waitlisted' => false];
+        }
+
+        $waiting = $learner === null ? null : $enrolling->first(static fn (Cohort $cohort): bool => $cohort->members()
+            ->where('learner_id', $learner->getKey())->where('status', CohortMember::WAITLISTED)->exists());
+
+        return ['cohorts' => true, 'seats_left' => 0, 'full' => true, 'waitlist_cohort' => (int) ($waiting ?? $enrolling->first())->getKey(), 'waitlisted' => $waiting instanceof Cohort];
     }
 
     /**

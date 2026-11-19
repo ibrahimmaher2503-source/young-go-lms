@@ -15,6 +15,8 @@ return [
     'col_status' => 'الحالة',
     'filter_status' => 'الحالة',
     'gateway_manual' => 'تحويل بنكي',
+    'gateway_paymob' => 'باي موب',
+    'gateway_fake' => 'بوابة تجريبية',
     'view' => 'عرض',
     'lines' => 'العناصر',
     'summary_pending' => 'بانتظار الدفع',

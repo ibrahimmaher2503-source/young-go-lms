@@ -12,6 +12,7 @@
         'learner' => $i->learner ? ($i->learner->display_name ?: $i->learner->name) : null,
         'kind' => $i->product_type->value,
         'cover' => $covers[$i->getKey()] ?? null,
+        'format' => $formats[$i->getKey()] ?? null,
     ])->all();
     $pending = $order->status === OrderStatus::Pending;
     $proofPending = $proof?->status === ManualPaymentStatus::Pending;

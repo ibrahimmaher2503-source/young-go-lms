@@ -54,7 +54,7 @@ function g7eCourse(string $status = 'published', int $priceMinor = 25000, string
 }
 
 /** A course order for the payer; paid through the state machine when $paid is true. */
-function g7eOrder(User $payer, bool $paid, ?Course $course = null): Order
+function g7ePayOrder(User $payer, bool $paid, ?Course $course = null): Order
 {
     $course ??= g7eCourse();
     $order = app(CreateOrder::class)($payer, Market::Egypt, [new OrderLine(ProductType::Course, $course->id, $payer)], 'g7e-'.uniqid());
@@ -90,10 +90,10 @@ function g7eSubscribe(User $learner, SubscriptionPlan $plan): Subscription
 it('E9 PaymentHistory::summary counts orders per status and sums only paid orders per currency for the payer alone', function (): void {
     $payer = g7eLearner();
     $other = g7eLearner();
-    g7eOrder($payer, true);
-    g7eOrder($payer, true);
-    g7eOrder($payer, false);
-    g7eOrder($other, true);
+    g7ePayOrder($payer, true);
+    g7ePayOrder($payer, true);
+    g7ePayOrder($payer, false);
+    g7ePayOrder($other, true);
 
     $summary = PaymentHistory::summary($payer);
 
@@ -116,8 +116,8 @@ it('E9 an account with no orders gets an empty summary and the summary block is 
 
 it('E9 the payments page shows the summary, one chip per existing status and lists only the filtered status', function (): void {
     $payer = g7eLearner();
-    g7eOrder($payer, true);
-    g7eOrder($payer, false);
+    g7ePayOrder($payer, true);
+    g7ePayOrder($payer, false);
 
     $this->actingAs($payer)->get(route('payments.history'))->assertOk()
         ->assertSee('data-payments-summary', false)
@@ -136,7 +136,7 @@ it('E9 the payments page shows the summary, one chip per existing status and lis
 
 it('E9 an unknown status value is ignored and the full list is shown', function (): void {
     $payer = g7eLearner();
-    g7eOrder($payer, true);
+    g7ePayOrder($payer, true);
 
     $this->actingAs($payer)->get(route('payments.history', ['status' => 'not-a-status']))->assertOk()
         ->assertDontSee('data-empty-filter', false)
@@ -145,7 +145,7 @@ it('E9 an unknown status value is ignored and the full list is shown', function 
 
 it('E9 a filter with no matching orders shows the empty-filter state', function (): void {
     $payer = g7eLearner();
-    g7eOrder($payer, true);
+    g7ePayOrder($payer, true);
 
     $this->actingAs($payer)->get(route('payments.history', ['status' => 'cancelled']))->assertOk()
         ->assertSee('data-empty-filter', false)
@@ -155,7 +155,7 @@ it('E9 a filter with no matching orders shows the empty-filter state', function 
 it('E9 the filter chips and pagination keep the status in the query string', function (): void {
     $payer = g7eLearner();
     for ($i = 0; $i < 11; $i++) {
-        g7eOrder($payer, true);
+        g7ePayOrder($payer, true);
     }
 
     $html = $this->actingAs($payer)->get(route('payments.history', ['status' => 'paid']))->assertOk()->getContent();

@@ -159,4 +159,6 @@ return [
     'tab_family' => 'Family',
     'tab_children' => 'Children',
     'tab_profile' => 'Profile',
+    'family_unavailable_title' => 'Family accounts are for parents',
+    'family_unavailable_text' => 'Your account is not a parent account, so there is nothing to manage here. Your own courses are on My learning.',
 ];

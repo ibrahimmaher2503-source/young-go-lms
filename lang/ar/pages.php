@@ -159,4 +159,6 @@ return [
     'tab_family' => 'عائلتي',
     'tab_children' => 'أبنائي',
     'tab_profile' => 'ملفي',
+    'family_unavailable_title' => 'الحسابات العائلية مخصصة لأولياء الأمور',
+    'family_unavailable_text' => 'حسابك ليس حساب ولي أمر، لذلك لا يوجد ما تديره هنا. دوراتك الخاصة في صفحة تعلّمي.',
 ];

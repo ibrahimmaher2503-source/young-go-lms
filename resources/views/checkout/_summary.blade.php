@@ -1,4 +1,4 @@
-{{-- Props: lines (list of [title, learner|null, kind, cover (url|null, optional)]), subtotal, discount (Money|null), total (Money), market. Read-only order summary shared by both checkout steps. --}}
+{{-- Props: lines (list of [title, learner|null, kind, cover (url|null, optional), format (recorded|live|hybrid, optional)]), subtotal, discount (Money|null), total (Money), market. Read-only order summary shared by both checkout steps. --}}
 <x-ui.card :title="__('checkout.summary')" class="order-first space-y-4 lg:order-none lg:sticky lg:top-4 lg:self-start" data-checkout-summary>
     <ul class="space-y-3">
         @foreach($lines as $line)
@@ -12,7 +12,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="break-words font-semibold" dir="auto">{{ $line['title'] }}</p>
-                    <p class="text-sm text-muted">{{ __('checkout.kind_'.$line['kind']) }}@if($line['learner']) · {{ __('checkout.for_learner', ['name' => $line['learner']]) }}@endif</p>
+                    <p class="text-sm text-muted">{{ $line['kind'] === 'course' && ! empty($line['format']) ? __('checkout.kind_course_'.$line['format']) : __('checkout.kind_'.$line['kind']) }}@if($line['learner']) · {{ __('checkout.for_learner', ['name' => $line['learner']]) }}@endif</p>
                 </div>
             </li>
         @endforeach

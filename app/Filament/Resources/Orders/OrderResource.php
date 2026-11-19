@@ -78,12 +78,22 @@ final class OrderResource extends Resource
 
     private static function gatewayLabel(Order $order): string
     {
-        $gateway = $order->getAttribute('last_gateway');
-        if ($gateway !== null) {
-            return (string) $gateway;
+        $label = static fn (string $key): string => trans()->has('orders.gateway_'.$key) ? (string) __('orders.gateway_'.$key) : ucfirst($key);
+        $manual = (string) __('orders.gateway_manual');
+
+        // The gateway that fulfilled the order wins; a transfer proof means bank transfer. A paid order with neither is a manual
+        // payment (the receipt makes the same call); an open or failed order shows the gateway of its latest attempt, else a dash.
+        if ($order->getAttribute('paid_gateway') !== null) {
+            return $label((string) $order->getAttribute('paid_gateway'));
+        }
+        if ($order->getAttribute('has_manual_proof') !== null) {
+            return $manual;
+        }
+        if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Refunded, OrderStatus::PartiallyRefunded, OrderStatus::Disputed], true)) {
+            return $manual;
         }
 
-        return $order->getAttribute('has_manual_proof') !== null ? (string) __('orders.gateway_manual') : '—';
+        return $order->getAttribute('last_gateway') !== null ? $label((string) $order->getAttribute('last_gateway')) : '—';
     }
 
     public static function table(Table $table): Table

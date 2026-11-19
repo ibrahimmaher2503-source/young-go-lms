@@ -38,7 +38,7 @@ return ['user' => 'User', 'table_user' => 'User', 'table_role' => 'Role', 'users
     'workspace_title' => 'Your workspace at a glance',
     'workspace_description' => 'Start with the tools available to your account and keep your work in one place.',
     'quick_access' => 'Quick access',
-    'quick_access_description' => 'Tools available to you in this workspace',
+    'quick_access_description' => 'A few shortcuts. Every section is in the menu.',
     'workspace_empty_title' => 'Your workspace is ready',
     'workspace_empty_description' => 'Tools available to your role will appear here as they are added to this workspace.',
     'all_roles' => 'All roles',
