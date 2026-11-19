@@ -46,6 +46,8 @@ use App\Domain\Identity\SessionLimiter;
 use App\Domain\InstructorFinance\Listeners\AccrueInstructorEarnings;
 use App\Domain\Live\ManualMeetingProvider;
 use App\Domain\Live\MeetingProvider;
+use App\Domain\Migration\Contracts\LegacySourceReader;
+use App\Domain\Migration\Support\ReadOnlyLegacyConnection;
 use App\Domain\Notifications\Listeners\NotifyInstructorsOfCourseReview;
 use App\Domain\Notifications\Listeners\NotifyOfCourseRevision;
 use App\Domain\Notifications\Listeners\NotifyPayerOfPayment;
@@ -160,6 +162,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RefundExecuted::class, [AccrueInstructorEarnings::class, 'refunded']);
         Event::listen(RefundExecuted::class, [NotifyPayerOfPayment::class, 'refunded']);
         $this->app->bind(CompletionLookup::class, LessonCompletionLookup::class);
+        $this->app->bind(LegacySourceReader::class, static fn (): LegacySourceReader => new ReadOnlyLegacyConnection);
         $this->app->scoped(EntitlementService::class);
         $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
