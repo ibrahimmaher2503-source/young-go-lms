@@ -29,7 +29,7 @@ final class PriceFormatter
      */
     public function formatDeduction(Money $money, Market $market, string $locale): string
     {
-        $absolute = Money::ofMinor(abs($money->value->getMinorAmount()->toInt()), $market->currency());
+        $absolute = Money::ofMinor(abs($money->value->getMinorAmount()->toInt()), $money->value->getCurrency()->getCurrencyCode());
         $formatted = $this->format($absolute, $market, $locale);
 
         if ($locale === 'ar' && preg_match('/[0-9][0-9.,\x{066B}\x{066C}]*/u', $formatted, $match) === 1) {

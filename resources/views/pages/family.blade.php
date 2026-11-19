@@ -47,7 +47,7 @@
             @if($guardianVerified)
                 <x-ui.badge tone="success">{{ __('guardian.verification.verified') }}</x-ui.badge>
                 <p class="mt-3" role="status">{{ __('guardian.verification.done') }}</p>
-            @elseunless($verified)
+            @elseif(! $verified)
                 <x-ui.alert tone="warning" role="status">{{ __('pages.verify_before_child') }}</x-ui.alert>
                 <x-ui.link class="mt-3" :href="url('/email/verify')">{{ __('pages.verify_title') }}</x-ui.link>
             @else
