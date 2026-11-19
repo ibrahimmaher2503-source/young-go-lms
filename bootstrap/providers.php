@@ -7,11 +7,17 @@ use App\Providers\ObservabilityServiceProvider;
 use App\Providers\SeoServiceProvider;
 use App\Providers\StaffPanelsServiceProvider;
 use App\Providers\TelescopeServiceProvider;
+use Laravel\Telescope\TelescopeApplicationServiceProvider;
 
-return [
+$providers = [
     AppServiceProvider::class,
     ObservabilityServiceProvider::class,
     SeoServiceProvider::class,
     StaffPanelsServiceProvider::class,
-    TelescopeServiceProvider::class,
 ];
+
+if (class_exists(TelescopeApplicationServiceProvider::class)) {
+    $providers[] = TelescopeServiceProvider::class;
+}
+
+return $providers;

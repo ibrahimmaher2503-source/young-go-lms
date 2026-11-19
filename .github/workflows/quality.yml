@@ -111,3 +111,7 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
         run: vendor/bin/pest tests/Browser --group=browser
+      - name: Verify production boot without dev dependencies
+        env:
+          APP_ENV: production
+        run: composer install --no-dev --no-interaction --prefer-dist
