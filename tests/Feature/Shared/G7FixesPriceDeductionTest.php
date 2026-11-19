@@ -7,7 +7,6 @@ declare(strict_types=1);
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\Money;
 use App\Domain\Shared\Money\PriceFormatter;
-use InvalidArgumentException;
 
 it('formats an English deduction as the currency code followed by the amount, with the sign in front', function (): void {
     $text = (new PriceFormatter)->formatDeduction(Money::ofMinor(5000, 'EGP'), Market::Egypt, 'en');

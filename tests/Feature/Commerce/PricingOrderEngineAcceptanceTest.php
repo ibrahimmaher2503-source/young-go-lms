@@ -132,7 +132,7 @@ it('has no price parameter on the order action or the order line (reflection)', 
         static fn (ReflectionParameter $p): string => $p->getName(),
         (new ReflectionMethod(OrderLine::class, '__construct'))->getParameters(),
     );
-    expect($lineParams)->toBe(['type', 'productId', 'learner'])
+    expect($lineParams)->toBe(['type', 'productId', 'learner', 'cohortSelections'])
         ->and(array_filter($lineParams, static fn (string $name): bool => preg_match('/price|amount|total|minor/i', $name) === 1))->toBe([]);
 })->group('T-P8-01', 'A1');
 
