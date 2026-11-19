@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Curriculum\Actions;
 
+use App\Domain\Assignments\Actions\SendAssignmentNotices;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
@@ -50,9 +51,13 @@ final class ManageSections
 
         DB::transaction(function () use ($actor, $section, $published): void {
             $status = $published ? CurriculumItem::STATUS_PUBLISHED : CurriculumItem::STATUS_DRAFT;
+            $wasPublished = (bool) CourseSection::query()->whereKey($section->getKey())->lockForUpdate()->value('published');
             $ids = CurriculumOutline::activeItems(CurriculumItem::query()->where('section_id', $section->getKey()))->pluck('id')->all();
+            $publishing = [];
             if ($published) {
                 LessonPublishRule::assertPublishable(CurriculumItem::query()->whereKey($ids)->with(['itemable', 'course'])->get());
+                $publishing = CurriculumItem::query()->whereKey($ids)->where('itemable_type', 'assignment')
+                    ->when($wasPublished, fn ($items) => $items->where('status', '!=', $status))->lockForUpdate()->pluck('id')->all();
             }
             $section->update(['published' => $published]);
             CurriculumItem::query()->whereKey($ids)->update(['status' => $status]);
@@ -60,6 +65,10 @@ final class ManageSections
             $recorded = $this->audit->record($published ? 'curriculum.section_published' : 'curriculum.section_unpublished', $section, (int) $actor->getKey(), null, ['items' => count($ids)]);
             if ($recorded === null) {
                 throw new RuntimeException('Unable to record curriculum audit.');
+            }
+
+            if ($publishing !== []) {
+                DB::afterCommit(fn () => rescue(fn () => app(SendAssignmentNotices::class)->published($publishing)));
             }
         });
     }

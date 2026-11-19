@@ -6,11 +6,14 @@ namespace App\Domain\Certificates\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Certificates\Certificate;
+use App\Domain\Certificates\Notifications\CertificateRevokedNotice;
+use App\Domain\Notifications\NotificationDispatcher;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 /**
  * Staff void a live certificate with a reason. The row stays (its link answers "revoked"); the completion is untouched.
@@ -18,7 +21,7 @@ use RuntimeException;
  */
 final class RevokeCertificate
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly NotificationDispatcher $notifications) {}
 
     public function __invoke(User $actor, Certificate $certificate, string $reason): Certificate
     {
@@ -26,7 +29,21 @@ final class RevokeCertificate
         Gate::forUser($actor)->authorize('update', $certificate->course);
         $reason = self::cleanReason($reason);
 
-        return DB::transaction(fn (): Certificate => $this->revoke($actor, $certificate, $reason));
+        return DB::transaction(function () use ($actor, $certificate, $reason): Certificate {
+            $revoked = $this->revoke($actor, $certificate, $reason);
+            DB::afterCommit(function () use ($revoked): void {
+                try {
+                    $learner = $revoked->learner;
+                    if ($learner !== null && $learner->getAttribute('status') === 'active') {
+                        $this->notifications->send($learner, new CertificateRevokedNotice($revoked));
+                    }
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            });
+
+            return $revoked;
+        });
     }
 
     /** Validates and normalises the staff reason (3 to 500 characters). */

@@ -22,7 +22,11 @@ use RuntimeException;
  */
 final class SubmitAssignment
 {
-    public function __construct(private readonly EntitlementService $access, private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly EntitlementService $access,
+        private readonly AuditLogger $audit,
+        private readonly SendAssignmentNotices $notices,
+    ) {}
 
     public function __invoke(User $learner, CurriculumItem $item): AssignmentSubmission
     {
@@ -31,7 +35,7 @@ final class SubmitAssignment
             throw new AssignmentRefusedException(AssignmentRefusedException::NO_ACCESS);
         }
 
-        return DB::transaction(function () use ($learner, $assignment): AssignmentSubmission {
+        return DB::transaction(function () use ($learner, $assignment, $item): AssignmentSubmission {
             $submission = AssignmentSubmission::query()->where('assignment_id', $assignment->getKey())->where('learner_id', $learner->getKey())->lockForUpdate()->first();
             if ($submission === null) {
                 throw new AssignmentRefusedException(AssignmentRefusedException::NOTHING_TO_SUBMIT);
@@ -65,6 +69,8 @@ final class SubmitAssignment
             if ($this->audit->record($event, $assignment, (int) $learner->getKey(), null, ['submission_id' => $submission->getKey(), 'revision' => $revision->number, 'is_late' => $late]) === null) {
                 throw new RuntimeException('Unable to record assignment audit.');
             }
+
+            DB::afterCommit(fn () => rescue(fn () => $this->notices->submitted($assignment, $item, (int) $submission->getKey(), $revision->number)));
 
             return $submission;
         });

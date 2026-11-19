@@ -12,9 +12,9 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 |---|---|---|---|---|---|---|
 | `account.verify` | account | mandatory | framework | - | - |  |
 | `account.password_reset` | account | mandatory | framework | - | - |  |
-| `access.granted` | access | mandatory | pending | `:course` | `notification_events.templates.access_granted.title` | T-P4-02 |
-| `access.expiring` | access | mandatory | pending | `:course` `:date` | `notification_events.templates.access_expiring.title` | T-P4-02 |
-| `access.revoked` | access | mandatory | pending | `:course` | `notification_events.templates.access_revoked.title` | T-P4-02 |
+| `access.granted` | access | mandatory | wired | `:course` | `notification_events.templates.access_granted.title` | Effective access granted |
+| `access.expiring` | access | mandatory | wired | `:course` `:date` | `notification_events.templates.access_expiring.title` | D-030 (7/3/1 days) |
+| `access.revoked` | access | mandatory | wired | `:course` | `notification_events.templates.access_revoked.title` | Loss of the last active grant |
 | `payment.pending` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_pending.title` | |
 | `payment.review` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_review.title` |  |
 | `payment.approved` | payment | mandatory | wired | `:order` | `notification_events.templates.payment_approved.title` |  |
@@ -26,16 +26,16 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `live.reminder` | live | optional | wired | `:title` `:time` | `live.notice.reminder.title` |  |
 | `live.rescheduled` | live | mandatory | wired | `:title` `:time` | `live.notice.rescheduled.title` |  |
 | `live.cancelled` | live | mandatory | wired | `:title` `:time` | `live.notice.cancelled.title` |  |
-| `assignment.published` | assignment | mandatory | pending | `:title` | `notification_events.templates.assignment_published.title` | T-P6-03 |
-| `assignment.due` | assignment | optional | pending | `:title` `:date` | `notification_events.templates.assignment_due.title` | T-P6-03 |
-| `assignment.submitted` | assignment | mandatory | pending | `:title` | `notification_events.templates.assignment_submitted.title` | T-P6-03 |
+| `assignment.published` | assignment | mandatory | wired | `:title` | `notification_events.templates.assignment_published.title` | Eligible learners |
+| `assignment.due` | assignment | optional | wired | `:title` `:date` | `notification_events.templates.assignment_due.title` | D-030 (7/3/1 days) |
+| `assignment.submitted` | assignment | mandatory | wired | `:title` | `notification_events.templates.assignment_submitted.title` | Authorized review queue |
 | `assignment.graded` | assignment | mandatory | wired | `:title` `:score` | `review.notice.graded.title` |  |
 | `assignment.accepted` | assignment | mandatory | wired | `:title` | `review.notice.accepted.title` |  |
 | `assignment.rejected` | assignment | mandatory | wired | `:title` | `review.notice.rejected.title` |  |
 | `assignment.revision` | assignment | mandatory | wired | `:title` | `review.notice.revision_requested.title` |  |
 | `quiz.result` | assignment | mandatory | wired | `:title` | `review.notice.essay_reviewed.title` |  |
 | `certificate.issued` | certificate | mandatory | wired | `:title` | `certificates.notice.title` |  |
-| `certificate.revoked` | certificate | mandatory | pending | `:title` | `notification_events.templates.certificate_revoked.title` | T-P6-06 |
+| `certificate.revoked` | certificate | mandatory | wired | `:title` | `notification_events.templates.certificate_revoked.title` | Holder |
 | `course.announcement` | announcement | optional | wired | `:course` `:title` `:message` | `notification_events.templates.course_announcement.title` |  |
 | `help.created` | help | mandatory | wired | `:lesson` | `help.notice.created.title` |  |
 | `help.student_replied` | help | mandatory | wired | `:lesson` | `help.notice.student_replied.title` |  |
@@ -53,4 +53,4 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 - Preferences gate in `NotificationDispatcher::send` (via `LocalizedNotification::event()`; null = mandatory). The email switch on the profile page (`notification_preferences.email`) now only affects optional notices; mandatory notices keep their email copy.
 - Payer notices use `NotifyPayerOfPayment` and the editable payment templates. Checkout creation sends pending once per order. Verified declines send once per attempt. Manual review and rejection send once per proof and outcome. Approval sends once per order. An executed refund sends once per refund. Links use the payer's own order, proof form or payment history.
 - YG-GAP-FAM-008 applies when the payer is a child without email. The verified guardian receives a localized email copy with the private action link removed.
-- Pending sources: access.*, assignment.published/due/submitted, certificate.revoked.
+- D-030 reminders run in the scheduler. Access checks use the effective end across continuous grants, including renewals. Assignment reminders respect optional notification preferences and skip completed submissions. Expiry and due reminders use a one-day delivery window for each offset.

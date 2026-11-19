@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Curriculum\Actions;
 
+use App\Domain\Assignments\Actions\SendAssignmentNotices;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Curriculum\CurriculumAccess;
 use App\Domain\Curriculum\Queries\CurriculumOutline;
@@ -42,14 +43,20 @@ final class SetCurriculumStatus
                 throw ValidationException::withMessages(['items' => __('curriculum.stale')]);
             }
 
+            $publishing = [];
             if ($status === CurriculumItem::STATUS_PUBLISHED) {
                 LessonPublishRule::assertPublishable(CurriculumItem::query()->whereKey($ids)->with(['itemable', 'course'])->get());
+                $publishing = CurriculumItem::query()->whereKey($ids)->where('status', '!=', $status)->where('itemable_type', 'assignment')->lockForUpdate()->pluck('id')->all();
             }
 
             $changed = CurriculumItem::query()->whereKey($ids)->where('status', '!=', $status)->update(['status' => $status]);
             $event = $status === CurriculumItem::STATUS_PUBLISHED ? 'curriculum.items_published' : 'curriculum.items_unpublished';
             if ($this->audit->record($event, $course, (int) $actor->getKey(), null, ['changed' => $changed], ['item_ids' => $ids]) === null) {
                 throw new RuntimeException('Unable to record curriculum audit.');
+            }
+
+            if ($publishing !== []) {
+                DB::afterCommit(fn () => rescue(fn () => app(SendAssignmentNotices::class)->published($publishing)));
             }
 
             return $changed;

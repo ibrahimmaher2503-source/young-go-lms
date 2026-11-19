@@ -16,7 +16,7 @@ use RuntimeException;
 /** Takes access away immediately and keeps the row for history. Needs the grant permission and a reason. */
 final class RevokeEntitlement
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $service) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $service, private readonly SendAccessNotice $notice) {}
 
     public function __invoke(User $actor, Entitlement $entitlement, string $reason): Entitlement
     {
@@ -34,9 +34,16 @@ final class RevokeEntitlement
                 return $current; // already revoked: nothing to change
             }
 
+            $hadAccess = $current->isCurrent() && $this->service->canAccessCourse($current->learner, $current->course)->allowed;
+
             $current->forceFill(['status' => Entitlement::REVOKED, 'revoked_by' => $actor->getKey(), 'revoked_at' => now(), 'reason' => $reason])->save();
             if ($this->audit->record('entitlement.revoked', $current->course, (int) $actor->getKey(), null, ['learner_id' => $current->learner_id, 'source' => $current->source_type->value]) === null) {
                 throw new RuntimeException('Unable to record entitlement audit.');
+            }
+
+            $this->service->flush();
+            if ($hadAccess && ! $this->service->canAccessCourse($current->learner, $current->course)->allowed) {
+                $this->notice->afterCommit($current, granted: false);
             }
 
             return $current;

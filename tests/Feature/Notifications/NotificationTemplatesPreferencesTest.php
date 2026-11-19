@@ -454,10 +454,10 @@ it('notifies only active learners with current access, not suspended, unentitled
     $announcement = t905Draft($instructor, $course);
     app(PublishAnnouncement::class)($admin, $announcement);
 
-    expect($active->notifications()->count())->toBe(1)
-        ->and($suspended->notifications()->count())->toBe(0)
-        ->and($unentitled->notifications()->count())->toBe(0)
-        ->and($otherCourse->notifications()->count())->toBe(0)
+    expect($active->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(1)
+        ->and($suspended->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(0)
+        ->and($unentitled->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(0)
+        ->and($otherCourse->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(0)
         ->and($announcement->fresh()->recipients_count)->toBe(1);
 })->group('T-P9-05', 'A1');
 
@@ -478,12 +478,12 @@ it('sends a publish once, counts recipients, skips opted-out learners and writes
     app(PublishAnnouncement::class)($instructor, $announcement->fresh());
 
     expect($announcement->fresh()->recipients_count)->toBe(2)
-        ->and($arabic->notifications()->count())->toBe(1)
-        ->and($english->notifications()->count())->toBe(1)
-        ->and($optedOut->notifications()->count())->toBe(0);
+        ->and($arabic->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(1)
+        ->and($english->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(1)
+        ->and($optedOut->notifications()->where('type', AnnouncementNotice::class)->count())->toBe(0);
 
-    $ar = $arabic->notifications()->first();
-    $en = $english->notifications()->first();
+    $ar = $arabic->notifications()->where('type', AnnouncementNotice::class)->first();
+    $en = $english->notifications()->where('type', AnnouncementNotice::class)->first();
     expect($ar->data['title'])->toBe('إعلان')
         ->and($ar->data['message'])->toBe('نص الإعلان')
         ->and($ar->data['url'])->toBe(route('learn.course', ['course' => $course->getKey()]))

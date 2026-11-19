@@ -24,7 +24,7 @@ use RuntimeException;
  */
 final class GrantEntitlement
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $service) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $service, private readonly SendAccessNotice $notice) {}
 
     public function __invoke(
         User $learner,
@@ -53,7 +53,8 @@ final class GrantEntitlement
 
         $keys = ['source_type' => $source->value, 'source_ref' => $sourceRef, 'learner_id' => $learner->getKey(), 'course_id' => $course->getKey()];
 
-        $entitlement = DB::transaction(function () use ($keys, $startsAt, $endsAt, $actor, $reason, $course): Entitlement {
+        $entitlement = DB::transaction(function () use ($keys, $startsAt, $endsAt, $actor, $reason, $learner, $course): Entitlement {
+            $hadAccess = $this->service->canAccessCourse($learner, $course)->allowed;
             try {
                 $entitlement = Entitlement::query()->firstOrCreate($keys, [
                     'starts_at' => $startsAt, 'ends_at' => $endsAt, 'status' => Entitlement::ACTIVE,
@@ -65,6 +66,10 @@ final class GrantEntitlement
 
             if ($entitlement->wasRecentlyCreated && $this->audit->record('entitlement.granted', $course, $actor === null ? null : (int) $actor->getKey(), null, ['learner_id' => $keys['learner_id'], 'source' => $keys['source_type'], 'ref' => $keys['source_ref']]) === null) {
                 throw new RuntimeException('Unable to record entitlement audit.');
+            }
+
+            if ($entitlement->wasRecentlyCreated && ! $hadAccess && $entitlement->isCurrent()) {
+                $this->notice->afterCommit($entitlement, granted: true);
             }
 
             return $entitlement;

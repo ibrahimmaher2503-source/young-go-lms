@@ -33,6 +33,8 @@ Schedule::command('payments:reconcile')->dailyAt('04:30')->name('payments:reconc
 // T-P8-10: freeze last month's instructor statements on the 2nd (idempotent; a settlement is still a manual finance record).
 Schedule::command('statements:generate')->monthlyOn(2, '03:15')->name('statements:generate')->withoutOverlapping();
 Schedule::command('subscriptions:process')->hourly()->name('subscriptions:process')->withoutOverlapping();
+Schedule::command('entitlements:send-expiry-notices')->hourly()->withoutOverlapping();
+Schedule::command('assignments:send-due-notices')->everyFiveMinutes()->name('assignments:send-due-notices')->withoutOverlapping();
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();
 // T-P9-08: per-class retention pruning (includes the AI class again; both jobs are idempotent). Never touches financial, certificate or audit data.
 Schedule::command('privacy:prune')->dailyAt('03:45')->name('privacy:prune')->withoutOverlapping();

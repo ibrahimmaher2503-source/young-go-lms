@@ -58,9 +58,9 @@ final class NotificationMatrix
             self::framework('account.verify', 'account'),
             self::framework('account.password_reset', 'account'),
 
-            self::fresh('access.granted', 'access', true, ['course'], 'T-P4-02'),
-            self::fresh('access.expiring', 'access', true, ['course', 'date'], 'T-P4-02'),
-            self::fresh('access.revoked', 'access', true, ['course'], 'T-P4-02'),
+            self::fresh('access.granted', 'access', true, ['course']),
+            self::fresh('access.expiring', 'access', true, ['course', 'date']),
+            self::fresh('access.revoked', 'access', true, ['course']),
 
             self::fresh('payment.pending', 'payment', true, ['order']),
             self::fresh('payment.review', 'payment', true, ['order']),
@@ -76,9 +76,9 @@ final class NotificationMatrix
             self::existing('live.rescheduled', 'live', true, ['title', 'time'], 'live.notice.rescheduled'),
             self::existing('live.cancelled', 'live', true, ['title', 'time'], 'live.notice.cancelled'),
 
-            self::fresh('assignment.published', 'assignment', true, ['title'], 'T-P6-03'),
-            self::fresh('assignment.due', 'assignment', false, ['title', 'date'], 'T-P6-03'),
-            self::fresh('assignment.submitted', 'assignment', true, ['title'], 'T-P6-03'),
+            self::fresh('assignment.published', 'assignment', true, ['title']),
+            self::fresh('assignment.due', 'assignment', false, ['title', 'date']),
+            self::fresh('assignment.submitted', 'assignment', true, ['title']),
             self::existing('assignment.graded', 'assignment', true, ['title', 'score'], 'review.notice.graded'),
             self::existing('assignment.accepted', 'assignment', true, ['title'], 'review.notice.accepted'),
             self::existing('assignment.rejected', 'assignment', true, ['title'], 'review.notice.rejected'),
@@ -86,7 +86,7 @@ final class NotificationMatrix
             self::existing('quiz.result', 'assignment', true, ['title'], 'review.notice.essay_reviewed'),
 
             self::existing('certificate.issued', 'certificate', true, ['title'], 'certificates.notice'),
-            self::fresh('certificate.revoked', 'certificate', true, ['title'], 'T-P6-06'),
+            self::fresh('certificate.revoked', 'certificate', true, ['title']),
 
             self::fresh(self::ANNOUNCEMENT, 'announcement', false, ['course', 'title', 'message']),
 

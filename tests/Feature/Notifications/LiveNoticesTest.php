@@ -69,8 +69,8 @@ it('announces a published live session once, in each recipient own language and 
     [, $item, $arabic, $english] = lnBuild();
     $session = $item->itemable;
 
-    $ar = $arabic->notifications()->get();
-    $en = $english->notifications()->get();
+    $ar = $arabic->notifications()->where('type', LiveSessionNotice::class)->get();
+    $en = $english->notifications()->where('type', LiveSessionNotice::class)->get();
 
     expect($ar)->toHaveCount(1)->and($en)->toHaveCount(1)
         ->and($ar[0]->data['title'])->toBe(__('live.notice.scheduled.title', ['title' => 'الانطلاق'], 'ar'))
@@ -85,13 +85,13 @@ it('does not announce again when the item is published a second time', function 
     app(SetCurriculumStatus::class)($admin, $course, [$item->id], 'draft');
     app(SetCurriculumStatus::class)($admin, $course, [$item->id], 'published');
 
-    expect($arabic->notifications()->count())->toBe(1);
+    expect($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(1);
 });
 
 it('says nothing about a draft session', function (): void {
     [, , $arabic, $english] = lnBuild(publish: false);
 
-    expect($arabic->notifications()->count())->toBe(0)->and($english->notifications()->count())->toBe(0);
+    expect($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(0)->and($english->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(0);
 });
 
 it('notifies a move and a cancellation, each once, and a second move separately', function (): void {
@@ -102,7 +102,7 @@ it('notifies a move and a cancellation, each once, and a second move separately'
     app(RescheduleLiveSession::class)($admin, $session->refresh(), ['starts_at' => '2027-03-14 18:00', 'ends_at' => '2027-03-14 19:00', 'timezone' => 'UTC']);
     app(CancelLiveSession::class)($admin, $session->refresh());
 
-    $types = $arabic->notifications()->get()->map(fn ($n) => $n->data['title'])->all();
+    $types = $arabic->notifications()->where('type', LiveSessionNotice::class)->get()->map(fn ($n) => $n->data['title'])->all();
     expect($types)->toHaveCount(4)
         ->and(collect($types)->filter(fn ($t) => str_contains($t, 'تغيّر موعد'))->count())->toBe(2)
         ->and(collect($types)->filter(fn ($t) => str_contains($t, 'أُلغيت'))->count())->toBe(1);
@@ -110,9 +110,9 @@ it('notifies a move and a cancellation, each once, and a second move separately'
 
 it('sends each configured reminder once even if the scheduler runs many times', function (): void {
     [, , $arabic, $english] = lnBuild();
-    $arabic->notifications()->delete();
-    $english->notifications()->delete();
-    NotificationDispatch::query()->delete();
+    $arabic->notifications()->where('type', LiveSessionNotice::class)->delete();
+    $english->notifications()->where('type', LiveSessionNotice::class)->delete();
+    NotificationDispatch::query()->where('notification', class_basename(LiveSessionNotice::class))->delete();
 
     expect(app(SendLiveReminders::class)())->toBe(0); // too early: more than a day away
 
@@ -121,17 +121,17 @@ it('sends each configured reminder once even if the scheduler runs many times', 
 
     $this->travelTo(CarbonImmutable::parse('2027-03-12 17:00:00', 'UTC')); // one hour before
     expect(app(SendLiveReminders::class)())->toBe(2)->and(app(SendLiveReminders::class)())->toBe(0)
-        ->and($arabic->notifications()->count())->toBe(2)->and($english->notifications()->count())->toBe(2);
+        ->and($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(2)->and($english->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(2);
 
     $this->artisan('live:send-reminders')->assertSuccessful();
-    expect($arabic->notifications()->count())->toBe(2);
+    expect($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(2);
 });
 
 it('skips a reminder offset that had already passed when the session was created', function (): void {
     $this->travelTo(CarbonImmutable::parse('2027-03-12 17:30:00', 'UTC'));
     [, , $arabic] = lnBuild(); // created 30 minutes before the start: no 24 hour or 1 hour reminder makes sense
-    $arabic->notifications()->delete();
-    NotificationDispatch::query()->delete();
+    $arabic->notifications()->where('type', LiveSessionNotice::class)->delete();
+    NotificationDispatch::query()->where('notification', class_basename(LiveSessionNotice::class))->delete();
 
     expect(app(SendLiveReminders::class)())->toBe(0);
 });
@@ -167,19 +167,19 @@ it('does not remind people outside the cohort or without current access, nor for
     $cohort = $item->itemable->cohort;
     app(ReserveCohortSeat::class)($cohort, $arabic); // only the Arabic learner has a seat
     $outsider = User::factory()->create()->assignRole('student');
-    NotificationDispatch::query()->delete();
-    $arabic->notifications()->delete();
+    NotificationDispatch::query()->where('notification', class_basename(LiveSessionNotice::class))->delete();
+    $arabic->notifications()->where('type', LiveSessionNotice::class)->delete();
 
     $this->travelTo(CarbonImmutable::parse('2027-03-11 18:00:00', 'UTC'));
     app(SendLiveReminders::class)();
 
-    expect($arabic->notifications()->count())->toBe(1)->and($english->notifications()->count())->toBe(0)->and($outsider->notifications()->count())->toBe(0);
+    expect($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(1)->and($english->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(0)->and($outsider->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(0);
 
     app(CancelLiveSession::class)($admin, $item->itemable->refresh());
     $this->travelTo(CarbonImmutable::parse('2027-03-12 17:00:00', 'UTC'));
-    $before = $arabic->notifications()->count();
+    $before = $arabic->notifications()->where('type', LiveSessionNotice::class)->count();
     app(SendLiveReminders::class)();
-    expect($arabic->notifications()->count())->toBe($before);
+    expect($arabic->notifications()->where('type', LiveSessionNotice::class)->count())->toBe($before);
 });
 
 it('sends one dedupe key to one recipient once, and lets a failed send be retried', function (): void {
@@ -225,6 +225,7 @@ it('retries failed mail without duplicating the delivered inbox notice', functio
         $item->itemable, (int) $item->course_id, (int) $item->getKey(),
         LiveSessionNotice::SCHEDULED,
     );
+    Mail::getSymfonyTransport()->flush();
     $mailAttempts = 0;
     Event::listen(MessageSending::class, function () use (&$mailAttempts): void {
         if (++$mailAttempts === 1) {
@@ -234,13 +235,13 @@ it('retries failed mail without duplicating the delivered inbox notice', functio
     $dispatcher = app(NotificationDispatcher::class);
 
     expect(fn () => $dispatcher->send($recipient, $notice))->toThrow(RuntimeException::class, 'Mail transport unavailable');
-    expect($recipient->notifications()->count())->toBe(1)
-        ->and(NotificationDispatch::query()->count())->toBe(0);
-    $inboxId = $recipient->notifications()->sole()->getKey();
+    expect($recipient->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(1)
+        ->and(NotificationDispatch::query()->where('notification', class_basename(LiveSessionNotice::class))->count())->toBe(0);
+    $inboxId = $recipient->notifications()->where('type', LiveSessionNotice::class)->sole()->getKey();
 
     expect($dispatcher->send($recipient, clone $notice))->toBeTrue()
-        ->and($recipient->notifications()->count())->toBe(1)
-        ->and($recipient->notifications()->sole()->getKey())->toBe($inboxId)
+        ->and($recipient->notifications()->where('type', LiveSessionNotice::class)->count())->toBe(1)
+        ->and($recipient->notifications()->where('type', LiveSessionNotice::class)->sole()->getKey())->toBe($inboxId)
         ->and($mailAttempts)->toBe(2)
         ->and(Mail::getSymfonyTransport()->messages())->toHaveCount(1)
         ->and($dispatcher->send($recipient, $notice))->toBeFalse()
