@@ -274,16 +274,41 @@ function initProgress(root, media) {
 
 document.querySelectorAll('[data-player]').forEach((root) => initProgress(root, initPlayer(root)));
 
-// Watermark (YG-GAP-VID-003): it stays inside the stage, so it is also visible in full screen, and it moves every few seconds.
-document.querySelectorAll('[data-watermark]').forEach((mark) => {
-    const spots = ['top: .75rem; inset-inline-end: .75rem', 'top: .75rem; inset-inline-start: .75rem', 'bottom: 3.5rem; inset-inline-end: .75rem', 'bottom: 3.5rem; inset-inline-start: .75rem', 'top: 45%; inset-inline-start: 35%'];
+// Watermark (YG-GAP-VID-003): it stays inside the stage, so it is also visible in full screen, and it moves periodically.
+function initWatermark(mark) {
+    const stage = mark.closest('[data-player-stage]');
+    const audioOnly = Boolean(stage?.querySelector('audio') && !stage?.querySelector('video, iframe'));
+    const spots = audioOnly
+        ? [
+            'top: .25rem; inset-inline-end: .75rem',
+            'top: .25rem; inset-inline-start: .75rem',
+            'top: .25rem; inset-inline: .75rem; margin-inline: auto; inline-size: max-content',
+        ]
+        : [
+            'top: .75rem; inset-inline-end: .75rem',
+            'top: .75rem; inset-inline-start: .75rem',
+            'bottom: 3.5rem; inset-inline-end: .75rem',
+            'bottom: 3.5rem; inset-inline-start: .75rem',
+            'top: 45%; inset-inline: .75rem; margin-inline: auto; inline-size: max-content',
+        ];
+    const raw = Number(mark.dataset.watermarkInterval);
+    const interval = Number.isFinite(raw) && raw >= 250 ? raw : 12000;
     let index = 0;
-    const place = () => {
+    let moves = 0;
+    const place = (advance = false) => {
+        if (advance) {
+            index += 1;
+            moves += 1;
+        }
+        const spot = index % spots.length;
         mark.removeAttribute('style');
-        mark.style.cssText = spots[index % spots.length];
-        mark.dataset.spot = String(index % spots.length);
-        index += 1;
+        mark.style.cssText = spots[spot];
+        mark.dataset.spot = String(spot);
+        mark.dataset.moves = String(moves);
     };
-    place();
-    window.setInterval(place, 12000);
-});
+    place(false);
+    const timer = window.setInterval(() => place(true), interval);
+    window.addEventListener('pagehide', () => window.clearInterval(timer), { once: true });
+}
+
+document.querySelectorAll('[data-watermark]').forEach(initWatermark);

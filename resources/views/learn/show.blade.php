@@ -91,14 +91,14 @@
                                 <div class="relative" data-player-surface>
                                     <x-learning.lesson-media :descriptor="$descriptor" :title="$title" managed-stage />
                                     @if(in_array($descriptor->type, ['video', 'audio', 'embed'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
-                                        <span class="pointer-events-none absolute z-10 select-none rounded bg-media/40 px-2 py-0.5 text-sm text-on-media/85 transition-all duration-700" data-watermark dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
+                                        <span class="pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] truncate select-none rounded bg-media/40 px-2 py-0.5 text-sm text-on-media/85 transition-all duration-700" data-watermark data-watermark-tier="{{ $descriptor->tier }}" data-watermark-interval="{{ max(250, (int) config('media.watermark_interval_ms', 12000)) }}" dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
                                     @endif
                                 </div>
                             @endif
                         </div>
                         @endif
 
-                        @if($descriptor !== null && (in_array($descriptor->type, ['video', 'audio'], true) || $descriptor->provider === 'vimeo'))
+                        @if($descriptor !== null && (in_array($descriptor->type, ['video', 'audio'], true) || $descriptor->provider === 'vimeo' || ($descriptor->type === 'embed' && \App\Domain\Media\Watermark::applies($descriptor->tier))))
                             <div role="toolbar" aria-label="{{ __('learn.toolbar') }}" class="flex flex-wrap items-center gap-2">
                                 @if($descriptor->type !== 'embed')
                                     <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3">

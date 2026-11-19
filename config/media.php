@@ -9,6 +9,9 @@ return [
     // Signed playback links for protected (T1) files expire after this many seconds.
     'signed_ttl' => 300,
 
+    // Periodic watermark motion interval on protected (T1/T2) playback in milliseconds (YG-GAP-VID-003).
+    'watermark_interval_ms' => 12000,
+
     // Embeddable hosts the Allowlisted iframe provider accepts. Empty means none: the owner approves each host.
     'iframe_allowlist' => [],
 

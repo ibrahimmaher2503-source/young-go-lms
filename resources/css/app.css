@@ -18,7 +18,7 @@ body {
     inline-size: min(100%, calc(100dvh * var(--lesson-video-ratio, 16 / 9)));
 }
 
-[data-player-stage]:fullscreen video {
+[data-player-stage]:fullscreen :is(video, iframe) {
     aspect-ratio: var(--lesson-video-ratio, 16 / 9);
 }
 
