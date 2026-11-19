@@ -5,13 +5,13 @@ declare(strict_types=1);
 // T-G7-FIXES-E | R10 checkout benefits, R7b checkout reference, G1 fake gateway, D16 settings hub, C3 review disclosure,
 // C1 course card, plus the F stars component and token parity | E8 E11 E12 E13 E14 E15 F8
 
+use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Commerce\Actions\CreateOrder;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
 use App\Domain\Commerce\OrderLine;
 use App\Domain\Commerce\PaymentAttempt;
 use App\Domain\Commerce\ProductType;
-use App\Domain\Engagement\Actions\SubmitCourseReview;
 use App\Domain\Entitlements\Actions\GrantEntitlement;
 use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Shared\Markets\Market;
@@ -174,7 +174,7 @@ it('E14 an entitled learner sees the review form inside a closed disclosure with
     $course = g7cCourse(['access_mode' => 'free']);
     $learner = g7cLearner();
     app(GrantEntitlement::class)($learner, $course, EntitlementSource::Free);
-    $url = route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)]);
+    $url = route('catalog.show', ['course' => PublicCourseDetail::key($course)]);
 
     $html = $this->actingAs($learner)->get($url)->assertOk()->getContent();
 
@@ -189,7 +189,7 @@ it('E14 a rejected review post reopens the disclosure on the next page', functio
     $course = g7cCourse(['access_mode' => 'free']);
     $learner = g7cLearner();
     app(GrantEntitlement::class)($learner, $course, EntitlementSource::Free);
-    $url = route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)]);
+    $url = route('catalog.show', ['course' => PublicCourseDetail::key($course)]);
 
     $this->actingAs($learner)->from($url)->post(route('reviews.store', ['course' => $course->getKey()]), ['rating' => '', 'body' => 'x']);
 
@@ -201,7 +201,7 @@ it('E14 a learner who cannot review sees no review disclosure', function (): voi
     $course = g7cCourse(['access_mode' => 'free']);
     $stranger = g7cLearner();
 
-    $html = $this->actingAs($stranger)->get(route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)]))->assertOk()->getContent();
+    $html = $this->actingAs($stranger)->get(route('catalog.show', ['course' => PublicCourseDetail::key($course)]))->assertOk()->getContent();
     expect($html)->not->toContain('data-review-disclosure');
 })->group('T-G7-FIXES-E', 'E14');
 

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 // T-G7-FIXES-E | D14 (/my/payments summary and filters, /my/subscription renewal and benefits) | E9 E10
 
+use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Commerce\Actions\CreateOrder;
+use App\Domain\Commerce\Actions\GrantOrderEntitlements;
 use App\Domain\Commerce\Actions\TransitionOrder;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
@@ -12,6 +14,7 @@ use App\Domain\Commerce\OrderLine;
 use App\Domain\Commerce\OrderStatus;
 use App\Domain\Commerce\ProductType;
 use App\Domain\Commerce\Queries\PaymentHistory;
+use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Subscriptions\Actions\SavePlan;
 use App\Domain\Subscriptions\Subscription;
@@ -78,7 +81,7 @@ function g7eSubscribe(User $learner, SubscriptionPlan $plan): Subscription
 {
     $order = app(CreateOrder::class)($learner, Market::Egypt, [new OrderLine(ProductType::Plan, $plan->id, $learner)], 'g7e-plan-'.uniqid());
     app(TransitionOrder::class)($order, OrderStatus::Paid);
-    app(\App\Domain\Commerce\Actions\GrantOrderEntitlements::class)($order->refresh(), \App\Domain\Entitlements\EntitlementSource::Purchase);
+    app(GrantOrderEntitlements::class)($order->refresh(), EntitlementSource::Purchase);
 
     return Subscription::query()->where(['plan_id' => $plan->id, 'learner_id' => $learner->id])->firstOrFail();
 }
@@ -186,7 +189,7 @@ it('E10 an active subscription shows the next renewal date and lists only the pu
         ->assertSee($period->ends_at->copy()->locale('en')->isoFormat('LL'))
         ->getContent();
 
-    expect($html)->toContain(route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($published)]));
+    expect($html)->toContain(route('catalog.show', ['course' => PublicCourseDetail::key($published)]));
 })->group('T-G7-FIXES-E', 'E10');
 
 it('E10 a cancelled subscription hides the next renewal line', function (): void {

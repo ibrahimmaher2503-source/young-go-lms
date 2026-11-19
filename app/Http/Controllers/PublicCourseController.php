@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Catalog\CourseSeo;
-use App\Domain\Cohorts\CohortAvailability;
 use App\Domain\Catalog\Queries\PublicCourseDetail;
+use App\Domain\Cohorts\CohortAvailability;
 use App\Domain\Commerce\Queries\CheckoutOffers;
 use App\Domain\Entitlements\EntitlementService;
 use App\Domain\Identity\ActingLearner;
