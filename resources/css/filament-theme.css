@@ -162,6 +162,11 @@
     gap: 1rem;
 }
 
+@media (min-width: 64rem) {
+    .fi-main-sidebar .fi-sidebar-nav { padding-block: calc(var(--spacing) * 2); }
+    .fi-main-sidebar .fi-sidebar-nav-groups { gap: var(--spacing); }
+}
+
 .fi-sidebar-item-btn,
 .fi-sidebar-group-dropdown-trigger-btn,
 .fi-sidebar-database-notifications-btn,

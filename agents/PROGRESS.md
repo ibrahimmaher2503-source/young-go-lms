@@ -353,6 +353,9 @@ Then re-run prd-auditor (cycle 2 of 3).
 - Checks: Pint (changed files), Larastan 0 errors, arch 6 passed, `app:check-translations` and `app:check-rtl` passed, `npm run build` ok, manual render smoke of AR/EN page, draft 404, preview 200.
 
 ## Notes
+
+- 2026-11-19, D-029: integrated the acceptance and visual worktrees into the canonical local checkout on `feat/lms-build`. The Downloads specification was already in its history. Recovered the P0 browser test and its captures from a temporary clone.
+- Staff sidebar integration: at the 1568×1003 Arabic reference viewport, Filament scrolled the dashboard link out of view with both the queue and active groups open. Reduced desktop group spacing while preserving the group order and 44px controls. All nine core AR/EN screenshot cases and both keyboard/navigation cases passed. The approved reference has fewer navigation entries; the visual review status remains as recorded under D-028.
 - **Source conflict (2026-11-16, T-P0-02):** DMC §5.2 and Arch §2 say "PHP 8.3+"; Pest 5 and current Spatie majors need PHP 8.4. Followed ADR-001 (task + Conventions §2 mandate); pointers added in both docs.
 - **Source conflict (2026-11-16, T-P0-01):** owner-stated domain `youngschool.com` (PROJECT_STATE, DMC §4, O-001) vs public observation (Learning Care Group childcare site, TLS org "Learning Care Group, Inc."). Followed observation: domain marked unconfirmed. Affects T-P0-04 (use O-027 placeholders), T-P10-01, domain-retention direction.
 - **Brief vs repo:** brief says branch `develop`; working directory is not a git repository. Brief names `agents/ANTI_HALLUCINATION_PROTOCOL.md`; file does not exist.
