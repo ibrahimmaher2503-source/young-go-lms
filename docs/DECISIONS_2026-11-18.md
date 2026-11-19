@@ -22,4 +22,4 @@ Full table: `docs/07_DECISION_REGISTER.md`, section D. Legal or accounting verif
 - O-030: 2000 learners, 300 concurrent, 150 in a live session. O-002 repo ibrahimmaher2503-source/young-go-lms, branch feat/lms-build. O-004 MySQL 8 (SQLite local/tests), PHP 8.4 (note: composer.json requires ^8.4).
 
 ## Still OPEN (owner facts)
-O-001 DNS/hosting access, O-003 legacy source/DB, O-007 seller name/tax id/VAT, O-019 certificate issuer wording, O-022 dates/budget, O-026 SKIT kit, O-027 brand assets, O-006 Paymob credentials, O-013 Saudi legal entity.
+O-001 DNS/hosting access, O-003 legacy source/DB, O-007 seller name/tax id/VAT, O-019 certificate issuer wording, O-022 dates/budget, O-006 Paymob credentials, O-013 Saudi legal entity.

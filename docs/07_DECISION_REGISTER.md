@@ -114,7 +114,7 @@ recommendations and open dependencies.
                                       slate/white/teal direction    native tables and permission
                                       and reusable composition     boundaries stay. The mockup
                                       for all current/future pages  does not approve logo/data;
-                                                                    O-027 remains open.
+                                                                    O-027 later decided 2026-11-18.
                                       Full visual matching is
                                       mandatory before acceptance.
   -----------------------------------------------------------------------------------------------
@@ -330,7 +330,7 @@ accounting confirmation before go-live. Rows in section C stay for traceability 
 | O-023 | ETA e-receipt adapter stays disabled with ETA-ready fields | Obligation unconfirmed | Accountant (verify) |
 
 **Still OPEN (facts needed from the owner):** O-001 DNS/hosting access; O-003 legacy source/DB; O-007 legal seller name, tax id, VAT;
-O-019 certificate legal issuer wording; O-022 dates/budget; O-026 SKIT kit; O-027 brand assets; O-006 Paymob credentials;
+O-019 certificate legal issuer wording; O-022 dates/budget; O-006 Paymob credentials;
 O-013 Saudi legal entity.
 
 ## E. Decision change protocol

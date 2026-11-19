@@ -36,3 +36,10 @@ Gate criteria (ORCHESTRATOR.md section 8.3): every task of the phase done, demo 
 - Demo accounts and setup stay in `docs/DEMO.md`. It lists no finance user, so the finance-only steps need one created by the PO before the demo.
 - Not verified by running the app: the script was written from code and PROGRESS notes. Expected values marked "verify on first run" are unconfirmed.
 - The gate stays `todo` until the G7 screenshot review and the owner decisions in the list above are done.
+
+## PO decision 2026-11-19: P8 accepted with known defects
+
+The owner accepted P8 as it stands, with the defects listed in `docs/reviews/G7_P8_REVIEW4_2026-11-19.md` (and fix batch E notes) recorded as known and not blocking.
+- G7 for P8 is closed as "accepted with known defects", not as a 4.5 pass. No further fix cycles are required for P8.
+- Remaining defects stay as backlog items. They are not claimed as fixed.
+- T-P8-MG stays `todo` until the other gate criteria (owner decisions, performance budget) are done.
