@@ -34,6 +34,9 @@ trait PersistsCourseWizard
         }
 
         $this->record = $course;
+        if ($step >= SaveCourseWizard::MEDIA_STEP && array_key_exists('thumbnail_path', $this->data ?? [])) {
+            $this->data['thumbnail_path'] = $course->thumbnail_path === null ? [] : [$course->thumbnail_path];
+        }
 
         return $course;
     }

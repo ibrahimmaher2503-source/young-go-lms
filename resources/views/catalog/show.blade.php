@@ -10,7 +10,7 @@
         return ['name' => (string) ($profile?->publicName($locale) ?: $user->name), 'url' => $profile ? route('instructors.show', ['instructor' => App\Domain\Instructors\Queries\PublicInstructors::keyFor($profile, $locale)]) : null];
     })->filter(fn ($row) => $row['name'] !== '')->values();
     $instructors = $instructorRows->pluck('name');
-    $cover = $course->category?->image && $course->category->status === 'active' ? Illuminate\Support\Facades\Storage::disk('public')->url($course->category->image) : null;
+    $cover = $course->coverUrl();
     $previewUrl = $curriculum['preview_item'] ? route('catalog.preview', ['course' => $key, 'item' => $curriculum['preview_item']]) : null;
     $levelLabel = filled($course->level) ? (trans()->has('catalog.'.$course->level) ? __('catalog.'.$course->level) : $course->level) : null;
     $languageLabel = filled($course->content_language) ? (trans()->has('catalog.'.$course->content_language) ? __('catalog.'.$course->content_language) : $course->content_language) : null;

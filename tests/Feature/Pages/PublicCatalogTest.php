@@ -84,3 +84,22 @@ it('uses configured age bands and keeps search state on newest-first pagination'
     $this->get('/courses?'.http_build_query(['q' => 'drawing', 'age_band' => $band->id, 'page' => 2]))
         ->assertOk()->assertSee('Drawing-1')->assertDontSee('Drawing-14');
 })->group('T-P2-04', 'A2');
+
+it('shows a published course thumbnail before falling back to its category cover', function (): void {
+    $category = Category::query()->create([
+        'name' => ['en' => 'Arts'], 'slug_en' => 'arts', 'slug_ar' => 'arts-ar', 'image' => 'categories/cover.png',
+    ]);
+    $course = publicCatalogCourse('drawing-ideas', [
+        'category_id' => $category->id, 'thumbnail_path' => 'course-thumbnails/drawing.jpg',
+    ]);
+    publicCatalogCourse('private-drawing', [
+        'status' => CourseStatus::Private, 'thumbnail_path' => 'course-thumbnails/private.jpg',
+    ]);
+
+    $this->withSession(['locale' => 'en'])->get('/courses')->assertOk()
+        ->assertSee('/storage/course-thumbnails/drawing.jpg', false)
+        ->assertDontSee('/storage/course-thumbnails/private.jpg', false);
+
+    $course->update(['thumbnail_path' => null]);
+    $this->get('/courses')->assertOk()->assertSee('/storage/categories/cover.png', false);
+})->group('T-P3-03', 'PRD-09-2');

@@ -10,6 +10,7 @@ use App\Domain\Shared\Search\HasSearchText;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Pennant\Feature;
 use Spatie\Translatable\HasTranslations;
 
@@ -24,6 +25,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $overview_video_url
  * @property string|null $preview_video_provider
  * @property string|null $preview_video_url
+ * @property string|null $thumbnail_path
  */
 final class Course extends Model
 {
@@ -60,7 +62,7 @@ final class Course extends Model
         'slug_ar', 'slug_en', 'level', 'content_language', 'min_age', 'max_age',
         'format', 'owner_type', 'status', 'access_mode', 'sequence_mode', 'featured', 'ai_enabled',
         'wizard_step', 'wizard_completed', 'faqs', 'requirements', 'outcomes',
-        'overview_video_provider', 'overview_video_url', 'preview_video_provider', 'preview_video_url',
+        'overview_video_provider', 'overview_video_url', 'preview_video_provider', 'preview_video_url', 'thumbnail_path',
         'seo_title', 'seo_description', 'seo_keywords', 'canonical_url',
     ];
 
@@ -94,6 +96,16 @@ final class Course extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function coverUrl(): ?string
+    {
+        $path = $this->thumbnail_path;
+        if ($path === null && $this->category?->status === 'active') {
+            $path = $this->category->image;
+        }
+
+        return filled($path) ? Storage::disk('public')->url($path) : null;
     }
 
     /** @return BelongsToMany<User, $this> */

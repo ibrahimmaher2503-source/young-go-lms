@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
 use Closure;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -93,7 +94,7 @@ final class CourseWizardSteps
             array_map(static fn (string $provider): string => __('courses.video_providers.'.$provider), SaveCourseWizard::VIDEO_LINK_PROVIDERS),
         );
 
-        return array_map(
+        $videos = array_map(
             static fn (string $video): Section => Section::make(__('courses.'.$video))
                 ->icon('heroicon-o-video-camera')->columns(['default' => 1, 'md' => 2])->schema([
                     Select::make($video.'_provider')->label(__('courses.'.$video.'_provider'))->options($providers),
@@ -102,6 +103,20 @@ final class CourseWizardSteps
                 ]),
             ['overview_video', 'preview_video'],
         );
+
+        return [
+            ...$videos,
+            Section::make(__('courses.thumbnail'))->icon('heroicon-o-photo')->schema([
+                FileUpload::make('thumbnail_path')->label(__('courses.thumbnail'))
+                    ->disk('public')->visibility('public')
+                    ->acceptedFileTypes(SaveCourseWizard::THUMBNAIL_MIME_TYPES)
+                    ->imageEditor()->imageAspectRatio('16:9')->automaticallyOpenImageEditorForAspectRatio()
+                    ->maxSize(SaveCourseWizard::THUMBNAIL_MAX_KILOBYTES)->storeFiles(false)->preventFilePathTampering()
+                    ->getUploadedFileUsing(static fn (FileUpload $component, string $file): ?array => $component->isFilePathAuthorized($file)
+                        ? $component->getUploadedFile($file, null)
+                        : null),
+            ]),
+        ];
     }
 
     /** @return list<mixed> */

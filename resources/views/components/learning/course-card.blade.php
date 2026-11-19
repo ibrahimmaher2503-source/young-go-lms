@@ -1,8 +1,8 @@
 @props(['course', 'wishlist' => false, 'compact' => false])
-@php($hasCover = $course->category?->image && $course->category->status === 'active')
-<article @class(['min-w-0 rounded-xl border border-border bg-surface p-4', 'space-y-3' => ! $compact || ! $hasCover, 'grid items-start gap-4 sm:grid-cols-[2fr_3fr]' => $compact && $hasCover, 'shadow-sm' => $compact])>
-    @if($hasCover)
-        <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($course->category->image) }}" alt=""
+@php($cover = $course->coverUrl())
+<article @class(['min-w-0 rounded-xl border border-border bg-surface p-4', 'space-y-3' => ! $compact || ! $cover, 'grid items-start gap-4 sm:grid-cols-[2fr_3fr]' => $compact && $cover, 'shadow-sm' => $compact])>
+    @if($cover)
+        <img src="{{ $cover }}" alt=""
             loading="lazy" class="aspect-video w-full rounded-lg object-cover">
     @endif
     <div class="min-w-0 space-y-3">

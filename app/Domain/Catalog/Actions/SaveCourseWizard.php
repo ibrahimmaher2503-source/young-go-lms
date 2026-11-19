@@ -7,6 +7,7 @@ namespace App\Domain\Catalog\Actions;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Commerce\CoursePrice;
+use App\Domain\Media\ImageReencoder;
 use App\Domain\Media\LessonPublishRule;
 use App\Domain\Media\MediaProviders;
 use App\Domain\Shared\Markets\Market;
@@ -16,10 +17,13 @@ use App\Models\MediaAsset;
 use App\Models\User;
 use Brick\Money\Money;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -44,6 +48,10 @@ final class SaveCourseWizard
     public const array CONTENT_LANGUAGES = ['ar', 'en', 'both'];
 
     public const array VIDEO_LINK_PROVIDERS = ['youtube', 'vimeo'];
+
+    public const int THUMBNAIL_MAX_KILOBYTES = 4096;
+
+    public const array THUMBNAIL_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
     /** Statuses the wizard may set; publishing and review go through their own actions. */
     public const array WIZARD_STATUSES = ['draft', 'private', 'upcoming', 'suspended', 'archived'];
@@ -73,6 +81,9 @@ final class SaveCourseWizard
             $pricing = $this->validatePricing($actor, $record, $data, $step >= self::PRICING_STEP && $complete);
             $videos = $step >= self::MEDIA_STEP ? $this->validateVideos($record, $data, $complete) : [];
             $before = $record->exists ? Arr::only($record->getAttributes(), ['owner_type', 'owner_instructor_id', 'status', 'featured']) : null;
+            if ($step >= self::MEDIA_STEP && array_key_exists('thumbnail_path', $data)) {
+                $record->thumbnail_path = $this->saveThumbnail($record, $data['thumbnail_path']);
+            }
             $record->fill([...$clean['attributes'], ...$videos]);
             $record->slug_ar = $clean['slugs']['slug_ar'] ?? $record->slug_ar ?? $this->uniqueSlug('slug_ar', $record, $record->getTranslation('title', 'ar', false) ?: $record->getTranslation('title', 'en', false), 'ar');
             $record->slug_en = $clean['slugs']['slug_en'] ?? $record->slug_en ?? $this->uniqueSlug('slug_en', $record, $record->getTranslation('title', 'en', false) ?: $record->getTranslation('title', 'ar', false), 'en');
@@ -98,6 +109,69 @@ final class SaveCourseWizard
     public static function canSetPricing(User $actor): bool
     {
         return $actor->can('panel.admin.access') && $actor->can('course.publish') && ! $actor->hasRole('instructor_independent');
+    }
+
+    private function saveThumbnail(Course $course, mixed $input): ?string
+    {
+        $oldPath = $course->thumbnail_path;
+        if (is_array($input)) {
+            if (count($input) > 1) {
+                throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_path')]);
+            }
+            $input = array_values($input)[0] ?? null;
+        }
+
+        $path = match (true) {
+            $input === null, $input === $oldPath => $input,
+            $input instanceof UploadedFile => $this->storeThumbnail($input),
+            default => throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_path')]),
+        };
+
+        if ($path !== $oldPath && $oldPath !== null && preg_match('#^course-thumbnails/[a-f0-9-]{36}\.(?:jpg|png)$#D', $oldPath) === 1) {
+            DB::afterCommit(static fn () => rescue(static function () use ($oldPath): void {
+                if (! Course::query()->where('thumbnail_path', $oldPath)->exists()) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }));
+        }
+
+        return $path;
+    }
+
+    private function storeThumbnail(UploadedFile $file): string
+    {
+        $maxBytes = self::THUMBNAIL_MAX_KILOBYTES * 1024;
+        if (! $file->isValid()) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_type')]);
+        }
+        if ($file->getSize() > $maxBytes) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.too_large')]);
+        }
+        $bytes = $file->get();
+        if (! is_string($bytes) || $bytes === '') {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_type')]);
+        }
+        if (strlen($bytes) > $maxBytes) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.too_large')]);
+        }
+        if (! in_array((new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes), self::THUMBNAIL_MIME_TYPES, true)) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_type')]);
+        }
+
+        try {
+            $image = ImageReencoder::reencode($bytes, [16, 9]);
+        } catch (ValidationException) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.invalid_type')]);
+        }
+
+        $disk = Storage::disk('public');
+        $path = 'course-thumbnails/'.Str::uuid().'.'.$image['extension'];
+        DB::afterRollBack(static fn () => rescue(static fn () => $disk->delete($path)));
+        if (! $disk->put($path, $image['bytes'], 'public')) {
+            throw ValidationException::withMessages(['thumbnail_path' => __('media.store_failed')]);
+        }
+
+        return $path;
     }
 
     /**

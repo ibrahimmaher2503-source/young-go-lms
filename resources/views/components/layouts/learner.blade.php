@@ -14,13 +14,11 @@
         ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('my/courses') || request()->is('learn/*')],
         ['/family', 'user', __('pages.nav_family'), request()->is('family')],
         ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
     ] : [
         ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('learn/*')],
         ['/my/courses', 'layers', __('pages.nav_courses'), request()->is('my/courses')],
         ['/link', 'user', __('pages.nav_link'), request()->is('link')],
         ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile')],
     ];
 @endphp
 <!doctype html>
