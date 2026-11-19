@@ -91,6 +91,22 @@ it('masks the Instapay address to its last four characters and never shows the f
         ->and($masked)->not->toBe('name@instapay');
 })->group('T-DECISIONS-2', 'O-012', 'A2');
 
+it('shows finance the localized Instapay method and only the masked address in the payout profile list', function (string $locale, string $method): void {
+    $this->withoutVite();
+    dipSave(dipInstructor(), 'name@instapay');
+    $finance = User::factory()->create(['status' => 'active', 'locale' => $locale])->assignRole('finance');
+
+    $this->actingAs($finance)->get('/finance/payout-profiles')
+        ->assertOk()
+        ->assertSee($method)
+        ->assertSee('*********apay')
+        ->assertDontSee('name@instapay')
+        ->assertDontSee('Instapay Holder');
+})->with([
+    'Arabic' => ['ar', 'إنستاباي'],
+    'English' => ['en', 'Instapay'],
+])->group('T-DECISIONS-2', 'O-012', 'YG-GAP-INS-003', 'A2');
+
 it('reveals the Instapay address only to a user with payout_profile.reveal and audits the reveal without values', function (): void {
     $profile = dipSave(dipInstructor(), 'name@instapay');
     $finance = User::factory()->create(['status' => 'active'])->assignRole('finance');

@@ -28,11 +28,14 @@ use App\Domain\Instructors\Actions\SavePayoutProfile;
 use App\Domain\Notifications\NotificationDispatch;
 use App\Domain\Notifications\NotificationEventDefinition;
 use App\Domain\Notifications\NotificationMatrix;
+use App\Filament\Resources\Settlements\Pages\ListSettlements;
 use App\Filament\Resources\Settlements\SettlementResource;
 use App\Filament\Resources\Statements\StatementResource;
 use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Filament\Actions\Testing\TestAction;
+use Filament\Forms\Components\Select;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,6 +43,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
@@ -707,6 +711,58 @@ it('A6 the instructor panel lists only the own statements and the instructor can
     $this->actingAs($mine)->get('/finance/settlements')->assertStatus(403);
 })->group('T-P8-10', 'A6');
 
+it('the finance payout action localizes the allowed methods and rejects unsupported choices', function (string $currency, string $locale, array $options, string $forbiddenMethod): void {
+    $this->withoutVite();
+    $finance = t810_user('finance');
+    $finance->forceFill(['locale' => $locale])->save();
+    $entry = t810_entry(t810_instructor(), LedgerEntryType::Earning, 100000, '2026-09-05 10:00:00', currency: $currency);
+    $batch = app(CreateSettlementBatch::class)($finance, $currency, [$entry->id]);
+    $batch = app(ApproveSettlement::class)(t810_user('finance'), $batch);
+    $item = $batch->items()->sole();
+
+    $this->actingAs($finance)->get('/finance/settlements')->assertOk();
+    app()->setLocale($locale);
+    Livewire::test(ListSettlements::class)
+        ->mountAction(TestAction::make('payout')->table($batch))
+        ->assertSchemaComponentExists('method', checkComponentUsing: fn (Select $field): bool => $field->getOptions() === $options)
+        ->fillForm(['item_id' => $item->id, 'method' => $forbiddenMethod, 'reference' => 'TEST-12345', 'paid_on' => now()->toDateString()])
+        ->callMountedAction()
+        ->assertHasFormErrors(['method']);
+
+    expect($item->fresh()->paid_at)->toBeNull()
+        ->and($entry->fresh()->status)->toBe(LedgerStatus::Approved);
+})->with([
+    'EGP Arabic' => ['EGP', 'ar', ['bank' => 'تحويل بنكي', 'wallet' => 'محفظة إلكترونية', 'instapay' => 'إنستاباي'], 'cash'],
+    'EGP English' => ['EGP', 'en', ['bank' => 'Bank transfer', 'wallet' => 'Mobile wallet', 'instapay' => 'Instapay'], 'cash'],
+    'SAR Arabic' => ['SAR', 'ar', ['bank' => 'تحويل بنكي'], 'wallet'],
+    'SAR English' => ['SAR', 'en', ['bank' => 'Bank transfer'], 'wallet'],
+])->group('T-DECISIONS-2', 'O-012', 'YG-GAP-INS-003', 'A2');
+
+it('localizes paid Instapay and legacy methods in finance settlement details', function (string $locale, string $instapay, string $cash, string $other): void {
+    $this->withoutVite();
+    $finance = t810_user('finance');
+    $finance->forceFill(['locale' => $locale])->save();
+    $entries = collect(range(1, 3))->map(fn () => t810_entry(t810_instructor(), LedgerEntryType::Earning, 100000, '2026-09-05 10:00:00'));
+    $batch = app(CreateSettlementBatch::class)($finance, 'EGP', $entries->pluck('id')->all());
+    $batch = app(ApproveSettlement::class)(t810_user('finance'), $batch);
+    [$instapayItem, $cashItem, $otherItem] = $batch->items()->orderBy('id')->get()->all();
+    app(RecordSettlementPayout::class)($finance, $instapayItem, PayoutMethod::Instapay, 'IPA-TEST-123', now()->toDateString());
+    app(RecordSettlementPayout::class)($finance, $cashItem, PayoutMethod::Bank, 'LEGACY-CASH', now()->toDateString());
+    app(RecordSettlementPayout::class)($finance, $otherItem, PayoutMethod::Bank, 'LEGACY-OTHER', now()->toDateString());
+    DB::table('instructor_settlement_items')->where('id', $cashItem->id)->update(['payout_method' => 'cash']);
+    DB::table('instructor_settlement_items')->where('id', $otherItem->id)->update(['payout_method' => 'other']);
+
+    $this->actingAs($finance)->get('/finance/settlements')->assertOk();
+    app()->setLocale($locale);
+    $page = Livewire::test(ListSettlements::class)->mountAction(TestAction::make('details')->table($batch));
+    $details = $page->instance()->getMountedAction()?->getModalContent();
+
+    expect($details?->render())->toContain("<td>{$instapay}</td>", "<td>{$cash}</td>", "<td>{$other}</td>", 'IPA-TEST-123');
+})->with([
+    'Arabic' => ['ar', 'إنستاباي', 'نقدًا', 'أخرى'],
+    'English' => ['en', 'Instapay', 'Cash', 'Other'],
+])->group('T-DECISIONS-2', 'O-012', 'YG-GAP-INS-003', 'A2');
+
 it('A6 the PDF route: 404 for another instructor and a student, login redirect for a guest, owner and finance get 200 or 503', function (): void {
     $finance = t810_user('finance');
     $owner = t810_instructor();
@@ -751,21 +807,29 @@ it('A6 StatementPdf::data returns RTL/AR and LTR/EN variants with localized cour
         ->and($ar['number'])->toBe($statement->number);
 })->group('T-P8-10', 'A6');
 
-it('A6 the statement Blade view renders for both locales with the matching direction', function (): void {
+it('A6 the statement prints only the permitted payout methods for its currency in the requested language', function (string $currency, string $locale, string $direction, string $methods): void {
     $finance = t810_user('finance');
-    $instructor = t810_instructor();
-    t810_entry($instructor, LedgerEntryType::Earning, 10000, '2026-09-05 10:00:00');
-    $statement = app(GenerateInstructorStatement::class)($finance, $instructor->id, '2026-09', 'EGP');
-    $pdf = app(StatementPdf::class);
+    $instructor = t810_instructor(false);
+    app(SavePayoutProfile::class)($instructor, [
+        'method' => 'instapay', 'holder_name' => 'Private Test Holder', 'instapay_address' => 'private.test@instapay',
+    ]);
+    t810_entry($instructor, LedgerEntryType::Earning, 10000, '2026-09-05 10:00:00', currency: $currency);
+    $statement = app(GenerateInstructorStatement::class)($finance, $instructor->id, '2026-09', $currency);
+    $data = app(StatementPdf::class)->data($statement, $locale);
 
-    $arHtml = view('statements.pdf', $pdf->data($statement, 'ar'))->render();
-    $enHtml = view('statements.pdf', $pdf->data($statement, 'en'))->render();
-
-    expect($arHtml)->toContain('dir="rtl"')
-        ->and($enHtml)->toContain('dir="ltr"')
-        ->and($arHtml)->toContain($statement->number)
-        ->and($enHtml)->toContain($statement->number);
-})->group('T-P8-10', 'A6');
+    expect($data['currency'])->toBe($currency)
+        ->and($data['payoutMethods'])->toBe($methods)
+        ->and(view('statements.pdf', $data)->render())->toContain(
+            "<html lang=\"{$locale}\" dir=\"{$direction}\">",
+            $statement->number,
+            __('settlements.pdf.methods', ['currency' => $currency], $locale).': '.$methods.'</div>',
+        )->not->toContain('private.test@instapay', 'Private Test Holder');
+})->with([
+    'EGP Arabic' => ['EGP', 'ar', 'rtl', 'تحويل بنكي / محفظة إلكترونية / إنستاباي'],
+    'EGP English' => ['EGP', 'en', 'ltr', 'Bank transfer / Mobile wallet / Instapay'],
+    'SAR Arabic' => ['SAR', 'ar', 'rtl', 'تحويل بنكي'],
+    'SAR English' => ['SAR', 'en', 'ltr', 'Bank transfer'],
+])->group('T-P8-10', 'T-DECISIONS-2', 'O-012', 'YG-GAP-INS-003', 'A6');
 
 it('A6 finance pages render in AR (rtl) and EN without raw keys', function (): void {
     $this->withoutVite();
