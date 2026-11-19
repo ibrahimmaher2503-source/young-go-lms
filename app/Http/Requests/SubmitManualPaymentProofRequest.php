@@ -83,7 +83,11 @@ final class SubmitManualPaymentProofRequest extends FormRequest
                 continue;
             }
 
-            return $parsed instanceof Carbon && ! str_contains($format, 'H') ? $parsed->setTime(12, 0) : $parsed;
+            if (! $parsed instanceof Carbon || $parsed->format($format) !== $value) {
+                continue;
+            }
+
+            return ! str_contains($format, 'H') ? $parsed->setTime(12, 0) : $parsed;
         }
 
         return null;
