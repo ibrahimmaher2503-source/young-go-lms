@@ -107,9 +107,42 @@ final class CourseWizardSteps
         ]);
     }
 
+    private static function videoAndThumbnailFields(): array
+    {
+        $providers = array_combine(
+            SaveCourseWizard::VIDEO_LINK_PROVIDERS,
+            array_map(static fn (string $provider): string => __('courses.video_providers.'.$provider), SaveCourseWizard::VIDEO_LINK_PROVIDERS),
+        );
+
+        $videos = array_map(
+            static fn (string $video): Section => Section::make(__('courses.'.$video))
+                ->icon('heroicon-o-video-camera')->columns(['default' => 1, 'md' => 2])->schema([
+                    Select::make($video.'_provider')->label(__('courses.'.$video.'_provider'))->options($providers),
+                    TextInput::make($video.'_url')->label(__('courses.'.$video.'_url'))
+                        ->url()->maxLength(2048)->extraInputAttributes(['dir' => 'ltr']),
+                ]),
+            ['overview_video', 'preview_video'],
+        );
+
+        return [
+            ...$videos,
+            Section::make(__('courses.thumbnail'))->icon('heroicon-o-photo')->schema([
+                FileUpload::make('thumbnail_path')->label(__('courses.thumbnail'))
+                    ->disk('public')->visibility('public')
+                    ->acceptedFileTypes(SaveCourseWizard::THUMBNAIL_MIME_TYPES)
+                    ->imageEditor()->imageAspectRatio('16:9')->automaticallyOpenImageEditorForAspectRatio()
+                    ->maxSize(SaveCourseWizard::THUMBNAIL_MAX_KILOBYTES)->storeFiles(false)->preventFilePathTampering()
+                    ->getUploadedFileUsing(static fn (FileUpload $component, string $file): ?array => $component->isFilePathAuthorized($file)
+                        ? $component->getUploadedFile($file, null)
+                        : null),
+            ]),
+        ];
+    }
+
     private static function media(): Section
     {
         return Section::make(__('course_wizard.media_section'))->icon('heroicon-o-photo')->schema([
+            ...self::videoAndThumbnailFields(),
             FileUpload::make('cover_image')->label(__('course_wizard.cover_image'))->helperText(__('course_wizard.cover_help'))
                 ->disk('public')->directory('courses')->visibility('public')->image()
                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(CourseMedia::MAX_KILOBYTES)

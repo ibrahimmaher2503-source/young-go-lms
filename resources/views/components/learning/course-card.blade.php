@@ -2,7 +2,7 @@
 @props(['course', 'wishlist' => false, 'compact' => false, 'price' => null, 'market' => null, 'availability' => null, 'instructorNames' => null, 'placeholder' => false, 'lessons' => null, 'priority' => false])
 @php
     $categoryCover = $course->category?->status === 'active' ? $course->category->image : null;
-    $cover = ($compact || $placeholder) && filled($course->cover_image) ? $course->cover_image : $categoryCover;
+    $cover = ($compact || $placeholder) && filled($course->cover_image) ? $course->cover_image : ($course->thumbnail_path ?? $categoryCover);
     $instructors = $instructorNames ?? $course->instructors->where('status', 'active')->map(static fn ($user): string => (string) $user->display_name)->filter()->implode(', ');
 @endphp
 <article @class([

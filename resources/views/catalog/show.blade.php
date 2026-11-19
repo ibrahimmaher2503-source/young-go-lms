@@ -10,8 +10,7 @@
         return ['name' => (string) ($profile?->publicName($locale) ?: $user->display_name), 'headline' => $profile ? trim((string) $profile->getTranslation('headline', $locale)) : '', 'url' => $profile ? route('instructors.show', ['instructor' => App\Domain\Instructors\Queries\PublicInstructors::keyFor($profile, $locale)]) : null];
     })->filter(fn ($row) => $row['name'] !== '')->values();
     $instructors = $instructorRows->pluck('name');
-    $cover = filled($course->cover_image) ? Illuminate\Support\Facades\Storage::disk('public')->url($course->cover_image)
-        : ($course->category?->image && $course->category->status === 'active' ? Illuminate\Support\Facades\Storage::disk('public')->url($course->category->image) : null);
+    $cover = $course->coverUrl();
     $customRows = \App\Domain\Catalog\CourseCustomValues::publicRows($course);
     $previewUrl = $curriculum['preview_item'] ? route('catalog.preview', ['course' => $key, 'item' => $curriculum['preview_item']]) : null;
     $levelLabel = filled($course->level) ? (trans()->has('catalog.'.$course->level) ? __('catalog.'.$course->level) : $course->level) : null;

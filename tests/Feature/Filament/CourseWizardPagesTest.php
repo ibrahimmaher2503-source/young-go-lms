@@ -16,6 +16,9 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
@@ -190,6 +193,106 @@ it('authorizes media changes before validating courses outside the instructor ed
         expect(fn () => $save($instructor, ['promo_video' => ['provider' => 'unknown', 'url' => 'https://example.com/x']], $course, SaveCourseWizard::MEDIA_STEP))
             ->toThrow(AuthorizationException::class);
     }
+})->group('T-P3-03', 'PRD-09-2');
+
+it('previews and saves a cropped course thumbnail, preserves it on draft retries and cleans up replacements', function (): void {
+    $disk = Storage::fake('course-thumbnails-public');
+    Storage::set('public', $disk);
+    $admin = wizardPageUser('admin');
+    $this->actingAs($admin);
+    $course = Course::query()->create([
+        'title' => ['en' => 'Thumbnail example'], 'slug_ar' => 'cover-ar', 'slug_en' => 'cover-en',
+        'access_mode' => 'free', 'wizard_step' => 4,
+    ]);
+
+    $original = UploadedFile::fake()->image('cover.jpg', 320, 240);
+    $upload = UploadedFile::fake()->createWithContent('cover.jpg', $original->get().'hidden image metadata');
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['thumbnail_path' => [$upload]])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+
+    $first = $course->refresh()->thumbnail_path;
+    expect($first)->toBeString()->toMatch('#^course-thumbnails/[a-f0-9-]+\.jpg$#');
+    $disk->assertExists($first);
+    $bytes = $disk->get($first);
+    expect(array_slice(getimagesizefromstring($bytes), 0, 2))->toBe([320, 180])
+        ->and($bytes)->not->toContain('hidden image metadata');
+
+    Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->assertFormSet(['thumbnail_path' => $first])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors()
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+    app(SaveCourseWizard::class)($admin, [], $course, 4);
+    app(SaveCourseWizard::class)($admin, ['thumbnail_path' => []], $course, 2);
+    expect($course->refresh()->thumbnail_path)->toBe($first)
+        ->and($disk->allFiles())->toBe([$first]);
+
+    $edit = Livewire::test(EditCourse::class, ['record' => $course->getKey()])
+        ->fillForm(['thumbnail_path' => [UploadedFile::fake()->image('replacement.jpg', 160, 160)]])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+    $replacement = $course->refresh()->thumbnail_path;
+    $edit->assertFormSet(['thumbnail_path' => $replacement])
+        ->callAction('saveDraft')
+        ->assertHasNoFormErrors();
+    expect($replacement)->not->toBe($first)
+        ->and($course->refresh()->thumbnail_path)->toBe($replacement)
+        ->and(array_slice(getimagesizefromstring($disk->get($replacement)), 0, 2))->toBe([160, 90])
+        ->and($disk->allFiles())->toBe([$replacement]);
+
+    $edit->fillForm(['thumbnail_path' => []])->call('save')->assertHasNoFormErrors();
+    expect($course->refresh()->thumbnail_path)->toBeNull()
+        ->and($disk->allFiles())->toBe([]);
+})->group('T-P3-03', 'PRD-09-2');
+
+it('rejects forged paths, invalid bytes and oversized thumbnail dimensions and preserves the current image', function (): void {
+    $disk = Storage::fake('course-thumbnails-public');
+    Storage::set('public', $disk);
+    $actor = wizardPageUser('admin');
+    $course = Course::query()->create([
+        'title' => ['en' => 'Thumbnail validation'], 'slug_ar' => 'cover-validation-ar', 'slug_en' => 'cover-validation-en',
+        'wizard_step' => 4,
+    ]);
+    $save = app(SaveCourseWizard::class);
+    $first = $save($actor, ['thumbnail_path' => [UploadedFile::fake()->image('cover.jpg', 320, 240)]], $course, 4)->thumbnail_path;
+    $foreign = $save($actor, [
+        'title' => ['en' => 'Other course'], 'thumbnail_path' => [UploadedFile::fake()->image('other.jpg', 160, 90)],
+    ], null, 4)->thumbnail_path;
+    $invalid = UploadedFile::fake()->createWithContent('bad.png', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+    $wide = UploadedFile::fake()->image('wide.jpg', 9000, 20);
+    $tooLarge = UploadedFile::fake()->createWithContent('large.jpg', $wide->get().str_repeat('x', 4096 * 1024));
+
+    foreach ([$foreign, $invalid, $wide, $tooLarge] as $input) {
+        expect(fn () => $save($actor, ['thumbnail_path' => [$input]], $course, 4))->toThrow(function (ValidationException $error): void {
+            expect($error->errors())->toHaveKey('thumbnail_path');
+        });
+    }
+    expect($course->refresh()->thumbnail_path)->toBe($first)
+        ->and($disk->allFiles())->toEqualCanonicalizing([$first, $foreign]);
+})->group('T-P3-03', 'PRD-09-2');
+
+it('keeps the old thumbnail and removes the new upload if the enclosing transaction rolls back', function (): void {
+    $disk = Storage::fake('course-thumbnails-public');
+    Storage::set('public', $disk);
+    $actor = wizardPageUser('admin');
+    $save = app(SaveCourseWizard::class);
+    $course = $save($actor, ['title' => ['en' => 'Rollback'], 'thumbnail_path' => [UploadedFile::fake()->image('old.jpg', 160, 90)]], null, 4);
+    $oldPath = $course->thumbnail_path;
+
+    DB::beginTransaction();
+    try {
+        $newPath = $save($actor, ['thumbnail_path' => [UploadedFile::fake()->image('new.jpg', 160, 90)]], $course, 4)->thumbnail_path;
+        expect($newPath)->not->toBe($oldPath);
+        $disk->assertExists([$oldPath, $newPath]);
+    } finally {
+        DB::rollBack();
+    }
+
+    expect($course->refresh()->thumbnail_path)->toBe($oldPath)
+        ->and($disk->allFiles())->toBe([$oldPath]);
 })->group('T-P3-03', 'PRD-09-2');
 
 it('hides ownership, status and featured from instructors and keeps their values', function (): void {
