@@ -43,3 +43,7 @@ The owner accepted P8 as it stands, with the defects listed in `docs/reviews/G7_
 - G7 for P8 is closed as "accepted with known defects", not as a 4.5 pass. No further fix cycles are required for P8.
 - Remaining defects stay as backlog items. They are not claimed as fixed.
 - T-P8-MG stays `todo` until the other gate criteria (owner decisions, performance budget) are done.
+
+## PO decision 2026-11-19: P9 design-only defects accepted
+
+The owner accepted the remaining design-only defects of P9 (re-review `G7_P9_REREVIEW_2026-11-19.md`: mean 4.18, none at 4.5). Functional defects X1-X5 and D1 were fixed (commit `beebd04`). Open and accepted as backlog: D2, C1, H1, X6, X7, W1b, P1, R2 (partial). G7 for P9 is closed as "accepted with known defects". T-P9-MG and T-P8-MG still need the owner-fact items (see HANDOFF_NEXT_PROMPT.md) before they can be marked done.
