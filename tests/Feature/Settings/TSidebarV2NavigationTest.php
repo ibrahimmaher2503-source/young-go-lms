@@ -4,19 +4,34 @@ declare(strict_types=1);
 
 // T-SIDEBAR-V2 | cases 1, 2, 3, 5, 6 | StaffNavigation, HasQueueBadge, OrderResource
 
+use App\Domain\Commerce\ManualPaymentProof;
+use App\Domain\Commerce\Order;
+use App\Domain\Commerce\OrderStatus;
+use App\Domain\Commerce\PaymentAttempt;
+use App\Domain\Commerce\PaymentEvent;
+use App\Domain\Commerce\PaymentEventOutcome;
+use App\Domain\Commerce\ProductType;
+use App\Domain\Entitlements\Entitlement;
+use App\Domain\Entitlements\EntitlementSource;
+use App\Domain\Shared\Markets\Market;
+use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Resources\Categories\CategoryResource;
 use App\Filament\Resources\Coupons\CouponResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\HelpRequests\HelpRequestResource;
 use App\Filament\Resources\ManualPayments\ManualPaymentProofResource;
 use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Shared\StaffNavigation;
+use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -99,6 +114,139 @@ it('lets payment.view holders open the orders resource and blocks writes', funct
     expect(OrderResource::canViewAny())->toBeFalse();
 })->group('T-SIDEBAR-V2', 'case-6');
 
-it('lists reference, learner, amount, status and gateway, filters by status and shows order lines')
-    ->todo('case 6 table columns, gateway label and view dialog need a Livewire table fixture; not written yet')
-    ->group('T-SIDEBAR-V2', 'case-6');
+it('lists the order details and payment method in each staff panel and language', function (string $panel, string $locale): void {
+    $staff = User::factory()->create(['status' => 'active', 'locale' => $locale])->assignRole($panel);
+    $payer = User::factory()->create(['display_name' => 'Order Payer']);
+    $createOrder = static fn (string $reference, OrderStatus $status): Order => Order::query()->create([
+        'reference' => $reference,
+        'payer_id' => $payer->id,
+        'market' => Market::Egypt->value,
+        'currency' => 'EGP',
+        'subtotal_minor' => 12575,
+        'total_minor' => 12345,
+        'discount_minor' => 230,
+        'status' => $status,
+        'idempotency_key' => $reference,
+        'request_hash' => hash('sha256', $reference),
+    ]);
+    $createAttempt = static fn (Order $order, int $sequence, string $gateway): PaymentAttempt => PaymentAttempt::query()->create([
+        'order_id' => $order->id,
+        'sequence' => $sequence,
+        'gateway' => $gateway,
+        'reference' => $order->reference.'-'.$sequence,
+        'currency' => $order->currency,
+        'amount_minor' => $order->total_minor,
+        'expires_at' => now()->addHour(),
+    ]);
+
+    $fulfilled = $createOrder('GATEWAY-ORDER', OrderStatus::Paid);
+    $paymobAttempt = $createAttempt($fulfilled, 1, 'paymob');
+    $createAttempt($fulfilled, 2, 'fake');
+    PaymentEvent::query()->create([
+        'order_id' => $fulfilled->id,
+        'payment_attempt_id' => $paymobAttempt->id,
+        'gateway' => 'paymob',
+        'event_key' => 'orders-paymob-success',
+        'provider_event_id' => 'orders-paymob-success',
+        'state' => 'success',
+        'currency' => $fulfilled->currency,
+        'amount_minor' => $fulfilled->total_minor,
+        'outcome' => PaymentEventOutcome::Fulfilled,
+        'processed_at' => now(),
+    ]);
+    $course = Course::query()->create([
+        'title' => ['en' => 'Drawing course', 'ar' => 'دورة رسم'],
+        'slug_en' => 'drawing-course',
+        'slug_ar' => 'دورة-رسم',
+        'status' => 'published',
+        'access_mode' => 'paid',
+    ]);
+    $fulfilled->items()->create([
+        'learner_id' => $payer->id,
+        'product_type' => ProductType::Course,
+        'product_id' => $course->id,
+        'unit_price_minor' => $fulfilled->subtotal_minor,
+        'currency' => $fulfilled->currency,
+        'title_en' => 'Drawing course',
+        'title_ar' => 'دورة رسم',
+    ]);
+    Entitlement::query()->create([
+        'learner_id' => $payer->id,
+        'course_id' => $course->id,
+        'source_type' => EntitlementSource::Purchase,
+        'source_ref' => 'order:'.$fulfilled->reference,
+        'starts_at' => now(),
+        'status' => Entitlement::ACTIVE,
+    ]);
+
+    $manual = $createOrder('TRANSFER-ORDER', OrderStatus::Pending);
+    $createAttempt($manual, 1, 'fake');
+    ManualPaymentProof::query()->create([
+        'order_id' => $manual->id,
+        'payer_id' => $payer->id,
+        'payer_name' => $payer->display_name,
+        'sender_account' => '01234567890',
+        'transfer_reference' => 'TEST-TRANSFER',
+        'currency' => $manual->currency,
+        'amount_minor' => $manual->total_minor,
+        'transferred_at' => now(),
+        'file_path' => 'proofs/test.png',
+        'file_mime' => 'image/png',
+        'file_size' => 32,
+        'file_sha256' => hash('sha256', 'test proof'),
+        'sla_due_at' => now()->addDay(),
+    ]);
+    $unattempted = $createOrder('NO-PAYMENT-ORDER', OrderStatus::Pending);
+
+    $manualFallbacks = array_map(
+        static fn (OrderStatus $status): Order => $createOrder('MANUAL-'.$status->value, $status),
+        [OrderStatus::Paid, OrderStatus::Refunded, OrderStatus::PartiallyRefunded, OrderStatus::Disputed],
+    );
+    $attemptFallbacks = array_map(function (OrderStatus $status) use ($createOrder, $createAttempt): Order {
+        $order = $createOrder('ATTEMPT-'.$status->value, $status);
+        $createAttempt($order, 1, 'paymob');
+        $createAttempt($order, 2, 'fake');
+
+        return $order;
+    }, [OrderStatus::Pending, OrderStatus::Failed, OrderStatus::Cancelled]);
+
+    $ordersBefore = DB::table('orders')->orderBy('id')->get()->all();
+    $entitlementsBefore = DB::table('entitlements')->orderBy('id')->get()->all();
+
+    $this->actingAs($staff)->get(route("filament.{$panel}.resources.orders.index"))
+        ->assertOk()
+        ->assertSee(__('orders.col_gateway', [], $locale))
+        ->assertSee($fulfilled->reference);
+    app()->setLocale($locale);
+    Filament::setCurrentPanel(Filament::getPanel($panel));
+
+    $table = Livewire::test(ListOrders::class)
+        ->assertTableColumnStateSet('reference', $fulfilled->reference, $fulfilled)
+        ->assertTableColumnStateSet('payer.display_name', 'Order Payer', $fulfilled)
+        ->assertTableColumnStateSet('total_minor', (new PriceFormatter)->format($fulfilled->total(), Market::Egypt, $locale), $fulfilled)
+        ->assertTableColumnFormattedStateSet('status', __('refunds.order_status_paid'), $fulfilled)
+        ->assertTableColumnStateSet('last_gateway', __('orders.gateway_paymob'), $fulfilled)
+        ->assertTableColumnStateSet('last_gateway', __('orders.gateway_manual'), $manual)
+        ->assertTableColumnStateSet('last_gateway', '—', $unattempted);
+
+    foreach ($manualFallbacks as $order) {
+        $table->assertTableColumnStateSet('last_gateway', __('orders.gateway_manual'), $order);
+    }
+    foreach ($attemptFallbacks as $order) {
+        $table->assertTableColumnStateSet('last_gateway', __('orders.gateway_fake'), $order);
+    }
+
+    $table->filterTable('status', OrderStatus::Paid->value)
+        ->assertCanSeeTableRecords([$fulfilled])
+        ->assertCanNotSeeTableRecords([$manual, $unattempted])
+        ->mountTableAction('view', $fulfilled)
+        ->assertSchemaComponentStateSet('lines', [$locale === 'ar' ? 'دورة رسم' : 'Drawing course']);
+
+    expect(DB::table('orders')->orderBy('id')->get()->all())->toEqual($ordersBefore)
+        ->and(DB::table('entitlements')->orderBy('id')->get()->all())->toEqual($entitlementsBefore);
+})->with([
+    'admin English' => ['admin', 'en'],
+    'admin Arabic' => ['admin', 'ar'],
+    'finance English' => ['finance', 'en'],
+    'finance Arabic' => ['finance', 'ar'],
+])->group('T-SIDEBAR-V2', 'case-6', 'T-G7-FIXES-G', 'X5', 'D1', 'YG-GAP-PAY-004');
