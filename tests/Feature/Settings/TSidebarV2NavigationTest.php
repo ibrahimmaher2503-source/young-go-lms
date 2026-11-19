@@ -13,6 +13,7 @@ use App\Domain\Commerce\PaymentEventOutcome;
 use App\Domain\Commerce\ProductType;
 use App\Domain\Entitlements\Entitlement;
 use App\Domain\Entitlements\EntitlementSource;
+use App\Domain\Instructors\Models\InstructorAgreement;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Resources\Categories\CategoryResource;
@@ -23,6 +24,8 @@ use App\Filament\Resources\ManualPayments\ManualPaymentProofResource;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Refunds\RefundResource;
+use App\Filament\Resources\Reviews\CourseReviewResource;
+use App\Filament\Resources\SubmissionReview\SubmissionReviewResource;
 use App\Filament\Shared\StaffNavigation;
 use App\Models\Course;
 use App\Models\User;
@@ -41,18 +44,49 @@ beforeEach(function (): void {
 });
 
 it('orders the sidebar groups per panel as the catalog says', function (): void {
-    expect(array_slice(StaffNavigation::order('admin'), 0, 3))->toBe(['inbox', 'sales', 'courses'])
+    expect(array_slice(StaffNavigation::order('admin'), 0, 4))->toBe(['reviews', 'inbox', 'courses', 'sales'])
         ->and(array_slice(StaffNavigation::order('finance'), 0, 2))->toBe(['sales', 'finance'])
-        ->and(array_slice(StaffNavigation::order('instructor'), 0, 2))->toBe(['courses', 'inbox']);
+        ->and(array_slice(StaffNavigation::order('instructor'), 0, 3))->toBe(['courses', 'reviews', 'inbox']);
 
     $admin = StaffNavigation::order('admin');
     expect(array_search('people', $admin, true))->toBeGreaterThan(array_search('courses', $admin, true))
         ->and(array_search('settings', $admin, true))->toBeGreaterThan(array_search('reports', $admin, true));
 })->group('T-SIDEBAR-V2', 'case-1');
 
-it('shows the rendered admin navigation with Dashboard first and groups in catalog order')
-    ->todo('case 1 rendered groups: group label translation keys not confirmed; enable after app:check-translations keys are verified')
-    ->group('T-SIDEBAR-V2', 'case-1');
+it('shows dashboard then the authorized new-course shortcut', function (string $panel, string $role, bool $canCreate): void {
+    $this->actingAs(User::factory()->create(['status' => 'active'])->assignRole($role));
+    Filament::setCurrentPanel(Filament::getPanel($panel));
+    $groups = Filament::getNavigation();
+    $firstItems = array_values($groups[0]->getItems());
+    expect($firstItems[0]->getUrl())->toBe(url('/'.$panel));
+    $routes = collect($groups)->flatMap(fn ($group): array => $group->getItems())->map(fn ($item): string => $item->getUrl());
+    expect($routes->filter(fn (string $url): bool => $url === url("/{$panel}/courses/create"))->count())->toBe((int) $canCreate)
+        ->and($routes->duplicates()->all())->toBe([]);
+    if ($canCreate) {
+        expect($firstItems[1]->getLabel())->toBe(__('courses.new_course'));
+    }
+})->with([
+    ['admin', 'admin', true],
+    ['instructor', 'instructor_academy', true],
+    ['admin', 'marketing', false],
+    ['finance', 'finance', false],
+])->group('T-SIDEBAR-V2', 'T-P9-09', 'A1');
+
+it('keeps creation unavailable to an independent instructor who has not accepted the active agreement', function (): void {
+    InstructorAgreement::query()->create([
+        'version' => 'sidebar-v1',
+        'title' => ['ar' => 'اتفاقية المدرب', 'en' => 'Instructor agreement'],
+        'body' => ['ar' => 'اتفاقية اختبار', 'en' => 'Test agreement'],
+        'status' => InstructorAgreement::PUBLISHED,
+        'published_at' => now(),
+    ]);
+    $this->actingAs(User::factory()->create(['status' => 'active'])->assignRole('instructor_independent'));
+    Filament::setCurrentPanel(Filament::getPanel('instructor'));
+
+    $items = Filament::getNavigation()[0]->getItems();
+    expect(array_map(fn ($item): string => $item->getUrl(), $items))->toBe([url('/instructor')]);
+    $this->get('/instructor/courses/create')->assertForbidden();
+})->group('T-SIDEBAR-V2', 'T-P9-09', 'A1', 'YG-GAP-INS-002');
 
 it('keeps the item order inside each group', function (): void {
     $sales = StaffNavigation::GROUPS['sales'];
@@ -65,6 +99,21 @@ it('keeps the item order inside each group', function (): void {
     expect(array_search(CourseResource::class, $courses, true))->toBeLessThan(array_search(CategoryResource::class, $courses, true));
 
     expect(StaffNavigation::GROUPS['inbox'][0])->toBe(HelpRequestResource::class);
+
+    expect(StaffNavigation::GROUPS['reviews'])->toContain(CourseReviewResource::class, SubmissionReviewResource::class)
+        ->and($courses)->not->toContain(SubmissionReviewResource::class);
+})->group('T-SIDEBAR-V2', 'T-P9-09', 'A1', 'case-2');
+
+it('puts transfer proofs and refunds before order history in the finance sidebar', function (): void {
+    $this->actingAs(User::factory()->create(['status' => 'active'])->assignRole('finance'));
+    Filament::setCurrentPanel(Filament::getPanel('finance'));
+    $groups = Filament::getNavigation();
+    $sales = collect($groups)->first(fn ($group): bool => $group->getLabel() === __('navigation.groups.sales'));
+    expect(array_map(fn ($item): string => $item->getUrl(), array_slice($sales->getItems(), 0, 3)))->toBe([
+        ManualPaymentProofResource::getUrl(),
+        RefundResource::getUrl(),
+        OrderResource::getUrl(),
+    ]);
 })->group('T-SIDEBAR-V2', 'case-2');
 
 it('registers OrderResource in admin and finance but never in instructor', function (): void {

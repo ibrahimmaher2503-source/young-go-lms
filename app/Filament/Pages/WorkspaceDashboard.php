@@ -131,7 +131,7 @@ final class WorkspaceDashboard extends Dashboard
 
         foreach (StaffNavigation::order($panel->getId()) as $key) {
             $links = [];
-            foreach (StaffNavigation::GROUPS[$key] as $class) {
+            foreach (StaffNavigation::classes($key, $panel->getId()) as $class) {
                 if ($total >= self::QUICK_ACCESS_MAX || count($links) >= self::QUICK_ACCESS_PER_GROUP) {
                     break;
                 }
@@ -154,7 +154,11 @@ final class WorkspaceDashboard extends Dashboard
         return $groups;
     }
 
-    /** The queue block lists its links only while at least one queue has work; when all are clear it is one summary line. */
+    /**
+     * The queue block lists its links only while at least one queue has work.
+     *
+     * @param  list<array{empty: bool}>  $queues
+     */
     private function queueLinksShown(array $queues): bool
     {
         foreach ($queues as $queue) {

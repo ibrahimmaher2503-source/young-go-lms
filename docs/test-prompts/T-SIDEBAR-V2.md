@@ -9,10 +9,10 @@ Write Pest tests only; do not change application code. Repo rules: `AGENTS.md`. 
 - CSS: `resources/css/tokens.css` (`--yg-font-sidebar: 0.875rem`, `--yg-font-sidebar-group: 0.8125rem`) and the sidebar rules in `resources/css/filament-theme.css`.
 
 ## Cases
-1. Group order per panel: for admin, finance and instructor users, the grouped labels from `Filament::getNavigation()` equal `StaffNavigation::order($panel)` filtered to non-empty groups; Dashboard is first and ungrouped. Admin starts Messages, Sales, Courses; finance starts Sales, Finance; instructor starts Courses, Messages. People and Settings come after Reports/Courses/Sales in admin.
-2. Item order: in `sales` Orders precedes Transfer Proofs, Refunds and Coupons; in `courses` Courses precedes Categories; in `inbox` Help Requests is first.
+1. Group order per panel: grouped labels from `Filament::getNavigation()` follow `StaffNavigation::order($panel)` filtered to non-empty groups. Dashboard is first; the second ungrouped item opens the course wizard if the current panel registers it and the user can create. Admin starts Review and grading, Support and messages, Courses, Sales. Finance starts Sales, Finance. Instructor starts Courses, Review and grading, Support and messages.
+2. Item order: Finance shows Transfer Proofs, Refunds and Orders first within Sales; Admin starts with Orders. Courses precedes Categories; Help Requests is first in Support and messages. Review queues have their own group.
 3. Every registered class of each panel is in exactly one catalog group (existing parity test must stay green); `OrderResource` is registered in admin and finance, never in instructor.
-4. Collapse: only the active group and the panel queue group (`inbox` for admin and instructor, `sales` for finance) are not collapsed; all other groups are collapsed.
+4. Collapse: open the active group and the panel queue group (`reviews` for admin and instructor, `sales` for finance) by default. When the role has no visible review queue, open Support and messages if available.
 5. Badges, one dataset per resource (transfer proofs `pending`; help requests `new`/`in_progress`; course reviews `pending`; submissions `submitted`/`resubmitted`; essay attempts awaiting review; instructor applications `pending`; refunds `requested`/`approved`; data requests `requested`; settlements `draft`):
    - Count equals the seeded waiting rows; resolved/other rows are not counted.
    - Zero waiting rows returns `null` (no badge), color `warning`.

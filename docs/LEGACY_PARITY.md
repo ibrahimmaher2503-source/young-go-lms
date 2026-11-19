@@ -10,23 +10,23 @@ Every legacy item and where it lives now. Sidebar groups and order come from `Ap
 | Subscription Plans | `PlanResource`, `SubscriptionResource` | admin, finance | Sales and enrolment | built |
 | Manual Grants | `ManualGrantResource` | admin, finance | Sales and enrolment | built |
 | Role Assignments | `RolePermissionResource` | admin | People | built |
-| Instapay Payments | `ManualPaymentProofResource`, `PaymentReconciliationPage` | admin, finance | Sales and enrolment | built |
+| Instapay Payments | `ManualPaymentProofResource`, `PaymentReconciliationPage` | admin, finance | Sales and enrolment; transfer proofs first in Finance | built |
 | Coupon Checkout Usage | `CouponResource` (usage report) | admin, finance | Sales and enrolment | built |
 | Young Go Settings | `SettingsHub` + `GeneralSettingsPage`, `PaymentPayeeSettings`, `MarketingTags`, `RetentionSettings`, notification templates | admin | Settings | built |
 | Course Management | `CourseResource` | admin, instructor | Courses | built |
-| Add New Course | `CourseResource` create action (course wizard) | admin, instructor | Courses | built |
+| Add New Course | `CourseResource` create action (course wizard) | admin, instructor | Directly after Dashboard for users who can create | built |
 | Categories | `CategoryResource` | admin | Courses | built |
 | Coupons | `CouponResource` | admin, finance | Sales and enrolment | built |
 | Enrollments/Registrations | `ManualGrantResource`, `SubscriptionResource`, learner 360 | admin | Sales and enrolment, People | built |
 | Reports | `ReportsPage` | admin, finance, instructor | Reports | built |
 | Users | `StaffUserResource` | admin | People | built |
-| Messages/announcements | `AnnouncementResource` | admin, instructor | Messages | built |
-| Help-request inbox | `HelpRequestResource` | admin, instructor | Messages | built |
-| Newsletter | `NewsletterSubscriberResource` | admin | Messages | built |
-| Contact enquiries | `ContactEnquiryResource` | admin | Messages | built |
+| Messages/announcements | `AnnouncementResource` | admin, instructor | Support and messages | built |
+| Help-request inbox | `HelpRequestResource` | admin, instructor | Support and messages | built |
+| Newsletter | `NewsletterSubscriberResource` | admin | Website | built |
+| Contact enquiries | `ContactEnquiryResource` | admin | Support and messages | built |
 | Blog | `BlogPostResource`, `BlogCategoryResource`, `BlogTagResource` | admin | Website | built |
 | Profile | Account menu (security/2FA) and `/profile` | all | user menu | built |
 
-Added beyond legacy (kept from earlier tasks): lesson assistant pages (group Lesson assistant), instructor earnings/statements/payout profile and agreements (Finance and earnings), privacy requests, retention and audit log (Settings), submission/essay review and course reviews (Courses).
+Added beyond legacy: lesson assistant pages (Lesson assistant), instructor earnings, statements, payout profile and agreement (Finance and earnings), privacy requests, retention and audit log (Settings), learner devices (People), and course, submission and essay review queues (Review and grading).
 
 Visibility rule: an item shows only when the panel registers it and the user passes its `canAccess()`/`canViewAny()`; empty groups are hidden. A class registered in a panel but absent from the catalog appears under "More".

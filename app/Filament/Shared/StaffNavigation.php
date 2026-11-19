@@ -34,6 +34,7 @@ use App\Filament\Resources\ContactEnquiries\ContactEnquiryResource;
 use App\Filament\Resources\Coupons\CouponResource;
 use App\Filament\Resources\CourseRevisions\CourseRevisionResource;
 use App\Filament\Resources\Courses\CourseResource;
+use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\DataRequests\DataRequestResource;
 use App\Filament\Resources\EssayReview\EssayReviewResource;
 use App\Filament\Resources\HelpRequests\HelpRequestResource;
@@ -66,6 +67,8 @@ use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 
+use function Filament\Support\original_request;
+
 /**
  * T-P9-09: one legacy-parity sidebar for the admin, finance and instructor panels (PRD 19.2, docs/LEGACY_PARITY.md).
  * Groups and order are listed once here; each panel shows only the classes it registers and only those the user can open
@@ -79,26 +82,30 @@ final class StaffNavigation
      * @var array<string, list<class-string>>
      */
     public const array GROUPS = [
+        'reviews' => [
+            CourseRevisionResource::class, SubmissionReviewResource::class, EssayReviewResource::class, CourseReviewResource::class,
+        ],
         'courses' => [
-            CourseResource::class, SubmissionReviewResource::class, EssayReviewResource::class, CourseReviewResource::class, CourseRevisionResource::class,
-            LibraryResource::class, CategoryResource::class, LearnerDeviceResource::class,
+            CourseResource::class, LibraryResource::class, CategoryResource::class,
         ],
         'site' => [
-            BlogPostResource::class, CmsPageResource::class, HomepageBlockResource::class, InstructorProfileResource::class, BlogCategoryResource::class, BlogTagResource::class,
+            HomepageBlockResource::class, CmsPageResource::class, BlogPostResource::class, InstructorProfileResource::class,
+            NewsletterSubscriberResource::class, BlogCategoryResource::class, BlogTagResource::class,
         ],
         'sales' => [
             OrderResource::class, ManualPaymentProofResource::class, RefundResource::class, PaymentReconciliationPage::class, SubscriptionResource::class,
             PlanResource::class, BundleResource::class, CouponResource::class, ManualGrantResource::class,
         ],
         'finance' => [
-            SettlementResource::class, StatementResource::class, LedgerEntryResource::class, CommissionRuleResource::class, PayoutProfileResource::class,
+            SettlementResource::class, LedgerEntryResource::class, StatementResource::class, PayoutProfileResource::class, CommissionRuleResource::class,
             MyEarningsResource::class, MyStatementsResource::class, MyPayoutProfile::class, InstructorAgreementPage::class,
         ],
         'people' => [
-            LearnerThreeSixtyPage::class, InstructorApplicationResource::class, StaffUserResource::class, InstructorAgreementResource::class, RolePermissionResource::class,
+            StaffUserResource::class, LearnerThreeSixtyPage::class, InstructorApplicationResource::class, LearnerDeviceResource::class,
+            InstructorAgreementResource::class, RolePermissionResource::class,
         ],
         'inbox' => [
-            HelpRequestResource::class, ContactEnquiryResource::class, AnnouncementResource::class, NewsletterSubscriberResource::class,
+            HelpRequestResource::class, ContactEnquiryResource::class, AnnouncementResource::class,
         ],
         'reports' => [ReportsPage::class],
         'ai' => [AssistantTestConsole::class, AssistantInsights::class, AssistantAvailability::class, AssistantUsageReport::class, AssistantControls::class],
@@ -114,13 +121,15 @@ final class StaffNavigation
      * @var array<string, list<string>>
      */
     public const array PANEL_ORDER = [
-        'admin' => ['inbox', 'sales', 'courses', 'finance', 'reports', 'people', 'site', 'ai', 'settings'],
+        'admin' => ['reviews', 'inbox', 'courses', 'sales', 'people', 'reports', 'finance', 'site', 'ai', 'settings'],
         'finance' => ['sales', 'finance', 'reports', 'inbox', 'people', 'settings'],
-        'instructor' => ['courses', 'inbox', 'finance', 'reports', 'ai', 'sales'],
+        'instructor' => ['courses', 'reviews', 'inbox', 'finance', 'reports', 'ai'],
     ];
 
     /** The work-queue group each panel keeps open next to the active one. */
-    public const array QUEUE_GROUP = ['admin' => 'inbox', 'finance' => 'sales', 'instructor' => 'inbox'];
+    public const array QUEUE_GROUP = ['admin' => 'reviews', 'finance' => 'sales', 'instructor' => 'reviews'];
+
+    private const array FINANCE_SALES_PRIORITY = [ManualPaymentProofResource::class, RefundResource::class, OrderResource::class];
 
     /** @return list<string> group keys in sidebar order for a panel */
     public static function order(string $panelId): array
@@ -130,24 +139,47 @@ final class StaffNavigation
         return [...$first, ...array_values(array_diff(array_keys(self::GROUPS), $first))];
     }
 
+    /** @return list<class-string> */
+    public static function classes(string $group, string $panelId): array
+    {
+        $classes = self::GROUPS[$group];
+        if ($group === 'sales' && $panelId === 'finance') {
+            return [...self::FINANCE_SALES_PRIORITY, ...array_diff($classes, self::FINANCE_SALES_PRIORITY)];
+        }
+
+        return $classes;
+    }
+
     public static function build(NavigationBuilder $builder): NavigationBuilder
     {
         $panel = Filament::getCurrentOrDefaultPanel();
         $registered = [...$panel->getPages(), ...$panel->getResources()];
+        $panelId = $panel->getId();
         $placed = [WorkspaceDashboard::class];
 
-        $builder->items(self::items([WorkspaceDashboard::class], $registered));
+        $primary = self::items([WorkspaceDashboard::class], $registered);
+        if (in_array(CourseResource::class, $registered, true) && CourseResource::canCreate()) {
+            $primary[] = NavigationItem::make(__('courses.new_course'))
+                ->key(CreateCourse::class)
+                ->icon('heroicon-o-plus')
+                ->activeWhen(static fn (): bool => original_request()->routeIs(CreateCourse::getRouteName($panel)))
+                ->url(CourseResource::getUrl('create'));
+        }
+        $builder->items($primary);
 
         $groups = [];
-        $queue = self::QUEUE_GROUP[$panel->getId()] ?? 'inbox';
-        foreach (self::order($panel->getId()) as $key) {
-            $classes = self::GROUPS[$key];
+        $queue = self::QUEUE_GROUP[$panelId] ?? 'inbox';
+        $queueVisible = false;
+        foreach (self::order($panelId) as $key) {
+            $classes = self::classes($key, $panelId);
             $placed = [...$placed, ...$classes];
             $items = self::items($classes, $registered);
             if ($items !== []) {
                 $group = NavigationGroup::make(self::label($key))->items($items);
                 $active = $group->isActive();
-                $group->collapsed($key !== $queue && ! $active)->collapsible();
+                $queueVisible = $queueVisible || $key === $queue;
+                $openByDefault = $key === $queue || ($key === 'inbox' && ! $queueVisible);
+                $group->collapsed(! $openByDefault && ! $active)->collapsible();
 
                 if ($active) {
                     $group->extraSidebarAttributes([
@@ -200,6 +232,10 @@ final class StaffNavigation
             }
 
             foreach ($class::getNavigationItems() as $item) {
+                if ($class === CourseResource::class) {
+                    $item->activeWhen(static fn (): bool => original_request()->routeIs(CourseResource::getNavigationItemActiveRoutePattern())
+                        && ! original_request()->routeIs(CreateCourse::getRouteName()));
+                }
                 $items[] = $item->group(null)->sort(++$sort);
             }
         }

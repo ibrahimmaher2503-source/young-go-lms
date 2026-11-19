@@ -680,6 +680,14 @@ Generated19new raster references with built-in image_gen and saved them with the
 - Wired the pending notices `settlement.statement` (statement generated) and `settlement.status` (payout recorded) through `SettlementNotices`.
 - Defaults (OPEN, O-012): one finance role creates and approves (no four-eyes); statements only for closed months; create form uses EGP.
 
+## Notes — T-P9-09 (staff sidebar priority)
+
+- Owner request 2026-11-19: reorganize all staff sidebar destinations by frequency of use and surface important actions. Prioritize review and support for Admin, transfer proofs and refunds for Finance, and courses and grading for Instructors. Priority is a workflow assumption. Reuse native Filament navigation, current tokens, policies, routes and queue badges.
+- New course shortcut opens the existing wizard. Availability uses the course-create policy, including the independent instructor agreement. Review and grading groups existing queues. The dashboard quick links share the same group and item order.
+- AI line: the assistant group uses the registered, permission-checked pages.
+- Verification on `2e93181` plus sidebar diff: Settings, role dashboards, Arch and Invariants passed (81 tests, one existing TODO). Separate independent-instructor agreement regression passed. Browser matrix passed for all three panels in Arabic and English, light and dark, mobile and desktop (24 tests, 212 assertions), with axe, active-link and destination checks. Scoped PHPStan, Pint, Vite, translation/RTL/brand and G10 passed.
+- Independent Sol PRD review passed scoped navigation and permissions. Local captures: `storage/app/review-media/staff-sidebar/`, including Arabic Admin at the 1568×1003 owner reference size. The disclosure groups follow the requested workflow and differ from the reference's flat list. Active tint is lighter and row typography denser than that reference. Full G7 fidelity acceptance remains open.
+
 ## Notes — T-P9-05 (payment notices)
 
 - 2026-11-19 scope: PRD §20, checklist §11 and T-P9-05 A1/A2. Connect the four existing payment templates to committed checkout creation, verified decline, rejected proof and executed refund. Reuse `NotifyPayerOfPayment`, `TemplatedNotice`, `NotificationDispatcher` and the existing payer-owned routes. Existing checkout, proof and refund Actions supply the required dependency slices; real gateway setup remains gated.

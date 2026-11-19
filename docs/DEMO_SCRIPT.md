@@ -409,7 +409,7 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 2. Open general settings. Expected: the form loads with the demo values. Change nothing.
 3. Open payment payee. Expected: the manual transfer payee shown on the checkout page (step 3). Do not enter real bank details. Use the demo values only.
 4. Open retention policies. Expected: the configured periods, alongside the O-025 policy in the decision register.
-5. **Sidebar parity (admin).** The sidebar groups must be, in order: **Courses, Site, Sales, Finance, People, Inbox, Reports, AI, Settings, More**. Expected: every page in `docs/LEGACY_PARITY.md` for admin appears in one of these groups. Anything not in the catalog is under **More**, so nothing is dropped.
+5. **Sidebar parity (admin).** Dashboard comes first, followed by **New course** if the user can create courses. The groups start with **Review and grading**, **Support and messages**, **Courses** and **Sales and enrolment**. Confirm that the available links follow the role-specific catalog and match `docs/LEGACY_PARITY.md`.
 6. **Sidebar parity (finance).** The finance sidebar shows only the classes the finance panel registers (`/finance` panel: dashboard, payment reconciliation, reports, and the finance resources such as coupons, bundles, plans, subscriptions, manual payments, refunds, payout profiles, commission rules, ledger, statements and settlements).
 7. **Sidebar parity (instructor).** The instructor sidebar shows only: dashboard, reports, AI pages (test console, insights, availability), instructor agreement, payout profile, courses, library, submission and essay review, help requests, announcements, my earnings, my statements.
 8. Confirm each group label in EN and in AR.

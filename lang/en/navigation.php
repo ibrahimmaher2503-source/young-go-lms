@@ -10,12 +10,13 @@ return [
     'profile' => 'Profile',
     // T-P9-09: staff sidebar groups (docs/LEGACY_PARITY.md).
     'groups' => [
+        'reviews' => 'Review and grading',
         'courses' => 'Courses',
         'site' => 'Website',
         'sales' => 'Sales and enrolment',
         'finance' => 'Finance and earnings',
         'people' => 'People',
-        'inbox' => 'Messages',
+        'inbox' => 'Support and messages',
         'reports' => 'Reports',
         'ai' => 'Lesson assistant',
         'settings' => 'Settings',
