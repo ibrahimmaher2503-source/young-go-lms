@@ -124,7 +124,7 @@ it('enforces assigned course scope even with another instructor or course in rep
         ->and(array_column($report->totals($forged), 'value'))->toBe([0, 0, 0, 0])
         ->and($catalog->available($instructor))->toBe([
             ReportKey::Enrollments, ReportKey::CohortAttendance, ReportKey::AssessmentResults,
-            ReportKey::Certificates, ReportKey::InstructorEarnings, ReportKey::HelpSla,
+            ReportKey::Certificates, ReportKey::InstructorEarnings, ReportKey::HelpSla, ReportKey::StudentProgress, ReportKey::Content,
         ]);
 
     Filament::setCurrentPanel(Filament::getPanel('instructor'));
@@ -140,7 +140,7 @@ it('enforces assigned course scope even with another instructor or course in rep
         ->assertOk()->streamedContent();
     expect(explode("\n", trim($csv)))->toHaveCount(1);
 
-    foreach (['sales', 'refunds', 'reconciliation', 'ai_usage'] as $restricted) {
+    foreach (['sales', 'refunds', 'reconciliation', 'ai_usage', 'platform_overview'] as $restricted) {
         $this->get(route('reports.export', ['report' => $restricted]))->assertForbidden();
     }
 })->group('T-P9-06', 'A2');

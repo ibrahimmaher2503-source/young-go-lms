@@ -108,9 +108,9 @@ it('gives no report to students, parents, support, marketing, content managers o
 })->group('T-P9-06', 'A2');
 
 it('shows the report page to admin, finance and instructors only, with the matching report counts', function (): void {
-    expect(t906cCatalog()->available(t906cUser('admin')))->toHaveCount(10)
+    expect(t906cCatalog()->available(t906cUser('admin')))->toHaveCount(13)
         ->and(t906cCatalog()->available(t906cUser('finance')))->toHaveCount(4)
-        ->and(t906cCatalog()->available(t906cUser('instructor_academy')))->toHaveCount(6);
+        ->and(t906cCatalog()->available(t906cUser('instructor_academy')))->toHaveCount(8);
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
     $this->actingAs(t906cUser('student'));

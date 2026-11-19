@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\DB;
  */
 final class EnrollmentReport
 {
+    /** One row per learner and course, including access that has since ended. */
+    public static function firstEnrollments(): Builder
+    {
+        return Entitlement::query()->groupBy('course_id', 'learner_id')
+            ->selectRaw('course_id, learner_id, min(starts_at) as enrolled_at')->toBase();
+    }
+
     /**
      * Distinct learners with access right now (T-P9-07 dashboards). A learner in two courses counts once.
      *

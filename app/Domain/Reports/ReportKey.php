@@ -7,6 +7,7 @@ namespace App\Domain\Reports;
 /** The reports of T-P9-06 (PRD 21). The value is the URL key and the lang key (`reports.names.<value>`). */
 enum ReportKey: string
 {
+    case PlatformOverview = 'platform_overview';
     case Sales = 'sales';
     case Refunds = 'refunds';
     case Enrollments = 'enrollments';
@@ -17,6 +18,8 @@ enum ReportKey: string
     case AiUsage = 'ai_usage';
     case HelpSla = 'help_sla';
     case Reconciliation = 'reconciliation';
+    case StudentProgress = 'student_progress';
+    case Content = 'content';
 
     public const string FILTER_COURSE = 'course';
 
@@ -36,7 +39,7 @@ enum ReportKey: string
         return match ($this) {
             self::Sales, self::Refunds, self::InstructorEarnings => [self::FILTER_COURSE, self::FILTER_INSTRUCTOR, self::FILTER_MARKET],
             self::Reconciliation => [self::FILTER_MARKET],
-            self::AiUsage => [],
+            self::AiUsage, self::PlatformOverview => [],
             default => [self::FILTER_COURSE, self::FILTER_INSTRUCTOR],
         };
     }

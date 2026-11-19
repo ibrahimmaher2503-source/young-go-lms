@@ -10,12 +10,15 @@ use App\Domain\Reports\Queries\AiUsageReport;
 use App\Domain\Reports\Queries\AssessmentResultsReport;
 use App\Domain\Reports\Queries\CertificatesReport;
 use App\Domain\Reports\Queries\CohortAttendanceReport;
+use App\Domain\Reports\Queries\ContentReport;
 use App\Domain\Reports\Queries\EnrollmentsReport;
 use App\Domain\Reports\Queries\HelpSlaReport;
 use App\Domain\Reports\Queries\InstructorEarningsReport;
+use App\Domain\Reports\Queries\PlatformOverviewReport;
 use App\Domain\Reports\Queries\ReconciliationMismatchReport;
 use App\Domain\Reports\Queries\RefundsReport;
 use App\Domain\Reports\Queries\SalesReport;
+use App\Domain\Reports\Queries\StudentProgressReport;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -62,12 +65,15 @@ final class ReportCatalog
 
         $instructor = $user->can('panel.instructor.access') && $user->hasAnyRole(PublicInstructors::ROLES);
 
-        return $instructor && ! in_array($key, [ReportKey::Sales, ReportKey::Refunds, ReportKey::Reconciliation], true) ? ReportScope::Own : ReportScope::None;
+        $own = $key === ReportKey::InstructorEarnings || (! $key->isFinancial() && $key !== ReportKey::PlatformOverview);
+
+        return $instructor && $own ? ReportScope::Own : ReportScope::None;
     }
 
     public function definition(ReportKey $key): ReportDefinition
     {
         return match ($key) {
+            ReportKey::PlatformOverview => app(PlatformOverviewReport::class),
             ReportKey::Sales => app(SalesReport::class),
             ReportKey::Refunds => app(RefundsReport::class),
             ReportKey::Enrollments => app(EnrollmentsReport::class),
@@ -78,6 +84,8 @@ final class ReportCatalog
             ReportKey::AiUsage => app(AiUsageReport::class),
             ReportKey::HelpSla => app(HelpSlaReport::class),
             ReportKey::Reconciliation => app(ReconciliationMismatchReport::class),
+            ReportKey::StudentProgress => app(StudentProgressReport::class),
+            ReportKey::Content => app(ContentReport::class),
         };
     }
 
