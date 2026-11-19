@@ -36,7 +36,16 @@
         'instructor' => $instructors->isNotEmpty() ? __('course_page.instructor') : null,
         'faq' => $faqs->isNotEmpty() ? __('course_page.faq') : null,
     ]);
-    $cta = ['course' => $course, 'entitled' => $entitled, 'signedIn' => $signedIn, 'purchasable' => $price !== null, 'seats' => $seats];
+    $cta = [
+        'course' => $course,
+        'entitled' => $entitled,
+        'signedIn' => $signedIn,
+        'purchasable' => $price !== null,
+        'freeEnrollable' => $freeEnrollable ?? ($course->access_mode === App\Models\Course::ACCESS_FREE),
+        'enrollLearners' => $enrollLearners ?? collect(),
+        'enrollOwned' => $enrollOwned ?? [],
+        'seats' => $seats,
+    ];
     $linkClass = 'rounded-md font-semibold text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 @endphp
 <x-layouts.base :title="$seo['title']" variant="public" full indexable>
@@ -203,8 +212,29 @@
                     </div>
                 @endif
                 @if(session('waitlist_notice'))<x-ui.alert tone="success" role="status">{{ session('waitlist_notice') }}</x-ui.alert>@endif
+                @if(session('enrollment_notice'))<x-ui.alert tone="success" role="status">{{ session('enrollment_notice') }}</x-ui.alert>@endif
                 @if($errors->has('cohort'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('cohort') }}</x-ui.alert>@endif
-                @include('catalog._cta', $cta)
+                @if($errors->has('course'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('course') }}</x-ui.alert>@endif
+                @if($errors->has('child_id'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('child_id') }}</x-ui.alert>@endif
+                @include('catalog._cta', $cta + ['showLearnerPicker' => true])
+                @if($entitled && ($cta['freeEnrollable']) && ! ($isParentContext ?? false))
+                    @php
+                        $unenrolledChildren = $cta['enrollLearners']->filter(fn ($u) => $u->getKey() !== auth()->id() && ! ($cta['enrollOwned'][$u->getKey()] ?? false))->values();
+                    @endphp
+                    @if($unenrolledChildren->isNotEmpty())
+                        <form method="post" action="{{ route('catalog.enroll', ['course' => $course->id]) }}" class="space-y-3 border-t border-border pt-3" data-enroll-child-form>
+                            @csrf
+                            <x-ui.form-field for="enroll-child-id" :label="__('course_page.enroll_for')">
+                                <x-ui.select id="enroll-child-id" name="child_id">
+                                    @foreach($unenrolledChildren as $child)
+                                        <option value="{{ $child->getKey() }}">{{ $child->display_name ?: $child->name }}</option>
+                                    @endforeach
+                                </x-ui.select>
+                            </x-ui.form-field>
+                            <x-ui.button type="submit" variant="secondary" class="w-full" data-cta="enroll-child">{{ __('course_page.enroll_child') }}</x-ui.button>
+                        </form>
+                    @endif
+                @endif
                 <x-engagement.wishlist-toggle :course="$course" class="flex justify-center"/>
                 @if($previewUrl)
                     <a href="{{ $previewUrl }}" class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border px-5 py-3 font-semibold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" data-preview-link><x-ui.icon name="play-circle"/> {{ __('course_page.watch_preview') }}</a>
@@ -231,7 +261,7 @@
             @else
                 <p class="max-w-1/2 font-bold">{{ $accessLabel }}</p>
             @endif
-            <div class="min-w-0 flex-1">@include('catalog._cta', $cta)</div>
+            <div class="min-w-0 flex-1">@include('catalog._cta', $cta + ['showLearnerPicker' => false])</div>
         </div>
     </div>
 </x-layouts.base>

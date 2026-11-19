@@ -526,15 +526,19 @@ it('A1 paid orders show the courses link and a receipt link; refunded, partly re
 
 // ---------------------------------------------------------------- Public CTA
 
-it('A1 the public course CTA: buy for a signed-in non-enrolled learner, soon for a free course, sign-in when signed out, continue when enrolled', function (): void {
+it('A1 the public course CTA: buy for a signed-in non-enrolled learner, enroll-free for a free course, soon for unpriced paid, sign-in when signed out, continue when enrolled', function (): void {
     $student = t812_user('student');
     $paid = t812_course();
     $free = t812_course('free', 0);
+    $unpriced = t812_course('paid', 0);
 
     $this->actingAs($student)->get(route('catalog.show', $paid))->assertOk()
         ->assertSee('data-cta="buy"', false)
         ->assertSee(route('checkout.product', ['type' => 'course', 'id' => $paid->id]), false);
-    $this->actingAs($student)->get(route('catalog.show', $free))->assertOk()->assertSee('data-cta="soon"', false);
+    $this->actingAs($student)->get(route('catalog.show', $free))->assertOk()
+        ->assertSee('data-cta="enroll-free"', false)
+        ->assertSee(route('catalog.enroll', ['course' => $free->id]), false);
+    $this->actingAs($student)->get(route('catalog.show', $unpriced))->assertOk()->assertSee('data-cta="soon"', false);
     $this->app['auth']->forgetGuards();
     $this->get(route('catalog.show', $paid))->assertOk()->assertSee('data-cta="sign-in"', false);
 
