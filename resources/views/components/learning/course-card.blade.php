@@ -1,5 +1,5 @@
-{{-- Props: course, wishlist, compact; optional approved instructor names, placeholder (true shows a token-colored cover block and prefers the course cover), price (Money) with market, and catalog availability. --}}
-@props(['course', 'wishlist' => false, 'compact' => false, 'price' => null, 'market' => null, 'availability' => null, 'instructorNames' => null, 'placeholder' => false, 'lessons' => null])
+{{-- Props: course, wishlist, compact; priority (true on the first above-the-fold card: eager + fetchpriority=high, others lazy), optional approved instructor names, placeholder (true shows a token-colored cover block and prefers the course cover), price (Money) with market, and catalog availability. --}}
+@props(['course', 'wishlist' => false, 'compact' => false, 'price' => null, 'market' => null, 'availability' => null, 'instructorNames' => null, 'placeholder' => false, 'lessons' => null, 'priority' => false])
 @php
     $categoryCover = $course->category?->status === 'active' ? $course->category->image : null;
     $cover = ($compact || $placeholder) && filled($course->cover_image) ? $course->cover_image : $categoryCover;
@@ -13,7 +13,7 @@
 ])>
     @if($cover)
         <div @class(['relative min-h-32 overflow-hidden rounded-lg' => $compact])>
-            <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($cover) }}" alt="" loading="lazy"
+            <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($cover) }}" alt="" width="640" height="360" @if($priority) loading="eager" fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif
                 @class(['w-full rounded-lg object-cover', 'absolute inset-0 h-full' => $compact, 'aspect-video' => ! $compact])>
         </div>
     @elseif($placeholder)

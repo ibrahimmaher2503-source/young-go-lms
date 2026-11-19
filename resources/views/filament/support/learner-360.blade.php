@@ -96,7 +96,7 @@
                         @foreach($record['access'] as $row)
                             <tr>
                                 <td>{{ $row['course'] }}</td>
-                                <td>{{ __('support.sources.'.$row['source']) }}@if($row['reference']) <span class="yg-rv-meta" dir="ltr">{{ $row['reference'] }}</span>@endif</td>
+                                <td data-source><span>{{ __('support.sources.'.$row['source']) }}</span>@if($row['reference_label'])<span class="yg-rv-meta" data-access-reference>{{ $row['reference_label'] }}</span>@endif</td>
                                 <td>{{ __('support.access_state.'.$row['state']) }}</td>
                                 <td>{{ $row['starts_at']->isoFormat('LL') }}</td>
                                 <td>{{ $row['ends_at']?->isoFormat('LL') ?? $dash }}</td>

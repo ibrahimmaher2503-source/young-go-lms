@@ -97,8 +97,10 @@ it('renders the two-factor and child-reset screens accessibly in both directions
         $this->actingAs(tfBrowserUser('student', ['name_en' => 'Omar', 'display_name' => 'Omar']));
         $page = $this->visit('/security/two-factor');
     } elseif ($screen === 'enabled') {
+        config(['identity.two_factor_enforced' => true]);
         $user = tfBrowserUser('student', ['name_en' => 'Omar', 'display_name' => 'Omar', ...$enrolled]);
-        $this->withSession(['locale' => $locale, TwoFactorSession::KEY => $user->id])->actingAs($user);
+        $this->actingAs($user);
+        TwoFactorSession::markVerified($user);
         $page = $this->visit('/security/two-factor');
     } elseif ($screen === 'challenge') {
         $this->actingAs(tfBrowserUser('student', $enrolled));
@@ -114,6 +116,9 @@ it('renders the two-factor and child-reset screens accessibly in both directions
         $page = $page->inDarkMode();
     }
     $page->resize($width, $height);
+    if ($screen === 'enabled') {
+        $page->assertSee(__('pages.tf_enabled', [], $locale));
+    }
     if ($screen === 'child-reset') {
         $page->click("[commandfor=\"reset-{$child->id}\"]");
     }

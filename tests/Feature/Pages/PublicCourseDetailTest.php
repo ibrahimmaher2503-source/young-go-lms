@@ -5,6 +5,7 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\CoursePrice;
 use App\Domain\Curriculum\Actions\ManageAssessmentItems;
 use App\Domain\Curriculum\Actions\ManageLessons;
 use App\Domain\Curriculum\Actions\ManageSections;
@@ -15,6 +16,8 @@ use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Identity\ActingLearner;
 use App\Domain\Identity\Actions\CreateChildAccount;
 use App\Domain\Media\Actions\AttachLessonMedia;
+use App\Domain\Shared\Markets\Market;
+use App\Domain\Shared\Money\PriceFormatter;
 use App\Filament\Shared\Forms\SeoFieldsGroup;
 use App\Models\Course;
 use App\Models\CurriculumItem;
@@ -338,6 +341,39 @@ it('outputs escaped SEO meta tags, Course JSON-LD, bilingual content blocks, and
 
     // Catalog cards link to catalog.show
     $this->get('/courses')->assertOk()->assertSee('data-course-link', false);
+})->group('T-P2-05', 'YG-WEB-004');
+
+it('shows the localized active-market price for an individually purchasable course in both access surfaces', function (string $locale): void {
+    $course = pcdCourse(['access_mode' => Course::ACCESS_BOTH]);
+    $price = CoursePrice::query()->create([
+        'course_id' => $course->id, 'market' => 'EG', 'currency' => 'EGP', 'amount_minor' => 59900,
+    ]);
+    $saudiPrice = CoursePrice::query()->create([
+        'course_id' => $course->id, 'market' => 'SA', 'currency' => 'SAR', 'amount_minor' => 29900,
+    ]);
+
+    $formatter = app(PriceFormatter::class);
+    $learner = User::factory()->create()->assignRole('student');
+    $response = $this->actingAs($learner)->get("/{$locale}/courses/".$course->slug_en)->assertOk()
+        ->assertSee(__('courses.access_both', [], $locale))
+        ->assertSee($formatter->format($price->money(), Market::Egypt, $locale))
+        ->assertDontSee($formatter->format($saudiPrice->money(), Market::SaudiArabia, $locale))
+        ->assertSee('data-cta="buy"', false);
+
+    expect(substr_count($response->getContent(), ' data-course-price='))->toBe(2);
+})->with(['ar', 'en'])->group('T-P2-05', 'YG-WEB-004');
+
+it('describes subscription-only access without advertising a stale individual price or checkout', function (): void {
+    $course = pcdCourse(['access_mode' => Course::ACCESS_SUBSCRIPTION]);
+    CoursePrice::query()->create([
+        'course_id' => $course->id, 'market' => 'EG', 'currency' => 'EGP', 'amount_minor' => 59900,
+    ]);
+    $learner = User::factory()->create()->assignRole('student');
+
+    $this->actingAs($learner)->get('/en/courses/'.$course->slug_en)->assertOk()
+        ->assertSee(__('courses.access_subscription', [], 'en'))
+        ->assertDontSee('data-course-price', false)
+        ->assertDontSee('data-cta="buy"', false);
 })->group('T-P2-05', 'YG-WEB-004');
 
 it('persists SEO columns on courses and builds the shared SeoFieldsGroup form section', function (): void {

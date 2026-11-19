@@ -39,8 +39,8 @@ return [
         ['name' => 'help_request.reply'],
         ['name' => 'instructor.manage'],
         ['name' => 'instructor.view'],
-        ['name' => 'learner.360.sensitive'],
-        ['name' => 'learner.360.view'],
+        ['name' => 'learner.record.sensitive'],
+        ['name' => 'learner.record.view'],
         ['name' => 'learner.profile.view'],
         ['name' => 'learner.progress.view'],
         ['name' => 'ledger.view'],
@@ -92,7 +92,7 @@ return [
             'learner.progress.view', 'ledger.view', 'lesson_document.approve', 'lesson_document.upload',
             'live_session.manage', 'manual_entitlement.grant', 'media.manage', 'payment.approve_manual',
             'payment.refund', 'payment.view', 'report.view', 'review.moderate', 'user.manage', 'user.view', 'ai.view_usage', 'privacy.manage',
-            'learner.360.sensitive', 'learner.360.view', 'support.view_as', 'system.settings.manage',
+            'learner.record.sensitive', 'learner.record.view', 'support.view_as', 'system.settings.manage',
         ],
         'content_manager' => [
             'category.create', 'category.delete', 'category.update', 'category.view', 'course.create', 'course.update',
@@ -122,7 +122,7 @@ return [
             'payment.view', 'panel.finance.access', 'payout_profile.reveal', 'payout_profile.view', 'report.finance.view', 'settlement.manage',
         ],
         'support' => [
-            'dashboard.view', 'help_request.manage', 'help_request.reply', 'learner.360.view', 'learner.profile.view', 'learner.progress.view', 'panel.admin.access', 'support.view_as', 'user.view',
+            'dashboard.view', 'help_request.manage', 'help_request.reply', 'learner.record.view', 'learner.profile.view', 'learner.progress.view', 'panel.admin.access', 'support.view_as', 'user.view',
         ],
         'marketing' => [
             'content.blog.manage', 'content.page.manage', 'content.seo.manage', 'dashboard.view', 'marketing.lead.view', 'panel.admin.access',

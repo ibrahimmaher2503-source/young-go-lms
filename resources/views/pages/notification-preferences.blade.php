@@ -1,4 +1,4 @@
-<x-layouts.base :variant="$variant" :title="__('notification_events.prefs_title')">
+<x-layouts.learner :title="__('notification_events.prefs_title')">
     <h1 class="mb-2 text-3xl font-bold">{{ __('notification_events.prefs_title') }}</h1>
     <p class="mb-6 text-muted">{{ __('notification_events.prefs_intro') }}</p>
 
@@ -41,4 +41,4 @@
             </ul>
         </x-ui.card>
     </div>
-</x-layouts.base>
+</x-layouts.learner>

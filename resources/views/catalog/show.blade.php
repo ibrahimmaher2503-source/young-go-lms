@@ -64,7 +64,7 @@
                     </ul>
                 </div>
                 <div class="relative self-start overflow-hidden rounded-lg bg-assistant md:order-first" data-hero-media>
-                        @if($cover)<img src="{{ $cover }}" alt="" class="aspect-video w-full object-cover">@else<div class="grid aspect-video w-full place-items-center text-primary" data-cover-placeholder><x-ui.icon name="book" class="size-14"/></div>@endif
+                        @if($cover)<img src="{{ $cover }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async" class="aspect-video w-full object-cover">@else<div class="grid aspect-video w-full place-items-center text-primary" data-cover-placeholder><x-ui.icon name="book" class="size-14"/></div>@endif
                         @if($previewUrl)
                             <a href="{{ $previewUrl }}" class="absolute inset-0 grid place-items-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label="{{ __('course_page.watch_preview') }}" data-preview-link>
                                 <span class="grid size-14 place-items-center rounded-full bg-surface text-primary shadow-card"><x-ui.icon name="play" class="size-6"/></span>

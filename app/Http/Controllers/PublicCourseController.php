@@ -28,6 +28,7 @@ final class PublicCourseController
         $key = PublicCourseDetail::key($found);
 
         $profiles = $instructors->forUsers($found->instructors->modelKeys());
+        $market = Market::Egypt;
 
         return view('catalog.show', [
             'course' => $found,
@@ -37,7 +38,8 @@ final class PublicCourseController
             'key' => $key,
             'entitled' => $learner instanceof User && $access->currentFor($learner, $found) !== null,
             'signedIn' => $learner instanceof User,
-            'purchasable' => $offers->coursePrice($found, Market::Egypt) !== null,
+            'market' => $market,
+            'price' => $offers->coursePrice($found, $market),
         ]);
     }
 }

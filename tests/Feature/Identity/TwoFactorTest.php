@@ -139,10 +139,25 @@ it('does not let a second user inherit another user’s passed challenge', funct
     $second = tfUser('admin');
     tfEnroll($this, $second);
 
-    $this->flushSession();
-    $this->withSession([TwoFactorSession::KEY => $second->id])->actingAs($first->refresh())
-        ->get('/profile')->assertRedirect('/two-factor-challenge');
+    tfAs($this, $first->refresh());
+    TwoFactorSession::markVerified($second->refresh());
+    $this->get('/profile')->assertRedirect('/two-factor-challenge');
 })->group('T-P1-11', 'A1');
+
+it('requires fresh session proof when the confirmed enrollment changes', function (): void {
+    $user = tfUser('admin', ['two_factor_secret' => 'first-enrollment', 'two_factor_confirmed_at' => now()]);
+    TwoFactorSession::markVerified($user);
+    expect(TwoFactorSession::isVerified($user))->toBeTrue();
+
+    $user->forceFill(['two_factor_secret' => null, 'two_factor_confirmed_at' => null])->save();
+    expect(TwoFactorSession::isVerified($user->refresh()))->toBeFalse();
+
+    $user->forceFill(['two_factor_secret' => 'replacement-enrollment', 'two_factor_confirmed_at' => now()])->save();
+    expect(TwoFactorSession::isVerified($user->refresh()))->toBeFalse();
+
+    TwoFactorSession::markVerified($user);
+    expect(TwoFactorSession::isVerified($user->refresh()))->toBeTrue();
+})->group('T-P1-11', 'A1', 'YG-GAP-SEC-003', 'ED-016');
 
 it('lets optional roles turn 2FA on and off but not required roles', function (): void {
     $parent = tfUser('parent');
@@ -230,8 +245,13 @@ it('applies a per-user cap that a changing address cannot sidestep', function ()
 })->group('T-P1-11', 'A1', 'YG-GAP-SEC-003');
 
 it('forgets a passed challenge when someone signs in again in the same session', function (): void {
-    $user = tfUser('student', ['email' => 'again@example.test']);
-    $this->withSession([TwoFactorSession::KEY => $user->id]);
+    $user = tfUser('student', [
+        'email' => 'again@example.test',
+        'two_factor_secret' => 'confirmed-enrollment',
+        'two_factor_confirmed_at' => now(),
+    ]);
+    TwoFactorSession::markVerified($user);
+    expect(TwoFactorSession::isVerified($user))->toBeTrue();
 
     $this->postJson('/login', ['login' => 'again@example.test', 'password' => 'Password1!secure'])->assertNoContent();
     expect(session(TwoFactorSession::KEY))->toBeNull();

@@ -9,19 +9,24 @@
     $name = $user ? ($user->display_name ?: $user->name) : '';
     $unread = $user ? $user->unreadNotifications()->exists() : false;
     $isParent = $user && $user->hasRole('parent');
+    // "Link to a parent" only makes sense for a minor or a parent-created account; adults never see it.
+    $canLinkParent = $user && \App\Domain\Identity\GuardianAccess::isMinor($user);
     $items = $isParent ? [
         ['/parent', 'users', __('parent.nav'), request()->is('parent'), __('pages.tab_children')],
         ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('my/courses') || request()->is('learn/*'), __('pages.tab_learning')],
         ['/family', 'user', __('pages.nav_family'), request()->is('family'), __('pages.tab_family')],
         ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*'), __('refunds.nav_payments')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile'), __('pages.tab_profile')],
+        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile', 'profile/*'), __('pages.tab_profile')],
     ] : [
         ['/my', 'book', __('pages.nav_learning'), request()->is('my') || request()->is('learn/*'), __('pages.tab_learning')],
         ['/my/courses', 'layers', __('pages.nav_courses'), request()->is('my/courses'), __('pages.tab_courses')],
         ['/link', 'user', __('pages.nav_link'), request()->is('link'), __('pages.tab_link')],
         ['/my/payments', 'file', __('refunds.nav_payments'), request()->is('my/payments*'), __('refunds.nav_payments')],
-        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile'), __('pages.tab_profile')],
+        ['/profile', 'user', __('pages.nav_profile'), request()->is('profile', 'profile/*'), __('pages.tab_profile')],
     ];
+    if (! $isParent && ! $canLinkParent) {
+        $items = array_values(array_filter($items, static fn (array $item): bool => $item[0] !== '/link'));
+    }
 @endphp
 <!doctype html>
 <html lang="{{ $locale }}" dir="{{ $locale === 'ar' ? 'rtl' : 'ltr' }}">

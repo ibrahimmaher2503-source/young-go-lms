@@ -83,13 +83,27 @@ final class Cohort extends Model
         return $this->members()->where('learner_id', $learner->getKey())->where('status', CohortMember::SEATED)->exists();
     }
 
-    public function isFull(): bool
+    /**
+     * Seats held for unpaid orders that have not expired, one per learner, not counting learners who already hold a seat.
+     * `$except` leaves that learner's own hold out, so a learner never competes with their own hold.
+     */
+    public function heldCount(?User $except = null): int
     {
-        return $this->capacity !== null && $this->seatedCount() >= $this->capacity;
+        $seated = CohortMember::query()->select('learner_id')->where('cohort_id', $this->getKey())->where('status', CohortMember::SEATED);
+
+        return CohortSeatHold::query()->active()->where('cohort_id', $this->getKey())->whereNotIn('learner_id', $seated)
+            ->when($except !== null, static fn ($q) => $q->where('learner_id', '!=', $except?->getKey()))
+            ->distinct()->count('learner_id');
+    }
+
+    /** Seated members plus live holds against the capacity (`$for` leaves that learner's own hold out). */
+    public function isFull(?User $for = null): bool
+    {
+        return $this->capacity !== null && ($this->seatedCount() + $this->heldCount($for)) >= $this->capacity;
     }
 
     public function seatsLeft(): ?int
     {
-        return $this->capacity === null ? null : max(0, $this->capacity - $this->seatedCount());
+        return $this->capacity === null ? null : max(0, $this->capacity - $this->seatedCount() - $this->heldCount());
     }
 }

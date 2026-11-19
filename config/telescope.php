@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnforceTwoFactor;
+use App\Http\Middleware\EnsureActiveAccount;
 use Laravel\Telescope\Http\Middleware\Authorize;
 use Laravel\Telescope\Watchers;
 
@@ -96,6 +98,10 @@ return [
 
     'middleware' => [
         'web',
+        'auth',
+        EnsureActiveAccount::class,
+        'auth.session',
+        EnforceTwoFactor::class,
         Authorize::class,
     ],
 
@@ -120,6 +126,12 @@ return [
         'pulse*',
         '_boost*',
         '.well-known*',
+        'security/two-factor',
+        'security/two-factor/*',
+        'two-factor-challenge',
+        'confirm-password',
+        'guardian/children',
+        'guardian/children/*/password',
     ],
 
     'ignore_commands' => [

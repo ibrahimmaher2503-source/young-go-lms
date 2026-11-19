@@ -52,17 +52,16 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         ]);
     }
 
-    /**
-     * Register the Telescope gate.
-     *
-     * This gate determines who can access Telescope in non-local environments.
-     */
+    protected function authorization(): void
+    {
+        $this->gate();
+
+        Telescope::auth(static fn (): bool => Gate::allows('viewTelescope'));
+    }
+
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function (User $user) {
-            return in_array($user->email, [
-                //
-            ]);
-        });
+        Gate::define('viewTelescope', fn (User $user): bool => $this->app->environment('local')
+            && $user->hasRole('super_admin'));
     }
 }

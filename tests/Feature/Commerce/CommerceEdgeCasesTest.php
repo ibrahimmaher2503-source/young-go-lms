@@ -276,6 +276,7 @@ it('restores the order and frees the use when a coupon is removed or its order i
 })->group('T-P8-05', 'A1')->group('payments');
 
 it('stores a transfer proof privately with a normalized reference and an SLA', function (): void {
+    $this->freezeSecond();
     Storage::fake('local');
     $payer = t8CommerceUser('student');
     $order = t8CommerceOrder($payer, [t8CommerceCourse('proof')]);
@@ -293,7 +294,7 @@ it('stores a transfer proof privately with a normalized reference and an SLA', f
         ->and($proof->toArray())->not->toHaveKey('file_path')
         ->and($proof->toArray())->not->toHaveKey('file_sha256')
         ->and(Activity::query()->where('event', 'manual_payment.submitted')->where('subject_id', $proof->id)->exists())->toBeTrue()
-        ->and($proof->sla_due_at->between(now()->addHours(24)->subSeconds(5), now()->addHours(24)->addSeconds(5)))->toBeTrue();
+        ->and($proof->sla_due_at->eq(now()->addHours(24)))->toBeTrue();
 })->group('T-P8-04', 'A1', 'YG-GAP-PAY-004')->group('payments');
 
 it('refuses a proof with bad values, one pending proof per order and a reused reference', function (): void {

@@ -6,6 +6,10 @@ namespace App\Domain\Commerce\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Cohorts\Actions\HoldCohortSeat;
+use App\Domain\Cohorts\Cohort;
+use App\Domain\Cohorts\CohortAvailability;
+use App\Domain\Cohorts\CohortFullException;
 use App\Domain\Commerce\Bundle;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\Order;
@@ -31,13 +35,14 @@ use RuntimeException;
  * Creates a pending order priced entirely on the server (PRD 17.3). Callers pass products and learners, never amounts.
  * The payer is the signed-in account; a parent may buy for a verified child (YG-GAP-FAM-005). Only active markets sell
  * (Saudi Arabia is off). The same payer and idempotency key return the same order; a different request under that key
- * is refused. Courses, bundles (a bundle line stores its per-course allocation) and subscription plans (one period per line, T-P8-08) are sellable.
+ * is refused. A course that runs in cohorts holds a seat for its order line (HoldCohortSeat: locked, counted with the other live holds);
+ * with no seat left the order is refused (`cohort_full`). Bundle and plan lines hold no seat. Courses, bundles (a bundle line stores its per-course allocation) and subscription plans (one period per line, T-P8-08) are sellable.
  */
 final class CreateOrder
 {
     private const int MAX_LINES = 20;
 
-    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $entitlements, private readonly AllocateBundlePrice $allocate) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly EntitlementService $entitlements, private readonly AllocateBundlePrice $allocate, private readonly HoldCohortSeat $hold) {}
 
     /** @param  list<OrderLine>  $lines */
     public function __invoke(User $payer, Market $market, array $lines, string $idempotencyKey): Order
@@ -92,6 +97,7 @@ final class CreateOrder
                         'title_ar' => $row['product']->getTranslation($field, 'ar', false) ?: null,
                         'title_en' => $row['product']->getTranslation($field, 'en', false) ?: null,
                     ]);
+                    $this->holdSeat($row, $item);
                     foreach ($row['allocations'] as $courseId => $share) {
                         OrderItemAllocation::query()->create([
                             'order_item_id' => $item->getKey(), 'course_id' => $courseId,
@@ -123,7 +129,7 @@ final class CreateOrder
 
     /**
      * @param  list<OrderLine>  $lines
-     * @return list<array{type: ProductType, product: Course|Bundle|SubscriptionPlan, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>}>
+     * @return list<array{type: ProductType, product: Course|Bundle|SubscriptionPlan, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>, cohorts?: list<int>}>
      */
     private function price(User $payer, Market $market, array $lines): array
     {
@@ -172,10 +178,54 @@ final class CreateOrder
                 $this->refuse('already_enrolled');
             }
 
-            $priced[] = ['type' => ProductType::Course, 'product' => $course, 'learner' => $learner, 'price' => $price->amount_minor, 'allocations' => []];
+            $priced[] = ['type' => ProductType::Course, 'product' => $course, 'learner' => $learner, 'price' => $price->amount_minor, 'allocations' => [], 'cohorts' => $this->cohortCandidates($course, $learner)];
         }
 
         return $priced;
+    }
+
+    /**
+     * Cohorts that could seat this course line, best first (empty: the course has no enrolling cohort, or the learner already has a seat).
+     * The earliest enrolling cohort with room is held. If cohorts take enrolment but none has room, the order is refused now;
+     * the locked check in `holdSeat` stays the one that decides.
+     *
+     * @return list<int>
+     */
+    private function cohortCandidates(Course $course, User $learner): array
+    {
+        $enrolling = CohortAvailability::enrollingFor((int) $course->getKey());
+        if ($enrolling->isEmpty() || $enrolling->contains(static fn (Cohort $cohort): bool => $cohort->hasSeat($learner))) {
+            return [];
+        }
+        $withRoom = $enrolling->filter(static fn (Cohort $cohort): bool => ! $cohort->isFull($learner));
+        if ($withRoom->isEmpty()) {
+            $this->refuse('cohort_full');
+        }
+
+        return $withRoom->pluck('id')->map(static fn ($id): int => (int) $id)->all();
+    }
+
+    /**
+     * Inside the order transaction: the first candidate cohort with room gets the hold; none left rolls the order back.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function holdSeat(array $row, OrderItem $item): void
+    {
+        $candidates = $row['cohorts'] ?? [];
+        if ($candidates === []) {
+            return;
+        }
+        foreach ($candidates as $cohortId) {
+            try {
+                ($this->hold)(Cohort::query()->findOrFail($cohortId), $row['learner'], (int) $item->getKey());
+
+                return;
+            } catch (CohortFullException) {
+                continue;
+            }
+        }
+        $this->refuse('cohort_full');
     }
 
     /** @return array{type: ProductType, product: Bundle, learner: User, price: int, allocations: array<int, array{weight: int, allocated_minor: int}>} */

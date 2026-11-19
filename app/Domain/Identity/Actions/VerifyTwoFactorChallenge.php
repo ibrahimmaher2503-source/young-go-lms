@@ -16,27 +16,27 @@ final class VerifyTwoFactorChallenge
     public function __construct(private readonly TwoFactor $twoFactor, private readonly AuditLogger $audit) {}
 
     /** Accepts a current TOTP code (each time step once) or an unused recovery code. */
-    public function handle(User $user, string $code): void
+    public function handle(User $user, string $code): User
     {
-        $passed = DB::transaction(function () use ($user, $code): bool {
+        $verified = DB::transaction(function () use ($user, $code): ?User {
             $locked = User::query()->lockForUpdate()->findOrFail($user->getKey());
             $secret = $locked->two_factor_secret;
             if ($locked->two_factor_confirmed_at === null || ! is_string($secret) || $secret === '') {
-                return false;
+                return null;
             }
 
             $step = $this->twoFactor->verify($secret, $code, $locked->two_factor_last_step);
             if ($step !== null) {
                 $locked->forceFill(['two_factor_last_step' => $step])->save();
 
-                return true;
+                return $locked;
             }
 
             $hash = TwoFactor::hashRecoveryCode($code);
             $stored = is_array($locked->two_factor_recovery_codes) ? $locked->two_factor_recovery_codes : [];
             $index = array_search($hash, $stored, true);
             if ($index === false) {
-                return false;
+                return null;
             }
 
             unset($stored[$index]);
@@ -45,11 +45,13 @@ final class VerifyTwoFactorChallenge
                 throw new RuntimeException('Unable to record recovery code audit.');
             }
 
-            return true;
+            return $locked;
         });
 
-        if (! $passed) {
+        if ($verified === null) {
             throw ValidationException::withMessages(['code' => __('auth.two_factor_invalid')]);
         }
+
+        return $verified;
     }
 }

@@ -220,7 +220,7 @@ it('sends the 3-day reminder at 2.5 days and the 1-day reminder at 12 hours, thr
 
     expect(SubscriptionReminder::query()->where('period_id', $period->id)->orderBy('offset_days')->pluck('offset_days')->all())
         ->toBe([1, 3, 7]);
-})->group('T-P8-08', 'A2')->group('subscriptions');
+})->group('T-P8-08', 'A2', 'YG-GAP-SUB-001')->group('subscriptions');
 
 it('sends nothing for a cancelled subscription and nothing after the period has ended', function (): void {
     $staff = subStaff('admin');
@@ -274,7 +274,7 @@ it('keeps individually bought courses and expires only the plan course after the
         ->toBe(Entitlement::EXPIRED)
         ->and(Activity::query()->where('event', 'subscription.expired')->count())->toBe(1)
         ->and(subAccess($learner, $bought))->toBeTrue();
-})->group('T-P8-08', 'A3')->group('subscriptions');
+})->group('T-P8-08', 'A3', 'YG-GAP-SUB-001')->group('subscriptions');
 
 it('restores plan course access after a paid renewal following expiry, and earlier rows are still there', function (): void {
     $staff = subStaff('admin');

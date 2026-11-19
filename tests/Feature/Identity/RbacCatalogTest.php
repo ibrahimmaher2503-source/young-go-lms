@@ -61,6 +61,37 @@ it('keeps permission names unique and in module.action form', function (): void 
     }
 })->group('T-P1-03', 'A3', 'PRD-06');
 
+it('preserves Learner 360 grants through permission rename and rollback', function (string $ability, string $roleName): void {
+    $legacyName = "learner.360.{$ability}";
+    $currentName = "learner.record.{$ability}";
+    $legacy = Permission::create(['name' => $legacyName, 'guard_name' => 'web']);
+    $current = Permission::findByName($currentName, 'web');
+    $legacyHolder = User::factory()->create()->givePermissionTo($legacy);
+    $currentHolder = User::factory()->create()->givePermissionTo($current);
+
+    $migration = require database_path('migrations/2026_11_23_300000_normalize_learner_record_permission_names.php');
+    $migration->up();
+    $migration->up();
+
+    expect(Permission::findByName($currentName, 'web')->id)->toBe($legacy->id)
+        ->and(Permission::query()->where('name', $legacyName)->exists())->toBeFalse()
+        ->and($legacyHolder->fresh()->hasDirectPermission($currentName))->toBeTrue()
+        ->and($currentHolder->fresh()->hasDirectPermission($currentName))->toBeTrue()
+        ->and(Role::findByName($roleName, 'web')->hasPermissionTo($currentName))->toBeTrue();
+
+    $migration->down();
+    $migration->down();
+
+    expect(Permission::findByName($legacyName, 'web')->id)->toBe($legacy->id)
+        ->and(Permission::query()->where('name', $currentName)->exists())->toBeFalse()
+        ->and($legacyHolder->fresh()->hasDirectPermission($legacyName))->toBeTrue()
+        ->and($currentHolder->fresh()->hasDirectPermission($legacyName))->toBeTrue()
+        ->and(Role::findByName($roleName, 'web')->hasPermissionTo($legacyName))->toBeTrue();
+})->with([
+    'read the record' => ['view', 'support'],
+    'see sensitive details' => ['sensitive', 'admin'],
+])->group('T-P1-03', 'A3', 'PRD-06');
+
 it('applies seeded role grants through Laravel authorization', function (string $roleName, string $ability, bool $allowed): void {
     $user = User::factory()->create();
     $user->assignRole($roleName);

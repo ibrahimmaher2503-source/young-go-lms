@@ -21,7 +21,7 @@
     }
     $nav = match ($variant) {
         'parent' => [['/family', __('pages.nav_family')], ['/my', __('pages.nav_learning')], ['/profile', __('pages.nav_profile')]],
-        'student' => [['/my', __('pages.nav_learning')], ['/my/courses', __('pages.nav_courses')], ['/link', __('pages.nav_link')], ['/profile', __('pages.nav_profile')]],
+        'student' => array_values(array_filter([['/my', __('pages.nav_learning')], ['/my/courses', __('pages.nav_courses')], ($user && \App\Domain\Identity\GuardianAccess::isMinor($user)) ? ['/link', __('pages.nav_link')] : null, ['/profile', __('pages.nav_profile')]])),
         default => [],
     };
 @endphp
@@ -33,6 +33,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @if($indexable){{ $head ?? '' }}@else<meta name="robots" content="noindex, nofollow">@endif
     <title>{{ $title ? $title.' · ' : '' }}{{ __('app.name') }}</title>
+    {{-- Primary face for the page language; the other subset loads on demand via unicode-range. crossorigin is required for font preloads. --}}
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ \Illuminate\Support\Facades\Vite::asset('resources/fonts/noto-sans-arabic/NotoSansArabic-'.($locale === 'ar' ? 'arabic' : 'latin').'.woff2') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <x-consent.tags :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </head>

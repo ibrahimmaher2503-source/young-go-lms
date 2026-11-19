@@ -47,8 +47,12 @@
                     @else
                         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                             @foreach($featured as $course)
-                                <x-learning.course-card :course="$course" compact>
-                                    <x-ui.link :href="\App\Domain\Seo\PublicUrl::course($course, $locale)">{{ __('public-site.view_course') }}</x-ui.link>
+                                <x-learning.course-card :course="$course" :price="$featuredPrices[$course->id] ?? null" :market="$market"
+                                    :instructor-names="$featuredInstructorNames->only($course->instructors->modelKeys())->filter()->join(', ')" compact>
+                                    <a href="{{ \App\Domain\Seo\PublicUrl::course($course, $locale) }}"
+                                        class="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg bg-assistant px-3 py-2 text-sm font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                        {{ __('public-site.view_course') }}<x-ui.icon name="arrow" class="size-4" />
+                                    </a>
                                 </x-learning.course-card>
                             @endforeach
                         </div>

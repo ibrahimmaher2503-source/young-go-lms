@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-it('renders staff users and roles in both directions and themes', function (string $locale, string $theme, int $width, int $height) {
+it('renders staff workspace resources in both directions and themes', function (string $locale, string $theme, int $width, int $height, bool $core) {
     $this->seed(RolePermissionSeeder::class);
     $user = User::factory()->create(['locale' => $locale, 'name' => $locale === 'ar' ? 'مدير النظام' : 'System administrator', 'email' => 'admin@example.test'])->assignRole('super_admin');
     foreach ([['سارة أحمد', 'Sara Ahmed', 'student'], ['عمر حسن', 'Omar Hassan', 'parent'], ['نور محمد', 'Nour Mohamed', 'instructor_academy'], ['ليلى علي', 'Layla Ali', 'student']] as $index => [$arabic, $english, $role]) {
@@ -20,7 +20,8 @@ it('renders staff users and roles in both directions and themes', function (stri
     Activity::query()->create(['log_name' => 'audit', 'description' => 'Role assignment', 'event' => 'user.roles_changed', 'causer_type' => User::class, 'causer_id' => $user->id]);
     $this->actingAs($user);
 
-    $screenshots = base_path('tests/Browser/Screenshots/T-P1-08/reference-pass');
+    $captureDirectory = 'T-P1-08/sidebar-review';
+    $screenshots = base_path('tests/Browser/Screenshots/'.$captureDirectory);
     if (! is_dir($screenshots)) {
         mkdir($screenshots, 0755, true);
     }
@@ -28,11 +29,17 @@ it('renders staff users and roles in both directions and themes', function (stri
     foreach (Filament::getPanel('admin')->getResources() as $resource) {
         $path = parse_url($resource::getUrl(panel: 'admin'), PHP_URL_PATH);
         $screen = substr($path, strlen('/admin/'));
+        if ($core !== in_array($screen, ['staff-users', 'role-permissions'], true)) {
+            continue;
+        }
         if ($width === 1568 && $screen !== 'staff-users') {
             continue;
         }
         $page = $this->visit($path)->resize($width, $height);
         $page->script("() => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); }");
+        if ($width === 1568) {
+            $page->script("() => localStorage.removeItem('filament:sidebar:collapsed_groups')");
+        }
         $page->refresh();
         $page->script('async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }');
         expect($page->script('() => [...document.querySelectorAll(".fi-ta-content-ctn")].every(region => region.scrollWidth <= region.clientWidth + 1 || region.tabIndex === 0)'))->toBeTrue($screen);
@@ -48,6 +55,18 @@ it('renders staff users and roles in both directions and themes', function (stri
             $page->assertVisible('.yg-summary-strip')->assertVisible('.yg-workspace-sidebar');
             expect($page->script('() => document.querySelectorAll(".yg-summary-item").length'))->toBe(3);
             expect($page->script('() => new Set([...document.querySelectorAll(".yg-role-meter")].map(meter => meter.getBoundingClientRect().width)).size'))->toBe(1);
+            if ($width === 1568) {
+                expect($page->script('() => document.querySelector(".yg-role-meter").getBoundingClientRect().width'))->toBeGreaterThanOrEqual(140);
+                expect($page->script('() => {
+                    const sidebar = document.querySelector(".fi-sidebar-nav").getBoundingClientRect();
+                    return ["/admin", "/admin/staff-users", "/admin/role-permissions"].every(path => {
+                        const link = document.querySelector(`.fi-sidebar-nav a[href$="${path}"]`);
+                        if (!link) return false;
+                        const box = link.getBoundingClientRect();
+                        return box.height > 0 && box.top >= sidebar.top && box.bottom <= sidebar.bottom;
+                    });
+                }'))->toBeTrue();
+            }
             if ($page->script('() => document.querySelector(".fi-ta-content-ctn").tabIndex === 0')) {
                 $page->assertVisible('.yg-table-scroll-hint');
             }
@@ -61,7 +80,7 @@ it('renders staff users and roles in both directions and themes', function (stri
             expect($page->script('() => { const table = document.querySelector(".fi-ta-content-ctn"); return table.scrollWidth <= table.clientWidth + 1; }'))->toBeTrue();
         }
         $filename = str_replace('/', '-', $screen);
-        $page->screenshot(fullPage: $width !== 1568, filename: "T-P1-08/reference-pass/{$filename}-{$locale}-{$theme}-{$width}");
+        $page->screenshot(fullPage: $width !== 1568, filename: "{$captureDirectory}/{$filename}-{$locale}-{$theme}-{$width}");
         if ($screen === 'role-permissions') {
             $role = Role::findByName('finance', 'web');
             $action = '[data-workspace-permission-action="'.$role->id.'"]';
@@ -70,7 +89,7 @@ it('renders staff users and roles in both directions and themes', function (stri
             $page->click($action)->assertVisible('.fi-modal-window:visible');
             $page->script('async () => { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); await Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))); await document.fonts.ready; }');
             $page->assertSee(__('permissions.payment.view', [], $locale))->assertSee(__('staff.permissions_scroll_help', [], $locale))->assertNoAccessibilityIssues();
-            $page->screenshot(fullPage: false, filename: "T-P1-08/reference-pass/permission-editor-{$locale}-{$theme}-{$width}");
+            $page->screenshot(fullPage: false, filename: "{$captureDirectory}/permission-editor-{$locale}-{$theme}-{$width}");
             $page->keys('.fi-modal-window:visible', 'Tab');
             expect($page->script('() => !!document.activeElement.closest(".fi-modal-window")'))->toBeTrue();
             $page->keys('.fi-modal-window:visible', 'Shift+Tab');
@@ -100,13 +119,15 @@ it('renders staff users and roles in both directions and themes', function (stri
             }
         }
     }
-})->with([
+})->with(collect([
     ['ar', 'light', 390, 844], ['ar', 'dark', 390, 844],
     ['en', 'light', 390, 844], ['en', 'dark', 390, 844],
     ['ar', 'light', 1440, 900], ['ar', 'dark', 1440, 900],
     ['en', 'light', 1440, 900], ['en', 'dark', 1440, 900],
-    ['ar', 'light', 1568, 1003],
-])->group('browser', 'T-P1-08', 'A4');
+])->flatMap(static fn (array $viewport): array => [
+    'core '.implode(' ', $viewport) => [...$viewport, true],
+    'other '.implode(' ', $viewport) => [...$viewport, false],
+])->put('core Arabic reference 1568', ['ar', 'light', 1568, 1003, true])->all())->group('browser', 'T-P1-08', 'A4');
 
 it('keeps the mobile staff table keyboard reachable after search updates', function () {
     $this->seed(RolePermissionSeeder::class);
@@ -115,6 +136,13 @@ it('keeps the mobile staff table keyboard reachable after search updates', funct
 
     $page = $this->visit('/admin/staff-users')->resize(390, 844);
     $search = '.fi-ta-search-field input';
+    expect($page->script('() => new Set([...document.querySelectorAll(".yg-summary-item")].map(item => item.getBoundingClientRect().top)).size'))->toBe(1);
+    expect($page->script('() => {
+        const search = document.querySelector(".fi-ta-search-field").getBoundingClientRect();
+        const role = document.querySelector(".yg-toolbar-filter").getBoundingClientRect();
+        const filter = document.querySelector(".yg-filter-trigger").getBoundingClientRect();
+        return search.width >= 300 && search.bottom <= role.top && Math.abs(role.top - filter.top) < 2;
+    }'))->toBeTrue();
     $page->assertPresent('.fi-ta-content-ctn[tabindex="0"]')
         ->fill($search, 'no matching staff users')
         ->assertNotPresent('.fi-ta-records > .fi-ta-row')
@@ -122,4 +150,15 @@ it('keeps the mobile staff table keyboard reachable after search updates', funct
         ->assertSee('Sara Ahmed')
         ->assertPresent('.fi-ta-content-ctn[tabindex="0"][role="region"]')
         ->assertNoAccessibilityIssues();
+})->group('browser', 'T-P1-08', 'A4', 'D-026');
+
+it('opens the active staff sidebar group after a direct visit', function (): void {
+    $this->seed(RolePermissionSeeder::class);
+    $this->actingAs(User::factory()->create(['locale' => 'en'])->assignRole('super_admin'));
+
+    $page = $this->visit('/admin/staff-users')->resize(1440, 900);
+    $auditLink = '.fi-sidebar-nav a[href$="/admin/audit/audit-logs"]';
+    $page->assertMissing($auditLink)
+        ->navigate('/admin/audit/audit-logs')
+        ->assertVisible($auditLink);
 })->group('browser', 'T-P1-08', 'A4', 'D-026');

@@ -16,6 +16,7 @@ use App\Models\Category;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 final class PublicCatalogController
@@ -47,26 +48,19 @@ final class PublicCatalogController
 
         $learner = $acting->current();
         $learnerBand = $bands->resolve($learner?->birth_year, $learner?->birth_month);
-        $configuredBands = AgeBand::query()->orderBy('sort')->orderBy('id')->get();
         $band = ($filters['age_band'] ?? null) === 'learner'
             ? $learnerBand
-            : $configuredBands->find($filters['age_band'] ?? null);
-        $options = $catalog->published();
-        $levels = (clone $options)->whereNotNull('level')->distinct()->orderBy('level')->pluck('level')->all();
-        $languages = (clone $options)->whereNotNull('content_language')->distinct()->orderBy('content_language')->pluck('content_language')->all();
+            : (isset($filters['age_band']) ? AgeBand::query()->find($filters['age_band']) : null);
+        $facets = $this->facets($catalog);
 
         $courses = $catalog->matching($filters, $band)->paginate(12)->appends($filters);
         $choices = [
-            'category' => Category::query()->where('status', 'active')->orderBy('sort')->orderBy('id')->get()
-                ->mapWithKeys(static fn (Category $category): array => [$category->id => $category->name])->all(),
-            'age_band' => ($learnerBand === null ? [] : ['learner' => __('catalog.learner_band')])
-                + $configuredBands->mapWithKeys(static fn (AgeBand $band): array => [$band->id => $band->label])->all(),
-            'level' => array_combine($levels, array_map(static fn (string $level): string => trans()->has('catalog.'.$level) ? __('catalog.'.$level) : $level, $levels)),
+            'category' => $facets['category'],
+            'age_band' => ($learnerBand === null ? [] : ['learner' => __('catalog.learner_band')]) + $facets['age_band'],
+            'level' => $facets['level'],
             'format' => ['recorded' => __('courses.recorded'), 'live' => __('courses.live'), 'hybrid' => __('courses.hybrid')],
-            'language' => array_combine($languages, array_map(static fn (string $language): string => trans()->has('catalog.'.$language) ? __('catalog.'.$language) : $language, $languages)),
-            'instructor' => User::query()->where('status', 'active')->whereIn('id', $options
-                ->join('course_instructors as catalog_assignments', 'catalog_assignments.course_id', '=', 'courses.id')
-                ->select('catalog_assignments.instructor_id'))->orderBy('name')->get()->mapWithKeys(static fn (User $user): array => [$user->getKey() => (string) $user->display_name])->all(),
+            'language' => $facets['language'],
+            'instructor' => $facets['instructor'],
             'access' => ['free' => __('courses.free'), 'paid' => __('courses.paid'), 'subscription' => __('catalog.subscription')],
             'availability' => array_combine(CohortAvailability::filters(), array_map(static fn (string $key): string => __('catalog.avail_'.$key), CohortAvailability::filters())),
         ];
@@ -84,6 +78,36 @@ final class PublicCatalogController
             'options' => $choices,
             'sorts' => $sorts,
         ]);
+    }
+
+    /**
+     * Filter option lists that do not depend on the visitor or on the active filters. Cached for 5 minutes per
+     * locale and market as plain arrays (never models), so a changed category or newly published course shows up
+     * within the TTL.
+     *
+     * @return array{category: array<int|string, string>, age_band: array<int|string, string>, level: array<string, string>, language: array<string, string>, instructor: array<int|string, string>}
+     */
+    private function facets(CatalogQuery $catalog): array
+    {
+        $key = 'catalog:facets:'.app()->getLocale().':'.Market::Egypt->value;
+
+        return Cache::remember($key, now()->addMinutes(5), static function () use ($catalog): array {
+            $options = $catalog->published();
+            $levels = (clone $options)->whereNotNull('level')->distinct()->orderBy('level')->pluck('level')->all();
+            $languages = (clone $options)->whereNotNull('content_language')->distinct()->orderBy('content_language')->pluck('content_language')->all();
+
+            return [
+                'category' => Category::query()->where('status', 'active')->orderBy('sort')->orderBy('id')->get()
+                    ->mapWithKeys(static fn (Category $category): array => [$category->id => (string) $category->name])->all(),
+                'age_band' => AgeBand::query()->orderBy('sort')->orderBy('id')->get()
+                    ->mapWithKeys(static fn (AgeBand $band): array => [$band->id => (string) $band->label])->all(),
+                'level' => array_combine($levels, array_map(static fn (string $level): string => trans()->has('catalog.'.$level) ? __('catalog.'.$level) : $level, $levels)),
+                'language' => array_combine($languages, array_map(static fn (string $language): string => trans()->has('catalog.'.$language) ? __('catalog.'.$language) : $language, $languages)),
+                'instructor' => User::query()->where('status', 'active')->whereIn('id', $catalog->published()
+                    ->join('course_instructors as catalog_assignments', 'catalog_assignments.course_id', '=', 'courses.id')
+                    ->select('catalog_assignments.instructor_id'))->orderBy('name')->get()->mapWithKeys(static fn (User $user): array => [$user->getKey() => (string) $user->display_name])->all(),
+            ];
+        });
     }
 
     /**

@@ -25,6 +25,8 @@ Schedule::command('seo:sitemap')->dailyAt('02:30')->name('seo:sitemap')->without
 // T-P2-07: a scheduled blog post goes public with no save, so drop the cached sitemap every hour.
 Schedule::call(static fn () => app(BuildSitemap::class)->forget())->hourly()->name('seo:sitemap-scheduled-posts');
 // T-P8-12: cancel abandoned pending orders (releases coupon uses); never touches an order with an open payment or proof.
+// Cohort seats held for unpaid orders go back after commerce.seat_hold_minutes; an order still being paid keeps its seat.
+Schedule::command('orders:release-expired-seat-holds')->everyMinute()->name('orders:release-expired-seat-holds')->withoutOverlapping();
 Schedule::command('orders:expire-abandoned')->hourly()->name('orders:expire-abandoned')->withoutOverlapping();
 // T-P8-11: reconcile yesterday's payments with the gateway; report only, never changes an order.
 Schedule::command('payments:reconcile')->dailyAt('04:30')->name('payments:reconcile')->withoutOverlapping();

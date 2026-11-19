@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 /**
- * Takes one seat in a cohort for a learner. The cohort row is locked while seats are counted, so two people asking for
+ * Takes one seat in a cohort for a learner (seats held for unpaid orders count as taken, the learner's own hold does not). The cohort row is locked while seats are counted, so two people asking for
  * the last seat cannot both get it; the loser gets CohortFullException. Idempotent for a learner who already has the seat.
  * Callers (checkout, manual grants) decide who may ask; this action never grants course access by itself.
  */
@@ -34,7 +34,7 @@ final class ReserveCohortSeat
             if ($member?->status === CohortMember::SEATED) {
                 return $member;
             }
-            if ($locked->isFull()) {
+            if ($locked->isFull($learner)) {
                 throw new CohortFullException;
             }
 

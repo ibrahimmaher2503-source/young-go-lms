@@ -24,7 +24,6 @@ use App\Filament\Resources\Coupons\CouponResource;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
 use App\Models\Course;
 use App\Models\User;
-use Closure;
 use Database\Seeders\RolePermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -32,7 +31,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
-use RuntimeException;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Support\ActivityLogStatus;
 

@@ -363,8 +363,12 @@ it('rejects invalid dataset configurations in EvalDataset::load with InvalidArgu
 
 it('protects prompts in older live attempts and their saved snapshots', function (): void {
     $learner = User::factory()->create();
+    $course = Course::query()->create(['title' => ['en' => 'Watercolor'], 'slug_ar' => 'watercolor-ar', 'slug_en' => 'watercolor-en']);
+    $section = CourseSection::query()->create(['course_id' => $course->id, 'title' => ['en' => 'Watercolor']]);
     $older = Quiz::query()->create(['title' => ['en' => 'Older quiz']]);
     $newer = Quiz::query()->create(['title' => ['en' => 'Newer quiz']]);
+    $older->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
+    $newer->item()->create(['course_id' => $course->id, 'section_id' => $section->id]);
     QuizAttempt::query()->create([
         'quiz_id' => $older->id, 'learner_id' => $learner->id, 'status' => QuizAttempt::IN_PROGRESS,
         'started_at' => now()->subMinute(), 'attempt_no' => 1, 'total' => 1,
@@ -376,5 +380,5 @@ it('protects prompts in older live attempts and their saved snapshots', function
         'snapshot' => ['questions' => []], 'settings' => [],
     ]);
 
-    expect((new QuizQuestionMatcher)->matches($learner, 'Which paint works best on wet paper?'))->toBeTrue();
-});
+    expect((new QuizQuestionMatcher)->matches($learner, 'Which paint works best on wet paper?', $course->id))->toBeTrue();
+})->group('T-P7-02', 'A2', 'unit');

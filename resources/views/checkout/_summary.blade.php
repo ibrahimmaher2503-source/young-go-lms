@@ -5,7 +5,7 @@
             <li class="flex min-w-0 items-start gap-3" data-summary-line>
                 <div class="size-16 shrink-0 overflow-hidden rounded-lg bg-assistant text-primary" data-summary-cover>
                     @if(! empty($line['cover']))
-                        <img src="{{ $line['cover'] }}" alt="" loading="lazy" class="size-full object-cover">
+                        <img src="{{ $line['cover'] }}" alt="" width="64" height="64" @if($loop->first) loading="eager" fetchpriority="high" @else loading="lazy" @endif decoding="async" class="size-full object-cover">
                     @else
                         <span class="grid size-full place-items-center"><x-ui.icon :name="$line['kind'] === 'plan' ? 'award' : ($line['kind'] === 'bundle' ? 'layers' : 'book')" class="size-7"/></span>
                     @endif

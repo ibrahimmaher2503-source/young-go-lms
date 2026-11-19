@@ -54,7 +54,7 @@ final class LearnerThreeSixtyPage extends Page
     {
         $user = Auth::user();
 
-        return $user instanceof User && $user->can('learner.360.view');
+        return $user instanceof User && $user->can('learner.record.view');
     }
 
     public function mount(?string $learner = null): void

@@ -29,7 +29,7 @@ final class JoinWaitlist
             if ($member !== null && in_array($member->status, [CohortMember::SEATED, CohortMember::WAITLISTED], true)) {
                 return $member; // already in: nothing changes and the place is kept
             }
-            if (! $locked->isFull()) {
+            if (! $locked->isFull($learner)) {
                 throw ValidationException::withMessages(['cohort' => __('cohorts.not_full')]);
             }
 

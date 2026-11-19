@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Commerce\CoursePrice;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseSection;
@@ -55,8 +56,10 @@ it('captures the course detail media and access card in both languages', functio
         'title' => ['en' => 'Digital drawing basics', 'ar' => 'أساسيات الرسم الرقمي'], 'slug_en' => 'drawing', 'slug_ar' => 'الرسم',
         'short_description' => ['en' => 'Learn to draw with digital tools.', 'ar' => 'تعلّم الرسم بالأدوات الرقمية.'],
         'status' => CourseStatus::Published, 'min_age' => 10, 'max_age' => 13,
+        'access_mode' => Course::ACCESS_PAID,
         'outcomes' => [['text' => ['en' => 'Use layers to compose an illustration', 'ar' => 'استخدم الطبقات في تكوين رسمة']]],
     ]);
+    CoursePrice::query()->create(['course_id' => $course->id, 'market' => 'EG', 'currency' => 'EGP', 'amount_minor' => 59900]);
     $section = CourseSection::query()->create([
         'course_id' => $course->id, 'published' => true, 'sort' => 1,
         'title' => ['en' => 'Drawing tools', 'ar' => 'أدوات الرسم'],
@@ -77,6 +80,7 @@ it('captures the course detail media and access card in both languages', functio
     }
     $page->resize($width, $height);
     $page->assertVisible('[data-hero-media] [data-preview-link]')->assertVisible('[data-access-age]')
+        ->assertVisible(($width === 390 ? '[data-mobile-cta]' : '[data-access-card]').' [data-course-price]')
         ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
     expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
     expect($page->script('() => document.documentElement.classList.contains("dark")'))->toBe($theme === 'dark');

@@ -29,7 +29,7 @@
                         <li class="space-y-1 py-3" data-review>
                             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                                 <x-engagement.stars :value="$review->rating"/>
-                                <span class="break-words font-semibold" data-review-author>{{ $review->author_name }}</span>
+                                <span class="break-words font-semibold" data-review-author><bdi>{{ $review->author_name }}</bdi></span>
                                 <time class="text-sm text-muted" datetime="{{ $review->created_at->toDateString() }}">{{ $review->created_at->locale(app()->getLocale())->isoFormat('LL') }}</time>
                             </div>
                             <p class="break-words" dir="auto">{!! nl2br(e($review->body)) !!}</p>

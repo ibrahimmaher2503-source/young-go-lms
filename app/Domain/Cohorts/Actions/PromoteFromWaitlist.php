@@ -33,7 +33,7 @@ final class PromoteFromWaitlist
             if ($next === null) {
                 throw ValidationException::withMessages(['cohort' => __('cohorts.waitlist_empty')]);
             }
-            if ($locked->isFull()) {
+            if ($locked->isFull($next->learner)) {
                 throw new CohortFullException;
             }
 

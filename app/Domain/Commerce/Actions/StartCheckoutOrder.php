@@ -17,7 +17,7 @@ use App\Models\User;
  */
 final class StartCheckoutOrder
 {
-    public function __construct(private readonly CreateOrder $create) {}
+    public function __construct(private readonly CreateOrder $create, private readonly RenewOrderSeatHolds $renew) {}
 
     public function __invoke(User $payer, Market $market, OrderLine $line, string $idempotencyKey): Order
     {
@@ -28,6 +28,12 @@ final class StartCheckoutOrder
                 ->where('product_id', $line->productId)->where('learner_id', $line->learner->getKey()))
             ->latest('id')->first();
 
-        return $open ?? ($this->create)($payer, $market, [$line], $idempotencyKey);
+        if ($open !== null) {
+            ($this->renew)($open); // a seat hold that lapsed while the buyer was away is taken again, or the buyer is told the cohort is full
+
+            return $open;
+        }
+
+        return ($this->create)($payer, $market, [$line], $idempotencyKey);
     }
 }

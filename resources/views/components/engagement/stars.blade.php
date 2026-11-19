@@ -2,5 +2,5 @@
 @props(['value', 'label' => null])
 @php($filled = (int) round((float) $value))
 <span role="img" aria-label="{{ $label ?? __('engagement.stars', ['value' => $value]) }}" {{ $attributes->class('inline-flex items-center gap-0.5') }}>
-    @for($i = 1; $i <= 5; $i++)<span aria-hidden="true" class="{{ $i <= $filled ? 'text-warning' : 'text-border' }}">&#9733;</span>@endfor
+    @for($i = 1; $i <= 5; $i++)<span aria-hidden="true" class="{{ $i <= $filled ? 'text-star' : 'text-star-empty' }}">&#9733;</span>@endfor
 </span>

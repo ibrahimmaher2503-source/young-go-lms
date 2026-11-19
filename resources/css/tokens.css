@@ -6,10 +6,46 @@
  */
 @font-face {
     font-family: "Noto Sans Arabic";
-    src: url("../fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf") format("truetype");
+    src: url("../fonts/noto-sans-arabic/NotoSansArabic-arabic.woff2") format("woff2");
     font-style: normal;
-    font-weight: 100 900;
+    font-weight: 300 800;
     font-display: swap;
+    unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F, U+202A-202E, U+2066-2069, U+25CC;
+}
+
+@font-face {
+    font-family: "Noto Sans Arabic";
+    src: url("../fonts/noto-sans-arabic/NotoSansArabic-latin.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 300 800;
+    font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Metric-matched fallbacks (no layout shift when the web font swaps in). size-adjust = brand font average advance /
+ * system font average advance; ascent/descent overrides are the brand font metrics divided by size-adjust.
+ * Recompute these when the brand font changes (docs/brand/CHANGING_THE_BRAND.md). The family name must equal
+ * --yg-font-family-fallback.
+ */
+@font-face {
+    font-family: "Noto Sans Arabic Fallback";
+    src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+    size-adjust: 107.7%;
+    ascent-override: 127.6%;
+    descent-override: 68.5%;
+    line-gap-override: 0%;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122;
+}
+
+@font-face {
+    font-family: "Noto Sans Arabic Fallback";
+    src: local("Tahoma"), local("Geeza Pro"), local("Segoe UI");
+    size-adjust: 102.1%;
+    ascent-override: 134.5%;
+    descent-override: 72.3%;
+    line-gap-override: 0%;
+    unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 .light,
@@ -59,6 +95,7 @@
     --yg-warning-500: oklch(0.61 0.0715 88);
     --yg-warning-600: oklch(0.51 0.0715 88);
     --yg-warning-700: oklch(0.41 0.0715 88);
+    --yg-star-500: oklch(0.66 0.14 80);
     --yg-danger-50: oklch(0.97 0.0078 25);
     --yg-danger-100: oklch(0.93 0.0175 25);
     --yg-danger-500: oklch(0.61 0.0845 25);
@@ -93,6 +130,8 @@
     --yg-color-on-success: var(--yg-success-700);
     --yg-color-warning: var(--yg-warning-100);
     --yg-color-on-warning: var(--yg-warning-700);
+    --yg-color-star: var(--yg-star-500);
+    --yg-color-star-empty: var(--yg-neutral-300);
     --yg-color-danger: var(--yg-danger-100);
     --yg-color-on-danger: var(--yg-danger-700);
     --yg-color-info: var(--yg-info-100);
@@ -108,8 +147,9 @@
     --yg-color-ai-ready: var(--yg-success-100);
     --yg-color-on-ai-ready: var(--yg-success-700);
     --yg-font-family-brand: "Noto Sans Arabic";
-    --yg-font-stack-sans: var(--yg-font-family-brand), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
-    --yg-font-stack-sans-ar: var(--yg-font-family-brand), "Segoe UI", Tahoma, Arial, sans-serif;
+    --yg-font-family-fallback: "Noto Sans Arabic Fallback";
+    --yg-font-stack-sans: var(--yg-font-family-brand), var(--yg-font-family-fallback), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    --yg-font-stack-sans-ar: var(--yg-font-family-brand), var(--yg-font-family-fallback), "Segoe UI", Tahoma, Arial, sans-serif;
     --yg-font-stack-latin: system-ui, sans-serif;
     --yg-color-media: oklch(0 0 0);
     --yg-color-on-media: var(--yg-neutral-0);
@@ -162,6 +202,8 @@
     --yg-color-on-success: var(--yg-success-50);
     --yg-color-warning: var(--yg-warning-700);
     --yg-color-on-warning: var(--yg-warning-50);
+    --yg-color-star: var(--yg-star-500);
+    --yg-color-star-empty: var(--yg-neutral-600);
     --yg-color-danger: var(--yg-danger-700);
     --yg-color-on-danger: var(--yg-danger-50);
     --yg-color-info: var(--yg-info-700);
@@ -206,6 +248,8 @@
     --color-on-success: var(--yg-color-on-success);
     --color-warning: var(--yg-color-warning);
     --color-on-warning: var(--yg-color-on-warning);
+    --color-star: var(--yg-color-star);
+    --color-star-empty: var(--yg-color-star-empty);
     --color-danger: var(--yg-color-danger);
     --color-on-danger: var(--yg-color-on-danger);
     --color-info: var(--yg-color-info);

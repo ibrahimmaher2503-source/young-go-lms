@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Entitlements;
 
 use Carbon\CarbonInterface;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -32,26 +33,14 @@ final class EnrollmentReport
             ->distinct()->count('learner_id');
     }
 
-    /**
-     * Active learners per course, most popular first (public catalog popularity sort, T-P2-04). Courses nobody can open now are
-     * left out, so a sort of the catalog ranks them after the listed ones.
-     *
-     * @return array<int, int> course id => distinct learners with access right now
-     */
-    public static function activeCountsByCourse(int $limit = 200): array
+    /** Group current access by course for the catalog's popularity sort (T-P2-04). */
+    public static function activeCountsByCourse(): Builder
     {
         $now = now()->utc()->format('Y-m-d H:i:s');
-        $out = [];
 
-        foreach (Entitlement::query()->where('status', Entitlement::ACTIVE)->where('starts_at', '<=', $now)
+        return Entitlement::query()->where('status', Entitlement::ACTIVE)->where('starts_at', '<=', $now)
             ->where(static fn ($open) => $open->whereNull('ends_at')->orWhere('ends_at', '>', $now))
-            ->whereNotNull('course_id')->groupBy('course_id')
-            ->selectRaw('course_id, count(distinct learner_id) as learners')
-            ->orderByDesc('learners')->orderBy('course_id')->limit($limit)->get() as $row) {
-            $out[(int) $row->getAttribute('course_id')] = (int) $row->getAttribute('learners');
-        }
-
-        return $out;
+            ->groupBy('course_id')->selectRaw('course_id, count(distinct learner_id) as learners')->toBase();
     }
 
     /**

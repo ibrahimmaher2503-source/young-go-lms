@@ -4,6 +4,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Entitlements\Actions\GrantEntitlement;
+use App\Domain\Entitlements\Entitlement;
+use App\Domain\Entitlements\EntitlementSource;
+use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -129,3 +133,25 @@ it('leaves no real email or phone in any text column after the staging run', fun
 it('leaves no real email or phone in any other text column, keeps ids and roles, and lets everyone sign in with the given password', function (): void {
     tp908RunStagingScan(['activity_log.description']);
 })->group('T-P9-08', 'A3');
+
+it('scrubs contact details from grant reasons while preserving course access', function (): void {
+    $learner = User::factory()->create()->assignRole('student');
+    $finance = User::factory()->create()->assignRole('finance');
+    $course = Course::query()->create([
+        'title' => ['en' => 'Drawing', 'ar' => 'الرسم'],
+        'slug_en' => 'privacy-drawing-en',
+        'slug_ar' => 'privacy-drawing-ar',
+        'status' => 'published',
+    ]);
+    $grant = app(GrantEntitlement::class);
+    $withContact = $grant($learner, $course, EntitlementSource::ManualGrant, 'contact', actor: $finance, reason: 'Contact learner@example.test or +201001234567');
+    $safe = $grant($learner, $course, EntitlementSource::ManualGrant, 'safe', actor: $finance, reason: 'Scholarship confirmed');
+
+    $this->artisan('app:anonymize', ['--force' => true])->assertExitCode(0);
+
+    expect($withContact->refresh()->reason)->toBe('Contact redacted@anonymized.invalid or [phone]')
+        ->and($withContact->learner_id)->toBe($learner->id)
+        ->and($withContact->course_id)->toBe($course->id)
+        ->and($withContact->accessState())->toBe(Entitlement::ACTIVE)
+        ->and($safe->refresh()->reason)->toBe('Scholarship confirmed');
+})->group('T-P9-08', 'A3', 'YG-GAP-PRV-003');

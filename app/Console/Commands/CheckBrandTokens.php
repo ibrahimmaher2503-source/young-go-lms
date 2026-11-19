@@ -156,17 +156,58 @@ final class CheckBrandTokens extends Command
             $problems[] = 'config/brand.php font.stack drifted from tokens.css '.config('brand.font.stack_token')." '{$stack}'";
         }
 
-        if (preg_match('/@font-face\s*{[^}]*font-family:\s*"([^"]+)"[^}]*url\("([^"]+)"\)/s', $css, $face) !== 1) {
-            $problems[] = 'tokens.css has no @font-face with a url()';
-        } else {
-            if ($face[1] !== $configFamily) {
-                $problems[] = "tokens.css @font-face family '{$face[1]}' differs from config/brand.php font.family '{$configFamily}'";
+        $fallback = $this->resolve($tokens, (string) config('brand.font.fallback_token'));
+        $configFallback = (string) config('brand.font.fallback_family');
+        if ($fallback === null || trim($fallback, '"\' ') !== $configFallback) {
+            $problems[] = "config/brand.php font.fallback_family '{$configFallback}' drifted from tokens.css ".config('brand.font.fallback_token')." '{$fallback}'";
+        }
+
+        $allowed = [];
+        foreach ((array) config('brand.font.web_files', []) as $file) {
+            $real = realpath(resource_path((string) $file));
+            if ($real === false) {
+                $problems[] = "config/brand.php font.web_files '{$file}' does not exist under resources/";
+            } else {
+                $allowed[] = $real;
             }
-            $declared = realpath(dirname($path).'/'.$face[2]);
-            $configured = realpath(Brand::fontPath());
-            if ($declared === false || $configured === false || $declared !== $configured) {
-                $problems[] = "tokens.css @font-face file '{$face[2]}' does not resolve to config/brand.php font.file '".config('brand.font.file')."'";
+        }
+
+        preg_match_all('/@font-face\s*{([^}]*)}/', $css, $faces);
+        $seenBrand = false;
+        $seenFallback = false;
+        foreach ($faces[1] as $body) {
+            if (preg_match('/font-family:\s*"([^"]+)"/', $body, $name) !== 1) {
+                continue;
             }
+            if ($name[1] === $configFallback) {
+                $seenFallback = true;
+
+                continue;
+            }
+            if ($name[1] !== $configFamily) {
+                $problems[] = "tokens.css @font-face family '{$name[1]}' is neither config/brand.php font.family '{$configFamily}' nor font.fallback_family";
+
+                continue;
+            }
+            $seenBrand = true;
+            if (preg_match('/url\("([^"]+)"\)/', $body, $url) !== 1) {
+                $problems[] = "tokens.css @font-face for '{$configFamily}' has no url()";
+
+                continue;
+            }
+            $declared = realpath(dirname($path).'/'.$url[1]);
+            if ($declared === false || ! in_array($declared, $allowed, true)) {
+                $problems[] = "tokens.css @font-face file '{$url[1]}' does not resolve to a config/brand.php font.web_files entry";
+            }
+        }
+        if (! $seenBrand) {
+            $problems[] = 'tokens.css has no @font-face for the brand font family';
+        }
+        if (! $seenFallback) {
+            $problems[] = 'tokens.css has no size-adjust fallback @font-face named '.$configFallback;
+        }
+        if (realpath(Brand::fontPath()) === false) {
+            $problems[] = "config/brand.php font.file '".config('brand.font.file')."' (embedded in PDFs) does not exist";
         }
 
         return $problems;

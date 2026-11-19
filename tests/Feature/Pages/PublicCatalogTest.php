@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 use App\Domain\Catalog\CourseStatus;
 use App\Domain\Catalog\Models\AgeBand;
+use App\Domain\Cohorts\Cohort;
+use App\Domain\Cohorts\CohortMember;
+use App\Domain\Commerce\CoursePrice;
+use App\Domain\Entitlements\Entitlement;
+use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Media\Providers\RichTextProvider;
 use App\Models\Category;
 use App\Models\Course;
@@ -89,6 +94,61 @@ it('uses configured age bands and keeps search state on newest-first pagination'
     $this->get('/courses?'.http_build_query(['q' => 'drawing', 'age_band' => $band->id, 'page' => 2]))
         ->assertOk()->assertSee('Drawing-1')->assertDontSee('Drawing-14');
 })->group('T-P2-04', 'A2');
+
+it('ranks matching courses by distinct active learners even below the global top 200', function (): void {
+    $this->freezeTime();
+    [$learner, $secondLearner] = User::factory()->count(2)->create()->all();
+    $drafts = [];
+    foreach (range(1, 200) as $number) {
+        $draft = publicCatalogCourse('rank-draft-'.$number, ['status' => CourseStatus::Draft]);
+        foreach ([$learner, $secondLearner] as $student) {
+            $drafts[] = ['course_id' => $draft->id, 'learner_id' => $student->id, 'source_type' => EntitlementSource::ManualGrant->value,
+                'source_ref' => 'catalog-rank', 'status' => Entitlement::ACTIVE, 'starts_at' => now()->subDay()];
+        }
+    }
+    foreach (array_chunk($drafts, 100) as $batch) {
+        Entitlement::query()->insert($batch);
+    }
+
+    $twoActive = publicCatalogCourse('rank-two-active');
+    $ranked = publicCatalogCourse('rank-enrolled');
+    $noActive = publicCatalogCourse('rank-no-active');
+    foreach ([[$twoActive, $learner, null, 'a'], [$twoActive, $secondLearner, null, 'a'], [$ranked, $learner, null, 'a'], [$ranked, $learner, null, 'b'], [$noActive, $learner, now(), 'expired']] as [$course, $student, $endsAt, $source]) {
+        Entitlement::query()->create(['course_id' => $course->id, 'learner_id' => $student->id, 'source_type' => EntitlementSource::ManualGrant,
+            'source_ref' => $source, 'status' => Entitlement::ACTIVE, 'starts_at' => now()->subDay(), 'ends_at' => $endsAt]);
+    }
+
+    $this->get('/en/courses?q=rank&sort=popular')->assertOk()
+        ->assertSeeInOrder(['Rank-two-active', 'Rank-enrolled', 'Rank-no-active'])->assertDontSee('Rank-draft-');
+})->group('T-P2-04', 'A2', 'YG-WEB-003');
+
+it('only lists starting-soon courses whose enrolling cohort can still take learners', function (): void {
+    $this->freezeTime();
+    $available = publicCatalogCourse('available-workshop', ['format' => 'live']);
+    $full = publicCatalogCourse('occupied-workshop', ['format' => 'live']);
+    $cohortFields = ['name' => 'Workshop intake', 'status' => Cohort::OPEN, 'capacity' => 1,
+        'starts_on' => now('Africa/Cairo')->addWeek()->toDateString()];
+    $available->cohorts()->create([...$cohortFields, 'starts_on' => now('Africa/Cairo')->addDays(14)->toDateString()]);
+    $full->cohorts()->create($cohortFields)->members()->create([
+        'learner_id' => User::factory()->create()->id, 'status' => CohortMember::SEATED,
+    ]);
+
+    $this->get('/en/courses?availability=soon')->assertOk()->assertSee('Available-workshop')
+        ->assertSee('data-availability="soon"', false)->assertDontSee('Occupied-workshop');
+})->group('T-P2-04', 'A2', 'YG-WEB-003');
+
+it('combines Egypt price bounds with price sorting', function (): void {
+    $this->freezeTime();
+    $cheap = publicCatalogCourse('priced-cheap', ['access_mode' => Course::ACCESS_PAID]);
+    $higher = publicCatalogCourse('priced-higher', ['access_mode' => Course::ACCESS_BOTH]);
+    $outside = publicCatalogCourse('priced-outside', ['access_mode' => Course::ACCESS_PAID]);
+    foreach ([[$cheap, 'EG', 'EGP', 1000], [$higher, 'EG', 'EGP', 2250], [$outside, 'EG', 'EGP', 2251], [$outside, 'SA', 'SAR', 2200]] as [$course, $market, $currency, $amount]) {
+        CoursePrice::query()->create(['course_id' => $course->id, 'market' => $market, 'currency' => $currency, 'amount_minor' => $amount]);
+    }
+
+    $this->get('/en/courses?price_min=10&price_max=22.50&sort=price_asc')->assertOk()
+        ->assertSeeInOrder(['Priced-cheap', 'Priced-higher'])->assertDontSee('Priced-outside');
+})->group('T-P2-04', 'A2', 'YG-WEB-003');
 
 it('renders a published course and its review area', function (bool $signedIn, bool $seedRoles): void {
     $this->withoutExceptionHandling();

@@ -59,7 +59,7 @@ final class Learner360Record
             'minor' => $minor,
             'profile' => $this->profile($learner, $sensitive, $minor),
             'guardians' => $this->guardians($learner, $sensitive),
-            'access' => $this->access->for($learner, $sensitive, $rows),
+            'access' => $this->accessRows($learner, $sensitive, $rows),
             'orders' => $this->orders($learner, $viewer->can('payment.view'), $rows, $locale),
             'certificates' => $this->certificates($learner, $locale, $rows),
             'help' => $this->help($learner, $rows),
@@ -126,6 +126,35 @@ final class Learner360Record
         return $out;
     }
 
+    /**
+     * Access rows with a human label for the source reference ("Order YG-ORD-1", "Subscription period 1") instead of
+     * the internal "kind:id" token.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function accessRows(User $learner, bool $sensitive, int $limit): array
+    {
+        return array_map(static function (array $row): array {
+            $reference = $row['reference'];
+            $row['reference_label'] = null;
+            if (is_string($reference) && $reference !== '') {
+                [$kind, $ref] = array_pad(explode(':', $reference, 2), 2, null);
+                $known = $ref !== null && Lang::has('support.source_refs.'.$kind);
+                $row['reference_label'] = __('support.source_refs.'.($known ? $kind : 'other'), ['ref' => $ref ?? $reference]);
+            }
+
+            return $row;
+        }, $this->access->for($learner, $sensitive, $limit));
+    }
+
+    /** Localized kind of a sent notice, from the notice class name (never the English class headline). */
+    private static function noticeLabel(string $class): string
+    {
+        $key = Str::snake(Str::beforeLast($class, 'Notice'));
+
+        return __('support.notice_kinds.'.(Lang::has('support.notice_kinds.'.$key) ? $key : 'other'));
+    }
+
     /** @return list<array<string, mixed>> */
     private function orders(User $learner, bool $payments, int $limit, string $locale): array
     {
@@ -180,7 +209,7 @@ final class Learner360Record
     {
         return NotificationDispatch::query()->where('recipient_id', $learner->getKey())->latest('id')->limit($limit)->get()
             ->map(static fn (NotificationDispatch $dispatch): array => [
-                'label' => Str::headline(Str::beforeLast($dispatch->notification, 'Notice')),
+                'label' => self::noticeLabel($dispatch->notification),
                 'at' => $dispatch->created_at->isoFormat('LLL'),
             ])->all();
     }

@@ -12,7 +12,11 @@
     .yg-rv-item { display: grid; gap: .25rem; padding: .5rem .75rem; border: 1px solid var(--yg-color-border); border-radius: .5rem; }
     .yg-rv-link { color: var(--yg-color-primary); font-weight: 600; text-decoration: underline; overflow-wrap: anywhere; }
     .yg-rv-btn { min-block-size: 2.75rem; padding: 0 1rem; border: 1px solid var(--yg-color-border); border-radius: .5rem; background: var(--yg-color-primary); color: var(--yg-color-on-primary); font-weight: 600; cursor: pointer; }
-    .yg-rv-terms { display: grid; gap: .5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: 0; }
+    .yg-rv-terms { display: grid; gap: .5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); margin: 0; }
+    .yg-rv-terms > div { min-inline-size: 0; }
+    @media (max-width: 47.999rem) { .yg-rv-terms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .yg-rv-terms dt { color: var(--yg-color-muted); font-size: .875rem; }
-    .yg-rv-terms dd { margin: 0; font-weight: 700; }
+    .yg-rv-terms dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; min-inline-size: 0; }
+    .yg-rv .yg-ai-table td[data-source] { white-space: normal; }
+    .yg-rv [data-access-reference] { display: block; max-inline-size: 11rem; white-space: normal; overflow-wrap: anywhere; }
 </style>

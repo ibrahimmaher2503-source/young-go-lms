@@ -6,12 +6,13 @@ namespace App\Domain\Cohorts;
 
 use App\Models\Course;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 
 /**
  * Public availability of courses that run in cohorts (T-P2-04): the catalog filter and the badges on the course cards.
  * One definition of "open", "seats left" and "starts soon" that reuses the cohort rules (enrolment window in Cairo time,
- * seated members against capacity). A course with no cohort at all (recorded, on demand) is open for enrolment.
+ * seated members plus live checkout seat holds against capacity). A course with no cohort at all (recorded, on demand) is open for enrolment.
  */
 final class CohortAvailability
 {
@@ -45,12 +46,24 @@ final class CohortAvailability
                 ->whereDoesntHave('cohorts')
                 ->orWhereHas('cohorts', static fn (Builder $cohorts): Builder => self::withRoom(self::enrolling($cohorts, $today)))),
             self::SEATS => $query->whereHas('cohorts', static fn (Builder $cohorts): Builder => self::withRoom(self::enrolling($cohorts, $today))->whereNotNull('capacity')),
-            self::SOON => $query->whereHas('cohorts', static fn (Builder $cohorts): Builder => self::enrolling($cohorts, $today)
+            self::SOON => $query->whereHas('cohorts', static fn (Builder $cohorts): Builder => self::withRoom(self::enrolling($cohorts, $today))
                 ->whereDate('starts_on', '>=', $today)
                 ->whereDate('starts_on', '<=', Carbon::parse($today)->addDays(self::SOON_DAYS)->toDateString())),
             self::SUBSCRIPTION => $query->whereIn('courses.access_mode', [Course::ACCESS_SUBSCRIPTION, Course::ACCESS_BOTH]),
             default => $query,
         };
+    }
+
+    /**
+     * Cohorts of a course that take enrolment today (open status and window), earliest start first. Empty for a course with no cohort
+     * or none enrolling. Capacity is not checked here.
+     *
+     * @return Collection<int, Cohort>
+     */
+    public static function enrollingFor(int $courseId): Collection
+    {
+        return Cohort::query()->where('course_id', $courseId)->orderByRaw('starts_on is null')->orderBy('starts_on')->orderBy('id')->get()
+            ->filter(static fn (Cohort $cohort): bool => $cohort->enrollmentIsOpen())->values();
     }
 
     /**
@@ -72,16 +85,22 @@ final class CohortAvailability
         $cohorts = Cohort::query()->whereIn('course_id', $ids)
             ->withCount(['members as seated_count' => static fn ($members) => $members->where('status', CohortMember::SEATED)])
             ->get()->groupBy('course_id');
-        $limit = now('Africa/Cairo')->startOfDay()->addDays(self::SOON_DAYS);
+        $held = CohortSeatHold::query()->active()->whereIn('cohort_id', $cohorts->flatten()->pluck('id'))
+            ->whereNotIn('learner_id', CohortMember::query()->select('learner_id')->whereColumn('cohort_members.cohort_id', 'cohort_seat_holds.cohort_id')->where('status', CohortMember::SEATED))
+            ->selectRaw('cohort_id, count(distinct learner_id) as held')->groupBy('cohort_id')->pluck('held', 'cohort_id');
+        $taken = static fn (Cohort $cohort): int => (int) $cohort->getAttribute('seated_count') + (int) ($held[$cohort->getKey()] ?? 0);
+        $day = now('Africa/Cairo');
+        $today = $day->toDateString();
+        $limit = $day->addDays(self::SOON_DAYS)->toDateString();
         $out = [];
 
         foreach ($ids as $id) {
             $all = $cohorts->get($id, collect());
-            $open = $all->filter(static fn (Cohort $cohort): bool => $cohort->enrollmentIsOpen() && ($cohort->capacity === null || $cohort->capacity > (int) $cohort->getAttribute('seated_count')));
+            $open = $all->filter(static fn (Cohort $cohort): bool => $cohort->enrollmentIsOpen() && ($cohort->capacity === null || $cohort->capacity > $taken($cohort)));
             $limited = $open->filter(static fn (Cohort $cohort): bool => $cohort->capacity !== null)
-                ->map(static fn (Cohort $cohort): int => max(0, (int) $cohort->capacity - (int) $cohort->getAttribute('seated_count')));
+                ->map(static fn (Cohort $cohort): int => max(0, (int) $cohort->capacity - $taken($cohort)));
             $soon = $open->map(static fn (Cohort $cohort): ?Carbon => $cohort->starts_on)->filter(static fn (?Carbon $date): bool => $date !== null
-                && $date->greaterThanOrEqualTo(now('Africa/Cairo')->startOfDay()) && $date->lessThanOrEqualTo($limit))->sort()->first();
+                && $date->toDateString() >= $today && $date->toDateString() <= $limit)->sort()->first();
 
             $out[(int) $id] = [
                 'cohorts' => $all->isNotEmpty(),
@@ -112,8 +131,10 @@ final class CohortAvailability
     private static function withRoom(Builder $cohorts): Builder
     {
         return $cohorts->where(static fn (Builder $room): Builder => $room->whereNull('capacity')->orWhereRaw(
-            'cohorts.capacity > (select count(*) from cohort_members where cohort_members.cohort_id = cohorts.id and cohort_members.status = ?)',
-            [CohortMember::SEATED],
+            'cohorts.capacity > (select count(*) from cohort_members where cohort_members.cohort_id = cohorts.id and cohort_members.status = ?)'
+            .' + (select count(distinct h.learner_id) from cohort_seat_holds h where h.cohort_id = cohorts.id and h.status = ? and h.expires_at > ?'
+            .' and h.learner_id not in (select m.learner_id from cohort_members m where m.cohort_id = cohorts.id and m.status = ?))',
+            [CohortMember::SEATED, CohortSeatHold::HELD, now()->toDateTimeString(), CohortMember::SEATED],
         ));
     }
 }

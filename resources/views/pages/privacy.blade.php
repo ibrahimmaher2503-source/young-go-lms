@@ -1,7 +1,7 @@
 @php
     $tones = ['requested' => 'info', 'approved' => 'warning', 'completed' => 'success', 'rejected' => 'danger', 'cancelled' => 'neutral'];
 @endphp
-<x-layouts.base :variant="$variant" :title="__('privacy.page_title')">
+<x-layouts.learner :title="__('privacy.page_title')">
     <h1 class="mb-2 text-3xl font-bold">{{ __('privacy.page_title') }}</h1>
     <p class="mb-6 text-muted">{{ __('privacy.page_intro') }}</p>
 
@@ -77,4 +77,4 @@
     <x-ui.card class="mt-4" :title="__('privacy.what_we_keep')">
         <p class="text-sm text-muted">{{ __('privacy.what_we_keep_body') }}</p>
     </x-ui.card>
-</x-layouts.base>
+</x-layouts.learner>

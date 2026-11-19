@@ -13,9 +13,16 @@ return [
     'font' => [
         'token' => '--yg-font-family-brand',
         'family' => 'Noto Sans Arabic',
-        'file' => 'fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf', // under resources/, must match @font-face in tokens.css
+        'file' => 'fonts/noto-sans-arabic/NotoSansArabic-Variable.ttf', // under resources/; full TTF embedded in PDFs (not served to browsers)
+        // Web subsets (woff2) served by tokens.css @font-face, under resources/. Every @font-face url() in tokens.css must be listed here.
+        'web_files' => [
+            'arabic' => 'fonts/noto-sans-arabic/NotoSansArabic-arabic.woff2', // preloaded on Arabic pages
+            'latin' => 'fonts/noto-sans-arabic/NotoSansArabic-latin.woff2',   // preloaded on other pages
+        ],
+        'fallback_token' => '--yg-font-family-fallback',
+        'fallback_family' => 'Noto Sans Arabic Fallback', // size-adjust fallback @font-face in tokens.css
         'stack_token' => '--yg-font-stack-sans',
-        'stack' => '"Noto Sans Arabic", system-ui, "Segoe UI", Tahoma, Arial, sans-serif',
+        'stack' => '"Noto Sans Arabic", "Noto Sans Arabic Fallback", system-ui, "Segoe UI", Tahoma, Arial, sans-serif',
         'pdf_stack' => '"Noto Sans Arabic", sans-serif', // PDFs embed the font, so only a generic fallback is needed
         'svg_fallback' => 'sans-serif', // avatar SVGs are images and cannot load the web font
     ],
