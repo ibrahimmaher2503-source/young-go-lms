@@ -10,20 +10,29 @@ use App\Domain\Privacy\ProtectedData;
 use App\Domain\Privacy\RetentionClass;
 use App\Domain\Privacy\RetentionPolicies;
 use App\Domain\Privacy\RetentionPolicy;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 /**
- * Scheduled retention pruning (YG-GAP-PRV-002). Each class deletes only rows older than its configured days; a class with no
- * value keeps its data. Every class is checked against ProtectedData first, so orders, payments, refunds, receipts, certificates,
- * consents and the audit log can never be reached. Help requests run before AI messages because help requests pin AI messages.
- * Idempotent; safe to run daily.
+ * Scheduled retention pruning (YG-GAP-PRV-002, O-025). Configurable classes without a value keep their data. Learning
+ * records use the account closure date. Help requests run before AI messages because help requests pin AI messages.
  */
 final class PruneRetainedData
 {
+    private const int LEARNING_RETENTION_YEARS = 2;
+
+    /** Includes tables reached by cascades from quiz attempts and assignment submissions. */
+    private const array LEARNING_TABLES = [
+        'lesson_progress', 'course_progress', 'live_attendance', 'course_completions',
+        'quiz_attempts', 'quiz_answers', 'assignment_submissions', 'submission_revisions',
+        'submission_files', 'submission_decisions', 'submission_feedback',
+    ];
+
     public function __construct(
         private readonly RetentionPolicies $policies,
         private readonly PruneAiData $pruneAi,
@@ -50,7 +59,15 @@ final class PruneRetainedData
                 default => $days === null ? 0 : $this->prune($class, now()->subDays(max($days, Config::integer('privacy.min_retention_days')))),
             };
             $report[$class->value] = $count;
-            $this->remember($class, $count);
+            $this->remember($class->value, $count, ['retention_days' => $days]);
+        }
+
+        if ($only === null) {
+            ProtectedData::assertNotProtected(self::LEARNING_TABLES);
+            $count = $this->policies->days(RetentionClass::SubmissionFiles) === null ? $this->submissionFiles(null) : 0;
+            $count += $this->pruneLearningRecords();
+            $report['learning_records'] = $count;
+            $this->remember('learning_records', $count, ['years_after_closure' => self::LEARNING_RETENTION_YEARS]);
         }
 
         return $report;
@@ -91,27 +108,69 @@ final class PruneRetainedData
         return $count;
     }
 
-    /** Files of graded work older than the cutoff: the stored file and its row go; the submission, grade and feedback stay. */
-    private function submissionFiles(Carbon $cutoff): int
+    private function closedLearners(): Builder
+    {
+        return DB::table('users')
+            ->select('id')
+            ->where('status', AnonymizeAccount::STATUS)
+            ->where('anonymized_at', '<=', now()->subYearsNoOverflow(self::LEARNING_RETENTION_YEARS));
+    }
+
+    private function pruneLearningRecords(): int
+    {
+        $count = 0;
+        foreach (['lesson_progress', 'course_progress', 'live_attendance', 'quiz_attempts', 'course_completions', 'assignment_submissions'] as $table) {
+            $eligible = DB::table($table)->whereIn('learner_id', $this->closedLearners());
+            if ($table === 'course_completions') {
+                // A completion with any certificate, including revoked certificates, must survive to preserve verification.
+                $eligible->whereNotExists(DB::table('certificates')->whereColumn('course_completion_id', 'course_completions.id'));
+            }
+            if ($table === 'assignment_submissions') {
+                // Let the file policy and disk deletion finish before a submission can cascade to its revisions.
+                $eligible->whereNotExists(DB::table('submission_revisions')
+                    ->join('submission_files', 'submission_files.revision_id', '=', 'submission_revisions.id')
+                    ->whereColumn('submission_id', 'assignment_submissions.id'));
+            }
+            (clone $eligible)->select('id')->chunkById(200, function ($rows) use ($eligible, &$count): void {
+                DB::transaction(function () use ($eligible, $rows, &$count): void {
+                    $batch = (clone $eligible)->whereIn('id', $rows->pluck('id')->all());
+                    $ids = (clone $batch)->lockForUpdate()->pluck('id')->all();
+                    // Recheck references after locking the parent rows against new foreign keys.
+                    $count += $batch->whereIn('id', $ids)->delete();
+                });
+            });
+        }
+
+        return $count;
+    }
+
+    /** Account closure sets the minimum lifetime. A longer configured file policy can extend it. */
+    private function submissionFiles(?Carbon $cutoff): int
     {
         $disk = Storage::disk(Config::string('media.disk'));
         $count = 0;
-        do {
-            $rows = DB::table('submission_files')
-                ->join('submission_revisions', 'submission_revisions.id', '=', 'submission_files.revision_id')
-                ->join('assignment_submissions', 'assignment_submissions.id', '=', 'submission_revisions.submission_id')
-                ->where('assignment_submissions.status', 'graded')
-                ->where('submission_files.created_at', '<', $cutoff)
-                ->orderBy('submission_files.id')->limit(200)
-                ->get(['submission_files.id', 'submission_files.path']);
-            if ($rows->isEmpty()) {
-                break;
-            }
-            foreach ($rows as $row) {
-                $disk->delete((string) $row->path);
-            }
-            $count += DB::table('submission_files')->whereIn('id', $rows->pluck('id')->all())->delete();
-        } while (true);
+        $eligible = DB::table('submission_files')
+            ->join('submission_revisions', 'submission_revisions.id', '=', 'submission_files.revision_id')
+            ->join('assignment_submissions', 'assignment_submissions.id', '=', 'submission_revisions.submission_id')
+            ->whereIn('assignment_submissions.learner_id', $this->closedLearners());
+        if ($cutoff !== null) {
+            $eligible->where('submission_files.created_at', '<', $cutoff);
+        }
+        (clone $eligible)->select('submission_files.id')->chunkById(200, function ($rows) use ($eligible, $disk, &$count): void {
+            DB::transaction(function () use ($eligible, $disk, $rows, &$count): void {
+                $files = (clone $eligible)->whereIn('submission_files.id', $rows->pluck('id')->all())
+                    ->lockForUpdate()->get(['submission_files.id', 'submission_files.path']);
+                foreach ($files as $file) {
+                    $path = (string) $file->path;
+                    $shared = $path === '' || $path === Config::string('privacy.placeholder_file')
+                        || DB::table('submission_files')->where('path', $path)->where('id', '!=', $file->id)->exists();
+                    if (! $shared && ! $disk->delete($path) && $disk->exists($path)) {
+                        throw new RuntimeException('Unable to remove expired submission attachment.');
+                    }
+                    $count += DB::table('submission_files')->where('id', $file->id)->delete();
+                }
+            });
+        }, 'submission_files.id', 'id');
 
         return $count;
     }
@@ -147,13 +206,15 @@ final class PruneRetainedData
         return $count;
     }
 
-    private function remember(RetentionClass $class, int $count): void
+    /** @param  array<string, int|null>  $context */
+    private function remember(string $class, int $count, array $context): void
     {
-        $row = RetentionPolicy::query()->firstOrNew(['data_class' => $class->value]);
-        $row->forceFill(['last_pruned_at' => now(), 'last_pruned_count' => $count])->save();
+        $row = RetentionPolicy::query()->updateOrCreate(['data_class' => $class], [
+            'last_pruned_at' => now(), 'last_pruned_count' => $count,
+        ]);
 
-        if ($count > 0 && $class !== RetentionClass::AiMessages) {
-            $this->audit->record('privacy.retention_pruned', $row, null, null, ['data_class' => $class->value, 'removed' => $count], ['retention_days' => $this->policies->days($class)]);
+        if ($count > 0 && $class !== RetentionClass::AiMessages->value) {
+            $this->audit->record('privacy.retention_pruned', $row, null, null, ['data_class' => $class, 'removed' => $count], $context);
         }
     }
 }

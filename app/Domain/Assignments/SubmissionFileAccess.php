@@ -15,7 +15,7 @@ final class SubmissionFileAccess
 {
     public static function allows(User $viewer, SubmissionFile $file): bool
     {
-        if ($viewer->getAttribute('status') !== 'active') {
+        if ($viewer->getAttribute('status') !== 'active' || $file->path === '') {
             return false;
         }
 

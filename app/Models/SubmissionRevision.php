@@ -36,7 +36,7 @@ final class SubmissionRevision extends Model
     /** @return HasMany<SubmissionFile, $this> */
     public function files(): HasMany
     {
-        return $this->hasMany(SubmissionFile::class, 'revision_id')->orderBy('id');
+        return $this->hasMany(SubmissionFile::class, 'revision_id')->where('path', '!=', '')->orderBy('id');
     }
 
     public function isDraft(): bool

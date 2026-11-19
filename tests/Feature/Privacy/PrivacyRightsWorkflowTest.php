@@ -4,6 +4,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Curriculum\Actions\ManageAssessmentItems;
+use App\Domain\Curriculum\Actions\ManageSections;
+use App\Domain\Entitlements\Actions\GrantEntitlement;
+use App\Domain\Entitlements\EntitlementSource;
 use App\Domain\Privacy\Actions\AnonymizeAccount;
 use App\Domain\Privacy\Actions\ApproveDataRequest;
 use App\Domain\Privacy\Actions\CancelDataRequest;
@@ -17,6 +21,7 @@ use App\Domain\Privacy\DataRequestStatus;
 use App\Domain\Privacy\DataRequestType;
 use App\Domain\Privacy\ProtectedData;
 use App\Domain\Privacy\RetentionClass;
+use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -250,7 +255,7 @@ it('builds an export zip on the private disk with manifest, README and the subje
         ->and($orders)->not->toContain('T908-STRANGER-1')
         ->and(implode("\n", $names))->not->toContain('password')
         ->and(implode("\n", $names))->not->toContain('remember_token');
-})->group('T-P9-08', 'A1');
+})->group('T-P9-08', 'YG-GAP-PRV-001', 'A1');
 
 it('lets the requester download a completed export with no-store, and answers 404 to others and guests', function (): void {
     $student = tp908Student();
@@ -329,3 +334,135 @@ it('keeps every class with null days and deletes nothing from financial tables',
     expect(DB::table('orders')->where('id', $orderId)->exists())->toBeTrue()
         ->and($report['data_exports'] ?? null)->toBeInt();
 })->group('T-P9-08', 'A2');
+
+it('prunes learning records only two years after recorded account closure', function (): void {
+    $this->travelTo(now()->setDate(2028, 11, 19)->startOfDay());
+    $admin = tp908Staff('admin');
+    $course = Course::query()->create([
+        'title' => ['ar' => 'الرسم', 'en' => 'Drawing'],
+        'slug_ar' => 'retention-test-ar', 'slug_en' => 'retention-test-en',
+    ]);
+    $course->instructors()->attach($admin->id, ['role' => 'instructor', 'scope' => 'manage']);
+    $section = app(ManageSections::class)->add($admin, $course, ['title' => ['ar' => 'القسم', 'en' => 'Section']]);
+    $quiz = app(ManageAssessmentItems::class)->add($admin, $section, 'quiz', ['title' => ['ar' => 'اختبار', 'en' => 'Quiz']]);
+    $assignment = app(ManageAssessmentItems::class)->add($admin, $section, 'assignment', ['title' => ['ar' => 'واجب', 'en' => 'Assignment']]);
+    $closed = tp908Student();
+    $grant = app(GrantEntitlement::class)($closed, $course, EntitlementSource::Free);
+    $orderId = tp908Order($closed, 'T908-RETENTION-KEEP', 10000);
+    $closureRequest = app(SubmitDataRequest::class)($closed, $closed, DataRequestType::Deletion);
+    $this->travel(-2)->years();
+    $submissionId = DB::table('assignment_submissions')->insertGetId([
+        'learner_id' => $closed->id, 'assignment_id' => $assignment->itemable_id, 'status' => 'graded',
+    ]);
+    $revisionId = DB::table('submission_revisions')->insertGetId(['submission_id' => $submissionId, 'number' => 1]);
+    $privatePath = 'privacy-test/learner-name.png';
+    Storage::disk('local')->put($privatePath, 'private work');
+    $privateFileId = DB::table('submission_files')->insertGetId([
+        'revision_id' => $revisionId, 'kind' => 'image', 'display_name' => 'Learner name.png', 'path' => $privatePath,
+        'mime' => 'image/png', 'size' => 12, 'sha256' => hash('sha256', 'private work'), 'created_at' => now(),
+    ]);
+    app(ApproveDataRequest::class)($admin, $closureRequest);
+    app(CompleteDataRequest::class)($admin, $closureRequest);
+    Storage::disk('local')->assertMissing($privatePath);
+    $this->assertDatabaseHas('submission_files', [
+        'id' => $privateFileId, 'revision_id' => $revisionId, 'kind' => 'image',
+        'path' => '', 'display_name' => '', 'size' => 0, 'sha256' => '',
+    ]);
+    $this->travel(2)->years();
+
+    $retained = [
+        tp908Student(),
+        User::factory()->create(['status' => 'suspended', 'anonymized_at' => now()->subYears(3)]),
+        User::factory()->create(['status' => 'anonymized', 'anonymized_at' => null]),
+        User::factory()->create(['status' => 'anonymized', 'anonymized_at' => now()->subYears(2)->addSecond()]),
+    ];
+    foreach ([$closed, ...$retained] as $learner) {
+        DB::table('lesson_progress')->insert(['learner_id' => $learner->id, 'curriculum_item_id' => $quiz->id]);
+        DB::table('course_progress')->insert(['learner_id' => $learner->id, 'course_id' => $course->id]);
+    }
+    $attemptId = DB::table('quiz_attempts')->insertGetId([
+        'learner_id' => $closed->id, 'quiz_id' => $quiz->itemable_id, 'attempt_no' => 1, 'started_at' => now(),
+        'snapshot' => '[]', 'settings' => '{}',
+    ]);
+    DB::table('quiz_answers')->insert(['quiz_attempt_id' => $attemptId, 'question_id' => 1, 'question_version' => 1]);
+
+    DB::table('submission_feedback')->insert(['submission_id' => $submissionId, 'body' => 'Feedback']);
+    DB::table('submission_decisions')->insert(['submission_id' => $submissionId, 'revision_number' => 1, 'decision' => 'graded']);
+    $path = 'privacy-test/expired-submission.png';
+    Storage::disk('local')->put($path, 'image');
+    DB::table('submission_files')->insert([
+        'revision_id' => $revisionId, 'kind' => 'image', 'display_name' => 'Expired attachment', 'path' => $path,
+        'mime' => 'image/png', 'size' => 5, 'sha256' => hash('sha256', 'image'), 'created_at' => now()->subYears(3),
+    ]);
+
+    $completionId = DB::table('course_completions')->insertGetId([
+        'learner_id' => $closed->id, 'course_id' => $course->id, 'completed_at' => now()->subYears(3), 'source' => 'auto',
+    ]);
+    $courseWithoutCertificate = Course::query()->create([
+        'title' => ['ar' => 'الكتابة', 'en' => 'Writing'],
+        'slug_ar' => 'retention-uncertified-ar', 'slug_en' => 'retention-uncertified-en',
+    ]);
+    $uncertifiedCompletionId = DB::table('course_completions')->insertGetId([
+        'learner_id' => $closed->id, 'course_id' => $courseWithoutCertificate->id, 'completed_at' => now()->subYears(3), 'source' => 'auto',
+    ]);
+    $certificateId = DB::table('certificates')->insertGetId([
+        'learner_id' => $closed->id, 'course_id' => $course->id, 'course_completion_id' => $completionId,
+        'number' => 'T908-CERT-KEEP', 'token' => str_repeat('a', 64), 'issued_at' => now()->subYears(3),
+        'learner_name' => 'Anonymized learner', 'completed_on' => now()->subYears(3),
+    ]);
+    $sessionId = DB::table('live_sessions')->insertGetId([
+        'course_id' => $course->id, 'title' => '{}', 'starts_at' => now()->subYears(3), 'ends_at' => now()->subYears(3),
+        'timezone' => 'UTC',
+    ]);
+    DB::table('live_attendance')->insert([
+        'learner_id' => $closed->id, 'live_session_id' => $sessionId, 'status' => 'present', 'source' => 'join', 'marked_at' => now()->subYears(3),
+    ]);
+    $activeSubmissionId = DB::table('assignment_submissions')->insertGetId([
+        'learner_id' => $retained[0]->id, 'assignment_id' => $assignment->itemable_id, 'status' => 'graded',
+    ]);
+    $activeRevisionId = DB::table('submission_revisions')->insertGetId(['submission_id' => $activeSubmissionId, 'number' => 1]);
+    $activePath = 'privacy-test/active-submission.png';
+    Storage::disk('local')->put($activePath, 'image');
+    DB::table('submission_files')->insert([
+        'revision_id' => $activeRevisionId, 'kind' => 'image', 'display_name' => 'Active attachment', 'path' => $activePath,
+        'mime' => 'image/png', 'size' => 5, 'sha256' => hash('sha256', 'image'), 'created_at' => now()->subYears(10),
+    ]);
+
+    app(SaveRetentionPolicies::class)($admin, ['submission_files' => 1500]);
+
+    $this->artisan('privacy:prune')->assertSuccessful();
+
+    foreach (['lesson_progress', 'course_progress'] as $table) {
+        $this->assertDatabaseMissing($table, ['learner_id' => $closed->id]);
+        foreach ($retained as $learner) {
+            $this->assertDatabaseHas($table, ['learner_id' => $learner->id]);
+        }
+    }
+    $this->assertDatabaseMissing('quiz_attempts', ['id' => $attemptId]);
+    $this->assertDatabaseMissing('quiz_answers', ['quiz_attempt_id' => $attemptId]);
+    $this->assertDatabaseMissing('live_attendance', ['learner_id' => $closed->id, 'live_session_id' => $sessionId]);
+    $this->assertDatabaseMissing('course_completions', ['id' => $uncertifiedCompletionId]);
+    $this->assertDatabaseHas('submission_files', ['revision_id' => $revisionId]);
+    $this->assertDatabaseHas('submission_files', ['id' => $privateFileId]);
+    Storage::disk('local')->assertExists($path);
+    $this->assertDatabaseHas('certificates', ['id' => $certificateId, 'course_completion_id' => $completionId]);
+    $this->assertDatabaseHas('orders', ['id' => $orderId]);
+    $this->assertDatabaseHas($grant->getTable(), ['id' => $grant->id]);
+    $this->assertDatabaseHas('data_requests', ['id' => $closureRequest->id, 'status' => 'completed']);
+    expect(tp908Events('privacy.retention_pruned'))->toBe(1)
+        ->and(tp908Events('privacy.account_anonymized'))->toBe(1);
+
+    $this->artisan('privacy:prune')->assertSuccessful();
+    expect(tp908Events('privacy.retention_pruned'))->toBe(1);
+
+    $this->travel(3)->years();
+    $this->artisan('privacy:prune')->assertSuccessful();
+    $this->assertDatabaseMissing('assignment_submissions', ['id' => $submissionId]);
+    $this->assertDatabaseMissing('submission_revisions', ['submission_id' => $submissionId]);
+    $this->assertDatabaseMissing('submission_feedback', ['submission_id' => $submissionId]);
+    $this->assertDatabaseMissing('submission_decisions', ['submission_id' => $submissionId]);
+    $this->assertDatabaseMissing('submission_files', ['revision_id' => $revisionId]);
+    $this->assertDatabaseHas('submission_files', ['revision_id' => $activeRevisionId]);
+    Storage::disk('local')->assertMissing($path);
+    Storage::disk('local')->assertExists($activePath);
+})->group('T-P9-08', 'YG-GAP-PRV-002', 'A2');

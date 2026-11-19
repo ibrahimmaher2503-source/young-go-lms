@@ -22,8 +22,9 @@ use RuntimeException;
  * and the audit log point at it) but every personal field, credential, session, device, notification, wishlist, review, AI
  * conversation and submission text/file is removed or blanked. Certificates keep their number and token so public verification
  * still answers, with the holder's name replaced and `anonymized_at` set. Financial records are NEVER edited here: orders,
- * payments, refunds, e-receipts (including the buyer snapshot) and transfer proofs are retained as legal/financial evidence until
- * O-025 sets final periods. Safeguarding flags stay under their own policy (O-028). Idempotent: an anonymized account is a no-op.
+ * payments, refunds, e-receipts (including the buyer snapshot) and transfer proofs are retained as legal/financial evidence
+ * under O-025. The account marker starts the two-year retention period for remaining learning records. Safeguarding flags
+ * stay under their own policy (O-028). Idempotent: an anonymized account is a no-op.
  *
  * Refused for: accounts with staff/instructor roles (offboard first), a payer with an open refund, a guardian with active
  * verified children (unlink or anonymize the children first).
@@ -140,14 +141,17 @@ final class AnonymizeAccount
             'id_document_path' => '', 'id_document_sha256' => '',
         ]);
 
-        // Learner work: essay text and uploaded files. Grades, decisions and reviewer feedback stay as the learning record.
+        // Remove identifying content while preserving attachment history until learning retention expires.
         $submissionIds = DB::table('assignment_submissions')->where('learner_id', $id)->pluck('id')->all();
         $revisionIds = DB::table('submission_revisions')->whereIn('submission_id', $submissionIds)->pluck('id')->all();
         $report['submission_text'] = DB::table('submission_revisions')->whereIn('id', $revisionIds)->whereNotNull('text_body')->update(['text_body' => null]);
-        foreach (DB::table('submission_files')->whereIn('revision_id', $revisionIds)->pluck('path') as $path) {
+        $uploads = DB::table('submission_files')->whereIn('revision_id', $revisionIds)->where('path', '!=', '');
+        foreach ($uploads->pluck('path') as $path) {
             $files['local'][] = (string) $path;
         }
-        $report['submission_files'] = DB::table('submission_files')->whereIn('revision_id', $revisionIds)->delete();
+        $report['submission_files'] = $uploads->update([
+            'path' => '', 'display_name' => '', 'mime' => 'application/octet-stream', 'size' => 0, 'sha256' => '',
+        ]);
         $attemptIds = DB::table('quiz_attempts')->where('learner_id', $id)->pluck('id')->all();
         $report['essay_answers'] = DB::table('quiz_answers')->whereIn('quiz_attempt_id', $attemptIds)->where('answer', 'like', '%"text"%')->update(['answer' => null]);
 
