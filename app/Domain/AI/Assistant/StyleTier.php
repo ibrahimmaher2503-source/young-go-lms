@@ -24,7 +24,15 @@ enum StyleTier: string
         }
 
         $tier = app(AgeBandResolver::class)->resolve($year, $month)?->style_tier;
+        $resolved = $tier === null ? self::Kids : (self::tryFrom($tier) ?? self::Kids);
+        if ($resolved === self::Adults && is_numeric($adultAge = config('ai.adult_age'))) {
+            $now = now();
+            $age = $now->year - $year - ($now->month < $month ? 1 : 0);
+            if ($age < (int) $adultAge) {
+                return self::Teens;
+            }
+        }
 
-        return $tier === null ? self::Kids : (self::tryFrom($tier) ?? self::Kids);
+        return $resolved;
     }
 }

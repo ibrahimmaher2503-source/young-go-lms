@@ -106,15 +106,18 @@ final class AskLessonAssistant
             return $this->persistCached($learner, $lesson, $document, $conversation, $input, $question, $checked->piiKinds, $tier, $prompt, $hit);
         }
 
-        $this->budget->assertOpen($lesson);
-        $reservation = $this->quota->reserve($learner, $lesson);
+        $budgetReservation = $this->budget->reserve($lesson);
+        $reservation = null;
 
         try {
+            $reservation = $this->quota->reserve($learner, $lesson);
             $reply = $this->answer($learner, $lesson, $document, $conversation, $messages, $input, $question, $checked, $tier, $prompt, $language, $reservation);
         } catch (Throwable $exception) {
-            $reservation->refund();
+            $reservation?->refund();
 
             throw $exception;
+        } finally {
+            $budgetReservation->release();
         }
 
         if ($cacheable && $reply->answered()) {

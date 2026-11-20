@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\AI;
 
+use App\Domain\AI\Assistant\StyleTier;
 use App\Domain\AI\Resilience\ProviderRegistry;
+use App\Domain\Catalog\AgeBandResolver;
+use App\Domain\Catalog\Models\AgeBand;
 use App\Domain\Entitlements\Contracts\LessonAccessChecker;
 use App\Domain\Guardians\Queries\GuardianVerified;
 use App\Domain\Identity\Models\GuardianChildLink;
@@ -22,7 +25,11 @@ use Laravel\Pennant\Feature;
  */
 final class AssistantEligibility
 {
-    public function __construct(private readonly LessonAccessChecker $access, private readonly AiSettings $settings) {}
+    public function __construct(
+        private readonly LessonAccessChecker $access,
+        private readonly AiSettings $settings,
+        private readonly AgeBandResolver $ageBands,
+    ) {}
 
     public function check(User $student, Lesson $lesson, bool $quotaReserved = false): AssistantAvailability
     {
@@ -146,13 +153,26 @@ final class AssistantEligibility
         $adultAge = config('ai.adult_age');
         $year = $student->getAttribute('birth_year');
         $month = $student->getAttribute('birth_month');
-        if (! is_numeric($adultAge) || $year === null || $month === null) {
+        if (! is_numeric($adultAge) || ! is_numeric($year) || ! is_numeric($month)) {
+            return false;
+        }
+
+        $birthYear = (int) $year;
+        $birthMonth = (int) $month;
+        if ($birthMonth < 1 || $birthMonth > 12) {
             return false;
         }
 
         $now = now();
-        $age = $now->year - (int) $year - ($now->month < (int) $month ? 1 : 0);
+        $age = $now->year - $birthYear - ($now->month < $birthMonth ? 1 : 0);
+        if ($age < (int) $adultAge) {
+            return false;
+        }
 
-        return $age >= (int) $adultAge;
+        if (AgeBand::query()->exists()) {
+            return $this->ageBands->resolve($birthYear, $birthMonth)?->style_tier === StyleTier::Adults->value;
+        }
+
+        return true;
     }
 }

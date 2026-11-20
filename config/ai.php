@@ -91,6 +91,11 @@ return [
         'ask_per_minute' => 8,           // POST assistant messages, per signed-in account
         'status_per_minute' => 60,       // GET assistant status, per signed-in account
     ],
+    'budget' => [
+        'reservation_minor' => null,     // optional explicit per-call reserve in minor units; null derives from observed max or default
+        'default_reservation_minor' => 50,
+        'reservation_ttl_seconds' => 60, // auto-expiry safety net if a worker crashes before releasing
+    ],
 
     // PDF ingestion (AI spec section 6). Thresholds are starting values to tune against real lesson PDFs.
     'ingestion' => [
