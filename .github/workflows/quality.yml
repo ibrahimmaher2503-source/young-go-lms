@@ -4,7 +4,8 @@ permissions:
   contents: read
 jobs:
   bootstrap:
-    runs-on: ubuntu-latest
+    # The Ubuntu 26.04 runner denied QPDF access to Pest's temporary uploads.
+    runs-on: ubuntu-24.04
     services:
       mysql:
         image: mysql:8.4
@@ -89,6 +90,13 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium --only-shell
+      - name: Verify QPDF reads temporary uploads
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+        run: php -d memory_limit=2G vendor/bin/pest tests/Feature/Media/PrivateFilesTest.php --filter='inspects real PDF'
       - name: Tests and coverage
         env:
           XDEBUG_MODE: coverage
