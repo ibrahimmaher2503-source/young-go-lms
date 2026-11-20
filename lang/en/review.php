@@ -70,6 +70,7 @@ return [
         'rejected' => ['title' => 'Your work was not accepted: :title', 'body' => 'Your instructor did not accept ":title". Open it to read the feedback.'],
         'revision_requested' => ['title' => 'Changes requested: :title', 'body' => 'Your instructor asked for changes to ":title". Update your work and submit it again.'],
         'essay_reviewed' => ['title' => 'Your quiz answers were graded: :title', 'body' => 'Your written answers in ":title" were graded. Open the result to see your score.'],
+        'quiz_result' => ['title' => 'Your quiz result is ready: :title', 'body' => 'Your result for ":title" is ready to view. Open it to see your score.'],
     ],
     'learner_view' => ['feedback' => 'Feedback from your instructor', 'instructor_feedback' => 'Instructor feedback'],
 ];

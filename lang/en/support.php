@@ -64,6 +64,7 @@ return [
         'assignment' => 'Assignment',
         'help_request' => 'Help request update',
         'essay_reviewed' => 'Essay reviewed',
+        'quiz_result' => 'Quiz result',
         'submission_decision' => 'Assignment decision',
         'certificate_issued' => 'Certificate issued',
         'certificate_revoked' => 'Certificate revoked',

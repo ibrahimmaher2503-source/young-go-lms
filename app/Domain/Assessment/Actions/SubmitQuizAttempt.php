@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Assessment\Actions;
 
+use App\Domain\Assessment\Notifications\QuizResultNotice;
 use App\Domain\Assessment\QuizAnswerWriter;
 use App\Domain\Assessment\QuizGrader;
 use App\Domain\Assessment\QuizRefusedException;
 use App\Domain\Assessment\QuizScoring;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Completion\CompletionTrigger;
+use App\Domain\Notifications\NotificationDispatcher;
 use App\Domain\Progress\Actions\CompleteAssessmentItem;
 use App\Models\Question;
 use App\Models\QuizAnswer;
@@ -17,6 +19,7 @@ use App\Models\QuizAttempt;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Throwable;
 
 /**
  * Closes an attempt and grades it from the snapshot. A submit after the deadline (plus grace) ignores anything sent with
@@ -30,6 +33,7 @@ final class SubmitQuizAttempt
         private readonly QuizAnswerWriter $writer,
         private readonly AuditLogger $audit,
         private readonly CompleteAssessmentItem $complete,
+        private readonly NotificationDispatcher $notifications,
     ) {}
 
     /**
@@ -42,10 +46,10 @@ final class SubmitQuizAttempt
             throw new QuizRefusedException(QuizRefusedException::NO_ACCESS);
         }
 
-        $done = DB::transaction(function () use ($learner, $attempt, $answers, $auto): QuizAttempt {
+        [$done, $justSubmitted] = DB::transaction(function () use ($learner, $attempt, $answers, $auto): array {
             $locked = QuizAttempt::query()->whereKey($attempt->getKey())->lockForUpdate()->firstOrFail();
             if (! $locked->isOpen()) {
-                return $locked; // already submitted: the first submit wins
+                return [$locked, false]; // already submitted: the first submit wins
             }
 
             $late = $locked->deadline_at !== null && now()->gt($locked->deadline_at->copy()->addSeconds((int) config('assessment.grace_seconds')));
@@ -59,10 +63,10 @@ final class SubmitQuizAttempt
                 throw new RuntimeException('Unable to record quiz audit.');
             }
 
-            return $locked;
+            return [$locked, true];
         });
 
-        $this->progress($learner, $done);
+        $this->progress($learner, $done, $justSubmitted);
 
         return $done;
     }
@@ -93,7 +97,7 @@ final class SubmitQuizAttempt
     }
 
     /** Called after the transaction, so a failure here never loses a submitted attempt. */
-    private function progress(User $learner, QuizAttempt $attempt): void
+    private function progress(User $learner, QuizAttempt $attempt, bool $justSubmitted): void
     {
         $item = $attempt->quiz->item()->first();
         if ($item === null) {
@@ -104,6 +108,13 @@ final class SubmitQuizAttempt
             $this->complete->__invoke($learner, $item, 'quiz_submitted');
         } elseif ($attempt->passed === true) {
             $this->complete->__invoke($learner, $item, 'quiz_passed');
+        }
+        if ($justSubmitted && ! $attempt->needs_review && ($attempt->settings['result_visibility'] ?? 'full') !== 'hidden') {
+            try {
+                $this->notifications->send($learner, new QuizResultNotice($attempt, (int) $item->course_id, (int) $item->getKey()));
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
         CompletionTrigger::changed($learner, (int) $item->course_id); // a quiz result can complete the course whatever the progression rule
     }

@@ -19,6 +19,11 @@ final class SubmissionDecisionNotice extends LocalizedNotification
         private readonly string $assignmentTitle,
     ) {}
 
+    public function event(): string
+    {
+        return $this->matrixEvent();
+    }
+
     public function dedupeKey(): string
     {
         return 'assignment-decision:'.$this->decision->getKey();
@@ -26,7 +31,7 @@ final class SubmissionDecisionNotice extends LocalizedNotification
 
     protected function title(User $recipient): string
     {
-        $values = ['title' => $this->assignmentTitle];
+        $values = ['title' => $this->titleText()];
 
         return NotificationTemplates::render($this->matrixEvent(), 'title', $values, __('review.notice.'.$this->decision->decision.'.title', $values));
     }
@@ -35,7 +40,7 @@ final class SubmissionDecisionNotice extends LocalizedNotification
     {
         $score = $this->decision->final_score === null ? '' : rtrim(rtrim((string) $this->decision->final_score, '0'), '.');
 
-        $values = ['title' => $this->assignmentTitle, 'score' => $score];
+        $values = ['title' => $this->titleText(), 'score' => $score];
 
         return NotificationTemplates::render($this->matrixEvent(), 'body', $values, __('review.notice.'.$this->decision->decision.'.body', $values));
     }
@@ -44,6 +49,19 @@ final class SubmissionDecisionNotice extends LocalizedNotification
     private function matrixEvent(): string
     {
         return 'assignment.'.($this->decision->decision === 'revision_requested' ? 'revision' : $this->decision->decision);
+    }
+
+    private function titleText(): string
+    {
+        $assignment = $this->decision->submission?->assignment;
+        if ($assignment !== null) {
+            $translated = (string) $assignment->getTranslation('title', app()->getLocale());
+            if ($translated !== '') {
+                return $translated;
+            }
+        }
+
+        return $this->assignmentTitle;
     }
 
     protected function url(User $recipient): string

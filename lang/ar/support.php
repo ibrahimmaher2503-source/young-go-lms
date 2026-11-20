@@ -64,6 +64,7 @@ return [
         'assignment' => 'تكليف',
         'help_request' => 'تحديث طلب المساعدة',
         'essay_reviewed' => 'تقييم المقال',
+        'quiz_result' => 'نتيجة الاختبار',
         'submission_decision' => 'قرار التكليف',
         'certificate_issued' => 'إصدار الشهادة',
         'certificate_revoked' => 'إلغاء الشهادة',

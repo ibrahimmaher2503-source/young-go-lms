@@ -14,6 +14,11 @@ final class CertificateIssuedNotice extends LocalizedNotification
 {
     public function __construct(private readonly Certificate $certificate) {}
 
+    public function event(): string
+    {
+        return 'certificate.issued';
+    }
+
     public function dedupeKey(): string
     {
         return 'certificate-issued:'.$this->certificate->course_completion_id;

@@ -14,6 +14,11 @@ final class EssayReviewedNotice extends LocalizedNotification
 {
     public function __construct(private readonly QuizAttempt $attempt, private readonly int $courseId, private readonly int $itemId) {}
 
+    public function event(): string
+    {
+        return 'quiz.result';
+    }
+
     public function dedupeKey(): string
     {
         return 'quiz-review:'.$this->attempt->getKey();
@@ -21,14 +26,14 @@ final class EssayReviewedNotice extends LocalizedNotification
 
     protected function title(User $recipient): string
     {
-        $values = ['title' => (string) $this->attempt->quiz->title];
+        $values = ['title' => $this->quizTitle()];
 
         return NotificationTemplates::render('quiz.result', 'title', $values, __('review.notice.essay_reviewed.title', $values));
     }
 
     protected function body(User $recipient): string
     {
-        $values = ['title' => (string) $this->attempt->quiz->title];
+        $values = ['title' => $this->quizTitle()];
 
         return NotificationTemplates::render('quiz.result', 'body', $values, __('review.notice.essay_reviewed.body', $values));
     }
@@ -36,5 +41,13 @@ final class EssayReviewedNotice extends LocalizedNotification
     protected function url(User $recipient): string
     {
         return route('quiz.attempt', ['course' => $this->courseId, 'item' => $this->itemId, 'attempt' => $this->attempt->getKey()]);
+    }
+
+    private function quizTitle(): string
+    {
+        $quiz = $this->attempt->quiz;
+        $translated = (string) $quiz->getTranslation('title', app()->getLocale());
+
+        return $translated !== '' ? $translated : (string) $quiz->title;
     }
 }

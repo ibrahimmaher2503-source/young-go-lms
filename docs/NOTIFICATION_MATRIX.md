@@ -44,13 +44,17 @@ Placeholders are whitelisted `:tokens` only (plain text, no HTML, no Blade).
 | `safeguarding.alert` | safeguarding | mandatory | wired | none | `notification_events.templates.safeguarding_alert.title` | DRAFT wording pending legal review (O-028); admin + support; case link only |
 | `settlement.statement` | settlement | mandatory | wired | `:period` | `notification_events.templates.settlement_statement.title` |  |
 | `settlement.status` | settlement | mandatory | wired | `:period` `:status` | `notification_events.templates.settlement_status.title` |  |
+| `course.approved` | course_review | mandatory | wired | `:course` | `notification_events.templates.course_approved.title` |  |
+| `course.rejected` | course_review | mandatory | wired | `:course` `:reason` | `notification_events.templates.course_rejected.title` |  |
 | `course.revision_submitted` | course_review | mandatory | wired | `:course` `:revision` | `notification_events.templates.course_revision_submitted.title` |  |
 | `course.revision_approved` | course_review | mandatory | wired | `:course` `:revision` | `notification_events.templates.course_revision_approved.title` |  |
 | `course.revision_rejected` | course_review | mandatory | wired | `:course` `:revision` `:reason` | `notification_events.templates.course_revision_rejected.title` |  |
 
 ## Wiring notes
 
-- Preferences gate in `NotificationDispatcher::send` (via `LocalizedNotification::event()`; null = mandatory). The email switch on the profile page (`notification_preferences.email`) now only affects optional notices; mandatory notices keep their email copy.
+- Preferences gate in `NotificationDispatcher::send` (via `LocalizedNotification::event()`). Every matrix-backed notice (`QuizResultNotice`, `EssayReviewedNotice`, `SubmissionDecisionNotice`, `CertificateIssuedNotice`, `AccessNotice`, `AnnouncementNotice`, `TemplatedNotice`) now returns its matrix event key so mandatory/optional checks and category opt-outs (`NotificationPreferences`) stay authoritative. The email switch on the profile page (`notification_preferences.email`) affects optional notices; mandatory notices keep their email copy.
+- `quiz.result` is wired across all three quiz outcomes with shared per-attempt idempotency (`quiz-review:{attempt_id}`): immediate auto-graded submits (`SubmitQuizAttempt` via `QuizResultNotice` when `!needs_review` and `result_visibility !== 'hidden'`), completed manual essay reviews (`GradeEssayAnswer` via `EssayReviewedNotice` once results are visible or already released), and manual result releases (`ReleaseQuizResult` via `EssayReviewedNotice` or `QuizResultNotice`).
 - Payer notices use `NotifyPayerOfPayment` and the editable payment templates. Checkout creation sends pending once per order. Verified declines send once per attempt. Manual review and rejection send once per proof and outcome. Approval sends once per order. An executed refund sends once per refund. Links use the payer's own order, proof form or payment history.
 - YG-GAP-FAM-008 applies when the payer is a child without email. The verified guardian receives a localized email copy with the private action link removed.
 - D-030 reminders run in the scheduler. Access checks use the effective end across continuous grants, including renewals. Assignment reminders respect optional notification preferences and skip completed submissions. Expiry and due reminders use a one-day delivery window for each offset.
+- Course review/revision listeners (`NotifyInstructorsOfCourseReview`, `NotifyOfCourseRevision`), `AccessNotice` (with validated `timezone_identifiers_list()` fallback), `QuizResultNotice`, `EssayReviewedNotice`, and `SubmissionDecisionNotice` resolve model titles in the recipient's locale.

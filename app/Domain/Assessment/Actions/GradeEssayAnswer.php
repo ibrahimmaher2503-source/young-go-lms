@@ -89,7 +89,8 @@ final class GradeEssayAnswer
             if ($passed && (string) ($attempt->settings['progression'] ?? 'after_submission') === 'require_pass') {
                 $this->complete->__invoke($learner, $item, 'quiz_passed');
             }
-            if ($reviewCompleted) {
+            $resultVisible = ($attempt->settings['result_visibility'] ?? 'full') !== 'hidden' || $attempt->released_at !== null;
+            if ($reviewCompleted && $resultVisible) {
                 $this->notifications->send($learner, new EssayReviewedNotice($attempt, (int) $item->course_id, (int) $item->getKey()));
             }
         } catch (Throwable $exception) {

@@ -23,9 +23,11 @@ final class NotifyInstructorsOfCourseReview
         $stamp = $course->reviewed_at->timestamp;
 
         foreach (User::query()->whereKey($ids)->get() as $instructor) {
+            $locale = in_array($instructor->locale, ['ar', 'en'], true) ? $instructor->locale : (string) config('app.locale');
+            $title = (string) ($course->getTranslation('title', $locale) ?: $course->title);
             try {
                 $this->dispatcher->send($instructor, new TemplatedNotice(
-                    $key, ['course' => $course->title, 'reason' => (string) $event->reason], 'course-review:'.$course->getKey().':'.$stamp.':'.$instructor->getKey(),
+                    $key, ['course' => $title, 'reason' => (string) $event->reason], 'course-review:'.$course->getKey().':'.$stamp.':'.$instructor->getKey(),
                 ));
             } catch (Throwable $exception) {
                 report($exception);
