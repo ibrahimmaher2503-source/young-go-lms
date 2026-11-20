@@ -52,7 +52,7 @@
     </div>
 @endif
 <header class="border-b border-border bg-surface/95 shadow-card backdrop-blur">
-    <div class="mx-auto flex max-w-[90rem] items-center justify-between gap-3 px-4 py-2 sm:px-8 {{ $wide ? '2xl:max-w-[100rem] 2xl:px-8' : '' }}">
+    <div class="mx-auto flex items-center justify-between gap-3 px-4 py-2 sm:px-8 {{ $wide ? 'max-w-[96rem] lg:px-8' : 'max-w-[90rem]' }}">
         <div class="flex shrink-0 items-center gap-6">
             <a href="{{ url($isParent ? '/parent' : '/my') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-xl font-extrabold text-body" aria-label="{{ __('app.name') }}">
                 <x-ui.icon name="book" class="size-8 shrink-0 text-primary" />
@@ -67,7 +67,12 @@
                 @endforeach
             </nav>
         </div>
-        <div class="flex min-w-0 items-center gap-2">
+        @if($back)
+            <a href="{{ $back['url'] }}" class="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary lg:hidden" data-mobile-back>
+                <x-ui.icon name="back" class="size-5" /> <span>{{ $back['label'] }}</span>
+            </a>
+        @endif
+        <div class="{{ $back ? 'hidden lg:flex' : 'flex' }} min-w-0 items-center gap-2">
             <x-ui.locale-switcher :locale="$locale" class="hidden sm:block" />
             <span class="relative inline-grid size-11 shrink-0 place-items-center text-body" title="{{ __('learner.notifications') }}">
                 <x-ui.icon name="bell" class="size-6" />
@@ -87,7 +92,7 @@
         </div>
     </div>
 </header>
-<main id="main" tabindex="-1" class="mx-auto px-4 py-6 sm:px-8 sm:py-8 {{ $wide ? 'max-w-[90rem] 2xl:max-w-[100rem] 2xl:px-4 2xl:py-4' : 'max-w-6xl' }}">
+<main id="main" tabindex="-1" class="mx-auto px-4 py-4 sm:px-8 sm:py-6 {{ $wide ? 'max-w-[96rem] lg:px-8' : 'max-w-6xl' }}">
     {{ $slot }}
 </main>
 <nav aria-label="{{ __('pages.main_nav') }}" class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-2 py-1 shadow-floating lg:hidden" data-bottom-nav>

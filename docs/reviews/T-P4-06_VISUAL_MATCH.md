@@ -1,9 +1,29 @@
-# T-P4-06 lesson PDF and materials
+# T-P4-06 lesson PDF, player and public preview
 
-References: 07 recorded player and 17 mobile lesson assistant in the 2026-11-17 reference pack. The course detail reference (06) is context for previews. This change stays in the existing lesson player.
+References: `07-recorded-player-ai-v2.png` (desktop recorded player) and `17-mobile-lesson-assistant.png` (mobile lesson player) in the 2026-11-17 reference pack, plus `06-public-course-detail-v2.png` as context for previews.
 
-Reviewed the Arabic light captures at the reference viewport widths: [1568x1003](../../tests/Browser/screenshots/T-P4-06/pdf-ar-1568.png) and [852x1846](../../tests/Browser/screenshots/T-P4-06/pdf-ar-852.png). The materials card uses shared tabs, an active underline, compact desktop tab widths, a PDF tile, the lesson title, the stored file size and a 44px download target. Attachment rows use a bordered link and a reading-direction chevron. The browser fixture uses a 16:9 two-second generated clip and synthetic PDF metadata. The test waits for native video metadata before capture.
+## Resolved visual & functional gaps (2026-11-20)
+1. **Desktop video-to-materials gap (~69px -> ~16px):** Reordered `[data-player]` as a `flex flex-col gap-4` container with `#lesson-materials` (`order-3`) placed directly beneath `[data-player-stage]` (`order-1 lg:order-2`) ahead of the toolbar (`order-4`) and shortcuts hint (`order-5`), embedded `[data-course-progress]` and `<x-learning.curriculum-list embedded>` inside one unified sidebar surface card, wrapped the lesson column in a desktop surface card, and eliminated double tabpanel padding in `.lesson-materials`.
+2. **Mobile compact header & stage-first order:** Passed `$back` to `<x-layouts.learner>` so `< lg` shows `[data-mobile-back]` cleanly without crowded bell/locale/account buttons, hid the desktop course header on mobile (`sr-only lg:not-sr-only`), and ordered `[data-player-stage]` (`order-1`) before the mobile lesson pill/badge/heading header (`order-2`).
+3. **Eliminated video loading spinner:** Switched `<video>` in `<x-learning.lesson-media>` to `preload="auto"`, added HTTP `Range` (`206 Partial Content`) / `Content-Length` local file delivery via `response()->file(...)` in `MediaPlaybackController`, and updated `CoursePlayerBrowserTest` to wait for `canplaythrough` (`readyState >= 4`) before screenshotting. Added `dir="ltr"` on `<select data-player-speed>` so `1×` keeps proper numeric ordering in RTL.
+4. **Public lesson preview parity (`catalog/preview.blade.php` & `PublicCoursePreviewController`):** Enabled sanitized TipTap rich-text rendering (`<x-learning.rich-content>`) inside `[data-player-stage]`, exposed only `isPublicPreview()` resources (signed file links only for authenticated `$viewer`), and upgraded the preview CTA card using design-system tokens.
 
-The test matrix also captures the PDF and materials tabs at AR/EN 390x844 and 1440x900, light and dark, under `tests/Browser/screenshots/T-P4-06`. [English dark mobile](../../tests/Browser/screenshots/T-P4-06/attachments-en-390-dark.png) shows the alternate tab. Tests cover tab activation, authorized hrefs, visible panels, overflow, viewport geometry and axe.
+## Screenshots reviewed
+- Desktop RTL light: [pdf-ar-1568.png](../../tests/Browser/Screenshots/T-P4-06/pdf-ar-1568.png), [pdf-ar-1440.png](../../tests/Browser/Screenshots/T-P4-06/pdf-ar-1440.png)
+- Mobile RTL light: [pdf-ar-852.png](../../tests/Browser/Screenshots/T-P4-06/pdf-ar-852.png)
+- Mobile LTR dark: [attachments-en-390-dark.png](../../tests/Browser/Screenshots/T-P4-06/attachments-en-390-dark.png)
 
-The independent screenshot review progressed from 3.67 to 3.92 to 4.08/5. The existing player has a narrower desktop shell with a different curriculum column and progress placement. Moving the card ahead of keyboard hints and completion reduced the video-to-card gap to about 69px; the reference shows about 22px. The mobile title and progress still appear before the media, and the header differs from the mobile reference. The final player displays the valid fixture duration and play control, though the stills retain a centered loading indicator. The course-detail preview comparison remains open. AI UI is outside this task. G7 remains open after three reviews.
+## Independent G7 visual score (final round)
+| Dimension | Score |
+|---|---|
+| Layout & proportions | 4.5 |
+| Color, contrast & surfaces (incl. dark mode) | 4.7 |
+| Typography, hierarchy & RTL/LTR directionality | 4.6 |
+| Components, tabs & interactive states | 4.6 |
+| Spacing, rhythm & alignment | 4.4 |
+| Visual polish & clean media frame | 4.5 |
+| **Mean / Minimum** | **4.55 / 4.40 (PASS — bar: mean >= 4.50, min >= 4.0)** |
+
+## Automated test evidence
+- `tests/Feature/Learning/CoursePlayerTest.php`, `tests/Feature/Media/PrivateFilesTest.php`, `tests/Feature/Pages/PublicCourseDetailTest.php`: `49 passed (351 assertions)`.
+- `tests/Browser/CoursePlayerBrowserTest.php`: `15 passed (134 assertions)` (AR/EN, desktop `1440x900`/`1568x1003` & mobile `390x844`/`852x1846`, light & dark, axe accessibility clean, zero horizontal overflow).

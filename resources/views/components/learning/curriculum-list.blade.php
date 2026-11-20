@@ -1,15 +1,15 @@
 {{-- Props: course, sections (EntitledCurriculumQuery output), current item id, completed ids, prefix (unique ids).
      Section cards with check / play / empty circles and minutes per lesson (C14); locked items show their reason. --}}
-@props(['course', 'sections', 'current', 'completed' => [], 'prefix' => 'list', 'route' => 'learn.show'])
+@props(['course', 'sections', 'current', 'completed' => [], 'prefix' => 'list', 'route' => 'learn.show', 'embedded' => false])
 @php($number = 0)
-<div class="space-y-3" data-curriculum-list>
+<div class="{{ $embedded ? 'divide-y divide-border' : 'space-y-3' }}" data-curriculum-list>
     @foreach($sections as $sectionIndex => $section)
-        <details open class="rounded-card border border-border bg-surface shadow-card" data-section>
+        <details open class="{{ $embedded ? '' : 'rounded-card border border-border bg-surface shadow-card' }}" data-section>
             <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3">
                 <h3 id="{{ $prefix }}-section-{{ $section['id'] }}" class="font-bold break-words">{{ $sectionIndex + 1 }}. {{ $section['title'] }}</h3>
-                <x-ui.icon name="chevron-down" class="size-5 text-muted" />
+                <x-ui.icon name="chevron-down" class="size-5 shrink-0 text-muted" />
             </summary>
-            <ol class="divide-y divide-border px-2 pb-2" aria-labelledby="{{ $prefix }}-section-{{ $section['id'] }}">
+            <ol class="{{ $embedded ? 'space-y-1 px-2.5 pb-3' : 'divide-y divide-border px-2 pb-2' }}" aria-labelledby="{{ $prefix }}-section-{{ $section['id'] }}">
                 @foreach($section['items'] as $entry)
                     @php($number++)
                     @php($isCurrent = $entry['id'] === $current)

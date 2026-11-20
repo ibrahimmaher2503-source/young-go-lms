@@ -6,9 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Domain\Catalog\Queries\PublicCourseDetail;
 use App\Domain\Entitlements\EntitlementService;
+use App\Domain\Identity\ActingLearner;
 use App\Domain\Media\Queries\LessonPlayback;
+use App\Domain\Media\SignedFileUrl;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
+use App\Models\LessonResource;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 
 /**
@@ -27,12 +31,30 @@ final class PublicCoursePreviewController
 
         $lesson = $entry->itemable;
         abort_unless($lesson instanceof Lesson, 404);
+        $lesson->loadMissing('resources');
+
+        $viewer = app(ActingLearner::class)->current();
+        $urls = app(SignedFileUrl::class);
+        $resources = $lesson->resources
+            ->filter(static fn (LessonResource $resource): bool => $resource->isPublicPreview())
+            ->map(static function (LessonResource $resource) use ($viewer, $urls): array {
+                $url = $resource->type === LessonResource::TYPE_LINK
+                    ? $resource->url
+                    : ($viewer instanceof User ? $urls->for($viewer, $resource) : null);
+
+                return ['title' => (string) $resource->title, 'url' => $url];
+            })
+            ->filter(static fn (array $resource): bool => filled($resource['url']))
+            ->values()
+            ->all();
 
         return view('catalog.preview', [
             'course' => $found,
             'key' => PublicCourseDetail::key($found),
             'lesson' => $lesson,
-            'descriptor' => LessonPlayback::for($lesson),
+            'viewer' => $viewer,
+            'resources' => $resources,
+            'descriptor' => LessonPlayback::for($lesson, $viewer),
         ]);
     }
 }

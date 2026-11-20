@@ -11,14 +11,14 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Rechecks account-bound protected playback, including a parent's current child context, on every redemption.
  */
 final class MediaPlaybackController
 {
-    public function __invoke(Request $request, int $asset, PrivateFileAccess $access, ActingLearner $acting): StreamedResponse
+    public function __invoke(Request $request, int $asset, PrivateFileAccess $access, ActingLearner $acting): Response
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -36,10 +36,18 @@ final class MediaPlaybackController
         $disk = Storage::disk(Config::string('media.disk'));
         abort_unless($disk->exists((string) $media->path), 404);
 
-        return $disk->response((string) $media->path, null, [
+        $headers = [
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
             'Content-Disposition' => 'inline',
-        ]);
+        ];
+        $fullPath = $disk->path((string) $media->path);
+        if (is_file($fullPath)) {
+            $mime = $disk->mimeType((string) $media->path);
+
+            return response()->file($fullPath, is_string($mime) && $mime !== '' ? [...$headers, 'Content-Type' => $mime] : $headers);
+        }
+
+        return $disk->response((string) $media->path, null, $headers);
     }
 }

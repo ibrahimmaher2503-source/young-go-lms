@@ -96,13 +96,14 @@ it('renders the PDF and attachment tabs in both directions, sizes and themes', f
     expect($page->script('() => document.documentElement.dataset.theme'))->toBe($theme);
     expect($page->script('async () => {
         const media = document.querySelector("[data-player-media]");
-        if (!media.readyState && !media.error) {
+        if (media.readyState < 4 && !media.error) {
             await new Promise(resolve => {
-                media.addEventListener("loadedmetadata", resolve, {once: true});
+                media.addEventListener("canplaythrough", resolve, {once: true});
                 media.addEventListener("error", resolve, {once: true});
-                setTimeout(resolve, 3000);
+                setTimeout(resolve, 4000);
             });
         }
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 500)));
         return media.duration;
     }'))->toBe(2);
     $page->assertVisible('#lesson-materials-panel-pdf a[href*="/files/document/"]')
