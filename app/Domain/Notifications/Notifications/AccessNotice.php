@@ -43,7 +43,7 @@ final class AccessNotice extends LocalizedNotification
     {
         $values = ['course' => $this->course->getTranslation('title', app()->getLocale())];
         if ($this->endsAt !== null) {
-            $timezone = is_string($recipient->timezone) && in_array($recipient->timezone, timezone_identifiers_list(), true)
+            $timezone = in_array($recipient->timezone, timezone_identifiers_list(), true)
                 ? $recipient->timezone
                 : (string) config('app.timezone');
             $values['date'] = $this->endsAt->copy()->setTimezone($timezone)->locale(app()->getLocale())->isoFormat('LL');
