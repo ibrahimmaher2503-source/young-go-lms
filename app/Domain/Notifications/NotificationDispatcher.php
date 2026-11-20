@@ -40,11 +40,17 @@ final class NotificationDispatcher
 
         try {
             $this->router->send($recipient, $notification);
-            ($this->phoneReminder)($recipient, $notification);
         } catch (Throwable $exception) {
             $dispatch->delete();
 
             throw $exception;
+        }
+
+        // Best-effort secondary phone copy after email/inbox succeeded; never delete $dispatch or trigger duplicate email on phone failure.
+        try {
+            ($this->phoneReminder)($recipient, $notification);
+        } catch (Throwable $exception) {
+            report($exception);
         }
 
         return true;

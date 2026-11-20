@@ -28,9 +28,14 @@ final class SetPhoneReminderOptIn
         DB::transaction(function () use ($user, $channel, $enabled): void {
             $account = User::query()->lockForUpdate()->findOrFail($user->getKey());
             $optIns = (array) $account->getAttribute('phone_reminder_opt_ins');
-            $was = isset($optIns[$channel]);
+            $previous = is_string($optIns[$channel] ?? null) && $optIns[$channel] !== '' ? $optIns[$channel] : null;
+            $was = $previous !== null;
 
             if ($enabled) {
+                if ($account->status !== 'active') {
+                    throw new InvalidArgumentException('Phone reminder consent requires an active account.');
+                }
+
                 if (GuardianAccess::isMinor($account)) {
                     throw new InvalidArgumentException('Phone reminders are not available for minors.');
                 }
@@ -42,13 +47,22 @@ final class SetPhoneReminderOptIn
                 }
 
                 $optIns[$channel] = $phone;
+                $next = $phone;
             } else {
                 unset($optIns[$channel]);
+                $next = null;
             }
 
             $account->forceFill(['phone_reminder_opt_ins' => $optIns])->save();
 
-            if ($was !== $enabled && $this->audit->record('notifications.phone_opt_in_changed', $account, (int) $account->getKey(), ['enabled' => $was], ['enabled' => $enabled], ['channel' => $channel]) === null) {
+            if ($previous !== $next && $this->audit->record(
+                'notifications.phone_opt_in_changed',
+                $account,
+                (int) $account->getKey(),
+                ['enabled' => $was],
+                ['enabled' => $enabled],
+                ['channel' => $channel, 'reconsented' => $was && $enabled],
+            ) === null) {
                 throw new RuntimeException('Unable to record phone opt-in audit.');
             }
         });

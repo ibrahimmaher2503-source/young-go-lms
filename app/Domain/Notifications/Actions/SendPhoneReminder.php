@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Traits\Localizable;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Optional WhatsApp/SMS copy of a reminder (YG-GAP-NTF-001). Sends only when the notice names a phone template, the
@@ -42,6 +43,13 @@ final class SendPhoneReminder
             static fn (string $channel): bool => ($optIns[$channel] ?? null) === $phone && filled($drivers[$channel] ?? null),
         ));
         if ($channels === []) {
+            return;
+        }
+
+        $status = $recipient->getAttribute('status');
+        if (is_string($status) && $status !== 'active') {
+            $this->skip('inactive', $template);
+
             return;
         }
 
@@ -75,8 +83,13 @@ final class SendPhoneReminder
             return;
         }
 
+        $key = is_string($notice->id) && $notice->id !== '' ? $notice->id : $notice->dedupeKey();
         foreach ($channels as $channel) {
-            $this->channels->for($channel)->send($channel, $phone, $locale, $template, $message, "{$notice->id}:{$channel}");
+            try {
+                $this->channels->for($channel)->send($channel, $phone, $locale, $template, $message, "{$key}:{$channel}");
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
     }
 
