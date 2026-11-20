@@ -158,10 +158,13 @@ final class DuplicateCourse
 
     private function uniqueSlug(string $column, string $base): string
     {
+        $base = trim($base, '-');
         $base = $base === '' ? 'course' : $base;
-        $slug = $base.'-copy';
+        $suffix = '-copy';
+        $slug = (rtrim(mb_substr($base, 0, 120 - strlen($suffix)), '-') ?: 'course').$suffix;
         for ($i = 2; Course::query()->where($column, $slug)->exists(); $i++) {
-            $slug = $base.'-copy-'.$i;
+            $suffix = '-copy-'.$i;
+            $slug = (rtrim(mb_substr($base, 0, 120 - strlen($suffix)), '-') ?: 'course').$suffix;
         }
 
         return $slug;

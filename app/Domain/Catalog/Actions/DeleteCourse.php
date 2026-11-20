@@ -52,18 +52,20 @@ final class DeleteCourse
     {
         Gate::forUser($actor)->authorize('delete', $course);
 
-        $blockers = self::blockers($course);
-        if ($blockers !== []) {
-            throw ValidationException::withMessages(['course' => __('courses.delete_blocked', ['reasons' => implode(', ', array_map(static fn (string $r): string => __('courses.blocked.'.$r), $blockers))])]);
-        }
-
         $files = [];
         DB::transaction(function () use ($actor, $course, &$files): void {
-            if ($this->audit->record('course.deleted', $course, (int) $actor->getKey(), ['title' => $course->getTranslations('title'), 'status' => $course->status->value]) === null) {
+            $locked = Course::query()->whereKey($course->getKey())->lockForUpdate()->firstOrFail();
+
+            $blockers = self::blockers($locked);
+            if ($blockers !== []) {
+                throw ValidationException::withMessages(['course' => __('courses.delete_blocked', ['reasons' => implode(', ', array_map(static fn (string $r): string => __('courses.blocked.'.$r), $blockers))])]);
+            }
+
+            if ($this->audit->record('course.deleted', $locked, (int) $actor->getKey(), ['title' => $locked->getTranslations('title'), 'status' => $locked->status->value]) === null) {
                 throw new RuntimeException('Unable to record course audit.');
             }
 
-            $items = CurriculumItem::query()->where('course_id', $course->getKey())->get();
+            $items = CurriculumItem::query()->where('course_id', $locked->getKey())->get();
             $lessonIds = $items->where('itemable_type', 'lesson')->pluck('itemable_id')->all();
             $documents = LessonCurriculumDocument::query()->whereIn('lesson_id', $lessonIds)->get();
 
@@ -80,13 +82,13 @@ final class DeleteCourse
             LessonResource::query()->whereIn('lesson_id', $lessonIds)->delete();
             SubtitleTrack::query()->whereIn('lesson_id', $lessonIds)->delete();
             MediaAsset::query()->whereIn('lesson_id', $lessonIds)->delete();
-            CurriculumItem::query()->where('course_id', $course->getKey())->delete();
+            CurriculumItem::query()->where('course_id', $locked->getKey())->delete();
             Lesson::query()->whereIn('id', $lessonIds)->delete();
             Quiz::query()->whereIn('id', $items->where('itemable_type', 'quiz')->pluck('itemable_id'))->delete();
             Assignment::query()->whereIn('id', $items->where('itemable_type', 'assignment')->pluck('itemable_id'))->delete();
-            CourseSection::query()->where('course_id', $course->getKey())->delete();
-            $course->instructors()->detach();
-            $course->delete();
+            CourseSection::query()->where('course_id', $locked->getKey())->delete();
+            $locked->instructors()->detach();
+            $locked->delete();
         });
 
         // Files go only after the rows are gone for good, so a failed delete never leaves rows pointing at missing files.

@@ -31,6 +31,7 @@ use App\Domain\Commerce\Events\PaymentAttemptDeclined;
 use App\Domain\Commerce\Events\PaymentCheckoutStarted;
 use App\Domain\Commerce\Events\PaymentVerified;
 use App\Domain\Commerce\Events\RefundExecuted;
+use App\Domain\Commerce\OrderHistory;
 use App\Domain\Commerce\Payments\PaymentGatewayResolver;
 use App\Domain\Commerce\Receipts\EReceiptProviderResolver;
 use App\Domain\Completion\Events\CourseCompleted;
@@ -166,7 +167,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LegacySourceReader::class, static fn (): LegacySourceReader => new ReadOnlyLegacyConnection);
         $this->app->scoped(LegacyIdMap::class);
         $this->app->scoped(EntitlementService::class);
-        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class], 'course.history');
+        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class, OrderHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);
