@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 final class ExportCsvAction
 {
     /**
-     * @param  array<string, string>  $columns  CSV heading => model attribute path
+     * @param  array<string, string|Closure(mixed): mixed>  $columns  CSV heading => model attribute path or extractor
      */
     public static function make(string $ability, array $columns, string $filename = 'export.csv', ?Closure $onExport = null): Action
     {
@@ -31,7 +31,7 @@ final class ExportCsvAction
         }
 
         foreach ($columns as $heading => $attribute) {
-            if (blank($heading) || blank($attribute)) {
+            if (blank($heading) || (! $attribute instanceof Closure && blank($attribute))) {
                 throw new InvalidArgumentException('Export headings and model attributes must be non-empty.');
             }
         }
@@ -64,7 +64,8 @@ final class ExportCsvAction
                             $values = [];
 
                             foreach ($columns as $attribute) {
-                                $values[] = self::safeCell(data_get($record, $attribute));
+                                $value = $attribute instanceof Closure ? $attribute($record) : data_get($record, $attribute);
+                                $values[] = self::safeCell($value);
                             }
 
                             fputcsv($stream, $values, ',', '"', '', "\r\n");

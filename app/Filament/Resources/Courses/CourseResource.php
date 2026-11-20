@@ -117,11 +117,39 @@ final class CourseResource extends FilamentResource
                 ->searchable(query: static fn (Builder $query, string $search): Builder => $query->whereLike(
                     'search_text',
                     '%'.ArabicNormalizer::normalize($search).'%',
-                )),
+                ))
+                ->sortable(query: static function (Builder $query, string $direction): Builder {
+                    $locale = app()->getLocale() === 'ar' ? 'ar' : 'en';
+                    $dir = $direction === 'desc' ? 'desc' : 'asc';
+
+                    return $query->orderBy('courses.title->'.$locale, $dir);
+                }),
             TextColumn::make('category.name')->label(__('courses.category'))
-                ->state(static fn (Course $record): string => $record->category->name ?? __('courses.unassigned')),
+                ->state(static fn (Course $record): string => $record->category->name ?? __('courses.unassigned'))
+                ->sortable(query: static function (Builder $query, string $direction): Builder {
+                    $locale = app()->getLocale() === 'ar' ? 'ar' : 'en';
+                    $dir = $direction === 'desc' ? 'desc' : 'asc';
+
+                    return $query->orderBy(
+                        Category::query()->select('name->'.$locale)->whereColumn('categories.id', 'courses.category_id')->limit(1),
+                        $dir,
+                    );
+                }),
             TextColumn::make('instructors.name')->label(__('courses.instructors'))
-                ->state(static fn (Course $record): string => $record->instructors->pluck('name')->implode(', ') ?: __('courses.unassigned')),
+                ->state(static fn (Course $record): string => $record->instructors->pluck('name')->implode(', ') ?: __('courses.unassigned'))
+                ->sortable(query: static function (Builder $query, string $direction): Builder {
+                    $dir = $direction === 'desc' ? 'desc' : 'asc';
+
+                    return $query->orderBy(
+                        User::query()
+                            ->select('users.name')
+                            ->join('course_instructors', 'course_instructors.instructor_id', '=', 'users.id')
+                            ->whereColumn('course_instructors.course_id', 'courses.id')
+                            ->orderBy('users.name')
+                            ->limit(1),
+                        $dir,
+                    );
+                }),
             TextColumn::make('sections_count')->label(__('courses.sections'))->sortable(),
             TextColumn::make('lessons_count')->label(__('courses.lessons'))->sortable(),
             TextColumn::make('enrollments_count')->label(__('courses.enrollments'))->visible($canViewLearners)->sortable(),
