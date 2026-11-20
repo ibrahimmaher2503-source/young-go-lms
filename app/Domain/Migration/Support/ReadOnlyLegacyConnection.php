@@ -9,7 +9,6 @@ use App\Domain\Migration\Exceptions\LegacyWriteForbiddenException;
 use App\Domain\Migration\Exceptions\MigrationConfigurationException;
 use Closure;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use WeakMap;
@@ -50,10 +49,6 @@ final class ReadOnlyLegacyConnection implements LegacySourceReader
     public function connection(): Connection
     {
         $connection = DB::connection($this->connectionName);
-        if (! $connection instanceof Connection) {
-            throw new MigrationConfigurationException("Connection '{$this->connectionName}' did not resolve to a database Connection.");
-        }
-
         $this->ensureGuarded($connection);
 
         return $connection;
@@ -70,7 +65,7 @@ final class ReadOnlyLegacyConnection implements LegacySourceReader
             return [];
         }
 
-        return array_values(array_map(strval(...), $this->connection()->getSchemaBuilder()->getColumnListing($table)));
+        return array_map(strval(...), $this->connection()->getSchemaBuilder()->getColumnListing($table));
     }
 
     public function count(string $table, ?Closure $scope = null): int

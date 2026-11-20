@@ -188,7 +188,7 @@ final class CourseImporter extends AbstractEntityImporter
         ]);
 
         if ($isNew && ($createdAt = LegacyDateParser::toUtc($row['date_added'] ?? null)) !== null) {
-            $course->created_at = $createdAt;
+            $course->created_at = $createdAt->toMutable();
         }
         $course->save();
 

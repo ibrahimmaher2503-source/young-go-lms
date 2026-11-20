@@ -46,6 +46,7 @@ final class RunLegacyImport
     {
         $importers = $this->registry->for($options->entity);
         $sourceSystem = $options->sourceSystem ?? Config::string('legacy_migration.source_system', 'legacy_academy');
+        $this->idMap->clearShadows($sourceSystem);
         $chunkSize = max(1, $options->chunkSize);
 
         $resumedBatch = null;

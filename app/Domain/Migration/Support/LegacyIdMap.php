@@ -8,6 +8,7 @@ use App\Domain\Migration\Enums\LegacyEntity;
 use App\Domain\Migration\Enums\MigrationRecordStatus;
 use App\Domain\Migration\Models\MigrationRecord;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 
 /**
  * Source-to-target ID map backed by `migration_records`, with in-memory shadow IDs for zero-write dry runs.
@@ -17,7 +18,36 @@ final class LegacyIdMap
     /** @var array<string, array<string, array{target_type: string, target_id: int, metadata: array<string, mixed>}>> */
     private array $shadows = [];
 
+    /** @var array<string, array<string, string>> */
+    private array $uniqueClaims = [];
+
+    private ?string $activeSourceSystem = null;
+
     private int $nextShadowId = -1;
+
+    public function clearShadows(?string $sourceSystem = null): void
+    {
+        $this->shadows = [];
+        $this->uniqueClaims = [];
+        $this->nextShadowId = -1;
+        $this->activeSourceSystem = $sourceSystem;
+    }
+
+    public function activeSourceSystem(): string
+    {
+        return $this->activeSourceSystem ?? Config::string('legacy_migration.source_system', 'legacy_academy');
+    }
+
+    public function claimUniqueKey(string $scope, string $value, string $sourceId): bool
+    {
+        if (isset($this->uniqueClaims[$scope][$value]) && $this->uniqueClaims[$scope][$value] !== $sourceId) {
+            return false;
+        }
+
+        $this->uniqueClaims[$scope][$value] = $sourceId;
+
+        return true;
+    }
 
     public function findRecord(string $sourceSystem, LegacyEntity $entity, string $sourceId): ?MigrationRecord
     {

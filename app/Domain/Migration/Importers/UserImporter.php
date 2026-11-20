@@ -9,6 +9,7 @@ use App\Domain\Migration\Data\ImportExceptionData;
 use App\Domain\Migration\Data\RowImportResult;
 use App\Domain\Migration\Enums\LegacyEntity;
 use App\Domain\Migration\Enums\MigrationExceptionSeverity;
+use App\Domain\Migration\Models\MigrationRecord;
 use App\Domain\Migration\Support\LegacyDateParser;
 use App\Domain\Migration\Support\ScriptNameMapper;
 use App\Domain\Shared\Phone\PhoneNumbers;
@@ -59,10 +60,14 @@ final class UserImporter extends AbstractEntityImporter
         }
 
         $existingTargetId = $context->existingRecord?->target_id;
+        if (! $context->idMap->claimUniqueKey('user_email', $email, $sourceId)) {
+            return RowImportResult::rejected('duplicate_email', "Duplicate email '{$email}' already mapped to another legacy user.");
+        }
+
         $existingByEmail = User::query()->where('email', $email)->first();
         if ($existingByEmail !== null && $existingTargetId !== (int) $existingByEmail->getKey()) {
             // Allow matching the existing seeded user only if no other legacy record already owns this user ID.
-            $alreadyClaimed = \App\Domain\Migration\Models\MigrationRecord::query()
+            $alreadyClaimed = MigrationRecord::query()
                 ->where('source_system', $context->sourceSystem)
                 ->where('entity', LegacyEntity::Users->value)
                 ->where('target_id', $existingByEmail->getKey())
@@ -143,8 +148,8 @@ final class UserImporter extends AbstractEntityImporter
             'email_verified_at' => $user->email_verified_at ?? $verifiedAt,
         ]);
 
-        if ($isNew && $createdAt !== null) {
-            $user->created_at = $createdAt;
+        if ($isNew) {
+            $user->created_at = $createdAt->toMutable();
         }
         $user->save();
 

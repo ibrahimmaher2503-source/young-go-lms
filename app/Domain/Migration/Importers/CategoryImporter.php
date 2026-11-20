@@ -117,7 +117,7 @@ final class CategoryImporter extends AbstractEntityImporter
         ]);
 
         if ($isNew && ($createdAt = LegacyDateParser::toUtc($row['date_added'] ?? null)) !== null) {
-            $category->created_at = $createdAt;
+            $category->created_at = $createdAt->toMutable();
         }
         $category->save();
 

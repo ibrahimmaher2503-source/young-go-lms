@@ -56,7 +56,7 @@ final class LegacyMigrationEntitlementStats
             'id' => (int) $row->getKey(),
             'learner_id' => (int) $row->learner_id,
             'course_id' => (int) $row->course_id,
-            'source_type' => (string) $row->source_type,
+            'source_type' => $row->source_type->value,
             'source_ref' => (string) $row->source_ref,
             'starts_at' => $row->starts_at->toIso8601String(),
             'ends_at' => $row->ends_at?->toIso8601String(),

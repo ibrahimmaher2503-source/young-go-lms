@@ -29,7 +29,7 @@ final class LessonImporter extends AbstractEntityImporter
         return 'lesson';
     }
 
-    protected function sourceScope(): ?Closure
+    protected function sourceScope(): Closure
     {
         return static function (Builder $query): void {
             $query->whereRaw("LOWER(TRIM(COALESCE(lesson_type, ''))) <> 'quiz'");
@@ -130,7 +130,7 @@ final class LessonImporter extends AbstractEntityImporter
         ]);
 
         if ($isNew && ($createdAt = LegacyDateParser::toUtc($row['date_added'] ?? null)) !== null) {
-            $lesson->created_at = $createdAt;
+            $lesson->created_at = $createdAt->toMutable();
         }
         $lesson->save();
 

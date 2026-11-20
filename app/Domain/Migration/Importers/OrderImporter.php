@@ -81,7 +81,7 @@ final class OrderImporter extends AbstractEntityImporter
         ];
 
         $existingTargetId = $context->existingRecord?->target_id;
-        if ($existingTargetId !== null && $context->existingRecord?->checksum !== $context->checksum) {
+        if ($context->existingRecord !== null && $existingTargetId !== null && $context->existingRecord->checksum !== $context->checksum) {
             return RowImportResult::skipped(
                 'paid_order_changed_in_source',
                 'Legacy payment source changed after import; paid Order money columns are frozen and require finance review.',

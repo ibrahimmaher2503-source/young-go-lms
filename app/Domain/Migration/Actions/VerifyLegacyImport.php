@@ -33,7 +33,7 @@ final class VerifyLegacyImport
 
         $results = [];
         foreach ($this->registry->for($entity) as $importer) {
-            $results[] = $importer->verifyTarget($this->reader, $this->idMap, $resolvedSampleSize);
+            $results[] = $importer->verifyTarget($this->reader, $this->idMap, $resolvedSampleSize, $resolvedSource);
         }
 
         return new VerificationReport($resolvedSource, $results);

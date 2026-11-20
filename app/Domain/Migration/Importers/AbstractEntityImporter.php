@@ -70,9 +70,8 @@ abstract class AbstractEntityImporter implements EntityImporter
         return $row;
     }
 
-    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize): EntityVerificationResult
+    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize, string $sourceSystem): EntityVerificationResult
     {
-        $sourceSystem = config('legacy_migration.source_system', 'legacy_academy');
         $tableExists = $reader->tableExists($this->sourceTable());
 
         if (! $tableExists && $this->tableIsOptional()) {

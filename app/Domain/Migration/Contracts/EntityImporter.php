@@ -45,5 +45,5 @@ interface EntityImporter
     /** @param array<string, mixed> $row */
     public function importRow(array $row, ImportContext $context): RowImportResult;
 
-    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize): EntityVerificationResult;
+    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize, string $sourceSystem): EntityVerificationResult;
 }

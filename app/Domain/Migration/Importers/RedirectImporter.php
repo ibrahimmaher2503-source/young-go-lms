@@ -6,8 +6,10 @@ namespace App\Domain\Migration\Importers;
 
 use App\Domain\Migration\Actions\SyncLegacyRedirects;
 use App\Domain\Migration\Contracts\LegacySourceReader;
+use App\Domain\Migration\Data\EntityVerificationResult;
 use App\Domain\Migration\Data\ImportContext;
 use App\Domain\Migration\Data\RowImportResult;
+use App\Domain\Migration\Data\SampleCheckResult;
 use App\Domain\Migration\Enums\LegacyEntity;
 use App\Domain\Migration\Support\LegacyIdMap;
 use App\Domain\Migration\Support\RedirectMapBuilder;
@@ -47,9 +49,7 @@ final class RedirectImporter extends AbstractEntityImporter
 
     public function sourceCount(LegacySourceReader $reader): int
     {
-        $sourceSystem = (string) config('legacy_migration.source_system', 'legacy_academy');
-
-        return count($this->builder->build($reader, $this->idMap, $sourceSystem));
+        return count($this->builder->build($reader, $this->idMap, $this->idMap->activeSourceSystem()));
     }
 
     public function iterateSource(
@@ -58,8 +58,7 @@ final class RedirectImporter extends AbstractEntityImporter
         ?string $afterSourceId,
         Closure $onChunk,
     ): void {
-        $sourceSystem = (string) config('legacy_migration.source_system', 'legacy_academy');
-        $entries = $this->builder->build($reader, $this->idMap, $sourceSystem);
+        $entries = $this->builder->build($reader, $this->idMap, $this->idMap->activeSourceSystem());
         usort($entries, static fn (array $a, array $b): int => strcmp($a['source_id'], $b['source_id']));
 
         if ($afterSourceId !== null) {
@@ -136,9 +135,8 @@ final class RedirectImporter extends AbstractEntityImporter
         return [];
     }
 
-    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize): \App\Domain\Migration\Data\EntityVerificationResult
+    public function verifyTarget(LegacySourceReader $reader, LegacyIdMap $idMap, int $sampleSize, string $sourceSystem): EntityVerificationResult
     {
-        $sourceSystem = (string) config('legacy_migration.source_system', 'legacy_academy');
         $entries = $this->builder->build($reader, $idMap, $sourceSystem);
         $bySourceId = [];
         foreach ($entries as $entry) {
@@ -171,14 +169,14 @@ final class RedirectImporter extends AbstractEntityImporter
             } else {
                 $failed++;
             }
-            $samples[] = new \App\Domain\Migration\Data\SampleCheckResult($sourceId, $targetId, $mismatches === [], $mismatches);
+            $samples[] = new SampleCheckResult($sourceId, $targetId, $mismatches === [], $mismatches);
         }
 
         $sourceCount = count($entries);
         $accounted = $counts['mapped'] + $counts['skipped'] + $counts['rejected'];
         $countsReconcile = ($accounted === $sourceCount) && (count($existingSet) === $counts['mapped']);
 
-        return new \App\Domain\Migration\Data\EntityVerificationResult(
+        return new EntityVerificationResult(
             entity: $this->entity()->value,
             sourceTable: $this->sourceTable(),
             sourceCount: $sourceCount,

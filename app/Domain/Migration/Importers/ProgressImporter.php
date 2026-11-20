@@ -104,6 +104,7 @@ final class ProgressImporter extends AbstractEntityImporter
                     "Legacy lesson {$legacyLessonId} referenced in progress history is not mapped.",
                     ['legacy_lesson_id' => $legacyLessonId],
                 );
+
                 continue;
             }
             $lessonCount++;

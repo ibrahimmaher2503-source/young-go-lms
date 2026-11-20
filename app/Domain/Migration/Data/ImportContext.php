@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Migration\Support;
+namespace App\Domain\Migration\Data;
 
 use App\Domain\Migration\Contracts\LegacySourceReader;
 use App\Domain\Migration\Enums\LegacyEntity;
+use App\Domain\Migration\Models\MigrationRecord;
+use App\Domain\Migration\Support\LegacyIdMap;
 
 final readonly class ImportContext
 {
@@ -14,7 +16,7 @@ final readonly class ImportContext
         public bool $dryRun,
         public LegacySourceReader $reader,
         public LegacyIdMap $idMap,
-        public ?\App\Domain\Migration\Models\MigrationRecord $existingRecord,
+        public ?MigrationRecord $existingRecord,
         public string $checksum,
         public string $defaultLocale,
         public string $defaultMarket,

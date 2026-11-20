@@ -30,7 +30,7 @@ final class QuizImporter extends AbstractEntityImporter
         return 'lesson';
     }
 
-    protected function sourceScope(): ?Closure
+    protected function sourceScope(): Closure
     {
         return static function (Builder $query): void {
             $query->whereRaw("LOWER(TRIM(COALESCE(lesson_type, ''))) = 'quiz'");

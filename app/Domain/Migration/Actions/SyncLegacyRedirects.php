@@ -34,8 +34,8 @@ final class SyncLegacyRedirects
         $skipped = 0;
 
         foreach ($entries as $entry) {
-            $from = $this->normalizePath($entry['from_path'] ?? '');
-            $to = $this->normalizePath($entry['to_path'] ?? '');
+            $from = $this->normalizePath($entry['from_path']);
+            $to = $this->normalizePath($entry['to_path']);
             $status = in_array((int) ($entry['status_code'] ?? 301), self::ALLOWED_STATUSES, true)
                 ? (int) ($entry['status_code'] ?? 301)
                 : 301;
