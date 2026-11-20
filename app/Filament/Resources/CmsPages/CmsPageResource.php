@@ -7,6 +7,7 @@ namespace App\Filament\Resources\CmsPages;
 use App\Domain\Content\Actions\SaveCmsContent;
 use App\Filament\Resources\CmsPages\Pages\ListCmsPages;
 use App\Filament\Shared\Forms\TranslatableTabs;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Models\CmsPage;
 use Closure;
 use Filament\Actions\Action;
@@ -85,13 +86,13 @@ final class CmsPageResource extends Resource
             TextColumn::make('status')->label(__('cms.status'))->badge()
                 ->formatStateUsing(static fn (string $state): string => __('cms.'.$state))
                 ->color(static fn (string $state): string => $state === CmsPage::PUBLISHED ? 'success' : 'gray'),
-        ])->recordActions([
+        ])->recordActions(CompactActions::group([
             EditAction::make()
                 ->mutateRecordDataUsing(static fn (CmsPage $record, array $data): array => [...$data, ...$record->getTranslations()])
                 ->using(static fn (CmsPage $record, array $data): CmsPage => app(SaveCmsContent::class)($record, $data)),
             Action::make('preview')->label(__('cms.preview'))->icon('heroicon-o-eye')->openUrlInNewTab()
                 ->url(static fn (CmsPage $record): string => URL::temporarySignedRoute('cms.preview', now()->addMinutes(15), ['page' => $record])),
-        ]);
+        ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

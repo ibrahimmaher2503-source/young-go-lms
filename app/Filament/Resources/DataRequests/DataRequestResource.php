@@ -13,6 +13,7 @@ use App\Domain\Privacy\DataRequestType;
 use App\Filament\Resources\DataRequests\Pages\ListDataRequests;
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\HasQueueBadge;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -132,11 +133,11 @@ final class DataRequestResource extends Resource
                 SelectFilter::make('type')->label(__('privacy.filter_type'))
                     ->options(collect(DataRequestType::cases())->mapWithKeys(static fn (DataRequestType $t): array => [$t->value => $t->label()])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 $approve->visible(static fn (DataRequest $r): bool => $r->status === DataRequestStatus::Requested && $canManage()),
                 $reject->visible(static fn (DataRequest $r): bool => $r->status->isOpen() && $canManage()),
                 $complete,
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function request(Model $record): DataRequest

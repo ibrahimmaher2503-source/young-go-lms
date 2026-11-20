@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Entitlements;
 
+use App\Domain\Shared\Markets\Market;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -74,5 +76,63 @@ final class EnrollmentReport
         }
 
         return $out;
+    }
+
+    /**
+     * First-time enrollments grouped across fixed date buckets for dashboard trend charts (I01).
+     *
+     * @param  list<int>|null  $courseIds  null = every course, an empty list = none
+     * @return array{days: int, total: int, max: int, points: list<array{label: string, range: string, count: int}>}
+     */
+    public static function trend(int $days = 30, ?array $courseIds = null): array
+    {
+        $days = in_array($days, [7, 30, 90], true) ? $days : 30;
+        $step = match ($days) {
+            7 => 1,
+            90 => 9,
+            default => 3,
+        };
+        $bucketCount = intdiv($days, $step);
+        $tz = Market::Egypt->timezone();
+        $locale = app()->getLocale();
+        $today = CarbonImmutable::now($tz)->startOfDay();
+        $start = $today->subDays($days - 1);
+        $end = $today->endOfDay();
+
+        $counts = array_fill(0, $bucketCount, 0);
+        if ($courseIds !== []) {
+            $firstQuery = self::firstEnrollments();
+            $timestamps = DB::query()->fromSub($firstQuery, 'first_enrollments')
+                ->when($courseIds !== null, static fn (Builder $query): Builder => $query->whereIn('course_id', $courseIds ?? []))
+                ->whereBetween('enrolled_at', [$start->clone()->utc()->format('Y-m-d H:i:s'), $end->clone()->utc()->format('Y-m-d H:i:s')])
+                ->pluck('enrolled_at');
+
+            foreach ($timestamps as $raw) {
+                $local = CarbonImmutable::parse((string) $raw, 'UTC')->setTimezone($tz)->startOfDay();
+                $dayIndex = (int) $start->diffInDays($local, false);
+                if ($dayIndex >= 0 && $dayIndex < $days) {
+                    $bucket = min($bucketCount - 1, intdiv($dayIndex, $step));
+                    $counts[$bucket]++;
+                }
+            }
+        }
+
+        $points = [];
+        for ($i = 0; $i < $bucketCount; $i++) {
+            $bucketStart = $start->addDays($i * $step);
+            $bucketEnd = $bucketStart->addDays($step - 1);
+            $label = $bucketStart->locale($locale)->translatedFormat('j M');
+            $range = $step === 1
+                ? $label
+                : $bucketStart->locale($locale)->translatedFormat('j M').' – '.$bucketEnd->locale($locale)->translatedFormat('j M');
+            $points[] = ['label' => $label, 'range' => $range, 'count' => $counts[$i]];
+        }
+
+        return [
+            'days' => $days,
+            'total' => array_sum($counts),
+            'max' => max($counts) > 0 ? max($counts) : 0,
+            'points' => $points,
+        ];
     }
 }

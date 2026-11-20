@@ -223,4 +223,9 @@ return [
     'support.view_as_page_viewed' => 'Page viewed while viewing as learner',
     'support.view_as_stopped' => 'View as learner ended',
     'support.view_as_refused' => 'View as learner refused',
+    'cohort.created' => 'Cohort created',
+    'quiz.attempt_started' => 'Quiz attempt started',
+    'quiz.attempt_submitted' => 'Quiz attempt submitted',
+    'quiz.question_added' => 'Quiz question added',
+    'quiz.settings_changed' => 'Quiz settings updated',
 ];

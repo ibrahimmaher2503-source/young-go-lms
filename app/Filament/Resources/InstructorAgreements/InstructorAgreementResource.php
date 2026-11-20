@@ -9,6 +9,7 @@ use App\Domain\Instructors\Actions\SaveInstructorAgreement;
 use App\Domain\Instructors\Models\InstructorAgreement;
 use App\Filament\Resources\InstructorAgreements\Pages\ListInstructorAgreements;
 use App\Filament\Shared\Forms\TranslatableTabs;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Models\User;
 use Closure;
@@ -132,7 +133,7 @@ final class InstructorAgreementResource extends Resource
                     ->color(static fn (string $state): string => $state === InstructorAgreement::PUBLISHED ? 'success' : 'gray'),
                 LocalizedDateColumn::make('published_at')->label(__('instructor_onboarding.agreement.published_at')),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('edit')->label(__('instructor_onboarding.agreement.edit'))->icon('heroicon-o-pencil-square')->visible($draft)
                     ->modalHeading(__('instructor_onboarding.agreement.edit'))
                     ->schema(self::agreementFields(false))
@@ -141,7 +142,7 @@ final class InstructorAgreementResource extends Resource
                 Action::make('publish')->label(__('instructor_onboarding.agreement.publish'))->icon('heroicon-o-check')->color('success')->visible($draft)
                     ->requiresConfirmation()->modalDescription(__('instructor_onboarding.agreement.publish_warning'))
                     ->action(static fn (InstructorAgreement $record) => self::guarded(static fn () => app(PublishInstructorAgreement::class)(self::actor(), $record), 'published_ok')),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

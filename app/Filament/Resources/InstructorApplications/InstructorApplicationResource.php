@@ -11,6 +11,7 @@ use App\Domain\Instructors\Models\InstructorApplication;
 use App\Filament\Resources\InstructorApplications\Pages\ListInstructorApplications;
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\HasQueueBadge;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -100,7 +101,7 @@ final class InstructorApplicationResource extends Resource
                 SelectFilter::make('status')->label(__('instructor_onboarding.col_status'))->default(ApplicationStatus::Pending->value)
                     ->options(collect(ApplicationStatus::cases())->mapWithKeys(static fn (ApplicationStatus $s): array => [$s->value => __('instructor_onboarding.state_'.$s->value)])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('details')->label(__('instructor_onboarding.details'))->icon('heroicon-o-eye')
                     ->modalHeading(__('instructor_onboarding.application'))->modalSubmitAction(false)
                     ->modalContent(static fn (InstructorApplication $record): HtmlString => self::details($record)),
@@ -108,7 +109,7 @@ final class InstructorApplicationResource extends Resource
                     ->url(static fn (InstructorApplication $record): string => route('instructor-applications.document', $record), shouldOpenInNewTab: true),
                 $approve->visible($pending),
                 $reject->visible($pending),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function application(Model $record): InstructorApplication

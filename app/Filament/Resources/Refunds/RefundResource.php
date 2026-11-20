@@ -103,6 +103,15 @@ final class RefundResource extends Resource
             : $formatter->format($money, $market, app()->getLocale());
     }
 
+    public static function currencyLabel(string $currency): string
+    {
+        return app()->isLocale('ar') ? match ($currency) {
+            'EGP' => 'ج.م.',
+            'SAR' => 'ر.س.',
+            default => $currency,
+        } : $currency;
+    }
+
     public static function table(Table $table): Table
     {
         $colors = ['requested' => 'info', 'approved' => 'warning', 'processing' => 'warning', 'executed' => 'success', 'rejected' => 'gray', 'failed' => 'danger'];

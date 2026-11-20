@@ -9,6 +9,7 @@ use App\Domain\Content\Actions\ChangeContactEnquiryStatus;
 use App\Domain\Content\ContactEnquiryStatus;
 use App\Domain\Content\Queries\LeadHandlers;
 use App\Filament\Resources\ContactEnquiries\Pages\ListContactEnquiries;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\ContactEnquiry;
@@ -90,7 +91,7 @@ final class ContactEnquiryResource extends Resource
                 ->options(collect(ContactEnquiryStatus::cases())->mapWithKeys(static fn (ContactEnquiryStatus $s): array => [$s->value => $s->label()])->all()),
             SelectFilter::make('assigned_to_id')->label(__('contact.admin.assignee'))
                 ->options(static fn (): array => app(LeadHandlers::class)->options()),
-        ])->recordActions([
+        ])->recordActions(CompactActions::group([
             ViewAction::make(),
             Action::make('assign')->label(__('contact.admin.assign'))->icon('heroicon-o-user-plus')
                 ->fillForm(static fn (ContactEnquiry $record): array => ['assignee' => $record->assigned_to_id])
@@ -120,7 +121,7 @@ final class ContactEnquiryResource extends Resource
                     app(ChangeContactEnquiryStatus::class)(self::actor(), $record, ContactEnquiryStatus::from((string) $data['status']));
                     Notification::make()->success()->title(__('contact.admin.status_changed'))->send();
                 }),
-        ]);
+        ]), CompactActions::POSITION);
     }
 
     public static function infolist(Schema $schema): Schema

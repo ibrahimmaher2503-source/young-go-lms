@@ -223,4 +223,9 @@ return [
     'support.view_as_page_viewed' => 'عرض صفحة أثناء العرض كمتعلم',
     'support.view_as_stopped' => 'انتهاء العرض كمتعلم',
     'support.view_as_refused' => 'رفض العرض كمتعلم',
+    'cohort.created' => 'إنشاء دفعة',
+    'quiz.attempt_started' => 'بدء محاولة اختبار',
+    'quiz.attempt_submitted' => 'تسليم محاولة اختبار',
+    'quiz.question_added' => 'إضافة سؤال إلى اختبار',
+    'quiz.settings_changed' => 'تعديل إعدادات الاختبار',
 ];

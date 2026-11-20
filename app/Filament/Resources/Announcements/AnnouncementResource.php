@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Announcements;
 use App\Domain\Notifications\Actions\PublishAnnouncement;
 use App\Domain\Notifications\Announcement;
 use App\Filament\Resources\Announcements\Pages\ListAnnouncements;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\Course;
@@ -98,7 +99,7 @@ final class AnnouncementResource extends Resource
             ])
             ->filters([SelectFilter::make('status')->label(__('notification_events.announcement_status'))
                 ->options([Announcement::DRAFT => __('notification_events.announcement_state_draft'), Announcement::PUBLISHED => __('notification_events.announcement_state_published')])])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 AnnouncementForm::configure(Action::make('edit')->label(__('notification_events.announcement_edit'))->icon('heroicon-o-pencil-square')
                     ->visible(static fn (Announcement $a): bool => ! $a->isPublished())
                     ->modalHeading(__('notification_events.announcement_edit'))),
@@ -117,7 +118,7 @@ final class AnnouncementResource extends Resource
                         }
                         Notification::make()->success()->title(__('notification_events.announcement_published', ['count' => $published->recipients_count]))->send();
                     }),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     public static function getPages(): array

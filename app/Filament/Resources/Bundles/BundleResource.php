@@ -8,9 +8,9 @@ use App\Domain\Commerce\Actions\AllocateBundlePrice;
 use App\Domain\Commerce\Bundle;
 use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Bundles\Pages\ListBundles;
+use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
-use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -83,7 +83,7 @@ final class BundleResource extends Resource
                 TextColumn::make('price_egp')->label(__('bundles.price_column'))->state(static function (Bundle $b): string {
                     $price = $b->priceFor(Market::Egypt);
 
-                    return $price === null ? '-' : BrickMoney::ofMinor($price->amount_minor, $price->currency)->formatToLocale('en-US');
+                    return $price === null ? '-' : RefundResource::money($price->amount_minor, $price->currency);
                 }),
                 StatusBadgeColumn::make('is_active', ['active' => 'success', 'inactive' => 'gray'])->label(__('bundles.status'))
                     ->state(static fn (Bundle $b): string => $b->is_active ? 'active' : 'inactive')
@@ -114,7 +114,7 @@ final class BundleResource extends Resource
         $rows = '';
         foreach (app(AllocateBundlePrice::class)($bundle, Market::Egypt, $price->amount_minor) as $courseId => $share) {
             $rows .= '<tr><td>'.e((string) ($titles[$courseId] ?? $courseId)).'</td><td>'.e((string) $share['weight']).'</td><td>'
-                .e(BrickMoney::ofMinor($share['allocated_minor'], $price->currency)->formatToLocale('en-US')).'</td></tr>';
+                .e(RefundResource::money($share['allocated_minor'], $price->currency)).'</td></tr>';
         }
 
         return new HtmlString('<table class="w-full text-start"><thead><tr><th>'.e(__('bundles.course')).'</th><th>'.e(__('bundles.weight')).'</th><th>'

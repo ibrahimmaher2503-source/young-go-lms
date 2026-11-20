@@ -7,8 +7,8 @@ namespace App\Filament\Resources\Coupons\Pages;
 use App\Domain\Commerce\Queries\CouponUsage;
 use App\Filament\Resources\Coupons\CouponForm;
 use App\Filament\Resources\Coupons\CouponResource;
+use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Shared\Pages\WorkspaceListRecords;
-use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Gate;
 
@@ -28,7 +28,7 @@ final class ListCoupons extends WorkspaceListRecords
     protected function getWorkspaceSummary(): array
     {
         $usage = CouponUsage::for();
-        $given = collect($usage['discount_minor'])->map(static fn (int $minor, string $currency): string => BrickMoney::ofMinor($minor, $currency)->formatToLocale('en-US'))->implode(' / ');
+        $given = collect($usage['discount_minor'])->map(static fn (int $minor, string $currency): string => RefundResource::money($minor, $currency))->implode(' / ');
 
         return [
             ['label' => __('commerce.coupon_used'), 'value' => $usage['redeemed'], 'icon' => 'heroicon-o-check-circle', 'tone' => 'success'],

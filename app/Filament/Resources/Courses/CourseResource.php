@@ -32,6 +32,7 @@ use App\Filament\Resources\Courses\Pages\ManageQuiz;
 use App\Filament\Resources\Courses\Pages\ReviewCurriculumDocument;
 use App\Filament\Resources\Courses\Pages\ViewCourse;
 use App\Filament\Shared\Actions\ApproveRejectAction;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\Category;
 use App\Models\Course;
@@ -101,7 +102,7 @@ final class CourseResource extends FilamentResource
         );
         $pendingOnly = static fn (Course $record): bool => $record->status === CourseStatus::PendingReview;
 
-        return $table->defaultSort('id', 'desc')->modifyQueryUsing(static function (Builder $query) use ($market, $canViewLearners): Builder {
+        return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')->modifyQueryUsing(static function (Builder $query) use ($market, $canViewLearners): Builder {
             return $query->addSelect([
                 'sections_count' => CourseSection::query()->selectRaw('count(*)')->whereColumn('course_id', 'courses.id')->whereNull('archived_at'),
                 'lessons_count' => CurriculumItem::query()->selectRaw('count(*)')->whereColumn('course_id', 'courses.id')
@@ -150,9 +151,9 @@ final class CourseResource extends FilamentResource
                         $dir,
                     );
                 }),
-            TextColumn::make('sections_count')->label(__('courses.sections'))->sortable(),
+            TextColumn::make('sections_count')->visibleFrom('md')->label(__('courses.sections'))->sortable(),
             TextColumn::make('lessons_count')->label(__('courses.lessons'))->sortable(),
-            TextColumn::make('enrollments_count')->label(__('courses.enrollments'))->visible($canViewLearners)->sortable(),
+            TextColumn::make('enrollments_count')->visibleFrom('md')->label(__('courses.enrollments'))->visible($canViewLearners)->sortable(),
             TextColumn::make('market_price')->label(__('courses.price'))->sortable()
                 ->placeholder(static fn (Course $record): string => __('courses.'.($record->access_mode === Course::ACCESS_FREE ? 'free' : 'unconfigured')))
                 ->formatStateUsing(static fn ($state): string => app(PriceFormatter::class)->format(Money::ofMinor((int) $state, $market->currency()), $market, app()->getLocale())),
@@ -179,7 +180,7 @@ final class CourseResource extends FilamentResource
                 array_column(CourseStatus::cases(), 'value'),
                 array_map(static fn (CourseStatus $status): string => __('courses.'.$status->value), CourseStatus::cases()),
             )),
-        ])->recordActions([
+        ])->recordActions(CompactActions::group([
             ViewAction::make(),
             EditAction::make(),
             $approve->visible($pendingOnly),
@@ -230,7 +231,7 @@ final class CourseResource extends FilamentResource
             Action::make('feature')->label(static fn (Course $record): string => __('courses.'.($record->featured ? 'unfeature' : 'feature')))
                 ->icon('heroicon-o-star')->visible(static fn (Course $record): bool => Gate::allows('feature', $record))
                 ->action(static fn (Course $record) => app(FeatureCourse::class)($record, ! $record->featured)),
-        ]);
+        ]), CompactActions::POSITION);
     }
 
     private static function course(Model $record): Course

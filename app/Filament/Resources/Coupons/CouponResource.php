@@ -9,10 +9,10 @@ use App\Domain\Commerce\CouponRedemptionStatus;
 use App\Domain\Commerce\CouponType;
 use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
+use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
-use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -96,12 +96,12 @@ final class CouponResource extends Resource
                 TextColumn::make('code')->label(__('commerce.coupon_code'))->searchable()->fontFamily('mono'),
                 TextColumn::make('name')->label(__('commerce.coupon_name'))->searchable(),
                 TextColumn::make('value')->visibleFrom('md')->label(__('commerce.coupon_type'))->state(static fn (Coupon $c): string => $c->discount_type === CouponType::Percent
-                    ? $c->percent.'%' : BrickMoney::ofMinor((int) $c->amount_minor, (string) $c->currency)->formatToLocale('en-US')),
+                    ? $c->percent.'%' : RefundResource::money((int) $c->amount_minor, (string) ($c->currency ?? Market::Egypt->currency()))),
                 StatusBadgeColumn::make('state', $colors)->label(__('commerce.coupon_status'))->state(static fn (Coupon $c): string => self::state($c))
                     ->formatStateUsing(static fn (mixed $state): string => __('commerce.coupon_state_'.$state)),
                 TextColumn::make('uses')->visibleFrom('md')->label(__('commerce.coupon_used'))->state(static fn (Coupon $c): string => $c->getAttribute('redeemed_count').' / '.($c->max_redemptions ?? __('commerce.coupon_unlimited'))),
                 TextColumn::make('reserved_count')->visibleFrom('md')->label(__('commerce.coupon_reserved')),
-                TextColumn::make('discount')->visibleFrom('md')->label(__('commerce.coupon_discount_given'))->state(static fn (Coupon $c): string => BrickMoney::ofMinor((int) $c->getAttribute('discount_sum'), $c->currency ?? Market::Egypt->currency())->formatToLocale('en-US')),
+                TextColumn::make('discount')->visibleFrom('md')->label(__('commerce.coupon_discount_given'))->state(static fn (Coupon $c): string => RefundResource::money((int) $c->getAttribute('discount_sum'), (string) ($c->currency ?? Market::Egypt->currency()))),
                 LocalizedDateColumn::make('starts_at')->visibleFrom('md')->label(__('commerce.coupon_starts'))->placeholder('-'),
                 LocalizedDateColumn::make('ends_at')->visibleFrom('md')->label(__('commerce.coupon_ends'))->placeholder('-'),
             ])

@@ -5,10 +5,17 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Domain\AI\Help\HelpRequestStatus;
+use App\Domain\Audit\AuditLogger;
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Entitlements\EnrollmentReport;
 use App\Domain\Reports\Dashboards\DashboardKpi;
 use App\Domain\Reports\Dashboards\DashboardMoney;
 use App\Domain\Reports\Dashboards\RoleDashboard;
+use App\Domain\Reports\ReportCatalog;
+use App\Domain\Reports\ReportFilters;
+use App\Domain\Reports\ReportKey;
+use App\Domain\Shared\Markets\Market;
+use App\Filament\Resources\Audit\AuditLogResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\EssayReview\EssayReviewResource;
 use App\Filament\Resources\HelpRequests\HelpRequestResource;
@@ -28,12 +35,24 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Components\Attributes\Unexposed;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\Models\Activity;
 
 final class WorkspaceDashboard extends Dashboard
 {
     private const int QUICK_ACCESS_MAX = 8;
 
     private const int QUICK_ACCESS_PER_GROUP = 3;
+
+    private const int RECENT_ACTIVITY_LIMIT = 5;
+
+    public int $chartDays = 30;
+
+    public function setChartDays(int $days): void
+    {
+        $this->chartDays = in_array($days, [7, 30, 90], true) ? $days : 30;
+    }
 
     #[Unexposed]
     public function getHeading(): string
@@ -155,6 +174,113 @@ final class WorkspaceDashboard extends Dashboard
     }
 
     /**
+     * @param  list<array<string, mixed>>  $kpis
+     * @return list<array<string, mixed>>
+     */
+    private function buildSummary(bool $isAdmin, array $kpis): array
+    {
+        $summary = [];
+        $registered = Filament::getCurrentOrDefaultPanel()->getResources();
+
+        foreach ($registered as $resource) {
+            if (! $resource::canViewAny()) {
+                continue;
+            }
+            if ($resource === StaffUserResource::class) {
+                $query = StaffUserResource::getEloquentQuery();
+                $summary = [...$summary, ...($isAdmin ? [
+                    ['label' => __('staff.overview_learners'), 'value' => (clone $query)->whereHas('roles', static fn ($roles) => $roles->where('name', 'student'))->count(), 'icon' => 'heroicon-o-users', 'url' => StaffUserResource::getUrl()],
+                ] : [
+                    ['label' => __('staff.total_users'), 'value' => (clone $query)->count(), 'icon' => 'heroicon-o-users'],
+                    ['label' => __('staff.active'), 'value' => (clone $query)->where('status', 'active')->count(), 'icon' => 'heroicon-o-check-circle', 'tone' => 'success'],
+                    ['label' => __('staff.inactive_users'), 'value' => (clone $query)->whereIn('status', ['suspended', 'deactivated'])->count(), 'icon' => 'heroicon-o-pause-circle', 'tone' => 'info'],
+                ])];
+            }
+            if ($isAdmin && $resource === CourseResource::class) {
+                $summary[] = ['label' => __('staff.overview_courses'), 'value' => CourseResource::getEloquentQuery()->where('status', CourseStatus::Published->value)->count(), 'icon' => 'heroicon-o-academic-cap', 'tone' => 'success', 'url' => CourseResource::getUrl()];
+            }
+            if ($isAdmin && $resource === HelpRequestResource::class) {
+                $summary[] = ['label' => __('staff.overview_help'), 'value' => HelpRequestResource::getEloquentQuery()->whereIn('status', HelpRequestStatus::openValues())->count(), 'icon' => 'heroicon-o-lifebuoy', 'tone' => 'info', 'url' => HelpRequestResource::getUrl()];
+            }
+        }
+
+        if ($isAdmin) {
+            foreach ($kpis as $kpi) {
+                if (($kpi['key'] ?? null) === 'revenue') {
+                    $lines = $kpi['lines'] ?? ['—'];
+                    $summary[] = [
+                        'label' => __('dashboard.kpi.revenue'),
+                        'value' => is_array($lines) ? implode(' · ', $lines) : '—',
+                        'icon' => 'heroicon-o-banknotes',
+                        'tone' => 'primary',
+                        'ltr' => true,
+                        'url' => ReportsPage::canAccess() ? ReportsPage::getUrl() : null,
+                    ];
+                    break;
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Permission-scoped enrollment trend series for the admin overview area chart.
+     *
+     * @return array{days: int, total: int, max: int, points: list<array{label: string, range: string, count: int}>}|null
+     */
+    private function enrollmentChart(bool $isAdmin, int $days): ?array
+    {
+        $user = auth()->user();
+        if (! $isAdmin || ! $user instanceof User) {
+            return null;
+        }
+
+        $catalog = app(ReportCatalog::class);
+        if (! $catalog->canView($user, ReportKey::Enrollments)) {
+            return null;
+        }
+
+        $to = now(Market::Egypt->timezone());
+        $requested = ReportFilters::fromInput(['from' => $to->copy()->subDays($days - 1)->toDateString(), 'to' => $to->toDateString()]);
+        $scoped = $catalog->scope($user, ReportKey::Enrollments, $requested);
+
+        return EnrollmentReport::trend($days, $scoped->courseIds);
+    }
+
+    /**
+     * @return list<array{actor: string, event: string, subject: string, subjectId: int|string|null, time: string, iso: string}>|null
+     */
+    private function recentActivity(bool $isAdmin): ?array
+    {
+        if (! $isAdmin || ! Gate::allows('audit.view')) {
+            return null;
+        }
+
+        $activities = Activity::query()->where('log_name', AuditLogger::LOG_NAME)
+            ->where(static fn ($query) => $query->whereNull('event')->orWhere('event', '!=', 'permission.super_admin_bypass'))
+            ->with('causer')->orderByDesc('created_at')->orderByDesc('id')
+            ->limit(self::RECENT_ACTIVITY_LIMIT)->get();
+
+        return $activities->map(static function (Activity $activity): array {
+            $actor = $activity->causer instanceof User && filled($activity->causer->display_name)
+                ? (string) $activity->causer->display_name
+                : __('staff.system_actor');
+            $eventKey = 'audit-events.'.$activity->event;
+            $event = Lang::has($eventKey) ? (string) __($eventKey) : __('staff.activity_recorded');
+
+            return [
+                'actor' => $actor,
+                'event' => $event,
+                'subject' => AuditLogResource::subjectLabel($activity->subject_type),
+                'subjectId' => $activity->subject_id,
+                'time' => $activity->created_at?->locale(app()->getLocale())->diffForHumans() ?? '',
+                'iso' => $activity->created_at?->toIso8601String() ?? '',
+            ];
+        })->values()->all();
+    }
+
+    /**
      * The queue block lists its links only while at least one queue has work.
      *
      * @param  list<array{empty: bool}>  $queues
@@ -184,35 +310,25 @@ final class WorkspaceDashboard extends Dashboard
     #[Unexposed]
     public function content(Schema $schema): Schema
     {
-        $summary = [];
+        $isAdmin = $this->isAdminOverview();
+        $chartDays = in_array($this->chartDays, [7, 30, 90], true) ? $this->chartDays : 30;
         $role = $this->roleDashboardData();
-        foreach (Filament::getCurrentOrDefaultPanel()->getResources() as $resource) {
-            if (! $resource::canViewAny()) {
-                continue;
-            }
-            if ($resource === StaffUserResource::class) {
-                $query = StaffUserResource::getEloquentQuery();
-                $summary = [...$summary, ...($this->isAdminOverview() ? [
-                    ['label' => __('staff.overview_learners'), 'value' => (clone $query)->whereHas('roles', static fn ($roles) => $roles->where('name', 'student'))->count(), 'icon' => 'heroicon-o-users'],
-                ] : [
-                    ['label' => __('staff.total_users'), 'value' => (clone $query)->count(), 'icon' => 'heroicon-o-users'],
-                    ['label' => __('staff.active'), 'value' => (clone $query)->where('status', 'active')->count(), 'icon' => 'heroicon-o-check-circle', 'tone' => 'success'],
-                    ['label' => __('staff.inactive_users'), 'value' => (clone $query)->whereIn('status', ['suspended', 'deactivated'])->count(), 'icon' => 'heroicon-o-pause-circle', 'tone' => 'info'],
-                ])];
-            }
-            if ($this->isAdminOverview() && $resource === CourseResource::class) {
-                $summary[] = ['label' => __('staff.overview_courses'), 'value' => CourseResource::getEloquentQuery()->where('status', CourseStatus::Published->value)->count(), 'icon' => 'heroicon-o-academic-cap'];
-            }
-            if ($this->isAdminOverview() && $resource === HelpRequestResource::class) {
-                $summary[] = ['label' => __('staff.overview_help'), 'value' => HelpRequestResource::getEloquentQuery()->whereIn('status', HelpRequestStatus::openValues())->count(), 'icon' => 'heroicon-o-lifebuoy', 'tone' => 'info'];
-            }
-        }
+        $summary = $this->buildSummary($isAdmin, $role['kpis']);
 
         return $schema->components([
-            View::make('filament.staff.dashboard-intro')->viewData(['panel' => $this->getTitle()])->visible(! $this->isAdminOverview()),
+            View::make('filament.staff.dashboard-intro')->viewData(['panel' => $this->getTitle()])->visible(! $isAdmin),
             View::make('filament.shared.summary-strip')->viewData(['items' => $summary])->visible($summary !== []),
-            View::make('filament.staff.dashboard-kpis')->viewData($role),
-            View::make('filament.staff.dashboard-links')->viewData(['groups' => self::quickAccess($this->queueLinksShown($role['queues']) ? array_filter(array_column($role['queues'], 'url')) : [])]),
+            View::make('filament.staff.dashboard-kpis')->viewData([
+                ...$role,
+                'isAdminOverview' => $isAdmin,
+                'chart' => $this->enrollmentChart($isAdmin, $chartDays),
+                'chartDays' => $chartDays,
+                'recentActivity' => $this->recentActivity($isAdmin),
+                'auditUrl' => ($isAdmin && Gate::allows('audit.view')) ? AuditLogResource::getUrl() : null,
+            ]),
+            View::make('filament.staff.dashboard-links')->viewData([
+                'groups' => self::quickAccess($this->queueLinksShown($role['queues']) ? array_filter(array_column($role['queues'], 'url')) : []),
+            ]),
         ]);
     }
 }

@@ -13,6 +13,7 @@ use App\Domain\Shared\Actions\RecordReviewDecision;
 use App\Filament\Resources\Reviews\Pages\ListCourseReviews;
 use App\Filament\Shared\Actions\ApproveRejectAction;
 use App\Filament\Shared\HasQueueBadge;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -122,14 +123,14 @@ final class CourseReviewResource extends Resource
                 SelectFilter::make('status')->label(__('engagement.filter_status'))->default(ReviewStatus::Pending->value)
                     ->options(collect(ReviewStatus::cases())->mapWithKeys(static fn (ReviewStatus $s): array => [$s->value => __('engagement.state_'.$s->value.'_short')])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('details')->label(__('engagement.details'))->icon('heroicon-o-eye')->visible(static fn (): bool => Gate::allows('review.moderate'))
                     ->modalHeading(__('engagement.review'))->modalSubmitAction(false)
                     ->modalContent(static fn (CourseReview $record): HtmlString => self::details($record)),
                 $approve->visible(static fn (CourseReview $r): bool => $is($r, ReviewStatus::Pending, ReviewStatus::Hidden)),
                 $reject->visible(static fn (CourseReview $r): bool => $is($r, ReviewStatus::Pending)),
                 $hide,
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function review(Model $record): CourseReview

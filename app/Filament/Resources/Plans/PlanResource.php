@@ -7,9 +7,9 @@ namespace App\Filament\Resources\Plans;
 use App\Domain\Shared\Markets\Market;
 use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Filament\Resources\Plans\Pages\ListPlans;
+use App\Filament\Resources\Refunds\RefundResource;
 use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
-use Brick\Money\Money as BrickMoney;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -81,7 +81,7 @@ final class PlanResource extends Resource
                 TextColumn::make('price_egp')->label(__('subscriptions.price_column'))->state(static function (SubscriptionPlan $p): string {
                     $price = $p->priceFor(Market::Egypt);
 
-                    return $price === null ? '-' : BrickMoney::ofMinor($price->amount_minor, $price->currency)->formatToLocale('en-US');
+                    return $price === null ? '-' : RefundResource::money($price->amount_minor, $price->currency);
                 }),
                 StatusBadgeColumn::make('is_active', ['active' => 'success', 'inactive' => 'gray'])->label(__('subscriptions.status'))
                     ->state(static fn (SubscriptionPlan $p): string => $p->is_active ? 'active' : 'inactive')

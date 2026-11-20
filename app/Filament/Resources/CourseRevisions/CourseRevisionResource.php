@@ -12,6 +12,7 @@ use App\Domain\Catalog\Revisions\Queries\CourseRevisions;
 use App\Domain\Catalog\Revisions\RevisionDiff;
 use App\Filament\Resources\CourseRevisions\Pages\ListCourseRevisions;
 use App\Filament\Shared\Actions\ApproveRejectAction;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\CourseRevision;
@@ -112,13 +113,13 @@ final class CourseRevisionResource extends Resource
                 SelectFilter::make('status')->label(__('course_revisions.col_status'))->default(CourseRevisionStatus::Pending->value)
                     ->options(collect(CourseRevisionStatus::cases())->mapWithKeys(static fn (CourseRevisionStatus $s): array => [$s->value => __('course_revisions.state.'.$s->value)])->all()),
             ])
-            ->recordActions([
+            ->recordActions(CompactActions::group([
                 Action::make('compare')->label(__('course_revisions.compare'))->icon('heroicon-o-eye')
                     ->modalHeading(__('course_revisions.compare'))->modalWidth('5xl')->modalSubmitAction(false)
                     ->modalContent(static fn (CourseRevision $record): HtmlString => new HtmlString(view('filament.courses.revision-compare', ['changes' => RevisionDiff::between($record->base, $record->payload)])->render())),
                 $approve->visible($canReview),
                 $reject->visible($canReview),
-            ]);
+            ]), CompactActions::POSITION);
     }
 
     private static function revision(Model $record): CourseRevision
