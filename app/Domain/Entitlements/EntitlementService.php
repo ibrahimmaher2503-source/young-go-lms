@@ -17,6 +17,7 @@ use App\Models\LiveSession;
 use App\Models\Quiz;
 use App\Models\User;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -34,6 +35,9 @@ final class EntitlementService implements LessonAccessChecker
 
     /** @var array<string, bool> */
     private array $seats = [];
+
+    /** @var array<string, CarbonInterface|null> */
+    private array $cohortStarts = [];
 
     public function __construct(private readonly CompletionLookup $completion) {}
 
@@ -74,8 +78,15 @@ final class EntitlementService implements LessonAccessChecker
         }
 
         $sequence = $this->sequenceDecision($learner, $item, $orderedItems);
+        if (! $sequence->allowed) {
+            return $sequence;
+        }
 
-        return $sequence->allowed ? $this->dripDecision($item, $entitlement, $cohort?->starts_on) : $sequence;
+        $cohortStart = $cohort !== null
+            ? $cohort->starts_on
+            : ($item->unlock_rule === 'days' ? $this->seatedCohortStart($learner, $course) : null);
+
+        return $this->dripDecision($item, $entitlement, $cohortStart);
     }
 
     public function canSeeCohortItem(User $learner, CurriculumItem $item): bool
@@ -165,6 +176,7 @@ final class EntitlementService implements LessonAccessChecker
         $this->cache = [];
         $this->completed = [];
         $this->seats = [];
+        $this->cohortStarts = [];
     }
 
     /** @param  Collection<int, CurriculumItem>  $items */
@@ -189,6 +201,53 @@ final class EntitlementService implements LessonAccessChecker
                 $this->seats[$learner->id.'.'.$cohortId] = $seated->has($cohortId);
             }
         }
+
+        /** @var list<int> $dripCourseIds */
+        $dripCourseIds = $items->where('unlock_rule', 'days')
+            ->pluck('course_id')
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        if ($dripCourseIds !== []) {
+            $seatedCohorts = $this->seatedCohortsQuery($learner, $dripCourseIds)
+                ->get()
+                ->unique('course_id')
+                ->keyBy('course_id');
+
+            foreach ($dripCourseIds as $courseId) {
+                /** @var Cohort|null $seatedCohort */
+                $seatedCohort = $seatedCohorts->get($courseId);
+                $this->cohortStarts[$learner->getKey().'.'.$courseId] = $seatedCohort?->starts_on;
+            }
+        }
+    }
+
+    private function seatedCohortStart(User $learner, Course $course): ?CarbonInterface
+    {
+        $key = $learner->getKey().'.'.$course->getKey();
+        if (array_key_exists($key, $this->cohortStarts)) {
+            return $this->cohortStarts[$key];
+        }
+
+        return $this->seatedCohortsQuery($learner, [(int) $course->getKey()])->first()?->starts_on;
+    }
+
+    /**
+     * @param  list<int>  $courseIds
+     * @return Builder<Cohort>
+     */
+    private function seatedCohortsQuery(User $learner, array $courseIds): Builder
+    {
+        return Cohort::query()
+            ->select('cohorts.*')
+            ->join('cohort_members', 'cohort_members.cohort_id', '=', 'cohorts.id')
+            ->whereIn('cohorts.course_id', $courseIds)
+            ->where('cohort_members.learner_id', $learner->getKey())
+            ->where('cohort_members.status', CohortMember::SEATED)
+            ->whereNotNull('cohorts.starts_on')
+            ->orderBy('cohorts.starts_on')
+            ->orderBy('cohort_members.id');
     }
 
     private function hasSeat(User $learner, Cohort $cohort): bool
