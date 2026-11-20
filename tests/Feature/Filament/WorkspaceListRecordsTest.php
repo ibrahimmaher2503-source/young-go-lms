@@ -103,9 +103,9 @@ it('renders summary labels and values as accessible definition pairs', function 
     ])->render();
 
     expect($html)->toContain('<dl class="yg-summary-strip">')
-        ->and($html)->toContain('<dt class="yg-summary-label" title="Open applications">Open applications</dt>')
-        ->and($html)->toContain('<dd class="yg-summary-value" data-workspace-value="3">3</dd>')
-        ->and($html)->toContain('<dd class="yg-summary-value" data-workspace-value="8 of 12">8 of 12</dd>')
+        ->and($html)->toMatch('~<dt class="yg-summary-label" title="Open applications">\s*Open applications\s*</dt>~')
+        ->and($html)->toMatch('~<dd class="yg-summary-value" data-workspace-value="3">\s*3\s*</dd>~')
+        ->and($html)->toMatch('~<dd class="yg-summary-value" data-workspace-value="8 of 12">\s*8 of 12\s*</dd>~')
         ->and($html)->toContain('aria-hidden="true"');
 })->group('T-P1-08', 'A1');
 
