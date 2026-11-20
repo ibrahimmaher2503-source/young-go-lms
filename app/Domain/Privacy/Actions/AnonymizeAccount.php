@@ -9,6 +9,7 @@ use App\Domain\Commerce\Refund;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 /**
  * Account deletion = anonymization in place (YG-GAP-PRV-001). The users row stays (orders, refunds, receipts, ledger rows, consents
@@ -65,16 +67,25 @@ final class AnonymizeAccount
             return [];
         }
 
-        // Files go after the commit: a rolled-back anonymization must not lose them.
-        $media = Storage::disk(Config::string('media.disk'));
-        foreach ($files['local'] as $path) {
-            $media->delete($path);
-        }
-        foreach ($files['public'] as $path) {
-            Storage::disk('public')->delete($path);
-        }
+        // Files go after the commit: a rolled-back anonymization must not lose them; one adapter failure must not abort others.
+        $this->deleteFiles(Storage::disk(Config::string('media.disk')), $files['local']);
+        $this->deleteFiles(Storage::disk('public'), $files['public']);
 
         return $report;
+    }
+
+    /** @param list<string> $paths */
+    private function deleteFiles(Filesystem $disk, array $paths): void
+    {
+        foreach (array_unique($paths) as $path) {
+            try {
+                if (! $disk->delete($path)) {
+                    report(new RuntimeException("Privacy storage cleanup failed for path [{$path}]; deferred to reconciliation."));
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
     }
 
     private function assertEligible(User $user): void

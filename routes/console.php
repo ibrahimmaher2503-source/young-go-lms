@@ -38,3 +38,5 @@ Schedule::command('assignments:send-due-notices')->everyFiveMinutes()->name('ass
 Schedule::command('ai:prune')->dailyAt('03:30')->name('ai:prune')->withoutOverlapping();
 // T-P9-08: per-class retention pruning (includes the AI class again; both jobs are idempotent). Never touches financial, certificate or audit data.
 Schedule::command('privacy:prune')->dailyAt('03:45')->name('privacy:prune')->withoutOverlapping();
+// T-P9-08: reconcile orphaned uploads left behind if post-commit storage cleanup fails or an upload is abandoned past grace window.
+Schedule::command('privacy:reconcile-storage --apply')->dailyAt('04:00')->name('privacy:reconcile-storage')->withoutOverlapping();

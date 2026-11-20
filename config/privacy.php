@@ -21,4 +21,7 @@ return [
 
     // Where staging placeholder files point (created by `app:anonymize`).
     'placeholder_file' => 'privacy/staging-placeholder.txt',
+
+    // Grace window (minutes) before unreferenced uploads in privacy-sensitive folders are treated as orphaned.
+    'orphan_grace_minutes' => 60,
 ];
