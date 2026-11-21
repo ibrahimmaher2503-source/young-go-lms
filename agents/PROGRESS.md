@@ -813,6 +813,11 @@ Generated19new raster references with built-in image_gen and saved them with the
 - Aligned the footer surface and artwork to the existing site grid. Kept the full-width public bands and reserved mobile purchase clearance outside the bordered footer panel.
 - Build, RTL and four focused browser tests passed. Independent PRD, QA and UX passed. Chromium checked Home, Catalog and Contact in both languages and themes at 390 and 1440 px, including footer alignment and no horizontal overflow. Captures are `storage/app/private/public-footer-visual/centered-*.png`. Mobile course footer links remained usable above the sticky purchase bar.
 
+## Notes — Official public branding (D-051, 2026-11-21)
+
+- Bundled the owner-supplied YounGo logo and favicon. Verified both public themes in Arabic and English at 390 and 1440 px, including logo decode, footer alignment, and no horizontal overflow. Captures: `tests/Browser/screenshots/T-P2-03/official-brand/`.
+- The targeted release suite passed 116 tests (832 assertions). Build, formatting, brand-token validation, and 68 contrast pairs passed. The local full test run stopped at the PHP worker memory limit.
+
 ## Notes — Prompt 06 functional gaps in learning, authoring, notifications and privacy storage (2026-11-20)
 
 - **T-P3-02 (`6021faf`):** Added `quiz_pass_mark_percent` `TextInput` (1..100, helper `QuizPassMark::default()`) to Step 1 (`CourseWizardSteps::basic()`) and blank-to-null normalization, validation, persistence and `course.quiz_pass_mark_saved` audit in `SaveCourseWizard`. Prompt: `docs/test-prompts/T-P3-02-GAPS.md`.
