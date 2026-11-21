@@ -20,7 +20,7 @@ return [
     |
     */
 
-    'enabled' => env('TELESCOPE_ENABLED', true),
+    'enabled' => env('TELESCOPE_ENABLED', env('APP_ENV', 'production') === 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -132,6 +132,12 @@ return [
         'confirm-password',
         'guardian/children',
         'guardian/children/*/password',
+        'webhooks/*',
+        'orders/*/manual-proof*',
+        'payments/manual-proofs/*',
+        'checkout/*',
+        'payments/*',
+        'fake-gateway/*',
     ],
 
     'ignore_commands' => [
