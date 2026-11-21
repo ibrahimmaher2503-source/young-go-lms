@@ -48,6 +48,8 @@ use App\Domain\Instructors\Actions\AcceptInstructorAgreement;
 use App\Domain\Instructors\Actions\PublishInstructorAgreement;
 use App\Domain\Instructors\Actions\SaveInstructorProfile;
 use App\Domain\Instructors\Models\InstructorAgreement;
+use App\Domain\Live\Actions\OpenLiveSession;
+use App\Domain\Live\Actions\ScheduleLiveSession;
 use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Domain\Progress\Actions\RecordProgress;
 use App\Domain\Shared\Markets\Market;
@@ -62,6 +64,7 @@ use App\Models\CourseSection;
 use App\Models\CurriculumItem;
 use App\Models\InstructorProfile;
 use App\Models\Lesson;
+use App\Models\LiveSession;
 use App\Models\Question;
 use App\Models\Quiz;
 use App\Models\User;
@@ -357,11 +360,40 @@ final class DemoSeeder extends Seeder
 
         if (in_array($key, ['stage-workshop', 'animation-lab'], true)) {
             $cohorts = app(ManageCohorts::class);
-            $cohorts->create($instructor, $course, [
+            $cohort = $cohorts->create($instructor, $course, [
                 'name' => 'Spring cohort', 'name_translations' => ['ar' => 'دفعة الربيع'], 'capacity' => 12,
                 'starts_on' => now()->addDays(30)->toDateString(), 'ends_on' => now()->addDays(90)->toDateString(),
                 'enrollment_opens_on' => now()->toDateString(), 'enrollment_closes_on' => now()->addDays(25)->toDateString(),
             ]);
+
+            $scheduler = app(ScheduleLiveSession::class);
+            $openItem = $scheduler($instructor, $section, [
+                'title' => ['ar' => 'جلسة مباشرة تفاعلية', 'en' => 'Interactive live session'],
+                'description' => ['ar' => 'جلسة جماعية مباشرة مع المدرّب.', 'en' => 'Group live workshop with the instructor.'],
+                'starts_at' => now('Africa/Cairo')->addMinutes(5)->format('Y-m-d H:i:s'),
+                'ends_at' => now('Africa/Cairo')->addMinutes(65)->format('Y-m-d H:i:s'),
+                'timezone' => 'Africa/Cairo',
+                'provider' => 'manual_zoom',
+                'meeting_url' => 'https://zoom.example.test/demo-'.$key,
+                'join_window_minutes' => 30,
+                'cohort_id' => $cohort->getKey(),
+                'instructor_id' => $instructor->getKey(),
+            ]);
+            $upcomingItem = $scheduler($instructor, $section, [
+                'title' => ['ar' => 'جلسة المتابعة الأسبوعية', 'en' => 'Weekly follow-up session'],
+                'description' => ['ar' => 'مراجعة الأعمال وتطبيق عملي مباشر.', 'en' => 'Project review and live coaching.'],
+                'starts_at' => now('Africa/Cairo')->addDays(7)->setTime(18, 0)->format('Y-m-d H:i:s'),
+                'ends_at' => now('Africa/Cairo')->addDays(7)->setTime(19, 30)->format('Y-m-d H:i:s'),
+                'timezone' => 'Africa/Cairo',
+                'provider' => 'meet',
+                'meeting_url' => 'https://meet.example.test/demo-'.$key.'-next',
+                'join_window_minutes' => 15,
+                'cohort_id' => $cohort->getKey(),
+                'instructor_id' => $instructor->getKey(),
+            ]);
+            app(SetCurriculumStatus::class)($instructor, $course, [(int) $openItem->getKey(), (int) $upcomingItem->getKey()], CurriculumItem::STATUS_PUBLISHED);
+            $openSession = LiveSession::query()->findOrFail($openItem->itemable_id);
+            app(OpenLiveSession::class)($instructor, $openSession);
         }
     }
 
