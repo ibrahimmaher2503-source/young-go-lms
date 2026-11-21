@@ -41,7 +41,7 @@
             <div class="yg-rv-grid">
                 <section class="yg-rv-card" aria-label="{{ __('ai_admin.usage.by_day') }}" data-section="by-day">
                     <h3 class="yg-rv-title">{{ __('ai_admin.usage.by_day') }}</h3>
-                    <div class="yg-ai-scroll">
+                    <div class="yg-ai-scroll" tabindex="0">
                         <table class="yg-ai-table">
                             <thead><tr>
                                 <th scope="col">{{ __('ai_admin.usage.day') }}</th>
@@ -79,7 +79,7 @@
             <div class="yg-rv-grid">
                 <section class="yg-rv-card" aria-label="{{ __('ai_admin.usage.by_lesson') }}" data-section="by-lesson">
                     <h3 class="yg-rv-title">{{ __('ai_admin.usage.by_lesson') }}</h3>
-                    <div class="yg-ai-scroll">
+                    <div class="yg-ai-scroll" tabindex="0">
                         <table class="yg-ai-table">
                             <thead><tr>
                                 <th scope="col">{{ __('ai_admin.usage.lesson') }}</th>

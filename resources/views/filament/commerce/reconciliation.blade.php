@@ -38,7 +38,7 @@
             @if($mismatches->isEmpty())
                 <p data-mismatch-empty>{{ __('payment_reconciliation.empty') }}</p>
             @else
-                <div class="yg-ai-scroll">
+                <div class="yg-ai-scroll" tabindex="0">
                     <table class="yg-ai-table" data-mismatch-table>
                         <thead><tr>
                             <th scope="col">{{ __('payment_reconciliation.found') }}</th>
