@@ -97,7 +97,7 @@
             @if($rows === [])
                 <x-ui.empty-state icon="heroicon-o-chart-bar" :title="__('reports.empty_title')" :description="__('reports.empty')" data-report-empty />
             @else
-                <div class="yg-ai-scroll">
+                <div class="yg-ai-scroll" tabindex="0" role="region" aria-label="{{ $key->label() }}">
                     <table class="yg-ai-table" data-report-table>
                         <thead><tr>
                             @foreach($columns as $column => $type)
