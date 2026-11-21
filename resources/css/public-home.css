@@ -2,7 +2,7 @@
 .public-home-shell {
     --site-container: 72.5rem;
     --home-column-gap: clamp(1rem, 2.2vw, 2rem);
-    --home-section-gap: calc(clamp(1.75rem, 4vw, 3.25rem) + var(--public-space-extra));
+    --home-section-gap: calc(clamp(1.75rem, 3.4vw, 3.25rem) + var(--public-space-extra));
     --home-panel: color-mix(in oklch, var(--yg-color-page) 30%, var(--yg-color-assistant));
     --home-panel-rule: color-mix(in oklch, var(--yg-color-primary) 17%, var(--home-panel));
     --home-card-shadow: 0 .25rem .75rem color-mix(in oklch, var(--yg-brand-950) 11%, transparent);
@@ -116,8 +116,8 @@
     background: linear-gradient(155deg, var(--yg-color-nav-active-bg), var(--yg-color-surface));
     color: var(--yg-color-primary);
 }
-.home-stat strong { font-size: clamp(1.5rem, 2.25vw, 2rem); font-weight: 800; font-variant-numeric: tabular-nums; }
-.home-stat span { font-size: .875rem; font-weight: 650; overflow-wrap: anywhere; }
+.home-stat strong { font-size: clamp(1.5rem, 2.25vw, 2rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.home-stat span { font-size: .8125rem; font-weight: 650; overflow-wrap: anywhere; }
 a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-active-bg); }
 .home-format-details summary { list-style: none; cursor: pointer; }
 .home-format-details summary::-webkit-details-marker { display: none; }
@@ -146,8 +146,10 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
     margin-block-end: clamp(1rem, 2.3vw, 1.75rem);
 }
 .home-section-heading p, .home-steps-copy p, .home-free-copy > p {
-    margin-block-start: .5rem;
+    margin-block-start: .375rem;
     color: var(--yg-color-muted);
+    font-size: .9375rem;
+    line-height: 1.55;
     white-space: pre-line;
 }
 .home-title { font-size: clamp(1.5rem, 3.1vw, 2.125rem); font-weight: 800; line-height: 1.3; }
@@ -165,7 +167,7 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
     border-block-start: .12em solid var(--yg-color-primary);
     border-radius: 50%;
 }
-.home-section-heading > a { flex-direction: row-reverse; }
+.home-section-heading > a { flex-direction: row-reverse; font-size: .875rem; }
 
 .home-disciplines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .875rem clamp(.5rem, 1.15vw, 1rem); }
 .home-discipline,
@@ -269,7 +271,7 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
 .home-course-meta svg, .home-free-meta svg { inline-size: 1rem; block-size: 1rem; margin-block-start: 0; }
 .home-course-meta .home-course-rating { order: -1; flex-basis: 100%; font-weight: 750; color: var(--yg-color-body); }
 .home-course-rating svg { color: var(--yg-color-star); fill: currentColor; }
-.home-course-card [data-card-footer] { gap: .25rem .5rem; border: 0; padding-block-start: .125rem; }
+.home-course-card [data-card-footer] { gap: .25rem .5rem; border: 0; padding-block-start: .125rem; line-height: 1.45; }
 .home-course-card [data-card-footer] > p { font-size: clamp(.9375rem, 1.35vw, 1.125rem); font-weight: 800; overflow-wrap: anywhere; }
 .home-course-action { padding-inline: .8rem; background: var(--yg-color-primary); color: var(--yg-color-on-primary); font-size: .8125rem; }
 .home-course-action:hover { background: var(--yg-color-primary-hover); }
@@ -285,7 +287,7 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
 .home-steps-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 1rem; list-style: none; }
 .home-steps-list li { display: grid; align-content: start; justify-items: center; gap: .375rem; min-inline-size: 0; text-align: center; }
 .home-steps-list h3 { font-weight: 800; }
-.home-steps-list p { max-inline-size: 20ch; color: var(--yg-color-muted); font-size: .875rem; }
+.home-steps-list p { max-inline-size: 20ch; color: var(--yg-color-muted); font-size: .875rem; line-height: 1.55; }
 .home-step-icon { display: grid; place-items: center; inline-size: 2.75rem; aspect-ratio: 1; margin-block-end: .125rem; border-radius: var(--yg-radius-control); background: var(--yg-color-surface); color: var(--yg-color-primary); }
 .home-step-icon svg { inline-size: 1.35rem; block-size: 1.35rem; }
 
@@ -300,7 +302,7 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
     box-shadow: var(--home-card-shadow);
 }
 .home-free-art { display: block; inline-size: 100%; block-size: 100%; min-block-size: 0; aspect-ratio: 2 / 1; object-fit: cover; border-radius: inherit; }
-.home-free-copy { align-self: center; padding: clamp(1rem, 2.1vw, 2rem); }
+.home-free-copy { align-self: center; padding: clamp(.875rem, 1.7vw, 2rem) clamp(1rem, 2.1vw, 2rem); }
 .home-free-copy::before {
     content: '';
     position: absolute;
@@ -314,7 +316,7 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
 }
 .home-free-copy:dir(rtl)::before { scale: -1 1; }
 .home-free-copy .home-title, .home-free-meta { margin-block-start: .375rem; }
-.home-free-copy .home-button { margin-block-start: .625rem; }
+.home-free-copy .home-button { margin-block-start: .375rem; }
 
 .home-instructors { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(.75rem, 1.7vw, 1.5rem); }
 .home-instructor { flex: 0 1 100%; min-inline-size: 0; text-align: start; }
@@ -348,29 +350,29 @@ a.home-stat:hover, summary.home-stat:hover { background: var(--yg-color-nav-acti
     display: grid;
     align-items: center;
     gap: 1.5rem;
-    padding: clamp(1rem, 2.25vw, 2rem);
+    padding: clamp(.75rem, 1.55vw, 1.5rem) clamp(1rem, 2.25vw, 2rem);
     border-radius: var(--yg-radius-card);
     background: linear-gradient(115deg, var(--yg-brand-700), var(--home-banner) 66%, var(--yg-brand-900));
     color: var(--home-banner-text);
 }
 .home-newsletter-copy { grid-row: 1; min-inline-size: 0; }
 .home-newsletter .home-title::before { border-color: var(--yg-brand-300); }
-.home-newsletter-copy > p { margin-block: .375rem .75rem; }
+.home-newsletter-copy > p { margin-block: .375rem .75rem; font-size: .9375rem; line-height: 1.55; }
 .home-newsletter-art { display: none; }
 .home-newsletter-fields { display: flex; flex-wrap: wrap; align-items: start; gap: .75rem; }
 .home-newsletter-form { display: grid; gap: .375rem; margin: 0; }
 .home-newsletter-form > :not(:last-child) { margin-block: 0; }
 .home-newsletter-email { position: relative; flex: 1; min-inline-size: min(100%, 12rem); }
-.home-newsletter-email > svg { position: absolute; inset-inline-start: .85rem; inset-block-start: .875rem; color: var(--yg-color-muted); pointer-events: none; }
-.home-newsletter-email input { min-block-size: 2.75rem; border-radius: 999px; padding-inline: 2.55rem .75rem; }
+.home-newsletter-email > svg { position: absolute; inset-inline-start: .85rem; inset-block-start: .75rem; color: var(--yg-color-muted); pointer-events: none; }
+.home-newsletter-email input { min-block-size: 2.75rem; border-radius: 999px; padding-inline: 2.55rem .75rem; line-height: 1.5; }
 .home-newsletter-email input:placeholder-shown { direction: inherit; }
 .home-newsletter-email input:not(:placeholder-shown) { padding-inline: 2.55rem; }
 .home-newsletter-email input::placeholder { color: var(--yg-color-muted); }
 .home-newsletter-submit { background: var(--yg-brand-100); color: var(--yg-brand-900); cursor: pointer; }
 .home-newsletter-submit:hover { background: var(--yg-brand-200); }
 .home-newsletter-submit:disabled { opacity: .7; cursor: wait; }
-.home-newsletter-form label:not(.sr-only) { font-size: .9375rem; line-height: 1.45; }
-.home-newsletter-form [data-field] p { color: var(--home-banner-text); font-size: .875rem; }
+.home-newsletter-form label:not(.sr-only) { font-size: .875rem; line-height: 1.4; }
+.home-newsletter-form [data-field] p { color: var(--home-banner-text); font-size: .8125rem; line-height: 1.45; }
 .home-newsletter a { color: var(--home-banner-text); }
 .home-newsletter :is(a, button, input):focus-visible { outline-color: var(--yg-brand-200); }
 

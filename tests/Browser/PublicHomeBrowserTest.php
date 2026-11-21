@@ -120,6 +120,14 @@ it('renders the public home and exposes accessible mobile navigation', function 
             }
             JS))->toBe([true, true, true, true, true]);
     }
+    if ($locale === 'ar' && $width === 828) {
+        expect($page->script(<<<'JS'
+            () => {
+                const height = selector => document.querySelector(selector).getBoundingClientRect().height;
+                return [height('.home-stats') <= 110, height('.home-free') <= 235, height('.home-newsletter') <= 222];
+            }
+            JS))->toBe([true, true, true]);
+    }
     $slug = $locale === 'ar' ? 'course-0' : 'creative-course-0';
     $featuredLink = '[data-block-type=featured_courses] a[href$="/'.$locale.'/courses/'.$slug.'"]';
     $page->assertVisible($featuredLink)->assertSee($locale === 'ar' ? 'أ. سارة' : 'Sara Artist')->assertDontSee('Staff account name');

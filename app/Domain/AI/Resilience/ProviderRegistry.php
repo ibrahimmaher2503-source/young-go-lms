@@ -67,7 +67,8 @@ final class ProviderRegistry
     public function make(string $key): AiProviderInterface
     {
         return match ($key) {
-            self::FAKE => new FakeAiProvider,
+            // The grounded fake answers from the lesson text so a local demo can show a cited answer; tests keep the plain fake.
+            self::FAKE => new FakeAiProvider((bool) (config('ai.fake_grounded') ?? app()->environment('local'))),
             self::OPENAI => new OpenAiProvider(
                 is_string(config('ai.openai.api_key')) ? config('ai.openai.api_key') : null,
                 $this->model() ?? (string) config('ai.openai.model', 'gpt-4o-mini'),

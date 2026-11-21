@@ -24,3 +24,11 @@ Read `docs/test-prompts/SEC-7.md` first: its 5 cases are still required and stil
 - Paymob HMAC: build callbacks the way `PaymobWebhookFulfillmentTest` does.
 - SQLite test DB: `Schema::getIndexes` works; don't rely on InnoDB locking.
 - Run with `php -d memory_limit=2G vendor/bin/pest` (128M default fails on the Demo seeder tests).
+
+## J05 grounded fake provider (2026-11-21)
+
+Write Pest unit tests for `App\Domain\AI\Providers\FakeAiProvider` with `grounded: true`, run through `AssistantEngine` + `OutputGuard`:
+- A question sharing words with a page sentence returns `answered`, cites that page, and the quote passes `OutputGuard` (quoteVerified true).
+- An off-topic question returns `not_in_source`.
+- A queued `respondWith()` answer still wins over the grounded answer.
+- `new FakeAiProvider()` (default) still returns `DEFAULT_ANSWER`; `ProviderRegistry::make('fake')` in the testing env is not grounded, and `config(['ai.fake_grounded' => true])` makes it grounded.

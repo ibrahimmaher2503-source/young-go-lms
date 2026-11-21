@@ -7,6 +7,10 @@ return [
     // AI_PROVIDER=openai) selects it. Without a key the assistant fails loudly instead of answering. Local development and tests use the fake provider.
     'provider' => env('AI_PROVIDER', 'unconfigured'),
 
+    // Demo only (T-P9-11, J05): the fake provider answers from the lesson pages instead of always refusing. Null means on in
+    // local and off elsewhere; set AI_FAKE_GROUNDED=true for a staging demo running AI_PROVIDER=fake. Tests keep it off.
+    'fake_grounded' => env('AI_FAKE_GROUNDED') === null ? null : (bool) env('AI_FAKE_GROUNDED'),
+
     // O-015 (decided 2026-11-18): the AI is disabled for anyone under 18 until legal review. 18 counts as an adult; with no
     // known birth month nobody is treated as an adult. Minors additionally need guardian consent and the minors flag.
     'adult_age' => env('AI_ADULT_AGE') === null ? 18 : (int) env('AI_ADULT_AGE'),
