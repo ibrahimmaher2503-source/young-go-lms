@@ -46,6 +46,7 @@ return [
     'status_disputed' => 'This payment is under review.',
     'status_closed_help' => 'You can start a new order from the course page.',
     'go_to_courses' => 'Go to my courses',
+    'start_first_lesson' => 'Start first lesson',
     'receipt' => 'Download receipt',
     'browse' => 'Browse courses',
     'status_proof_pending' => 'Your transfer proof is waiting for review.',

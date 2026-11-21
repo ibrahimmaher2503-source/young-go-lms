@@ -47,8 +47,18 @@
                         <p class="font-semibold">{{ __('checkout.status_paid') }}</p>
                         <p class="mt-1">{{ __('checkout.status_paid_help') }}</p>
                     </x-ui.alert>
+                    @php
+                        // J01: one course bought for the signed-in learner goes straight to its first lesson (learn.course resumes or opens it).
+                        $courseLines = $order->items->where('product_type', \App\Domain\Commerce\ProductType::Course);
+                        $startCourse = $courseLines->count() === 1 && (int) $courseLines->first()->learner_id === (int) auth()->id() ? (int) $courseLines->first()->product_id : null;
+                    @endphp
                     <div class="flex flex-wrap gap-3">
-                        <a href="{{ route('learner.courses') }}" class="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('checkout.go_to_courses') }}</a>
+                        @if($startCourse !== null)
+                            <a href="{{ route('learn.course', $startCourse) }}" class="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" data-start-first-lesson>{{ __('checkout.start_first_lesson') }}</a>
+                            <x-ui.link :href="route('learner.courses')">{{ __('checkout.go_to_courses') }}</x-ui.link>
+                        @else
+                            <a href="{{ route('learner.courses') }}" class="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('checkout.go_to_courses') }}</a>
+                        @endif
                         <x-ui.link :href="route('payments.receipt', $order)">{{ __('checkout.receipt') }}</x-ui.link>
                     </div>
                 @elseif(! $pending)

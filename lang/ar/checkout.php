@@ -46,6 +46,7 @@ return [
     'status_disputed' => 'هذه الدفعة قيد المراجعة.',
     'status_closed_help' => 'يمكنك بدء طلب جديد من صفحة الدورة.',
     'go_to_courses' => 'الذهاب إلى دوراتي',
+    'start_first_lesson' => 'ابدأ أول درس',
     'receipt' => 'تنزيل الإيصال',
     'browse' => 'تصفّح الدورات',
     'status_proof_pending' => 'إثبات التحويل في انتظار المراجعة.',
