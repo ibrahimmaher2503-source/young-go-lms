@@ -10,8 +10,12 @@ use App\Models\CmsPage;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\HomepageBlock;
+use App\Models\InstructorProfile;
 use App\Models\Lesson;
+use App\Models\User;
+use Database\Seeders\CategorySeeder;
 use Database\Seeders\CmsPageSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -44,13 +48,16 @@ it('renders the branded public shell and only shows published featured content',
         ->assertSee('Featured painting')
         ->assertDontSee('Draft painting');
     $home = new Crawler($page->getContent());
+    expect($home->filter('[data-public-brand] img[src$="/images/young-go-logo.png"]')->count())->toBe(2)
+        ->and($home->filter('html.public-identity')->count())->toBe(1);
     expect($home->filter('[data-block-type="featured_courses"]')->text())->toContain(__('catalog.included_in_subscription'), __('courses.levels.beginner'))
         ->not->toContain('Ordinary painting')
         ->and($home->filter('[data-block-type="free_courses"]')->text())->toContain('Ordinary painting');
 })->group('T-P2-03', 'A1', 'D-002', 'YG-WEB-001', 'YG-WEB-010');
 
-it('links to the catalog discipline section and uses saved footer links', function (string $locale): void {
+it('links to the catalog filters from the homepage disciplines and uses saved footer links', function (string $locale): void {
     $this->withoutVite();
+    $this->seed([CmsPageSeeder::class, CategorySeeder::class]);
     config(['public-site.social_links.facebook' => 'https://facebook.example/old']);
     $settings = app(GeneralSettings::class);
     $settings->social_facebook = 'https://facebook.example/current';
@@ -58,11 +65,16 @@ it('links to the catalog discipline section and uses saved footer links', functi
     $settings->save();
 
     $catalog = PublicUrl::catalog($locale);
-    $this->get('/'.$locale)->assertOk()
-        ->assertSee($catalog.'#catalog-filters', false)
+    $response = $this->get('/'.$locale)->assertOk()
         ->assertSee('https://facebook.example/current', false)
         ->assertSee('https://linkedin.example/current', false)
         ->assertDontSee('https://facebook.example/old', false);
+    $page = new Crawler($response->getContent());
+    expect($page->filter('#home-disciplines a[href$="/'.$locale.'/courses#catalog-filters"]')->count())->toBe(1)
+        ->and($page->filter('.site-footer-brand .site-footer-social a')->extract(['href']))->toBe([
+            'https://facebook.example/current',
+            'https://linkedin.example/current',
+        ]);
     $this->get($catalog)->assertOk()->assertSee('id="catalog-filters"', false);
 })->with(['ar', 'en'])->group('T-P2-03', 'A1', 'YG-WEB-001', 'YG-GAP-UX-001');
 
@@ -75,22 +87,85 @@ it('groups published help and policy pages in the public footer', function (): v
     $footer = (new Crawler($page->getContent()))->filter('footer[data-public-footer]');
 
     expect($footer->filter('a[href$="/en/contact"]')->count())->toBe(1)
+        ->and($footer->filter('.site-footer-grid > *')->count())->toBe(3)
         ->and($footer->filter('a[href$="/en/pages/faq"]')->count())->toBe(1)
-        ->and($footer->filter('a[href$="/en/pages/privacy"]')->count())->toBe(1)
-        ->and($footer->filter('a[href$="/en/pages/terms"]')->count())->toBe(0);
+        ->and($footer->filter('.site-footer-bottom a[href$="/en/pages/privacy"]')->count())->toBe(1)
+        ->and($footer->filter('a[href$="/en/pages/terms"]')->count())->toBe(0)
+        ->and($footer->filter('.site-footer-bottom a[href="'.route('consent.show').'"]')->count())->toBe(1)
+        ->and($footer->filter('a[href$="/en/contact#contact-reasons-title"]')->count())->toBe(1)
+        ->and($footer->filter('a[href$="/en/plans"]')->count())->toBe(0);
+
+    CmsPage::query()->where('seed_key', 'terms')->update(['status' => CmsPage::PUBLISHED]);
+    $terms = new Crawler($this->get('/en/pages/terms')->assertOk()->getContent());
+    expect($terms->filter('.site-footer-bottom a[href$="/en/pages/terms"][aria-current="page"]')->count())->toBe(1);
 })->group('T-P2-03', 'A1', 'YG-WEB-001');
 
 it('uses one public shell with localized links across visitor pages', function (string $locale): void {
     $this->withoutVite();
 
     foreach (['courses', 'blog', 'contact'] as $path) {
-        $this->get('/'.$locale.'/'.$path)->assertOk()
+        $response = $this->get('/'.$locale.'/'.$path)->assertOk()
             ->assertSee('data-public-shell', false)
             ->assertSee('site-footer-grid', false)
-            ->assertSee('href="'.url('/'.$locale.'/blog').'"', false)
             ->assertSee('href="'.url('/'.$locale.'/contact').'"', false);
+        $page = new Crawler($response->getContent());
+        expect($page->filter('[data-public-footer] a[href$="/'.$locale.'/blog"]')->count())->toBe(1);
     }
 })->with(['ar', 'en'])->group('T-P2-03', 'YG-WEB-001', 'YG-GAP-UX-001');
+
+it('keeps disciplines in the footer and uses the requested three links in both public menus', function (string $locale): void {
+    $this->withoutVite();
+    $this->seed([CmsPageSeeder::class, CategorySeeder::class, RolePermissionSeeder::class]);
+    CmsPage::query()->where('seed_key', 'about')->update(['status' => CmsPage::PUBLISHED]);
+    $user = User::factory()->create()->assignRole('instructor_academy');
+    InstructorProfile::query()->create([
+        'user_id' => $user->id,
+        'slug_ar' => 'instructor-ar',
+        'slug_en' => 'instructor-en',
+        'status' => InstructorProfile::APPROVED,
+    ]);
+
+    $anchor = 'a[href$="/'.$locale.'#home-disciplines"]';
+    $page = new Crawler($this->get('/'.$locale.'/courses')->assertOk()->getContent());
+    $header = $page->filter('.site-header-nav a')->extract(['href']);
+    $menu = $page->filter('#public-menu [data-public-nav] a')->extract(['href']);
+    $footer = $page->filter('footer nav a')->extract(['href']);
+    expect($header)->toBe([
+        url('/'.$locale.'/courses'),
+        url('/'.$locale.'/pages/about'),
+        url('/'.$locale.'/contact'),
+    ])->and($menu)->toBe($header)
+        ->and($footer)->toBe([
+            url('/'.$locale.'/courses'),
+            url('/'.$locale).'#home-disciplines',
+            url('/'.$locale).'#home-instructors',
+            url('/'.$locale.'/blog'),
+            url('/'.$locale.'/pages/about'),
+            url('/'.$locale.'/pages/about').'#about-features-title',
+            url('/'.$locale.'/contact'),
+            url('/'.$locale.'/contact').'#contact-reasons-title',
+        ]);
+    $this->get('/'.$locale)->assertOk()->assertSee('id="home-instructors"', false);
+    $this->get('/'.$locale.'/pages/about')->assertOk()->assertSee('id="about-features-title"', false);
+    $this->get('/'.$locale.'/contact')->assertOk()->assertSee('id="contact-reasons-title"', false);
+    $labels = $locale === 'ar'
+        ? ['الدورات', 'من نحن', 'تواصل معنا']
+        : ['Courses', 'About us', 'Contact us'];
+    expect($page->filter('.site-header-nav a')->each(fn (Crawler $link): string => $link->text()))->toBe($labels)
+        ->and($page->filter('#public-menu [data-public-nav] a')->each(fn (Crawler $link): string => $link->text()))->toBe($labels);
+
+    HomepageBlock::query()->whereIn('type', ['categories', 'instructors'])->update(['visible' => false]);
+    CmsPage::query()->where('seed_key', 'about')->update(['status' => CmsPage::DRAFT]);
+    $page = new Crawler($this->get('/'.$locale.'/courses')->assertOk()->getContent());
+    expect($page->filter($anchor)->count())->toBe(0);
+    expect($page->filter('.site-header-nav a')->extract(['href']))->toBe([url('/'.$locale.'/courses'), url('/'.$locale.'/contact')]);
+    expect($page->filter('footer nav a')->extract(['href']))->toBe([
+        url('/'.$locale.'/courses'),
+        url('/'.$locale.'/blog'),
+        url('/'.$locale.'/contact'),
+        url('/'.$locale.'/contact').'#contact-reasons-title',
+    ]);
+})->with(['ar', 'en'])->group('T-P2-03', 'A1', 'YG-WEB-001', 'YG-GAP-UX-001');
 
 it('returns visitors to the localized home and contact page after a missing public URL', function (): void {
     $this->withoutVite();
@@ -154,10 +229,12 @@ it('renders a localized newsletter signup with explicit consent and a contact fa
     $this->seed(CmsPageSeeder::class);
 
     $page = $this->get('/'.$locale)->assertOk()->assertSee(url('/'.$locale.'/contact').'#contact-newsletter', false);
-    $form = (new Crawler($page->getContent()))->filter('[data-block-type="newsletter"] form');
+    $html = new Crawler($page->getContent());
+    $form = $html->filter('[data-block-type="newsletter"] form');
     expect($form->attr('action'))->toBe(url('/'.$locale.'/newsletter'))
         ->and($form->filter('input[name="source"]')->attr('value'))->toBe('home')
         ->and($form->filter('input[name="consent"][checked]')->count())->toBe(0);
+    expect($html->filter('[data-public-footer] form')->count())->toBe(0);
 
     $this->postJson('/'.$locale.'/newsletter', ['email' => 'home-reader@example.com'])->assertUnprocessable();
     $this->postJson('/'.$locale.'/newsletter', ['email' => 'home-reader@example.com', 'consent' => '1', 'source' => 'home'])->assertNoContent();
@@ -314,4 +391,7 @@ it('shows only live articles in the homepage blog section', function (): void {
         ->assertSee('href="'.url('/en/blog/guide-to-ink').'"', false)
         ->assertSee('A guide to ink')
         ->assertDontSee('Upcoming sketch guide');
+    $page = new Crawler($this->get('/en/courses')->assertOk()->getContent());
+    expect($page->filter('[data-public-footer] a[href$="/en/blog"]')->count())->toBe(1)
+        ->and($page->filter('[data-public-header] a[href$="/en/blog"]')->count())->toBe(0);
 })->group('T-P2-03', 'YG-WEB-002');

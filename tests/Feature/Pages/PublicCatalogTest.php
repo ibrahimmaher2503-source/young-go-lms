@@ -18,6 +18,7 @@ use App\Models\Lesson;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\DomCrawler\Crawler;
 
 uses(RefreshDatabase::class);
 
@@ -33,6 +34,26 @@ function publicCatalogCourse(string $slug, array $fields = []): Course
         ...$fields,
     ]);
 }
+
+it('shows five primary catalog filters and opens additional filters when a deep link uses one', function (string $locale) {
+    $category = Category::query()->create(['name' => ['en' => 'Arts', 'ar' => 'الفنون'], 'slug_en' => 'arts', 'slug_ar' => 'فنون']);
+    AgeBand::query()->create(['min' => 9, 'max' => 12, 'sort' => 1, 'label' => ['en' => 'First band', 'ar' => 'الفئة الأولى']]);
+    publicCatalogCourse('drawing', ['category_id' => $category->id, 'level' => 'beginner', 'content_language' => 'en']);
+    $catalog = '/'.$locale.'/courses';
+    $expected = ['category', 'age_band', 'level', 'format', 'access', 'additional'];
+
+    $page = new Crawler($this->get($catalog.'?q=drawing&sort=popular')->assertOk()->getContent());
+    $filtered = new Crawler($this->get($catalog.'?language=en&age=12&price_min=0')->assertOk()->getContent());
+    foreach (['aside [data-filter-groups]', '#catalog-filter-drawer [data-filter-groups]'] as $selector) {
+        expect($page->filter($selector.' > div > [data-filter-group]')->extract(['data-filter-group']))->toBe($expected)
+            ->and($page->filter($selector.' [data-filter-group="additional"][open]')->count())->toBe(0);
+
+        $additional = $filtered->filter($selector.' [data-filter-group="additional"][open]');
+        expect($additional->filter('select[name="language"] option[selected]')->attr('value'))->toBe('en')
+            ->and($additional->filter('input[name="age"]')->attr('value'))->toBe('12')
+            ->and($additional->filter('input[name="price_min"]')->attr('value'))->toBe('0');
+    }
+})->with(['ar', 'en'])->group('T-P2-04', 'A2', 'YG-WEB-003');
 
 it('keeps the explicit public language and current filters in catalog controls', function () {
     $course = publicCatalogCourse('drawing');

@@ -7,7 +7,12 @@
     $instructorRows = $course->instructors->map(function ($user) use ($profiles, $locale) {
         $profile = $profiles->get($user->getKey());
 
-        return ['name' => (string) ($profile?->publicName($locale) ?: $user->display_name), 'headline' => $profile ? trim((string) $profile->getTranslation('headline', $locale)) : '', 'url' => $profile ? App\Domain\Seo\PublicUrl::instructor($profile, $locale) : null];
+        return [
+            'name' => (string) ($profile?->publicName($locale) ?: $user->display_name),
+            'headline' => $profile?->publicHeadline($locale, fallback: true) ?? '',
+            'avatar' => $profile?->avatarUrl(),
+            'url' => $profile ? App\Domain\Seo\PublicUrl::instructor($profile, $locale) : null,
+        ];
     })->filter(fn ($row) => $row['name'] !== '')->values();
     $instructors = $instructorRows->pluck('name');
     $cover = $course->coverUrl();
@@ -55,7 +60,7 @@
         <x-seo.head :seo="$seo"/>
     </x-slot:head>
 
-    <div class="mb-4">
+    <div class="public-band public-band-header mb-4">
         <x-ui.breadcrumb :items="[['label' => __('catalog.title'), 'url' => \App\Domain\Seo\PublicUrl::catalog($locale)], ['label' => $course->title]]"/>
     </div>
 
@@ -179,7 +184,7 @@
                     <ul class="space-y-2">
                         @foreach($instructorRows as $row)
                             <li class="flex items-center gap-3">
-                                <x-ui.icon name="user" class="size-5 text-primary"/>
+                                <x-ui.avatar :name="$row['name']" :src="$row['avatar']" aria-hidden="true"/>
                                 <div class="min-w-0">
                                     @if($row['url'])<a href="{{ $row['url'] }}" class="{{ $linkClass }} wrap-anywhere" data-instructor-link>{{ $row['name'] }}</a>@else<span class="wrap-anywhere font-semibold">{{ $row['name'] }}</span>@endif
                                     @if($row['headline'] !== '')<p class="wrap-anywhere text-sm text-muted" dir="auto">{{ $row['headline'] }}</p>@endif

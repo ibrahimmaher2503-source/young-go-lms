@@ -3,7 +3,7 @@
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
 
     <div class="public-page-stack mx-auto max-w-7xl py-2 sm:py-4" data-plans-page>
-        <header class="grid gap-3 border-b border-border pb-5 sm:pb-7">
+        <header class="public-band public-band-header grid gap-3 border-b border-border">
             <h1 class="text-3xl font-extrabold wrap-anywhere sm:text-4xl">{{ __('subscriptions.plans_page_title') }}</h1>
             <p class="max-w-prose text-muted">{{ __('subscriptions.plans_page_intro') }}</p>
         </header>

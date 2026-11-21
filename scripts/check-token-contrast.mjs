@@ -6,6 +6,7 @@ const declarations = (block) =>
 
 const light = declarations(source.match(/:root\s*{([^}]+)}/)[1]);
 const dark = declarations(source.match(/\[data-theme="dark"\]\s*{([^}]+)}/)[1]);
+const publicIdentity = declarations(source.match(/\.public-identity\s*{([^}]+)}/)[1]);
 const requiredPairs = [
     ['body', 'page'], ['body', 'surface'], ['body', 'assistant'],
     ['muted', 'page'], ['muted', 'surface'], ['muted', 'assistant'],
@@ -38,7 +39,13 @@ function luminance(tokens, semantic) {
     return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
 }
 
-for (const [theme, tokens] of [['light', light], ['dark', new Map([...light, ...dark])]]) {
+const themes = [
+    ['light', light],
+    ['dark', new Map([...light, ...dark])],
+    ['public light', new Map([...light, ...publicIdentity])],
+    ['public dark', new Map([...light, ...dark, ...publicIdentity])],
+];
+for (const [theme, tokens] of themes) {
     for (const [text, surface] of requiredPairs) {
         const values = [luminance(tokens, text), luminance(tokens, surface)];
         const ratio = (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05);
@@ -48,4 +55,4 @@ for (const [theme, tokens] of [['light', light], ['dark', new Map([...light, ...
         }
     }
 }
-if (!process.exitCode) console.log(`AA contrast passed for ${requiredPairs.length * 2} light/dark pairs.`);
+if (!process.exitCode) console.log(`AA contrast passed for ${requiredPairs.length * themes.length} light/dark pairs.`);

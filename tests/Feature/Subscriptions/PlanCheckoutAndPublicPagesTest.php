@@ -297,6 +297,7 @@ it('A4 the English plans page lists names, term, price, included courses, hrefla
         ->assertSee('data-plan="'.$plan->id.'"', false);
 
     expect($response->getContent())->toContain('dir="ltr"');
+    $this->get('/en/courses')->assertOk()->assertSee('href="'.url('/en/plans').'"', false);
 })->group('T-P8-GAPS', 'A4');
 
 it('A4 the Arabic plans page shows the Arabic name, the monthly term label and renders right to left', function (): void {

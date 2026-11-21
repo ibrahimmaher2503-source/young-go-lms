@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\Seo;
 
 use App\Models\InstructorProfile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -21,7 +20,7 @@ final class InstructorSeo
     {
         $locale = app()->getLocale();
         $name = $profile->publicName($locale);
-        $headline = (string) $profile->getTranslation('headline', $locale, false);
+        $headline = $profile->publicHeadline($locale);
         $bio = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) $profile->getTranslation('bio', $locale, false))));
         $title = PageSeo::first($profile->getTranslation('seo_title', $locale, false), $name.($headline !== '' ? ' - '.$headline : ''));
         $description = Str::limit(PageSeo::first($profile->getTranslation('seo_description', $locale, false), $bio, $headline, $name), 300, '');
@@ -30,7 +29,8 @@ final class InstructorSeo
         foreach (PublicUrl::locales() as $each) {
             $urls[$each] = PublicUrl::instructor($profile, $each);
         }
-        $image = filled($profile->avatar) ? url(Storage::disk('public')->url((string) $profile->avatar)) : null;
+        $avatar = $profile->avatarUrl();
+        $image = $avatar === null ? null : url($avatar);
         $disciplines = $profile->disciplines->map(static fn ($category): string => (string) $category->getTranslation('name', $locale))->filter()->values()->all();
 
         $jsonld = array_filter([

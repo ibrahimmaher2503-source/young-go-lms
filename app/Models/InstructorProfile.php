@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -52,5 +53,15 @@ final class InstructorProfile extends Model
         $locale ??= app()->getLocale();
 
         return trim((string) ($this->getTranslation('display_name', $locale) ?: $this->user?->getAttribute('display_name') ?: $this->user?->name));
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return filled($this->avatar) ? Storage::disk('public')->url((string) $this->avatar) : null;
+    }
+
+    public function publicHeadline(string $locale, bool $fallback = false): string
+    {
+        return trim((string) $this->getTranslation('headline', $locale, $fallback));
     }
 }

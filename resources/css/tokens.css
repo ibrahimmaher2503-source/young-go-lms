@@ -176,6 +176,29 @@
     --yg-shadow-focus: 0 0 0 3px color-mix(in oklch, var(--yg-color-focus) 22%, transparent);
 }
 
+.public-identity {
+    --yg-brand-50: oklch(0.982833 0.007296 312.30289);
+    --yg-brand-100: oklch(0.940779 0.024994 311.70233);
+    --yg-brand-200: oklch(0.877723 0.052230 314.91520);
+    --yg-brand-300: oklch(0.799589 0.089518 313.10308);
+    --yg-brand-400: oklch(0.707026 0.121313 311.15487);
+    --yg-brand-500: oklch(0.555154 0.145215 307.41630);
+    --yg-brand-600: oklch(0.416722 0.126917 301.18441);
+    --yg-brand-700: oklch(0.352932 0.114606 301.82669);
+    --yg-brand-800: oklch(0.297775 0.088544 300.49774);
+    --yg-brand-900: oklch(0.240512 0.067668 300.65014);
+    --yg-brand-950: oklch(0.190038 0.048053 299.08656);
+    --yg-accent-100: oklch(0.929557 0.027679 338.59352);
+    --yg-accent-500: oklch(0.544139 0.176572 337.25625);
+    --yg-accent-700: oklch(0.411663 0.131237 341.45742);
+    --yg-accent-800: oklch(0.327782 0.101391 338.57405);
+    --yg-color-public-home: var(--yg-brand-50);
+}
+
+.public-identity:is(.dark, [data-theme="dark"]) {
+    --yg-color-public-home: var(--yg-color-page);
+}
+
 .dark,
 [data-theme="dark"] {
     color-scheme: dark;

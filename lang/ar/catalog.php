@@ -7,6 +7,7 @@ return [
     'search' => 'ابحث في الدورات',
     'find' => 'بحث',
     'filters' => 'تصفية الدورات',
+    'additional_filters' => 'فلاتر إضافية',
     'category' => 'التصنيف',
     'age_band' => 'الفئة العمرية',
     'age' => 'عمر محدد',

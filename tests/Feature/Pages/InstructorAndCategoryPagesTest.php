@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\CourseStatus;
+use App\Domain\Demo\DemoAnchors;
 use App\Domain\Instructors\Actions\SaveInstructorProfile;
 use App\Domain\Seo\Actions\BuildSitemap;
 use App\Domain\Seo\PublicUrl;
@@ -10,14 +11,96 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\InstructorProfile;
 use App\Models\User;
+use Database\Seeders\CmsPageSeeder;
+use Database\Seeders\DemoInstructorContentSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
 beforeEach(fn () => $this->seed(RolePermissionSeeder::class));
+
+it('shares the demo portrait and localized role across public instructor placements', function (): void {
+    $this->seed(CmsPageSeeder::class);
+    Storage::fake('public');
+    $domain = config('demo.email_domain');
+    $admin = User::factory()->create(['email' => 'admin@'.$domain])->assignRole('admin');
+    $karim = User::factory()->create(['email' => 'instructor.indie@'.$domain])->assignRole('instructor_independent');
+    $sara = User::factory()->create(['email' => 'instructor.academy@'.$domain])->assignRole('instructor_academy');
+    foreach ([$admin, $karim] as $demoUser) {
+        DemoAnchors::mark($demoUser);
+    }
+
+    foreach ([[$karim, 'karim', 'كريم'], [$sara, 'sara', 'سارة']] as [$user, $slug, $arabic]) {
+        app(SaveInstructorProfile::class)($admin, null, [
+            'user_id' => $user->id,
+            'slug_ar' => $slug.'-demo-ar',
+            'slug_en' => $slug.'-demo',
+            'display_name' => ['ar' => $arabic, 'en' => ucfirst($slug)],
+            'headline' => 'Creative instructor',
+            'status' => InstructorProfile::APPROVED,
+        ]);
+    }
+
+    $course = Course::query()->create([
+        'title' => ['ar' => 'تمارين الأداء', 'en' => 'Performance exercises'],
+        'slug_ar' => 'performance-ar',
+        'slug_en' => 'performance-en',
+        'status' => CourseStatus::Published->value,
+    ]);
+    $course->instructors()->attach($karim, ['scope' => Course::INSTRUCTOR_SCOPE_MANAGE]);
+
+    $this->seed(DemoInstructorContentSeeder::class);
+
+    $portrait = 'instructors/demo-karim.webp';
+    Storage::disk('public')->assertExists($portrait);
+    Storage::disk('public')->assertMissing('instructors/demo-sara.webp');
+    foreach (['lina', 'omar'] as $key) {
+        Storage::disk('public')->assertExists('instructors/demo-'.$key.'.webp');
+        $profile = InstructorProfile::query()->where('slug_en', $key.'-demo')->firstOrFail();
+        expect($profile->getTranslation('bio', 'ar', false))->not->toBeEmpty()
+            ->and($profile->getTranslation('bio', 'en', false))->not->toBeEmpty();
+    }
+    foreach ([
+        ['/ar', 'مدرّب تمثيل'],
+        ['/ar/instructors/karim-demo-ar', 'مدرّب تمثيل'],
+        ['/ar/courses/performance-ar', 'مدرّب تمثيل'],
+        ['/en/instructors/karim-demo', 'Acting instructor'],
+        ['/en/courses/performance-en', 'Acting instructor'],
+    ] as [$url, $headline]) {
+        $this->get($url)->assertOk()->assertSee('src="'.Storage::disk('public')->url($portrait).'"', false)->assertSee($headline);
+    }
+
+    $profile = InstructorProfile::query()->where('user_id', $karim->id)->firstOrFail();
+    app(SaveInstructorProfile::class)($admin, $profile, ['avatar' => 'instructors/upload.webp', 'headline' => ['ar' => 'مدرّب مسرح', 'en' => 'Theatre instructor']]);
+    $this->seed(DemoInstructorContentSeeder::class);
+    expect($profile->fresh()->avatar)->toBe('instructors/upload.webp');
+    expect($profile->fresh()->getTranslation('headline', 'en'))->toBe('Theatre instructor');
+    expect(InstructorProfile::query()->count())->toBe(4);
+})->group('T-P2-09', 'A3', 'YG-GAP-CMS-001', 'T-P9-11', 'ED-022');
+
+it('skips demo instructor routes already used by a non-demo profile', function (): void {
+    Storage::fake('public');
+    $admin = User::factory()->create(['email' => 'admin@'.config('demo.email_domain')])->assignRole('admin');
+    DemoAnchors::mark($admin);
+    $instructor = User::factory()->create()->assignRole('instructor_academy');
+    $profile = InstructorProfile::query()->create([
+        'user_id' => $instructor->id,
+        'slug_en' => 'existing-profile',
+        'slug_ar' => 'lina-demo',
+        'status' => InstructorProfile::APPROVED,
+    ]);
+
+    $this->seed(DemoInstructorContentSeeder::class);
+
+    expect($profile->fresh()->avatar)->toBeNull();
+    $this->assertDatabaseMissing('users', ['email' => 'instructor.lina@'.config('demo.email_domain')]);
+    Storage::disk('public')->assertMissing('instructors/demo-lina.webp');
+    Storage::disk('public')->assertExists('instructors/demo-omar.webp');
+})->group('T-P9-11', 'ED-022');
 
 it('exposes only approved active instructor profiles publicly, hides PII, and lists only their published courses', function (): void {
     $admin = User::factory()->create(['status' => 'active'])->assignRole('admin');

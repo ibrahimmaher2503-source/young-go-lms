@@ -7,7 +7,7 @@
     $breadcrumbs[] = ['label' => $title];
 @endphp
 
-<header @class(['info-hero', 'info-hero-reference' => $image === 'privacy'])>
+<header @class(['info-hero public-band public-band-header', 'info-hero-reference' => $image === 'privacy'])>
     <div>
         <x-ui.breadcrumb class="text-sm text-muted" :items="$breadcrumbs"/>
         <h1 class="public-hero-title info-hero-title" id="info-page-title">{{ $title }}</h1>

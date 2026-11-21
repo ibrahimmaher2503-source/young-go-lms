@@ -15,6 +15,12 @@ use Illuminate\Support\Collection;
  */
 final class PublicPlans
 {
+    /** @return Collection<int, SubscriptionPlan> */
+    public function paidForMarket(Market $market): Collection
+    {
+        return $this->forMarket($market)->filter(static fn (SubscriptionPlan $plan): bool => $plan->priceFor($market)?->amount_minor > 0)->values();
+    }
+
     /** @return Collection<int, SubscriptionPlan> with prices and courses.course loaded */
     public function forMarket(Market $market): Collection
     {

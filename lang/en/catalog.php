@@ -7,6 +7,7 @@ return [
     'search' => 'Search courses',
     'find' => 'Search',
     'filters' => 'Course filters',
+    'additional_filters' => 'More filters',
     'category' => 'Category',
     'age_band' => 'Age band',
     'age' => 'Specific age',

@@ -5,7 +5,7 @@
     <div class="public-page-stack mx-auto max-w-7xl py-2 sm:py-4" data-bundle-page>
         <x-ui.breadcrumb :items="[['label' => __('catalog.title'), 'url' => \App\Domain\Seo\PublicUrl::catalog(app()->getLocale())], ['label' => $bundle->name]]"/>
 
-        <header class="space-y-3 border-b border-border pb-5 sm:pb-7">
+        <header class="public-band public-band-header space-y-3 border-b border-border">
             <h1 id="bundle-title" class="text-3xl font-extrabold wrap-anywhere sm:text-4xl"><bdi>{{ $bundle->name }}</bdi></h1>
             <p class="max-w-prose text-muted">{{ __('subscriptions.bundle_one_price') }}</p>
         </header>

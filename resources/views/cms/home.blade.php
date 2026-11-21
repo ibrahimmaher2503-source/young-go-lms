@@ -1,4 +1,4 @@
-<x-layouts.base variant="public" indexable full homepage :home-instructors="$homeInstructors->isNotEmpty()">
+<x-layouts.base variant="public" indexable full homepage :home-disciplines="$categories->isNotEmpty()">
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
     @php
         $locale = app()->getLocale();
@@ -54,7 +54,7 @@
                         @endif
                     </div>
                 </section>
-                <ul class="home-stats" aria-label="{{ __('public-site.platform_stats') }}">
+                <ul class="home-stats public-band" aria-label="{{ __('public-site.platform_stats') }}">
                     <li>
                         <a href="{{ $categories->isNotEmpty() ? '#home-disciplines' : $catalog.'#catalog-filters' }}" class="home-stat">
                             <x-ui.icon name="star"/><strong data-home-stat="categories">{{ $disciplineCount }}</strong><span>{{ __('public-site.stat_categories') }}</span>
@@ -135,7 +135,7 @@
                     @endif
                 </section>
             @elseif($block->type === 'how_it_works')
-                <section id="home-block-{{ $block->id }}" data-block-type="how_it_works" data-home-reveal class="home-steps">
+                <section id="home-block-{{ $block->id }}" data-block-type="how_it_works" data-home-reveal class="home-steps public-band">
                     <div class="home-steps-copy">
                         <h2 class="home-title">{{ $block->title }}</h2>
                         <p>{{ filled($block->body) ? $block->body : __('public-site.steps_intro') }}</p>
@@ -188,8 +188,8 @@
                             @foreach($homeInstructors as $profile)
                                 @php
                                     $name = $profile->publicName($locale);
-                                    $avatar = filled($profile->avatar) ? \Illuminate\Support\Facades\Storage::disk('public')->url($profile->avatar) : null;
-                                    $specialization = $profile->disciplines->pluck('name')->filter()->join(' · ') ?: $profile->headline;
+                                    $avatar = $profile->avatarUrl();
+                                    $specialization = $profile->publicHeadline($locale) ?: $profile->disciplines->pluck('name')->filter()->join(' · ');
                                 @endphp
                                 <a href="{{ \App\Domain\Seo\PublicUrl::instructor($profile, $locale) }}" class="home-instructor">
                                     <div class="home-instructor-image" aria-hidden="true">
@@ -200,7 +200,7 @@
                                         @endif
                                     </div>
                                     <h3>{{ $name }}</h3>
-                                    @if(filled($specialization))<p><bdi>{{ $specialization }}</bdi></p>@endif
+                                    @if(filled($specialization))<p dir="auto">{{ $specialization }}</p>@endif
                                 </a>
                             @endforeach
                         </div>
@@ -224,7 +224,7 @@
                     </section>
                 @endif
             @elseif($block->type === 'newsletter')
-                <section data-block-type="newsletter" data-home-reveal class="home-newsletter">
+                <section data-block-type="newsletter" data-home-reveal class="home-newsletter public-band">
                     <img class="home-newsletter-art" src="{{ asset('images/public-info/catalog-band.webp') }}" alt="" width="816" height="300" loading="lazy" decoding="async">
                     <div class="home-newsletter-copy">
                         <h2 class="home-title">{{ $block->title }}</h2>

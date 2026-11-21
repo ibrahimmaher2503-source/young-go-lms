@@ -1,27 +1,33 @@
 {{-- Props: variant public/auth/student/parent, title, minimal (error pages: no session-dependent chrome), wide (public pages that need more width), indexable (public pages that fill the head slot with their own meta). --}}
-@props(['variant' => 'public', 'title' => null, 'minimal' => false, 'wide' => false, 'indexable' => false, 'full' => false, 'homepage' => false, 'homeInstructors' => false, 'localeAlternates' => [], 'authCard' => false])
+@props(['variant' => 'public', 'title' => null, 'minimal' => false, 'wide' => false, 'indexable' => false, 'full' => false, 'homepage' => false, 'homeDisciplines' => false, 'localeAlternates' => [], 'authCard' => false])
 @php
     $locale = app()->getLocale();
     $user = $minimal ? null : auth()->user();
     $child = ($user && ! $minimal) ? (app(\App\Domain\Identity\ActingLearner::class)->isParentContext() ? app(\App\Domain\Identity\ActingLearner::class)->current() : null) : null;
     $name = $user ? ($user->display_name ?: $user->name) : null;
     $public = $variant === 'public' && ! $minimal;
+    $publicIdentity = $variant === 'public' || $authCard;
     if ($public) {
-        $publicPages = app(\App\Domain\Content\Queries\PublicSitePages::class)();
+        $sitePages = app(\App\Domain\Content\Queries\PublicSitePages::class);
+        $publicPages = $sitePages();
         $home = \App\Domain\Seo\PublicUrl::home($locale);
         $catalog = \App\Domain\Seo\PublicUrl::catalog($locale);
-        $publicNav = [
-            [$home, __('public-site.home'), request()->routeIs('cms.home', 'public.home'), 'home'],
+        $exploreNav = [
             [$catalog, __('public-site.courses'), request()->routeIs('catalog.index', 'public.catalog.index'), 'book'],
-            [$catalog.'#catalog-filters', __('public-site.categories'), false, 'layers'],
         ];
-        if ($homepage && $homeInstructors) {
-            $publicNav[] = [$home.'#home-instructors', __('public-site.instructors_nav'), false, 'users'];
-        }
+        $platformNav = [];
         if ($about = $publicPages->get('about')) {
-            $publicNav[] = [\App\Domain\Seo\PublicUrl::page($about, $locale), $about->title, request()->route('slug') === $about->slug, 'help'];
+            $platformNav[] = [\App\Domain\Seo\PublicUrl::page($about, $locale), __('public-site.about_nav'), request()->route('slug') === $about->slug, 'help'];
         }
-        $footerNav = [...$publicNav, [\App\Domain\Seo\PublicUrl::blog($locale), __('blog.title')]];
+        $platformNav[] = [\App\Domain\Seo\PublicUrl::contact($locale), __('public-site.contact'), request()->routeIs('public.contact.show', 'contact.show'), 'mail'];
+        $publicNav = [...$exploreNav, ...$platformNav];
+        if ($homepage ? $homeDisciplines : $sitePages->hasHomeDisciplines()) {
+            $exploreNav[] = [$home.'#home-disciplines', __('public-site.disciplines_nav'), false];
+        }
+        if ($sitePages->hasHomeInstructors(app(\App\Domain\Instructors\Queries\PublicInstructors::class))) {
+            $exploreNav[] = [$home.'#home-instructors', __('public-site.instructors_nav'), false];
+        }
+        $exploreNav[] = [\App\Domain\Seo\PublicUrl::blog($locale), __('blog.title'), request()->routeIs('public.blog.index', 'blog.index')];
     }
     $nav = match ($variant) {
         'parent' => [['/family', __('pages.nav_family')], ['/my', __('pages.nav_learning')], ['/profile', __('pages.nav_profile')]],
@@ -30,13 +36,14 @@
     };
 @endphp
 <!doctype html>
-<html lang="{{ $locale }}" dir="{{ $locale === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ $locale }}" dir="{{ $locale === 'ar' ? 'rtl' : 'ltr' }}" @if($publicIdentity) class="public-identity" @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @if($indexable){{ $head ?? '' }}@else<meta name="robots" content="noindex, nofollow">@endif
     <title>{{ $title ? $title.' · ' : '' }}{{ __('app.name') }}</title>
+    @if($publicIdentity)<link rel="icon" type="image/png" href="{{ asset('images/young-go-favicon.png') }}">@endif
     {{-- Primary face for the page language; the other subset loads on demand via unicode-range. crossorigin is required for font preloads. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ \Illuminate\Support\Facades\Vite::asset('resources/fonts/noto-sans-arabic/NotoSansArabic-'.($locale === 'ar' ? 'arabic' : 'latin').'.woff2') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -77,8 +84,10 @@
     ])>
         <div @class(['site-header-leading flex items-center gap-5' => $public, 'flex flex-wrap items-center gap-3' => ! $public])>
             @if($public)
-                <x-public.brand :href="$home"/>
+                <x-public.brand :href="$home" :aria-current="request()->routeIs('cms.home', 'public.home') ? 'page' : null"/>
                 <x-public.navigation :links="$publicNav" class="site-header-nav"/>
+            @elseif($publicIdentity)
+                <x-public.brand :href="\App\Domain\Seo\PublicUrl::home($locale)"/>
             @else
                 <a href="{{ $user ? url('/home') : url('/login') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 text-xl font-extrabold text-primary" aria-label="{{ __('app.name') }}">@isset($minimalHeader)<x-ui.icon name="book" class="size-7 text-primary"/>@endisset<span dir="ltr">Young Go</span></a>
             @endif
@@ -93,7 +102,7 @@
                 @endforeach
             </nav>
             @endif
-            <div class="{{ $public ? 'flex shrink-0 items-center gap-0.5 sm:gap-1' : 'flex flex-wrap items-center gap-2' }}">
+            <div class="{{ $public ? 'site-header-actions flex shrink-0 items-center gap-0.5 sm:gap-1' : 'flex flex-wrap items-center gap-2' }}">
                 <x-ui.theme-toggle class="{{ $public ? 'border-transparent! bg-transparent! text-muted! hover:bg-hover!' : '' }}"/>
                 <x-ui.locale-switcher :locale="$locale" :alternates="$localeAlternates" :variant="$public ? 'ghost' : 'secondary'"/>
                 @if($user)
@@ -113,7 +122,7 @@
                         <x-ui.drawer id="public-menu" :title="__('public-site.menu')" placement="side" trigger-size="sm" data-public-menu>
                             <x-slot:trigger><x-ui.icon name="menu"/><span class="sr-only">{{ __('public-site.menu') }}</span></x-slot:trigger>
                             <x-public.navigation :links="$publicNav" class="pb-5" mobile/>
-                            <div class="mt-auto border-t border-border pt-5">
+                            <div class="border-t border-border pt-5">
                                 @if($user)
                                     <x-ui.account-actions/>
                                 @else
@@ -136,7 +145,7 @@
 </main>
 @if($public)
     @php($socialLinks = collect($siteSettings->socialLinks()))
-    <x-public.footer :home="$home" :links="$footerNav" :pages="$publicPages" :social-links="$socialLinks"/>
+    <x-public.footer :home="$home" :pages="$publicPages" :explore-links="$exploreNav" :social-links="$socialLinks"/>
 @endif
 <x-consent.banner :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </body>

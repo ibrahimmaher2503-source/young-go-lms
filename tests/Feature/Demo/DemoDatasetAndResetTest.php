@@ -127,10 +127,10 @@ it('refuses an environment that is not allow-listed, such as qa, and creates not
 it('creates the demo dataset with the documented counts, demo emails and the public demo password', function (): void {
     tp911Seed();
 
-    // Two child accounts have no email (minors), so the ten accounts are counted through the anchors.
+    // Two child accounts have no email, so the demo anchors include two more records than the email query.
     $demoUsers = User::query()->where('email', 'like', '%@demo.younggo.test')->get();
-    expect(DemoAnchors::ids('users'))->toHaveCount(10)
-        ->and($demoUsers)->toHaveCount(8)
+    expect(DemoAnchors::ids('users'))->toHaveCount(12)
+        ->and($demoUsers)->toHaveCount(10)
         ->and(DB::table('courses')->count())->toBe(8)
         ->and(DB::table('orders')->count())->toBe(11)
         ->and(DB::table('orders')->where('status', 'paid')->count())->toBe(8)
@@ -140,8 +140,7 @@ it('creates the demo dataset with the documented counts, demo emails and the pub
         ->and(DB::table('coupons')->count())->toBe(2)
         ->and(DB::table('help_requests')->count())->toBe(1)
         ->and(DB::table('certificates')->count())->toBeGreaterThanOrEqual(1)
-        ->and(DemoAnchors::ids('users'))->toHaveCount(10)
-        ->and(DB::table('demo_anchors')->count())->toBe(22);
+        ->and(DB::table('demo_anchors')->count())->toBe(24);
 
     foreach ($demoUsers as $user) {
         expect(str_ends_with((string) $user->email, '@demo.younggo.test'))->toBeTrue()

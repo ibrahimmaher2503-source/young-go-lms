@@ -1,6 +1,6 @@
 @props(['title', 'description' => null, 'image', 'quiet' => false, 'icon' => 'book'])
 
-<section {{ $attributes->class(['info-banner', 'info-banner-quiet' => $quiet, 'info-banner-strong' => ! $quiet]) }}>
+<section {{ $attributes->class(['info-banner public-band', 'info-banner-quiet' => $quiet, 'info-banner-strong' => ! $quiet]) }}>
     <div @class(['info-banner-copy', 'info-card-row' => $quiet])>
         @if($quiet)<span class="info-icon"><x-ui.icon :name="$icon"/></span>@endif
         <div class="min-w-0">

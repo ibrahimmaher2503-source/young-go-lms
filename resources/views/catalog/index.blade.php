@@ -8,7 +8,7 @@
 <x-layouts.base :title="__('catalog.title')" :locale-alternates="$seo['alternates']" variant="public" indexable full>
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
     <div class="public-page-stack">
-        <header id="catalog-filters" class="mx-auto max-w-6xl scroll-mt-4 space-y-3 sm:px-6" data-catalog-hero>
+        <header id="catalog-filters" class="public-band public-band-header scroll-mt-4 space-y-3" data-catalog-hero>
             <div class="space-y-1">
                 <h1 class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ __('catalog.hero_title') }}</h1>
                 <p class="max-w-prose text-muted sm:text-lg">{{ __('catalog.hero_subtitle') }}</p>

@@ -2,6 +2,7 @@
 @props(['name'])
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" {{ $attributes->class(['size-5 shrink-0', 'rtl:rotate-180' => in_array($name, ['chevron', 'arrow', 'back', 'send'], true)]) }}>
     @switch($name)
+        @case('grid') <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/> @break
         @case('search') <circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/> @break
         @case('menu') <path d="M4 6h16M4 12h16M4 18h16"/> @break
         @case('globe') <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18 16 16 0 0 1 0-18Z"/> @break

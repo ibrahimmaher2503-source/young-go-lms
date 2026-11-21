@@ -5,9 +5,6 @@
 
 .public-site-shell:has(.info-page) .site-header-inner { min-block-size: 3.5rem; }
 .public-site-shell:has(.info-page) > main { padding-block: calc(clamp(1rem, 1.85vw, 1.75rem) + var(--public-space-extra)); }
-.public-site-shell:has(.info-page) [data-public-footer] { background: var(--yg-color-public-home); }
-.public-site-shell:has(.info-page) .site-footer-grid { padding-block: calc(1.25rem + var(--public-space-extra)); }
-
 .info-page {
     --home-banner-text: var(--yg-neutral-0);
     display: grid;

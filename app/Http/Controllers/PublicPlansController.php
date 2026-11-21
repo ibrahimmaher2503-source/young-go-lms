@@ -16,7 +16,7 @@ final class PublicPlansController
     public function __invoke(Request $request, PublicPlans $plans): View
     {
         $market = Market::Egypt;
-        $listed = $plans->forMarket($market)->filter(static fn ($plan): bool => $plan->priceFor($market)?->amount_minor > 0)->values();
+        $listed = $plans->paidForMarket($market);
         abort_if($listed->isEmpty(), 404);
 
         return view('catalog.plans', ['plans' => $listed, 'market' => $market, 'signedIn' => $request->user() !== null, 'seo' => OfferSeo::plans()]);

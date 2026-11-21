@@ -126,9 +126,11 @@ final class DemoSeeder extends Seeder
             $this->learning();
             $this->engagement();
             app(AttachDemoLessonPdf::class)($this->admin, Lesson::query()->findOrFail($this->lessonItems['drawing-basics'][0]->itemable_id));
+            $this->call(DemoInstructorContentSeeder::class);
         });
 
         $this->call(DemoAcceptanceSeeder::class);
+        $this->userCount = count(DemoAnchors::ids('users'));
     }
 
     /**
