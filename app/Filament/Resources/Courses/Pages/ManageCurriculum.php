@@ -53,12 +53,13 @@ use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Symfony\Component\HttpFoundation\File\File;
 
 /** Course curriculum manager: sections and lessons, drag and keyboard ordering, bulk publish, archive, student preview. */
@@ -317,7 +318,8 @@ final class ManageCurriculum extends Page
                     ->options(fn (): array => $this->mountedAssignment()->attachments->mapWithKeys(static fn (AssignmentAttachment $a): array => [$a->getKey() => (string) $a->title])->all())
                     ->visible(fn (): bool => $this->mountedAssignment()->attachments->isNotEmpty()),
                 FileUpload::make('attachment_file')->label(__('curriculum.assignment.attachment_file'))->helperText(__('curriculum.assignment.attachment_help', ['max' => ManageAssignmentAttachments::MAX]))
-                    ->disk(Config::string('media.disk'))->directory('assignments/staging')->visibility('private')->maxSize(Config::integer('assignments.ceiling_kilobytes'))->preserveFilenames(false),
+                    ->disk(Config::string('media.disk'))->visibility('private')->maxSize(Config::integer('assignments.ceiling_kilobytes'))
+                    ->preserveFilenames(false)->storeFiles(false)->preventFilePathTampering(),
                 TextInput::make('attachment_title.ar')->label(__('curriculum.assignment.attachment_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
                 TextInput::make('attachment_title.en')->label(__('curriculum.assignment.attachment_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             ])
@@ -372,17 +374,15 @@ final class ManageCurriculum extends Page
             }
         }
 
-        $stored = $data['attachment_file'] ?? null;
-        $stored = is_array($stored) ? (reset($stored) ?: null) : $stored;
-        if (! is_string($stored) || $stored === '') {
+        $uploaded = $this->stagedUpload($data['attachment_file'] ?? null, 'attachment_file');
+        if ($uploaded === null) {
             return;
         }
-        $disk = Storage::disk(Config::string('media.disk'));
         try {
             $title = array_filter((array) ($data['attachment_title'] ?? []), static fn ($v): bool => is_string($v) && trim($v) !== '');
-            $manager->add($this->actor(), $assignment, new File($disk->path($stored)), $title);
+            $manager->add($this->actor(), $assignment, $this->asLocalFile($uploaded), $title);
         } finally {
-            $disk->delete($stored);
+            $this->cleanupTemporaryUpload($uploaded);
         }
     }
 
@@ -509,8 +509,9 @@ final class ManageCurriculum extends Page
             Select::make('media_provider')->label(__('curriculum.media_source'))->live()->placeholder(__('curriculum.media_keep'))
                 ->options(static fn (Get $get): array => self::providerOptions((string) ($get('type') ?? 'video'))),
             FileUpload::make('media_file')->label(__('curriculum.media_file'))->helperText(__('curriculum.media_file_help'))
-                ->disk(Config::string('media.disk'))->directory('media/uploads')->visibility('private')->maxSize(Config::integer('media.max_kilobytes'))
+                ->disk(Config::string('media.disk'))->visibility('private')->maxSize(Config::integer('media.max_kilobytes'))
                 ->extraInputAttributes(['accept' => implode(',', self::uploadMimes())])->preserveFilenames(false)
+                ->storeFiles(false)->preventFilePathTampering()
                 ->visible(static fn (Get $get): bool => in_array($get('media_provider'), self::UPLOAD_PROVIDERS, true)),
             TextInput::make('media_url')->label(__('curriculum.media_link'))->url()->maxLength(2048)->extraInputAttributes(['dir' => 'ltr'])
                 ->visible(static fn (Get $get): bool => in_array($get('media_provider'), self::LINK_PROVIDERS, true)),
@@ -524,11 +525,13 @@ final class ManageCurriculum extends Page
             Select::make('library_pdf')->label(__('library.pick_pdf'))->native(false)->searchable()->placeholder(__('library.none'))
                 ->options(fn (): array => $this->libraryOptions(['document'])),
             FileUpload::make('curriculum_pdf')->label(__('curriculum.curriculum_pdf'))->helperText(__('curriculum.curriculum_pdf_help'))
-                ->disk(Config::string('media.disk'))->directory('documents/uploads')->visibility('private')->maxSize(Config::integer('media.pdf_max_kilobytes'))
-                ->extraInputAttributes(['accept' => 'application/pdf'])->preserveFilenames(false),
+                ->disk(Config::string('media.disk'))->visibility('private')->maxSize(Config::integer('media.pdf_max_kilobytes'))
+                ->extraInputAttributes(['accept' => 'application/pdf'])->preserveFilenames(false)
+                ->storeFiles(false)->preventFilePathTampering(),
             FileUpload::make('resource_file')->label(__('curriculum.resource_file'))->helperText(__('curriculum.resource_file_help'))
-                ->disk(Config::string('media.disk'))->directory('resources/uploads')->visibility('private')->maxSize(Config::integer('media.resource_max_kilobytes'))
-                ->extraInputAttributes(['accept' => 'application/pdf,text/plain,image/png,image/jpeg,image/webp'])->preserveFilenames(false),
+                ->disk(Config::string('media.disk'))->visibility('private')->maxSize(Config::integer('media.resource_max_kilobytes'))
+                ->extraInputAttributes(['accept' => 'application/pdf,text/plain,image/png,image/jpeg,image/webp'])->preserveFilenames(false)
+                ->storeFiles(false)->preventFilePathTampering(),
             TextInput::make('resource_title.ar')->label(__('curriculum.resource_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
             TextInput::make('resource_title.en')->label(__('curriculum.resource_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
             Toggle::make('resource_downloadable')->label(__('curriculum.resource_downloadable'))->default(true),
@@ -557,31 +560,25 @@ final class ManageCurriculum extends Page
      */
     private function saveDocuments(Lesson $lesson, array $data): void
     {
-        $disk = Storage::disk(Config::string('media.disk'));
-        $stage = static function (mixed $value): ?string {
-            $value = is_array($value) ? (reset($value) ?: null) : $value;
-
-            return is_string($value) && $value !== '' ? $value : null;
-        };
-
-        $pdf = $stage($data['curriculum_pdf'] ?? null);
+        $pdf = $this->stagedUpload($data['curriculum_pdf'] ?? null, 'curriculum_pdf');
         if ($pdf !== null) {
             try {
-                app(UploadCurriculumDocument::class)($this->actor(), $lesson, new File($disk->path($pdf)));
+                app(UploadCurriculumDocument::class)($this->actor(), $lesson, $this->asLocalFile($pdf));
             } finally {
-                $disk->delete($pdf);
+                $this->cleanupTemporaryUpload($pdf);
             }
         }
 
-        $resource = $stage($data['resource_file'] ?? null);
+        $resource = $this->stagedUpload($data['resource_file'] ?? null, 'resource_file');
         if ($resource !== null) {
             try {
                 $title = array_filter((array) ($data['resource_title'] ?? []), static fn ($v): bool => is_string($v) && trim($v) !== '');
-                app(ManageLessonResources::class)->addFile($this->actor(), $lesson, new File($disk->path($resource)), [
-                    'title' => $title === [] ? ['en' => basename($resource)] : $title, 'downloadable' => (bool) ($data['resource_downloadable'] ?? true),
+                $fallbackTitle = $resource->getClientOriginalName() ?: $resource->getFilename();
+                app(ManageLessonResources::class)->addFile($this->actor(), $lesson, $this->asLocalFile($resource), [
+                    'title' => $title === [] ? ['en' => $fallbackTitle] : $title, 'downloadable' => (bool) ($data['resource_downloadable'] ?? true),
                 ]);
             } finally {
-                $disk->delete($resource);
+                $this->cleanupTemporaryUpload($resource);
             }
         }
     }
@@ -636,17 +633,16 @@ final class ManageCurriculum extends Page
 
         $duration = $lesson->duration_seconds;
         if (in_array($provider, self::UPLOAD_PROVIDERS, true)) {
-            $stored = $data['media_file'] ?? null;
-            $stored = is_array($stored) ? (reset($stored) ?: null) : $stored;
-            if (! is_string($stored) || $stored === '') {
+            $uploaded = $this->stagedUpload($data['media_file'] ?? null, 'media_file');
+            if ($uploaded === null) {
                 return;
             }
 
-            $disk = Storage::disk(Config::string('media.disk'));
             try {
-                app(UploadLessonMedia::class)($this->actor(), $lesson, $provider, new File($disk->path($stored)), basename($stored), $duration);
+                $originalName = $uploaded->getClientOriginalName() ?: $uploaded->getFilename();
+                app(UploadLessonMedia::class)($this->actor(), $lesson, $provider, $this->asLocalFile($uploaded), $originalName, $duration);
             } finally {
-                $disk->delete($stored); // the upload staging copy is never kept
+                $this->cleanupTemporaryUpload($uploaded);
             }
 
             return;
@@ -698,6 +694,31 @@ final class ManageCurriculum extends Page
         }
         if ($item = $find($data['library_pdf'] ?? null)) {
             $attach->asCurriculumPdf($this->actor(), $item, $lesson);
+        }
+    }
+
+    private function stagedUpload(mixed $value, string $field): ?UploadedFile
+    {
+        $item = is_array($value) ? (reset($value) ?: null) : $value;
+        if ($item === null || $item === '') {
+            return null;
+        }
+        if (! $item instanceof UploadedFile) {
+            throw ValidationException::withMessages([$field => __('media.invalid_type')]);
+        }
+
+        return $item;
+    }
+
+    private function asLocalFile(UploadedFile $file): File
+    {
+        return new File($file->getRealPath() ?: $file->getPathname());
+    }
+
+    private function cleanupTemporaryUpload(UploadedFile $file): void
+    {
+        if ($file instanceof TemporaryUploadedFile) {
+            $file->delete();
         }
     }
 
