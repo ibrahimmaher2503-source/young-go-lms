@@ -86,14 +86,15 @@ final class BudgetGate
                     ->delete();
 
                 $used = $this->spent($scope, $lesson, $month) + $this->activeReserved($scope, $period, $now);
-                if ($used >= $ceiling) {
+                $amount = $this->reservationMinor($scope, $lesson, $month, $estimatedCostMinor);
+                if ($used >= $ceiling || $used + $amount > $ceiling) {
                     throw AssistantRefused::budgetExhausted(self::monthlyResetAt());
                 }
 
                 $reservation = AiBudgetReservation::query()->create([
                     'scope' => $scope,
                     'period' => $period,
-                    'amount_minor' => $this->reservationMinor($scope, $lesson, $month, $estimatedCostMinor),
+                    'amount_minor' => $amount,
                     'expires_at' => $now->copy()->addSeconds($ttlSeconds),
                 ]);
                 $reservedIds[] = (int) $reservation->getKey();
@@ -200,11 +201,10 @@ final class BudgetGate
             return (int) $configured;
         }
 
+        $attempts = 1 + max(0, (int) config('ai.assistant.retries', 1));
         $observedMax = (int) ($this->usageQuery($scope, $lesson, $month)->max('cost_minor') ?? 0);
-        if ($observedMax > 0) {
-            return $observedMax;
-        }
+        $perCall = $observedMax > 0 ? $observedMax : max(1, (int) config('ai.budget.default_reservation_minor', 50));
 
-        return max(1, (int) config('ai.budget.default_reservation_minor', 50));
+        return $perCall * $attempts;
     }
 }

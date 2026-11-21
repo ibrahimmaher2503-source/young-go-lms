@@ -328,9 +328,10 @@ it('enforces daily quota reserve/commit/refund, returns 429 with reset_at when e
     $settings = app(AiSettings::class);
     $settings->questions_per_student_day = 2;
     $settings->questions_per_student_lesson_day = 2;
-    $settings->monthly_budget_minor = 100;
+    $settings->monthly_budget_minor = 120;
     $settings->budget_alert_percent = 80;
     $settings->save();
+    config(['ai.assistant.retries' => 0]);
 
     // Provider error refunds reserved quota unit cleanly (count stays 0)
     $failing = aigcqBindCountingProvider(error: 'Upstream 500');
