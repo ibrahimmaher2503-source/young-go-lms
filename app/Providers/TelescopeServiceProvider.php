@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -24,6 +25,17 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $isLocal = $this->app->environment('local');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
+            if (! $isLocal) {
+                $uri = $entry->content['uri'] ?? null;
+                $ignorePaths = config('telescope.ignore_paths', []);
+                if (is_string($uri) && is_array($ignorePaths) && $ignorePaths !== []) {
+                    $path = ltrim((string) parse_url($uri, PHP_URL_PATH), '/');
+                    if ($path !== '' && Request::create('/'.$path)->is($ignorePaths)) {
+                        return false;
+                    }
+                }
+            }
+
             return $isLocal ||
                    $entry->isReportableException() ||
                    $entry->isFailedRequest() ||
@@ -61,6 +73,15 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             'secret',
             'api_key',
             'client_secret',
+            'child_password',
+            'code',
+            'recovery_code',
+            'recovery_codes',
+            'sender_account',
+            'sender_name',
+            'transfer_reference',
+            'payout_details',
+            'instapay_address',
         ]);
 
         Telescope::hideRequestHeaders([

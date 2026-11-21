@@ -134,10 +134,17 @@ return [
         'guardian/children/*/password',
         'webhooks/*',
         'orders/*/manual-proof*',
+        'my/orders/*/payment-proof*',
+        'my/payments*',
         'payments/manual-proofs/*',
         'checkout/*',
         'payments/*',
         'fake-gateway/*',
+        'login',
+        'register',
+        'forgot-password',
+        'reset-password*',
+        'guardian/*',
     ],
 
     'ignore_commands' => [
