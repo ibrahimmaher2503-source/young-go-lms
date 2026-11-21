@@ -29,6 +29,17 @@ final class ViewAsEligibility
 
     public function refusal(User $actor, User $learner): ?ViewAsRefusal
     {
+        return $this->check($actor, $learner, requireNotAlreadyActive: true);
+    }
+
+    /** Re-evaluates permission and learner eligibility when redeeming an existing session. */
+    public function redeemRefusal(User $actor, User $learner): ?ViewAsRefusal
+    {
+        return $this->check($actor, $learner, requireNotAlreadyActive: false);
+    }
+
+    private function check(User $actor, User $learner, bool $requireNotAlreadyActive): ?ViewAsRefusal
+    {
         if (! $actor->can('support.view_as') || ! $actor->can('learner.record.view')) {
             return ViewAsRefusal::Permission;
         }
@@ -70,7 +81,7 @@ final class ViewAsEligibility
             return ViewAsRefusal::ParentContext;
         }
 
-        if (ViewAsSession::query()->open()->where('staff_id', $actor->getKey())->where('expires_at', '>', now())->exists()) {
+        if ($requireNotAlreadyActive && ViewAsSession::query()->open()->where('staff_id', $actor->getKey())->where('expires_at', '>', now())->exists()) {
             return ViewAsRefusal::AlreadyActive;
         }
 

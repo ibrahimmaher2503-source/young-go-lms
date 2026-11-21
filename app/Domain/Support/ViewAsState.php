@@ -15,7 +15,7 @@ final class ViewAsState
 {
     public const string SESSION_KEY = 'view_as_session_id';
 
-    public function __construct(private readonly StopViewAs $stop) {}
+    public function __construct(private readonly StopViewAs $stop, private readonly ViewAsEligibility $eligibility) {}
 
     public function current(): ?ViewAsSession
     {
@@ -34,6 +34,13 @@ final class ViewAsState
 
         if ($session->isExpired()) {
             ($this->stop)($session, ViewAsSession::END_EXPIRED);
+
+            return null;
+        }
+
+        $learner = $session->learner;
+        if (! $learner instanceof User || $this->eligibility->redeemRefusal($user, $learner) !== null) {
+            ($this->stop)($session, ViewAsSession::END_REVOKED);
 
             return null;
         }

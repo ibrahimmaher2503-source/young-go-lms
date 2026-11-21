@@ -32,6 +32,8 @@ final class ViewAsSession extends Model
 
     public const string END_REPLACED = 'replaced';
 
+    public const string END_REVOKED = 'revoked';
+
     protected $table = 'view_as_sessions';
 
     protected $guarded = ['id'];
