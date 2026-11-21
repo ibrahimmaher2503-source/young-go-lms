@@ -21,7 +21,7 @@
         </header>
         @if(filled($post->featured_image))
             <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($post->featured_image) }}" alt="{{ $post->getTranslation('featured_image_alt', $locale, false) }}"
-                class="aspect-video w-full rounded-xl object-cover">
+                width="1280" height="720" loading="eager" fetchpriority="high" decoding="async" class="aspect-video w-full rounded-xl object-cover">
         @endif
         @if(filled($post->excerpt))<p class="break-words text-lg font-semibold">{{ $post->excerpt }}</p>@endif
         <div class="whitespace-pre-line break-words" dir="auto">{{ $post->body }}</div>

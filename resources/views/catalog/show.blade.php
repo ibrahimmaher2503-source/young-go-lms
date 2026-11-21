@@ -194,7 +194,7 @@
 
         <aside class="lg:sticky lg:top-4 lg:self-start" aria-label="{{ __('course_page.access') }}" data-access-card>
             <x-ui.card class="space-y-4">
-                @if($cover)<img src="{{ $cover }}" alt="" class="aspect-video w-full rounded-lg object-cover">@endif
+                @if($cover)<img src="{{ $cover }}" alt="" width="640" height="360" loading="lazy" decoding="async" class="aspect-video w-full rounded-lg object-cover">@endif
                 <div class="text-center">
                     @if($price !== null)
                         <p class="text-3xl font-extrabold"><x-ui.price :money="$price" :market="$market" data-course-price /></p>

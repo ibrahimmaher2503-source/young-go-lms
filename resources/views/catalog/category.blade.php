@@ -18,7 +18,7 @@
                 @endif
                 <p class="text-sm text-muted">{{ __('catalog.results', ['count' => $courses->total()]) }}</p>
             </div>
-            @if($image)<img src="{{ $image }}" alt="" class="aspect-video w-full rounded-lg object-cover">@endif
+            @if($image)<img src="{{ $image }}" alt="" width="640" height="360" loading="eager" fetchpriority="high" decoding="async" class="aspect-video w-full rounded-lg object-cover">@endif
         </section>
 
         @if($children->isNotEmpty())

@@ -22,7 +22,7 @@
         <iframe class="h-[70vh] w-full" src="{{ $descriptor->url }}" title="{{ $title }}" loading="lazy"></iframe>
         @break
     @case('image')
-        <img class="mx-auto block max-h-[70vh] w-auto max-w-full" src="{{ $descriptor->url }}" alt="{{ $title }}">
+        <img class="mx-auto block max-h-[70vh] w-auto max-w-full" src="{{ $descriptor->url }}" alt="{{ $title }}" decoding="async">
         @break
     @case('text')
         <div class="prose max-w-none p-4 break-words" dir="auto">{!! nl2br(e((string) $descriptor->text)) !!}</div>

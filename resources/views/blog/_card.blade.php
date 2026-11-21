@@ -7,7 +7,7 @@
 <article class="min-w-0 space-y-3 rounded-xl border border-border bg-surface p-4" data-blog-card>
     @if(filled($post->featured_image))
         <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($post->featured_image) }}" alt="{{ $post->getTranslation('featured_image_alt', $locale, false) }}"
-            loading="lazy" class="aspect-video w-full rounded-lg object-cover">
+            width="640" height="360" loading="lazy" decoding="async" class="aspect-video w-full rounded-lg object-cover">
     @endif
     <div class="flex flex-wrap items-center gap-2 text-sm">
         @if($category)<x-ui.badge>{{ $category->name }}</x-ui.badge>@endif

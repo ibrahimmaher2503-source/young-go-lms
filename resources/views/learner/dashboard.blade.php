@@ -12,7 +12,7 @@
                 <section class="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="continue-title">
                     @if($resume)
                         <div class="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]" data-widget="continue">
-                            <x-learner.course-thumb :course="$resume['course']" class="md:order-2" />
+                            <x-learner.course-thumb :course="$resume['course']" :priority="true" class="md:order-2" />
                             <div class="min-w-0 space-y-3 md:order-1">
                                 <p id="continue-title" class="inline-flex items-center gap-2 rounded-full bg-assistant px-4 py-2 font-semibold text-primary"><x-ui.icon name="play-circle" /> {{ __('learner.continue_badge') }}</p>
                                 <div>
