@@ -72,7 +72,7 @@ it('renders the paid order receipt for the payer in Arabic and English with the 
     // Pest writes below Screenshots; retain the repository's lowercase artifact directory.
     $page->screenshot(fullPage: true, filename: "../screenshots/T-P8-06/receipt-{$locale}-{$width}");
 })->with(['ar', 'en'])->with([[390, 844], [1440, 900]])
-    ->group('T-P8-06', 'A2', 'payments', 'browser');
+    ->group('T-P8-06', 'A2', 'payments')->group('browser');
 
 it('renders the refund credit note for the payer in Arabic and English with the original receipt and refund amount visible', function (string $locale, int $width, int $height): void {
     $this->seed(RolePermissionSeeder::class);
@@ -125,4 +125,4 @@ it('renders the refund credit note for the payer in Arabic and English with the 
     }
     $page->screenshot(fullPage: true, filename: "../screenshots/T-P8-06/refund-receipt-{$locale}-{$width}");
 })->with(['ar', 'en'])->with([[390, 844], [1440, 900]])
-    ->group('T-P8-06', 'A2', 'payments', 'browser');
+    ->group('T-P8-06', 'A2', 'payments')->group('browser');

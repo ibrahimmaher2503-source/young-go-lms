@@ -119,7 +119,7 @@ JS);
     }
 
     $page->screenshot(fullPage: false, filename: "T-P6-06/pdf-{$locale}-landscape");
-})->with(['ar', 'en'])->group('T-P6-06', 'A2', 'REQ-CP-003', 'REQ-CP-004', 'YG-GAP-CRT-001', 'browser');
+})->with(['ar', 'en'])->group('T-P6-06', 'A2', 'REQ-CP-003', 'REQ-CP-004', 'YG-GAP-CRT-001')->group('browser');
 
 it('keeps the certificate footer inside the frame border at A4 landscape', function (string $locale): void {
     $learner = User::factory()->create([
@@ -143,4 +143,4 @@ it('keeps the certificate footer inside the frame border at A4 landscape', funct
     $page->script('async () => { await document.fonts.ready; }');
     // The footer (QR, verify link, issuer) must sit inside the frame border, not spill past it.
     expect($page->script('() => document.querySelector(".foot").getBoundingClientRect().bottom <= document.querySelector(".frame").getBoundingClientRect().bottom'))->toBeTrue();
-})->with(['ar', 'en'])->group('T-P6-06', 'A2', 'REQ-CP-003', 'REQ-CP-004', 'YG-GAP-CRT-001', 'browser');
+})->with(['ar', 'en'])->group('T-P6-06', 'A2', 'REQ-CP-003', 'REQ-CP-004', 'YG-GAP-CRT-001')->group('browser');

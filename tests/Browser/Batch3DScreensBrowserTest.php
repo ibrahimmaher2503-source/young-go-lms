@@ -42,7 +42,7 @@ it('captures accessible teach page screenshots in AR and EN across mobile and de
 
     t3dPublicSettingsScreenshot($page, $locale, $theme, $width, 'T-P9-01', 'teach');
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P9-01', 'A3', 'YG-GAP-INS-001', 'browser');
+    ->group('T-P9-01', 'A3', 'YG-GAP-INS-001')->group('browser');
 
 it('associates the application field hints and server errors with their native controls', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -62,7 +62,7 @@ it('associates the application field hints and server errors with their native c
         ->assertAttribute('#privacy', 'aria-describedby', 'privacy-error')
         ->assertVisible('#full_name-error');
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P9-01', 'A3', 'YG-GAP-INS-001', 'browser');
+    ->group('T-P9-01', 'A3', 'YG-GAP-INS-001')->group('browser');
 
 it('shows the current cookie setting and offers two explicit choices', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -80,7 +80,7 @@ it('shows the current cookie setting and offers two explicit choices', function 
         ->assertVisible('[data-consent-state="declined"]')
         ->assertNoJavaScriptErrors();
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P9-03', 'A1', 'YG-GAP-MKT-001', 'browser');
+    ->group('T-P9-03', 'A1', 'YG-GAP-MKT-001')->group('browser');
 
 it('captures accessible public course reviews screenshots in AR and EN across mobile and desktop', function (string $locale, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);

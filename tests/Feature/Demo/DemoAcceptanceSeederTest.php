@@ -37,7 +37,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Pennant\Feature;
-use RuntimeException;
 
 uses(RefreshDatabase::class);
 

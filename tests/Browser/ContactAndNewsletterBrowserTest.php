@@ -89,7 +89,7 @@ it('renders the public contact page with an accessible form and a honeypot that 
     t208AssertCapture($page, $locale);
     $page->screenshot(fullPage: true, filename: "T-P2-08/public-refined/contact-reference-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1122, 1402], [1440, 900]])
-    ->group('T-P2-08', 'A1', 'YG-WEB-007', 'browser');
+    ->group('T-P2-08', 'A1', 'YG-WEB-007')->group('browser');
 
 it('links the contact privacy note to the localized policy only after publication', function (): void {
     $policy = CmsPage::query()->forceCreate([
@@ -105,7 +105,7 @@ it('links the contact privacy note to the localized policy only after publicatio
     $policy->update(['status' => CmsPage::PUBLISHED]);
 
     $page->refresh()->assertVisible('[data-contact-form] a[href$="/ar/pages/privacy-policy"]');
-})->group('T-P2-08', 'A1', 'YG-WEB-007', 'browser');
+})->group('T-P2-08', 'A1', 'YG-WEB-007')->group('browser');
 
 it('renders the public newsletter page with the consent checkbox and an accessible card', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -119,7 +119,7 @@ it('renders the public newsletter page with the consent checkbox and an accessib
     t208AssertCapture($page, $locale);
     $page->screenshot(fullPage: true, filename: "T-P2-08/public-refined/newsletter-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P2-08', 'A2', 'YG-WEB-008', 'browser');
+    ->group('T-P2-08', 'A2', 'YG-WEB-008')->group('browser');
 
 it('confirms the login-free signed unsubscribe page in both locales', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -143,7 +143,7 @@ it('confirms the login-free signed unsubscribe page in both locales', function (
     t208AssertCapture($page, $locale);
     $page->screenshot(fullPage: true, filename: "T-P2-08/public-refined/unsubscribed-{$locale}-{$theme}-{$width}");
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P2-08', 'A2', 'YG-WEB-008', 'browser');
+    ->group('T-P2-08', 'A2', 'YG-WEB-008')->group('browser');
 
 it('renders the populated and empty enquiry inbox for marketing staff', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -163,7 +163,7 @@ it('renders the populated and empty enquiry inbox for marketing staff', function
         $page->screenshot(fullPage: true, filename: "T-P2-08/admin-contact-enquiries-{$state}-{$locale}-{$theme}-{$width}");
     }
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P2-08', 'A1', 'YG-WEB-007', 'browser');
+    ->group('T-P2-08', 'A1', 'YG-WEB-007')->group('browser');
 
 it('renders the populated and empty newsletter subscriber list for marketing staff', function (string $locale, string $theme, int $width, int $height): void {
     $this->withSession(['locale' => $locale]);
@@ -183,4 +183,4 @@ it('renders the populated and empty newsletter subscriber list for marketing sta
         $page->screenshot(fullPage: true, filename: "T-P2-08/admin-newsletter-subscribers-{$state}-{$locale}-{$theme}-{$width}");
     }
 })->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('T-P2-08', 'A2', 'YG-WEB-008', 'browser');
+    ->group('T-P2-08', 'A2', 'YG-WEB-008')->group('browser');

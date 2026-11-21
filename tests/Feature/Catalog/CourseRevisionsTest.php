@@ -30,14 +30,12 @@ use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
 use App\Models\User;
-use Closure;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);

@@ -53,8 +53,8 @@ owner brand confirmation, and release tag remain open.
     work.
 -   [x] Deactivated/suspended users cannot access protected routes. Evidence: `tests/Feature/Identity/RbacCatalogTest.php` (`restricts Filament panels to active users with the matching permission`).
 -   [x] Roles and granular permissions are manageable. See the [P1 evidence](evidence/p1-milestone/README.md#checklist-docs04-3-and-14a--items-a-test-proves).
--   [ ] Backend policies enforce permissions on direct URL/API access.
--   [ ] Instructor can access assigned courses only.
+-   [x] Backend policies enforce permissions on direct URL/API access. Evidence: `tests/Feature/Invariants/I02_ObjectScopeTest.php` (`enforces object ownership and relationship scopes in policies`); `tests/Feature/Identity/RbacCatalogTest.php` (`applies seeded role grants through Laravel authorization`); `tests/Feature/AI/HelpRequestQueueTest.php` (`forbids students, parents, content managers, and suspended staff from opening either panel page`).
+-   [x] Instructor can access assigned courses only. Evidence: `tests/Feature/Invariants/I02_CourseScopeTest.php` (`scopes instructor listings, detail URLs and update authorization to assignments`).
 -   [x] Independent instructor cannot publish without approval. Evidence: `tests/Feature/Catalog/CourseWizardReviewFlowTest.php` (`submits a complete independent course for review, locks it for the instructor and keeps publishing with the admin`).
 -   [x] Finance role cannot alter curriculum/security unless explicitly
     granted.
@@ -62,9 +62,9 @@ owner brand confirmation, and release tag remain open.
 -   [x] Parent cannot access unlinked children. See `ChildAccountsTest`, `GuardianLinkingTest` and `ChildRecoveryTest`.
 -   [x] Each child has a separate learner profile and progress. Evidence: `tests/Feature/Learning/ParentDashboardTest.php` (`shows each linked child with their courses and progress and switches between them`).
 -   [ ] Guardian consent and minor privacy policy are approved before
-    minor launch.
+    minor launch. Pending: owner/legal approval (O-015); implemented behaviour: `tests/Feature/AI/DecisionsGuardianAiGateTest.php` (`refuses a minor the assistant with guardian_unverified until the guardian confirms the code`).
 -   [ ] Parent visibility into AI conversations follows the approved
-    policy.
+    policy. Pending: owner/legal approval (O-015); implemented behaviour: `tests/Feature/AI/LearnerHelpThreadTest.php` (`enforces parent context restrictions: hides question/answer and learner messages, and forbids reply`).
 
 ## 4. Public website, CMS and discovery
 
@@ -166,11 +166,11 @@ owner brand confirmation, and release tag remain open.
 -   [x] Assistant is not available during live sessions. Evidence: `tests/Feature/AI/AssistantEligibilityTest.php` (`is unavailable with the right reason when one condition fails`).
 -   [x] Current lesson has an approved curriculum PDF before AI
     activation. Evidence: `tests/Feature/AI/AssistantEligibilityTest.php` (`is unavailable with the right reason when one condition fails`).
--   [ ] AI retrieval is restricted to the current lesson PDF only.
+-   [x] AI retrieval is restricted to the current lesson PDF only. Evidence: `tests/Feature/AI/AssistantEnginePipelineTest.php` (`uses only selected approved excerpts in a chunked prompt`); `tests/Feature/AI/AssistantEnginePipelineTest.php` (`discards provider replies if the approved document was retired during the request`); `tests/Feature/AI/PdfIngestionTest.php` (`makes the approved edited text the only active source and swaps versions atomically`).
 -   [ ] Student entitlement is rechecked on every AI request.
--   [ ] AI answers are short, simple and age-appropriate.
+-   [x] AI answers are short, simple and age-appropriate. Evidence: `tests/Feature/AI/AssistantCoreGuardTest.php` (`enforces OutputGuard length trimming, retry caps, leakage rules, and thread/simpler turn limits`); `tests/Feature/AgeBandResolverTest.php` (`seeds editable catalog defaults and resolves each wording tier from the stored bands`).
 -   [ ] AI does not deliver a full lesson or replace the instructor.
--   [ ] If source is insufficient, AI says so and offers human help.
+-   [x] If source is insufficient, AI says so and offers human help. Evidence: `tests/Feature/AI/AssistantEnginePipelineTest.php` (`ends as not_in_source when quote fails to match cited page after retry`); `tests/Browser/AssistantPanelBrowserTest.php` (`captures every assistant panel state across AR and EN on mobile and desktop`, not-in-source case asserts the human-help action).
 -   [x] "I understood" feedback is recorded. Evidence: `tests/Feature/AI/AssistantFeedbackTest.php` (`records understood feedback without creating a help request, idempotently, and logs audit`).
 -   [x] "I still don't understand" creates one linked help request. Evidence: `tests/Feature/AI/AssistantFeedbackTest.php` (`creates exactly one help request on not_understood feedback and returns 201 then 200 on repeated taps`).
 -   [x] Help request contains student, course, lesson, question, AI
@@ -182,7 +182,7 @@ owner brand confirmation, and release tag remain open.
 -   [x] Request status and audit trail are available. Evidence: `tests/Feature/AI/HelpRequestLifecycleTest.php` (`enforces valid staff status transitions and stops SLA when resolving or closing`). Evidence: `tests/Feature/AI/AssistantFeedbackTest.php` (`creates exactly one help request on not_understood feedback and returns 201 then 200 on repeated taps`).
 -   [ ] AI provider outage does not block video, PDF or learning.
 -   [ ] Provider data policy, cost controls, retention and minor-consent
-    requirements are approved before activation.
+    requirements are approved before activation. Pending: T-P7-07 (real provider, privacy gate) — accepted as blocked for T-P7-MG; fake-provider evidence: `tests/Feature/AI/AssistantEligibilityTest.php` (`uses the deterministic fake provider and never touches the network`); `tests/Feature/AI/AssistantEligibilityTest.php` (`refuses loudly and reports down when no provider is configured`).
 
 ## 10. Commerce, subscriptions and instructor finance
 
@@ -222,8 +222,8 @@ owner brand confirmation, and release tag remain open.
 
 ## 11. Administration, reports and notifications
 
--   [ ] SKIT shell is consistent across admin/instructor/finance/content
-    panels.
+-   [x] SKIT shell is consistent across admin/instructor/finance/content
+    panels. Evidence: owner acceptance D-032 in `docs/07_DECISION_REGISTER.md`; `tests/Browser/StaffPanelsTest.php` (`opens the active staff sidebar group after a direct visit`).
 -   [x] Role-aware sidebar includes all approved modules. Evidence: `tests/Feature/Settings/SettingsAndSidebarParityTest.php` (`lists every registered class of each staff panel in exactly one catalog group, so More is empty`).
 -   [ ] Course/user/payment/enrollment/help-request/finance lists
     support search/filter/sort/pagination.

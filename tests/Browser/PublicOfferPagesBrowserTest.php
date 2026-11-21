@@ -67,4 +67,4 @@ it('keeps public offers accessible and course links in the browsing language', f
             JS))->toBeTrue();
         $page->screenshot(fullPage: true, filename: "T-P8-12/public-release/{$kind}-{$locale}-{$theme}-{$width}");
     }
-})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])->group('T-P8-12', 'T-P8-GAPS', 'A3', 'A4', 'YG-WEB-010', 'browser');
+})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])->group('T-P8-12', 'T-P8-GAPS', 'A3', 'A4', 'YG-WEB-010')->group('browser');

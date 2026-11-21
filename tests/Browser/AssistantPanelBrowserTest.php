@@ -277,4 +277,4 @@ it('captures every assistant panel state across AR and EN on mobile and desktop'
     }
     $page->screenshot(fullPage: false, filename: "../screenshots/T-P7-03/assistant-state-{$state}-{$locale}-{$width}");
 })->with('assistant-panel-a2-states')->with(['ar', 'en'])->with([[390, 844], [1440, 900]])
-    ->group('T-P7-03', 'A2', 'browser');
+    ->group('T-P7-03', 'A2')->group('browser');

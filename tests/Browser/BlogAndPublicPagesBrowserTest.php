@@ -91,7 +91,7 @@ it('captures About, Privacy and FAQ from the CMS in both directions', function (
         }
     }
 })->with(['ar', 'en'])->with([[390, 844], [1122, 1402], [1440, 900]])->with(['light', 'dark'])
-    ->group('T-P2-02', 'A1', 'YG-WEB-005', 'browser');
+    ->group('T-P2-02', 'A1', 'YG-WEB-005')->group('browser');
 
 it('renders public blog index and post accessibly in AR and EN across mobile and desktop', function (string $locale, int $width, int $height, string $theme): void {
     $this->seed(RolePermissionSeeder::class);
@@ -240,4 +240,4 @@ it('presents published CMS reading pages with a localized breadcrumb and one mai
     }
     $page->screenshot(fullPage: true, filename: "T-P2-02/editorial-polish/cms-{$locale}-{$width}-{$theme}");
 })->with(['ar', 'en'])->with([[390, 844], [1440, 900]])->with(['light', 'dark'])
-    ->group('T-P2-02', 'A1', 'YG-WEB-005', 'browser');
+    ->group('T-P2-02', 'A1', 'YG-WEB-005')->group('browser');
