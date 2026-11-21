@@ -105,7 +105,8 @@ final class HelpRequestResource extends Resource
                 StatusBadgeColumn::make('status', $colors)->label(__('help.queue.status'))
                     ->formatStateUsing(static fn (mixed $state): string => $state instanceof HelpRequestStatus ? $state->label() : (string) $state),
                 TextColumn::make('overdue')->label(__('help.queue.sla'))->badge()->color('danger')
-                    ->state(static fn (HelpRequest $r): ?string => $r->isOverdue() ? __('help.queue.overdue_badge') : null),
+                    ->state(static fn (HelpRequest $r): ?string => $r->isOverdue() ? __('help.queue.overdue_badge') : null)
+                    ->placeholder('-'),
                 TextColumn::make('instructor.name')->label(__('help.queue.instructor'))->placeholder(__('help.queue.admin_queue')),
                 LocalizedDateColumn::make('created_at')->label(__('help.queue.created')),
                 LocalizedDateColumn::make('due_at')->label(__('help.queue.due'))->placeholder('-'),
