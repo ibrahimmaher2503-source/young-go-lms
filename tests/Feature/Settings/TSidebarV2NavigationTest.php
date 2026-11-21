@@ -276,7 +276,8 @@ it('lists the order details and payment method in each staff panel and language'
         ->assertTableColumnFormattedStateSet('status', __('refunds.order_status_paid'), $fulfilled)
         ->assertTableColumnStateSet('last_gateway', __('orders.gateway_paymob'), $fulfilled)
         ->assertTableColumnStateSet('last_gateway', __('orders.gateway_manual'), $manual)
-        ->assertTableColumnStateSet('last_gateway', '—', $unattempted);
+        // An unattempted order has no gateway: the state is null and the table shows the '—' placeholder instead of a badge.
+        ->assertTableColumnStateSet('last_gateway', null, $unattempted);
 
     foreach ($manualFallbacks as $order) {
         $table->assertTableColumnStateSet('last_gateway', __('orders.gateway_manual'), $order);

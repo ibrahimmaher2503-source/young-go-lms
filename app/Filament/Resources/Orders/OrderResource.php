@@ -103,11 +103,11 @@ final class OrderResource extends Resource
         return $table->extraAttributes(['class' => 'yg-compact-table'], merge: true)->defaultSort('id', 'desc')
             ->emptyState(EmptyStateView::make('heroicon-o-shopping-bag', 'orders.empty_title', 'orders.empty_hint'))
             ->columns([
-                TextColumn::make('reference')->label(__('orders.col_reference'))->fontFamily('mono')->searchable(),
+                TextColumn::make('reference')->label(__('orders.col_reference'))->fontFamily('mono')->searchable()->sortable(),
                 TextColumn::make('payer.display_name')->label(__('orders.col_learner'))->searchable(),
                 TextColumn::make('total_minor')->label(__('orders.col_amount'))->state(static fn (Order $o): string => RefundResource::money($o->total_minor, $o->currency)),
                 TextColumn::make('last_gateway')->visibleFrom('md')->label(__('orders.col_gateway'))->badge()->placeholder('—')->state(static fn (Order $o): ?string => self::gatewayLabel($o)),
-                LocalizedDateColumn::make('created_at')->label(__('orders.col_created'))->visibleFrom('md'),
+                LocalizedDateColumn::make('created_at')->label(__('orders.col_created'))->visibleFrom('md')->sortable(),
                 StatusBadgeColumn::make('status', $colors)->label(__('orders.col_status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('refunds.order_status_'.($state instanceof OrderStatus ? $state->value : (string) $state))),
             ])

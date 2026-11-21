@@ -108,8 +108,8 @@ final class HelpRequestResource extends Resource
                     ->state(static fn (HelpRequest $r): ?string => $r->isOverdue() ? __('help.queue.overdue_badge') : null)
                     ->placeholder('-'),
                 TextColumn::make('instructor.name')->label(__('help.queue.instructor'))->placeholder(__('help.queue.admin_queue')),
-                LocalizedDateColumn::make('created_at')->label(__('help.queue.created')),
-                LocalizedDateColumn::make('due_at')->label(__('help.queue.due'))->placeholder('-'),
+                LocalizedDateColumn::make('created_at')->label(__('help.queue.created'))->sortable(),
+                LocalizedDateColumn::make('due_at')->label(__('help.queue.due'))->placeholder('-')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('course')->label(__('help.queue.course'))->options(static fn (): array => self::courseOptions())

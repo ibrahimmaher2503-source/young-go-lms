@@ -83,7 +83,7 @@ final class ManualGrantResource extends Resource
                 TextColumn::make('source_type')->label(__('entitlements.source'))->badge()->color('gray')->formatStateUsing(static fn (EntitlementSource $state): string => __('entitlements.sources.'.$state->value)),
                 TextColumn::make('status')->label(__('entitlements.status'))->badge()->state(static fn (Entitlement $r): string => self::state($r))
                     ->color(static fn (string $state): string => $state === 'active' ? 'success' : 'gray')->formatStateUsing(static fn (string $state): string => __('entitlements.states.'.$state)),
-                TextColumn::make('starts_at')->label(__('entitlements.starts'))->dateTime(),
+                TextColumn::make('starts_at')->label(__('entitlements.starts'))->dateTime()->sortable(),
                 TextColumn::make('ends_at')->label(__('entitlements.ends'))->state(static fn (Entitlement $r): string => $r->ends_at === null ? __('entitlements.lifetime') : $r->ends_at->isoFormat('LLL')),
                 TextColumn::make('reason')->label(__('entitlements.reason'))->limit(40)->placeholder('-'),
             ])
