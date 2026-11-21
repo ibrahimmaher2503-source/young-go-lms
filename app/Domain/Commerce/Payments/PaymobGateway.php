@@ -93,14 +93,14 @@ final class PaymobGateway implements PaymentGateway
 
         $clientSecret = $json['client_secret'] ?? null;
         $intentionId = $json['id'] ?? ($json['intention_order_id'] ?? null);
-        if (! is_string($clientSecret) || $clientSecret === '' || ! is_scalar($intentionId)) {
+        $orderId = $json['intention_order_id'] ?? null;
+        if (! is_string($clientSecret) || $clientSecret === '' || ! is_scalar($intentionId) || ! is_scalar($orderId) || (string) $orderId === '') {
             throw new PaymentGatewayException('Paymob returned an unexpected checkout response.', 'bad_response');
         }
 
         $url = $this->credentials->baseUrl.'/unifiedcheckout/?'.http_build_query(['publicKey' => $this->credentials->publicKey(), 'clientSecret' => $clientSecret]);
-        $orderId = $json['intention_order_id'] ?? null;
 
-        return new CheckoutSession('paymob', (string) $intentionId, is_scalar($orderId) ? (string) $orderId : null, $url);
+        return new CheckoutSession('paymob', (string) $intentionId, (string) $orderId, $url);
     }
 
     public function verifyCallback(array $payload, ?string $signature): VerifiedPaymentEvent

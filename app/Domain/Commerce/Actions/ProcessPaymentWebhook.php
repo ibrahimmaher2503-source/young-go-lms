@@ -83,8 +83,7 @@ final class ProcessPaymentWebhook
     /** @param  array<string, mixed>  $payload */
     private function apply(VerifiedPaymentEvent $verified, array $payload, string $key, string $state): PaymentEvent
     {
-        $attempt = $verified->attemptReference === null ? null
-            : PaymentAttempt::query()->where('reference', $verified->attemptReference)->lockForUpdate()->first();
+        $attempt = $this->resolveAttempt($verified);
         $order = $attempt === null ? null : Order::query()->lockForUpdate()->find($attempt->order_id);
 
         $event = PaymentEvent::query()->create([
@@ -115,20 +114,51 @@ final class ProcessPaymentWebhook
         return $event;
     }
 
+    private function resolveAttempt(VerifiedPaymentEvent $verified): ?PaymentAttempt
+    {
+        if ($verified->gateway !== 'fake' && $verified->providerOrderId !== null && $verified->providerOrderId !== '') {
+            $byProviderOrder = PaymentAttempt::query()
+                ->where('gateway', $verified->gateway)
+                ->where('provider_order_id', $verified->providerOrderId)
+                ->orderByDesc('id') // not unique (fake ids repeat): pick the newest attempt deterministically
+                ->lockForUpdate()
+                ->first();
+            if ($byProviderOrder !== null) {
+                return $byProviderOrder;
+            }
+        }
+
+        if ($verified->attemptReference === null || $verified->attemptReference === '') {
+            return null;
+        }
+
+        return PaymentAttempt::query()->where('reference', $verified->attemptReference)->lockForUpdate()->first();
+    }
+
     /** @return array{0: PaymentEventOutcome, 1: string|null} */
     private function decide(VerifiedPaymentEvent $verified, string $state, PaymentEvent $event, PaymentAttempt $attempt, Order $order): array
     {
         if ($attempt->gateway !== $verified->gateway) {
             return [PaymentEventOutcome::Flagged, 'gateway_mismatch'];
         }
+        // Refunds, voids and pending change no state, so they keep their own reason ahead of the binding checks below.
+        if (in_array($state, ['refunded', 'voided', 'pending'], true)) {
+            return $state === 'pending' ? [PaymentEventOutcome::Ignored, 'pending'] : [PaymentEventOutcome::Flagged, 'refund_or_void_received'];
+        }
+        if ($verified->gateway !== 'fake') {
+            if ($attempt->provider_order_id === null || $attempt->provider_order_id === '' || $verified->providerOrderId === null || $verified->providerOrderId === '') {
+                return [PaymentEventOutcome::Flagged, 'missing_provider_order'];
+            }
+            if ($attempt->provider_order_id !== $verified->providerOrderId) {
+                return [PaymentEventOutcome::Flagged, 'provider_order_mismatch'];
+            }
+            if ($verified->attemptReference !== null && $verified->attemptReference !== '' && $attempt->reference !== $verified->attemptReference) {
+                return [PaymentEventOutcome::Flagged, 'reference_mismatch'];
+            }
+        }
 
-        return match ($state) {
-            // Refunds are T-P8-06; finance handles a refund or void by hand until then, so it must not pass silently.
-            'refunded', 'voided' => [PaymentEventOutcome::Flagged, 'refund_or_void_received'],
-            'pending' => [PaymentEventOutcome::Ignored, 'pending'],
-            'failed' => $this->failure($verified, $attempt, $order),
-            default => $this->success($verified, $event, $attempt, $order),
-        };
+        // Refunds are T-P8-06; finance handles a refund or void by hand until then, so it must not pass silently (handled above).
+        return $state === 'failed' ? $this->failure($verified, $attempt, $order) : $this->success($verified, $event, $attempt, $order);
     }
 
     /** @return array{0: PaymentEventOutcome, 1: string|null} */
@@ -170,7 +200,6 @@ final class ProcessPaymentWebhook
 
         $attempt->forceFill([
             'status' => PaymentAttemptStatus::Succeeded, 'active_order_id' => null, 'signature_valid' => true, 'failure_code' => null,
-            'provider_order_id' => $attempt->provider_order_id ?? $verified->providerOrderId,
         ])->save();
         ($this->transition)($order, OrderStatus::Paid);
         ($this->grants)($order, EntitlementSource::Purchase);
