@@ -294,13 +294,19 @@
     border: 1px solid var(--yg-color-input-border);
 }
 
-.fi-btn.fi-color-primary {
+.fi-btn.fi-color-primary,
+.fi-btn:not(.fi-outlined).fi-color-primary:not(label):not([aria-pressed]) {
+    --bg: var(--yg-color-primary);
+    --text: var(--yg-color-on-primary);
+    --hover-bg: var(--yg-color-primary-hover);
+    --hover-text: var(--yg-color-on-primary);
     border-color: var(--yg-color-primary);
     background-color: var(--yg-color-primary);
     color: var(--yg-color-on-primary);
 }
 
-.fi-btn.fi-color-primary:hover {
+.fi-btn.fi-color-primary:hover,
+.fi-btn:not(.fi-outlined).fi-color-primary:not(label):not([aria-pressed]):hover {
     background-color: var(--yg-color-primary-hover);
     border-color: var(--yg-color-primary-hover);
     color: var(--yg-color-on-primary);
@@ -484,7 +490,9 @@
 .fi-input, .fi-select-input, .fi-btn, .fi-link { font-size: var(--yg-font-label); }
 .fi-tabs-item-label { font-size: var(--yg-font-body); font-weight: 500; }
 .fi-input-wrp { min-block-size: 2.75rem; }
-.fi-modal-window { border-radius: var(--yg-radius-card); background-color: var(--yg-color-surface); color: var(--yg-color-body); }
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window,
+.fi-modal-window { border-radius: var(--yg-radius-card); background-color: var(--yg-color-surface); color: var(--yg-color-body); --gray-500: var(--yg-color-muted); --gray-400: var(--yg-color-muted); }
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-description,
 .fi-modal-description { color: var(--yg-color-muted); }
 .fi-modal-heading { font-size: 1.25rem; font-weight: 600; }
 .fi-modal-header, .fi-modal-content, .fi-modal-footer { padding-inline: var(--yg-space-card); }
