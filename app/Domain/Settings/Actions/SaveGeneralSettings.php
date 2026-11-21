@@ -58,6 +58,7 @@ final class SaveGeneralSettings
             'social_x' => $url,
             'social_linkedin' => $url,
             'banner_enabled' => ['boolean'],
+            'require_email_verification' => ['boolean'],
             'banner_text_ar' => ['nullable', 'string', 'max:300'],
             'banner_text_en' => ['nullable', 'string', 'max:300'],
             'mail_from_name' => ['nullable', 'string', 'max:120', 'regex:/^[^\r\n<>]*$/'],
@@ -65,13 +66,23 @@ final class SaveGeneralSettings
             'mail_reply_to' => ['nullable', 'string', 'email:rfc', 'max:190'],
         ], [], (array) __('settings.fields'))->validate();
 
-        $after = ['default_locale' => (string) $clean['default_locale'], 'default_market' => (string) $clean['default_market'], 'banner_enabled' => (bool) ($clean['banner_enabled'] ?? false)];
+        $after = [
+            'default_locale' => (string) $clean['default_locale'],
+            'default_market' => (string) $clean['default_market'],
+            'banner_enabled' => (bool) ($clean['banner_enabled'] ?? false),
+            'require_email_verification' => (bool) ($clean['require_email_verification'] ?? $this->general->require_email_verification),
+        ];
         foreach (self::TEXT_FIELDS as $field) {
             $value = $clean[$field] ?? null;
             $after[$field] = is_string($value) && trim($value) !== '' ? trim($value) : null;
         }
 
-        $before = ['default_locale' => $this->general->default_locale, 'default_market' => $this->markets->default_market, 'banner_enabled' => $this->general->banner_enabled];
+        $before = [
+            'default_locale' => $this->general->default_locale,
+            'default_market' => $this->markets->default_market,
+            'banner_enabled' => $this->general->banner_enabled,
+            'require_email_verification' => $this->general->require_email_verification,
+        ];
         foreach (self::TEXT_FIELDS as $field) {
             $before[$field] = $this->general->{$field};
         }
@@ -83,6 +94,7 @@ final class SaveGeneralSettings
         DB::transaction(function () use ($actor, $before, $after): void {
             $this->general->default_locale = $after['default_locale'];
             $this->general->banner_enabled = $after['banner_enabled'];
+            $this->general->require_email_verification = $after['require_email_verification'];
             foreach (self::TEXT_FIELDS as $field) {
                 $this->general->{$field} = $after[$field];
             }

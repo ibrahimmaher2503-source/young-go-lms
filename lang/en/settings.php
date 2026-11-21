@@ -12,6 +12,7 @@ return [
     'denied' => 'You are not allowed to change settings.',
     'failed' => 'The settings could not be saved.',
     'market_help' => 'Only active markets are listed.',
+    'email_verification_help' => 'When off, new members continue without an automatic verification email. They can still verify their address for features that require it.',
     'mail_help' => 'Leave empty to keep the sender from the server mail configuration.',
 
     'hub' => [
@@ -76,6 +77,7 @@ return [
         'defaults' => 'Defaults',
         'banner' => 'Maintenance banner',
         'mail' => 'Mail sender',
+        'registration' => 'Account registration',
     ],
 
     'locale' => ['ar' => 'Arabic', 'en' => 'English'],
@@ -99,6 +101,7 @@ return [
         'default_locale' => 'Default language',
         'default_market' => 'Default market',
         'banner_enabled' => 'Show maintenance banner',
+        'require_email_verification' => 'Ask members to verify their email after signup',
         'banner_text_ar' => 'Banner text (Arabic)',
         'banner_text_en' => 'Banner text (English)',
         'mail_from_name' => 'Sender name',

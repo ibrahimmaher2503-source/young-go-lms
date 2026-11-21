@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Settings\GeneralSettings;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -64,6 +65,26 @@ it('requires acceptance of the configured versions and fails closed when missing
     $this->postJson('/register', identityRegistration())->assertServiceUnavailable();
     expect(User::count())->toBe(0);
 })->group('T-P1-02', 'YG-GAP-ID-002');
+
+it('skips email verification after signup when disabled without marking the address verified', function (): void {
+    $this->withoutVite();
+    $settings = app(GeneralSettings::class);
+    $settings->require_email_verification = false;
+    $settings->save();
+
+    $this->postJson('/register', identityRegistration())->assertCreated();
+    $user = User::where('email', 'new@example.test')->firstOrFail();
+    Notification::assertNotSentTo($user, VerifyEmail::class);
+    expect($user->hasVerifiedEmail())->toBeFalse();
+    $this->get(route('verification.notice', ['from' => 'registration']))->assertRedirect('/home');
+    $this->get(route('verification.notice'))->assertOk();
+    $this->postJson(route('verification.send'))->assertNoContent();
+    Notification::assertSentTo($user, VerifyEmail::class);
+
+    $settings->require_email_verification = true;
+    $settings->save();
+    $this->get(route('verification.notice', ['from' => 'registration']))->assertOk();
+})->group('T-P1-02', 'T-P9-09', 'YG-GAP-ID-002');
 
 it('blocks inactive signed-in accounts on protected routes', function (string $status) {
     $user = User::factory()->create(['status' => $status]);

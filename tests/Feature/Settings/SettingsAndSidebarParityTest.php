@@ -28,6 +28,7 @@ use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
@@ -206,6 +207,22 @@ it('saves and reloads every general field and writes one audit row with before a
 
     app(SaveGeneralSettings::class)($super, tp909GeneralInput(['banner_enabled' => true, 'banner_text_en' => 'Enrol before Friday']));
     expect(tp909AuditCount('settings.general_saved'))->toBe(1);
+})->group('T-P9-09', 'A1');
+
+it('lets authorized staff disable initial email verification and keeps the choice on other settings saves', function (): void {
+    $super = tp909Staff('super_admin');
+    expect(app(GeneralSettings::class)->require_email_verification)->toBeTrue();
+    $this->actingAs($super)->get('/admin/general-settings')->assertOk()
+        ->assertSee(__('settings.fields.require_email_verification'));
+
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    Livewire::test(GeneralSettingsPage::class)
+        ->callAction('edit', tp909GeneralInput(['require_email_verification' => false]))
+        ->assertHasNoActionErrors();
+    expect(app(GeneralSettings::class)->refresh()->require_email_verification)->toBeFalse();
+    app(SaveGeneralSettings::class)($super, tp909GeneralInput(['banner_enabled' => true]));
+    expect(app(GeneralSettings::class)->refresh()->require_email_verification)->toBeFalse()
+        ->and(tp909AuditCount('settings.general_saved'))->toBe(2);
 })->group('T-P9-09', 'A1');
 
 it('refuses invalid email, javascript urls, short phone, market SA, locale fr and a name with a newline', function (array $overrides): void {

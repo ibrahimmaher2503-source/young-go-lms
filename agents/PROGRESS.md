@@ -818,6 +818,11 @@ Generated19new raster references with built-in image_gen and saved them with the
 - Bundled the owner-supplied YounGo logo and favicon. Verified both public themes in Arabic and English at 390 and 1440 px, including logo decode, footer alignment, and no horizontal overflow. Captures: `tests/Browser/screenshots/T-P2-03/official-brand/`.
 - The targeted release suite passed 116 tests (832 assertions). Build, formatting, brand-token validation, and 68 contrast pairs passed. The local full test run stopped at the PHP worker memory limit.
 
+## Notes — Signup email verification setting (D-052, 2026-11-21)
+
+- The site-settings edit action saves and audits the default-on email verification toggle. Turning it off skips the initial email and post-signup notice. Real verification, manual resend and the consent checks remain available.
+- Three focused feature tests and three browser signup tests passed, including direct access with verification off and the signed verification flow with it on. The new migration ran on the local SQLite environment and the setting remains on there.
+
 ## Notes — Prompt 06 functional gaps in learning, authoring, notifications and privacy storage (2026-11-20)
 
 - **T-P3-02 (`6021faf`):** Added `quiz_pass_mark_percent` `TextInput` (1..100, helper `QuizPassMark::default()`) to Step 1 (`CourseWizardSteps::basic()`) and blank-to-null normalization, validation, persistence and `course.quiz_pass_mark_saved` audit in `SaveCourseWizard`. Prompt: `docs/test-prompts/T-P3-02-GAPS.md`.

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Domain\Guardians\Models\GuardianVerification;
 use App\Domain\Guardians\Queries\GuardianVerified;
 use App\Domain\Identity\Models\GuardianChildLink;
+use App\Domain\Settings\GeneralSettings;
 use App\Models\User;
 use DateTimeZone;
 use Illuminate\Contracts\View\View;
@@ -54,7 +55,8 @@ final class PageController
     public function verifyNotice(Request $request): View|RedirectResponse
     {
         $user = $this->user($request);
-        if ($user->email === null || $user->hasVerifiedEmail()) {
+        if ($user->email === null || $user->hasVerifiedEmail()
+            || ($request->query('from') === 'registration' && ! app(GeneralSettings::class)->require_email_verification)) {
             return redirect('/home');
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Identity\Actions\CreateChildAccount;
 use App\Domain\Identity\Actions\RedeemLinkCode;
 use App\Domain\Identity\Models\GuardianChildLink;
+use App\Domain\Settings\GeneralSettings;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -53,6 +54,22 @@ it('registers, verifies and signs in through the browser forms', function (strin
         ->click('main form[action$="/login"] button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
         ->assertNoJavaScriptErrors();
 })->with([['ar', 'طالب تجريبي'], ['en', 'Browser Learner']])->group('browser', 'T-P1-10', 'A1', 'J01');
+
+it('continues directly to the learner area when signup email verification is disabled', function (): void {
+    $settings = app(GeneralSettings::class);
+    $settings->require_email_verification = false;
+    $settings->save();
+
+    $this->visit('/register')
+        ->type('#name_en', 'Browser Learner')->type('#email', 'skip-verification@example.test')
+        ->type('#password', 'BrowserPass1!')->type('#password_confirmation', 'BrowserPass1!')
+        ->check('#accept_terms')->check('#accept_privacy')
+        ->click('main form[data-ajax] button[type="submit"]')
+        ->waitForText(__('learner.my_enrolled', [], 'en'))
+        ->assertPathIs('/my')->assertNoJavaScriptErrors();
+
+    expect(User::where('email', 'skip-verification@example.test')->firstOrFail()->hasVerifiedEmail())->toBeFalse();
+})->group('browser', 'T-P1-10', 'T-P9-09', 'A1');
 
 it('shows field errors in the page when a form is invalid', function (): void {
     $this->withSession(['locale' => 'en']);

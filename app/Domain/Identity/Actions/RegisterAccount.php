@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Identity\Actions;
 
+use App\Domain\Settings\GeneralSettings;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -53,7 +54,9 @@ final class RegisterAccount
             throw $errors === [] ? $exception : ValidationException::withMessages($errors);
         }
 
-        event(new Registered($user));
+        if (app(GeneralSettings::class)->require_email_verification) {
+            event(new Registered($user));
+        }
 
         return $user;
     }

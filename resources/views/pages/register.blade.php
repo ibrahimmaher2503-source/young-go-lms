@@ -5,7 +5,7 @@
         @else
             <p class="mb-5 text-center text-muted">{{ __('pages.register_intro') }}</p>
             @php($policies = app(\App\Domain\Content\Queries\PublicSitePages::class)()->toBase()->only(['terms', 'privacy']))
-            <x-ui.ajax-form :action="url('/register')" :success="url('/email/verify')">
+            <x-ui.ajax-form :action="url('/register')" :success="route('verification.notice', ['from' => 'registration'])">
                 <input type="hidden" name="terms_version" value="{{ $termsVersion }}">
                 <input type="hidden" name="privacy_version" value="{{ $privacyVersion }}">
                 <fieldset class="space-y-1" data-field>

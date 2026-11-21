@@ -169,6 +169,8 @@ recommendations and open dependencies.
 
 **D-051 · 2026-11-21 · Official logo and public palette.** The owner directed use of the logo from [youngoschool.com](https://youngoschool.com/). Bundle the official logo and favicon locally. Use the mark's violet and magenta for the public and entry-screen palette in both themes. Preserve operational workspaces, standalone documents and functional status colors.
 
+**D-052 · 2026-11-21 · Configurable email verification after signup.** Staff with the existing site-settings permission can turn off the automatic verification email and the post-signup verification prompt. The default is on. The change is audited. Existing signed verification and resend routes, actual verification timestamps, guardian and instructor requirements, staff two-factor authentication, and consent versions retain their behavior.
+
 ## B. Technical recommendations (not owner-locked)
 
 **O-015 · Educational catalog defaults (2026-11-18).** The owner asked for research-based defaults. Seed 0–9, 10–17 and 18+ as editable educational bands for Egypt. WHO defines adolescence as 10–19. CRC Article 1 defines childhood as under 18, subject to its stated exception. The LMS split is an educational grouping. Guardian verification, privacy, consent and AI eligibility still require the applicable reviewed policy. [WHO adolescent health](https://www.who.int/health-topics/adolescent-health) · [CRC Article 1](https://www.unicef.org/child-rights-convention/convention-text)

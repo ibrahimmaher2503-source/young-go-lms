@@ -93,6 +93,9 @@ final class GeneralSettingsPage extends Page
                 Section::make(__('settings.sections.mail'))->columns(2)->description(__('settings.mail_help'))->schema([
                     $text('mail_from_name', 120), $text('mail_from_address')->email(), $text('mail_reply_to')->email(),
                 ]),
+                Section::make(__('settings.sections.registration'))->schema([
+                    Toggle::make('require_email_verification')->label($label('require_email_verification'))->helperText(__('settings.email_verification_help')),
+                ]),
             ])
             ->fillForm(fn (): array => $this->values())
             ->action(function (array $data, Action $action): void {
@@ -128,6 +131,7 @@ final class GeneralSettingsPage extends Page
     {
         $general = app(GeneralSettings::class);
         $values = ['default_locale' => $general->default_locale, 'default_market' => app(MarketsSettings::class)->default_market, 'banner_enabled' => $general->banner_enabled];
+        $values['require_email_verification'] = $general->require_email_verification;
         foreach (SaveGeneralSettings::TEXT_FIELDS as $field) {
             $values[$field] = $general->{$field};
         }
@@ -146,6 +150,7 @@ final class GeneralSettingsPage extends Page
             'defaults' => ['default_locale', 'default_market'],
             'banner' => ['banner_enabled', 'banner_text_ar', 'banner_text_en'],
             'mail' => ['mail_from_name', 'mail_from_address', 'mail_reply_to'],
+            'registration' => ['require_email_verification'],
         ];
         $rows = [];
         foreach ($sections as $section => $keys) {
@@ -155,7 +160,7 @@ final class GeneralSettingsPage extends Page
                     'key' => $key,
                     'label' => __('settings.fields.'.$key),
                     'value' => match (true) {
-                        $key === 'banner_enabled' => __($value ? 'settings.on' : 'settings.off'),
+                        is_bool($value) => __($value ? 'settings.on' : 'settings.off'),
                         $key === 'default_locale' => __('settings.locale.'.$value),
                         $key === 'default_market' => __('settings.market.'.$value),
                         default => is_string($value) && $value !== '' ? $value : null,

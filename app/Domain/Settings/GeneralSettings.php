@@ -41,6 +41,8 @@ final class GeneralSettings extends Settings
 
     public bool $banner_enabled;
 
+    public bool $require_email_verification = true;
+
     public ?string $banner_text_ar;
 
     public ?string $banner_text_en;
