@@ -32,9 +32,15 @@ final class OrderDirectory
     /** @return array{pending: int, paid: int} */
     public static function summary(): array
     {
+        $counts = Order::query()
+            ->whereIn('status', [OrderStatus::Pending->value, OrderStatus::Paid->value])
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
         return [
-            'pending' => Order::query()->where('status', OrderStatus::Pending->value)->count(),
-            'paid' => Order::query()->where('status', OrderStatus::Paid->value)->count(),
+            'pending' => (int) ($counts[OrderStatus::Pending->value] ?? 0),
+            'paid' => (int) ($counts[OrderStatus::Paid->value] ?? 0),
         ];
     }
 }

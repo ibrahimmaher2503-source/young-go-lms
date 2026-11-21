@@ -35,6 +35,11 @@ final class LearnerThreeSixtyPage extends Page
 
     public ?int $learnerId = null;
 
+    private ?User $cachedTarget = null;
+
+    /** @var array{0: int, 1: array<string, mixed>}|null learner id and that learner's record */
+    private ?array $cachedRecord = null;
+
     public static function getRoutePath(Panel $panel): string
     {
         return '/learner-360/{learner?}';
@@ -70,6 +75,7 @@ final class LearnerThreeSixtyPage extends Page
         $this->learnerId = (int) $target->getKey();
 
         $record = app(Learner360Record::class)->for($this->viewer(), $target);
+        $this->cachedRecord = [$this->learnerId, $record];
         app(RecordLearner360View::class)($this->viewer(), $target, $record['sections']);
     }
 
@@ -122,10 +128,13 @@ final class LearnerThreeSixtyPage extends Page
         }
 
         $learner = $this->target($this->learnerId);
+        if ($this->cachedRecord === null || $this->cachedRecord[0] !== $this->learnerId) {
+            $this->cachedRecord = [$this->learnerId, app(Learner360Record::class)->for($viewer, $learner)];
+        }
 
         return [
             'results' => [],
-            'record' => app(Learner360Record::class)->for($viewer, $learner),
+            'record' => $this->cachedRecord[1],
             'refusal' => app(ViewAsEligibility::class)->refusal($viewer, $learner),
             'learnerId' => $this->learnerId,
             'ttl' => config()->integer('support.view_as.ttl_minutes'),
@@ -134,10 +143,14 @@ final class LearnerThreeSixtyPage extends Page
 
     private function target(int $id): User
     {
+        if ($this->cachedTarget instanceof User && (int) $this->cachedTarget->getKey() === $id) {
+            return $this->cachedTarget;
+        }
+
         $learner = User::query()->find($id);
         abort_if($learner === null || ! app(Learner360Record::class)->canView($this->viewer(), $learner), 404);
 
-        return $learner;
+        return $this->cachedTarget = $learner;
     }
 
     private function viewer(): User

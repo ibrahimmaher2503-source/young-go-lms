@@ -51,6 +51,7 @@ final class Learner360Record
      */
     public function for(User $viewer, User $learner): array
     {
+        $learner->loadMissing('roles');
         $sensitive = $viewer->can('learner.record.sensitive');
         $minor = GuardianAccess::isMinor($learner);
         $rows = config()->integer('support.learner_360.list_rows');
