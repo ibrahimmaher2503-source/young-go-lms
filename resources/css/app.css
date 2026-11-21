@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 @import './tokens.css';
+@import './public-site.css';
+@import './public-home.css';
+@import './public-info.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -7,6 +10,30 @@
 body {
     font-size: var(--yg-font-body);
     line-height: var(--yg-line-height-body);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    [data-home-enter="copy"] {
+        animation: yg-home-enter 480ms ease-out both;
+    }
+
+    [data-home-enter="media"] {
+        animation: yg-home-enter 650ms 70ms cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    [data-home-reveal].home-revealing {
+        animation: yg-home-enter 420ms ease-out both;
+    }
+}
+
+@keyframes yg-home-enter {
+    from {
+        translate: 0 .7rem;
+    }
+
+    to {
+        translate: 0 0;
+    }
 }
 
 [data-player-stage]:fullscreen {

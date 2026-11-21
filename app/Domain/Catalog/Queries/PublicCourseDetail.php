@@ -10,6 +10,7 @@ use App\Models\Course;
 use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Everything the public course page shows, read from published data only. A course that is not published
@@ -64,7 +65,7 @@ final class PublicCourseDetail
                 /** @var CurriculumItem $item */
                 $entity = $item->itemable;
                 $lesson = $entity instanceof Lesson ? $entity : null;
-                $length = $lesson === null ? 0 : (int) round((int) ($lesson->media->duration_seconds ?? $lesson->duration_seconds ?? 0) / 60);
+                $length = $lesson === null ? 0 : $this->minutes($lesson);
                 $preview = $lesson !== null && $lesson->is_preview;
                 $lessons += $lesson === null ? 0 : 1;
                 $minutes += $length;
@@ -81,5 +82,31 @@ final class PublicCourseDetail
         }
 
         return ['sections' => $sections, 'lessons' => $lessons, 'minutes' => $minutes, 'preview_item' => $previewItem];
+    }
+
+    /**
+     * @param  Collection<int, Course>  $courses
+     * @return array<int, array{lessons: int, minutes: int}>
+     */
+    public function lessonSummaries(Collection $courses): array
+    {
+        $summaries = [];
+        foreach (CurriculumOutline::forStudentCourses($courses) as $section) {
+            foreach ($section->items as $item) {
+                if ($item->itemable instanceof Lesson) {
+                    $courseId = (int) $section->course_id;
+                    $summaries[$courseId] ??= ['lessons' => 0, 'minutes' => 0];
+                    $summaries[$courseId]['lessons']++;
+                    $summaries[$courseId]['minutes'] += $this->minutes($item->itemable);
+                }
+            }
+        }
+
+        return $summaries;
+    }
+
+    private function minutes(Lesson $lesson): int
+    {
+        return (int) round((int) ($lesson->media->duration_seconds ?? $lesson->duration_seconds ?? 0) / 60);
     }
 }

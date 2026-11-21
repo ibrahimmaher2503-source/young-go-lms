@@ -229,6 +229,15 @@ it('plays explicit preview lessons for guests and denies protected, non-lesson, 
         ->assertSee('data-player-stage', false)
         ->assertSee('Preview rich text body');
 
+    $localizedCourse = "/en/courses/{$course->slug_en}";
+    $localizedPreview = "$localizedCourse/preview/{$items['previewText']->id}";
+    $this->withSession(['locale' => 'ar'])->get($localizedCourse)->assertOk()
+        ->assertSee('href="'.url($localizedPreview).'"', false);
+    $this->get($localizedPreview)->assertOk()
+        ->assertSee('href="'.url($localizedCourse).'"', false)
+        ->assertSee('Preview rich text body');
+    $this->withSession(['locale' => 'en']);
+
     // Preview YouTube video lesson
     $this->get("/courses/{$course->slug_en}/preview/{$items['previewVideo']->id}")
         ->assertOk()

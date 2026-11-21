@@ -2,6 +2,11 @@
 @props(['name'])
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" {{ $attributes->class(['size-5 shrink-0', 'rtl:rotate-180' => in_array($name, ['chevron', 'arrow', 'back', 'send'], true)]) }}>
     @switch($name)
+        @case('search') <circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/> @break
+        @case('menu') <path d="M4 6h16M4 12h16M4 18h16"/> @break
+        @case('globe') <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18 16 16 0 0 1 0-18Z"/> @break
+        @case('level') <path d="M5 20v-5m7 5V9m7 11V4"/> @break
+        @case('tag') <path d="M3 11v-7h7l10 10-7 7zM7.5 8h.01"/> @break
         @case('filter') <path d="M3 5h18l-7 8v6l-4 2v-8z"/> @break
         @case('check') <path d="m5 12 4 4L19 6"/> @break
         @case('close') <path d="m6 6 12 12M18 6 6 18"/> @break
@@ -31,5 +36,28 @@
         @case('users') <circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2.4.7 4 2.2 4 5.2"/> @break
         @case('heart') <path d="M12 20.5s-8-4.6-8-10.4A4.6 4.6 0 0 1 12 7.5a4.6 4.6 0 0 1 8 2.6c0 5.8-8 10.4-8 10.4z"/> @break
         @case('home')<path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/> @break
+        @case('sun') <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/> @break
+        @case('moon') <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/> @break
+        @case('star') <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/> @break
+        @case('graduate') <path d="m2 9 10-5 10 5-10 5zm4 2v5l6 3 6-3v-5m4-2v6"/> @break
+        @case('pencil') <path d="m4 15 11-11a2 2 0 0 1 3 0l2 2a2 2 0 0 1 0 3L9 20l-5 1zm9-9 5 5"/> @break
+        @case('trophy') <path d="M7 3h10v7a5 5 0 0 1-10 0zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4m-5 4v5m-5 1h10"/> @break
+        @case('gift') <path d="M4 10h16v11H4zM3 6h18v4H3zm9 0v15m0-15H8a2 2 0 1 1 2-3.6L12 6zm0 0h4a2 2 0 1 0-2-3.6L12 6z"/> @break
+        @case('mail') <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/> @break
+        @case('phone') <path d="M22 16.9v3a2 2 0 0 1-2.2 2A18 18 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.5 2L7.8 10a14 14 0 0 0 6.2 6.2l1.3-1.3a2 2 0 0 1 2-.5l3 .5a2 2 0 0 1 1.7 2z"/> @break
+        @case('lock') <rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/> @break
+        @case('list') <path d="M9 6h12M9 12h12M9 18h12M3 6h.01M3 12h.01M3 18h.01"/> @break
+        @case('shield') <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m8.5 12 2.5 2.5 4.5-5"/> @break
+        @case('eye') <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/> @break
+        @case('target') <circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="m11 13 8-8m-1 1 .5-3L22 2l-1 3.5-3 .5"/> @break
+        @case('cookie') <path d="M12 3a5 5 0 0 0 6 6 4 4 0 0 0 3 4 9 9 0 1 1-9-10zM8 9h.01M7 14h.01M12 16h.01M15 12h.01"/> @break
+        @case('scale') <path d="M12 3v18m-5 0h10M4 6h16M6 6l-4 8h8L6 6Zm12 0-4 8h8l-4-8Z"/> @break
+        @case('settings') <path d="m9 3 1 2h4l1-2 3 2v2l2 2 2 1v4l-2 1-2 2v2l-3 2-1-2h-4l-1 2-3-2v-2l-2-2-2-1v-4l2-1 2-2V5z"/><circle cx="12" cy="12" r="3"/> @break
+        @case('youtube') <rect x="3" y="6" width="18" height="12" rx="3"/><path d="m10 9 5 3-5 3z" fill="currentColor"/> @break
+        @case('instagram') <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17 7h.01"/> @break
+        @case('tiktok') <path d="M15 3v12a4 4 0 1 1-4-4m4-8a5 5 0 0 0 5 5"/> @break
+        @case('x') <path d="M4 4l12 16h4L8 4zm16 0L4 20"/> @break
+        @case('facebook') <path d="M14 21v-8h4l.5-4H14V7c0-1.2.8-2 2-2h3V2h-4a5 5 0 0 0-5 5v2H7v4h3v8"/> @break
+        @case('linkedin') <path d="M4 9v11M4 4h.01M9 20V9m0 4a5 5 0 0 1 10 0v7"/> @break
     @endswitch
 </svg>

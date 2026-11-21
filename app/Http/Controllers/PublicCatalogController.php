@@ -65,6 +65,9 @@ final class PublicCatalogController
             'availability' => array_combine(CohortAvailability::filters(), array_map(static fn (string $key): string => __('catalog.avail_'.$key), CohortAvailability::filters())),
         ];
         $sorts = array_combine(CatalogQuery::sorts(), array_map(static fn (string $key): string => __('catalog.sort_'.$key), CatalogQuery::sorts()));
+        $localized = $request->routeIs('public.catalog.index');
+        $catalogRoute = $localized ? 'public.catalog.index' : 'catalog.index';
+        $catalogParameters = $localized ? ['publicLocale' => app()->getLocale()] : [];
 
         return view('catalog.index', [
             'courses' => $courses,
@@ -73,7 +76,9 @@ final class PublicCatalogController
             'prices' => $offers->coursePrices($courses->items(), Market::Egypt),
             'availability' => CohortAvailability::forCourses($courses->items()),
             'lessonCounts' => $catalog->lessonCounts($courses->items()),
-            'active' => $this->activeFilters($filters, $choices, $sorts, Market::Egypt),
+            'active' => $this->activeFilters($filters, $choices, $sorts, Market::Egypt, $catalogRoute, $catalogParameters),
+            'catalogRoute' => $catalogRoute,
+            'catalogParameters' => $catalogParameters,
             'filters' => $filters,
             'options' => $choices,
             'sorts' => $sorts,
@@ -116,9 +121,10 @@ final class PublicCatalogController
      * @param  array<string, mixed>  $filters
      * @param  array<string, array<int|string, string>>  $choices
      * @param  array<string, string>  $sorts
+     * @param  array<string, string>  $routeParameters
      * @return list<array{name: string, label: string, url: string}>
      */
-    private function activeFilters(array $filters, array $choices, array $sorts, Market $market): array
+    private function activeFilters(array $filters, array $choices, array $sorts, Market $market, string $routeName, array $routeParameters): array
     {
         $chips = [];
 
@@ -131,7 +137,7 @@ final class PublicCatalogController
                 $name === 'sort' => __('catalog.sort').': '.($sorts[$value] ?? $value),
                 default => __('catalog.'.$name).': '.($choices[$name][$value] ?? $value),
             };
-            $chips[] = ['name' => $name, 'label' => (string) $label, 'url' => route('catalog.index', array_diff_key($filters, [$name => true]))];
+            $chips[] = ['name' => $name, 'label' => (string) $label, 'url' => route($routeName, $routeParameters + array_diff_key($filters, [$name => true]))];
         }
 
         return $chips;

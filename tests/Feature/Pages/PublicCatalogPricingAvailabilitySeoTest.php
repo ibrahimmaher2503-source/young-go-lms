@@ -276,10 +276,11 @@ it('shows the empty state with a clear link, and each chip removes only its own 
 
     $this->get('/en/courses?price_min=5000')->assertOk()
         ->assertSee('data-catalog-empty', false)
-        ->assertSee(route('catalog.index'), false);
+        ->assertSee('href="'.route('public.catalog.index', ['publicLocale' => 'en']).'"', false);
 
     $html = (string) $this->get('/en/courses?price_min=400&price_max=1000&sort=price_asc')->assertOk()->getContent();
-    expect($html)->toContain('data-active-filters');
+    $withoutMinimum = route('public.catalog.index', ['publicLocale' => 'en', 'price_max' => 1000, 'sort' => 'price_asc']);
+    expect($html)->toContain('data-active-filters')->toContain('href="'.e($withoutMinimum).'"');
 
     $this->get('/en/courses?price_min=400&price_max=1000')->assertOk()
         ->assertSee('data-active-filters', false);

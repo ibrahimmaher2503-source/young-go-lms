@@ -22,7 +22,7 @@
                 <div class="yg-ai-field" data-field="report">
                     <label for="report-key">{{ __('reports.report') }}</label>
                     <x-filament::input.wrapper>
-                        <x-filament::input.select id="report-key" wire:model.live="report">
+                        <x-filament::input.select id="report-key" wire:model.live="report" style="background-image: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important;">
                             @foreach($available as $option)
                                 <option value="{{ $option->value }}">{{ $option->label() }}</option>
                             @endforeach
@@ -35,7 +35,7 @@
                     <div class="yg-ai-field" data-field="course">
                         <label for="report-course">{{ __('reports.course') }}</label>
                         <x-filament::input.wrapper>
-                            <x-filament::input.select id="report-course" wire:model.live="course">
+                            <x-filament::input.select id="report-course" wire:model.live="course" style="background-image: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important;">
                                 <option value="">{{ __('reports.all') }}</option>
                                 @foreach($courses as $id => $title)
                                     <option value="{{ $id }}">{{ $title }}</option>
@@ -48,7 +48,7 @@
                     <div class="yg-ai-field">
                         <label for="report-instructor">{{ __('reports.instructor') }}</label>
                         <x-filament::input.wrapper>
-                            <x-filament::input.select id="report-instructor" wire:model.live="instructor">
+                            <x-filament::input.select id="report-instructor" wire:model.live="instructor" style="background-image: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important;">
                                 <option value="">{{ __('reports.all') }}</option>
                                 @foreach($instructors as $id => $name)
                                     <option value="{{ $id }}">{{ $name }}</option>
@@ -61,7 +61,7 @@
                     <div class="yg-ai-field">
                         <label for="report-market">{{ __('reports.market') }}</label>
                         <x-filament::input.wrapper>
-                            <x-filament::input.select id="report-market" wire:model.live="market">
+                            <x-filament::input.select id="report-market" wire:model.live="market" style="background-image: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important;">
                                 <option value="">{{ __('reports.all') }}</option>
                                 <option value="EG">{{ __('reports.markets.EG') }}</option>
                                 <option value="SA">{{ __('reports.markets.SA') }}</option>

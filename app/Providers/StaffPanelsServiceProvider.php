@@ -106,6 +106,7 @@ final class StaffPanelsServiceProvider extends ServiceProvider
                 ->brandName(static fn (): string => (string) __('app.name'))
                 ->userMenuItems([Action::make('security')->label(static fn (): string => (string) __('pages.tf_title'))->url('/security/two-factor')->icon('heroicon-o-shield-check')])
                 ->viteTheme('resources/css/filament-theme.css')
+                ->renderHook(PanelsRenderHook::STYLES_AFTER, static fn () => view('filament.shared.theme-bridge'))
                 ->renderHook(PanelsRenderHook::CONTENT_START, static fn () => view('filament.staff.view-as-banner'))
                 ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, static fn () => view('filament.staff.locale-switcher', ['panel' => $id]))
                 ->pages(match ($id) {

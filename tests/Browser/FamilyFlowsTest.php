@@ -33,7 +33,7 @@ it('registers, verifies and signs in through the browser forms', function (strin
         ->type("#name_{$locale}", $name)->type('#email', 'browser@example.test')
         ->type('#password', 'BrowserPass1!')->type('#password_confirmation', 'BrowserPass1!')
         ->check('#accept_terms')->check('#accept_privacy')
-        ->click('main form button[type="submit"]')
+        ->click('main form[data-ajax] button[type="submit"]')
         ->waitForText(__('pages.verify_title', [], $locale))
         ->assertPathIs('/email/verify');
 
@@ -50,13 +50,13 @@ it('registers, verifies and signs in through the browser forms', function (strin
         ->waitForText(__('pages.login_title', [], $locale))->assertPathIs('/login');
 
     $page->type('#login', 'browser@example.test')->type('#password', 'BrowserPass1!')
-        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
+        ->click('main form[action$="/login"] button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
         ->assertNoJavaScriptErrors();
 })->with([['ar', 'طالب تجريبي'], ['en', 'Browser Learner']])->group('browser', 'T-P1-10', 'A1', 'J01');
 
 it('shows field errors in the page when a form is invalid', function (): void {
     $this->withSession(['locale' => 'en']);
-    $this->visit('/register')->type('#email', 'not-an-email')->click('main form button[type="submit"]')
+    $this->visit('/register')->type('#email', 'not-an-email')->click('main form[data-ajax] button[type="submit"]')
         ->waitForText('valid email')->assertPresent('#email[aria-invalid="true"]')->assertNoJavaScriptErrors();
 })->group('browser', 'T-P1-10', 'A1', 'A3');
 
@@ -81,7 +81,7 @@ it('lets a parent create a child who then signs in with the username', function 
     $page->click('#account-menu form[action$="/logout"] button[type="submit"]')
         ->waitForText(__('pages.login_title', [], $locale))->assertPathIs('/login');
     $page->type('#login', 'little-browser')->type('#password', 'ChildBrowser1!')
-        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
+        ->click('main form[action$="/login"] button[type="submit"]')->waitForText(__('learner.my_enrolled', [], $locale))->assertPathIs('/my')
         ->assertSee($name);
 })->with([['ar', 'طفل تجريبي'], ['en', 'Little Browser']])->group('browser', 'T-P1-10', 'A1', 'J02', 'YG-GAP-FAM-001');
 
@@ -178,11 +178,12 @@ it('renders every screen accessibly in both directions, themes and sizes', funct
         $name = 'family-unavailable';
     }
 
-    $directory = base_path('tests/Browser/screenshots/T-P1-10');
+    $folder = $as === null ? 'T-P1-10/public-release' : 'T-P1-10';
+    $directory = base_path('tests/Browser/screenshots/'.$folder);
     if (! is_dir($directory)) {
         mkdir($directory, 0755, true);
     }
-    $page->screenshot(fullPage: true, filename: "T-P1-10/{$name}-{$locale}-{$theme}-{$width}");
+    $page->screenshot(fullPage: true, filename: "{$folder}/{$name}-{$locale}-{$theme}-{$width}");
 })->with('family-screens')->with([['ar', 390, 844], ['ar', 1440, 900], ['en', 390, 844], ['en', 1440, 900]])->with(['light', 'dark'])
     ->group('browser', 'T-P1-10', 'A2', 'A3', 'YG-GAP-A11Y-001');
 

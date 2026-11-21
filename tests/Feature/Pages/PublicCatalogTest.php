@@ -34,14 +34,25 @@ function publicCatalogCourse(string $slug, array $fields = []): Course
     ]);
 }
 
+it('keeps the explicit public language and current filters in catalog controls', function () {
+    $course = publicCatalogCourse('drawing');
+
+    $this->withSession(['locale' => 'ar'])->get('/en/courses?q=drawing')
+        ->assertOk()
+        ->assertSee('action="'.url('/en/courses').'"', false)
+        ->assertSee('name="q" value="drawing"', false)
+        ->assertSee('name="sort"', false)
+        ->assertSee('href="'.url('/en/courses/'.$course->slug_en).'" data-course-link', false);
+})->group('T-P2-04', 'A2', 'YG-WEB-003');
+
 it('matches Arabic spelling variants using normalized course text', function () {
     $this->get('/courses')->assertOk();
     publicCatalogCourse('acting', ['title' => ['ar' => 'أداء مسرحية', 'en' => 'Theatre performance']]);
-    publicCatalogCourse('drawing', ['title' => ['ar' => 'رسم', 'en' => 'Drawing']]);
+    publicCatalogCourse('drawing', ['title' => ['ar' => 'رسم بالفحم', 'en' => 'Charcoal drawing']]);
 
     foreach (['اداء', 'مسرحيه'] as $term) {
         $this->withSession(['locale' => 'ar'])->get('/courses?'.http_build_query(['q' => $term]))
-            ->assertOk()->assertSee('أداء مسرحية')->assertDontSee('رسم');
+            ->assertOk()->assertSee('أداء مسرحية')->assertDontSee('رسم بالفحم');
     }
 })->group('T-P2-04', 'A1', 'YG-GAP-SRCH-001');
 

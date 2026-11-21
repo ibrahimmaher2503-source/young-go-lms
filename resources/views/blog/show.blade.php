@@ -1,46 +1,48 @@
 @php
     $locale = app()->getLocale();
+    $blog = \App\Domain\Seo\PublicUrl::blog($locale);
     $category = $post->category?->status === \App\Models\BlogCategory::ACTIVE ? $post->category : null;
     $author = $post->author?->display_name ?: $post->author?->name;
+    $cover = filled($post->featured_image) ? Illuminate\Support\Facades\Storage::disk('public')->url($post->featured_image) : null;
 @endphp
-<x-layouts.base :title="$seo['title']" variant="public" indexable>
+<x-layouts.base :title="$seo['title']" :locale-alternates="$seo['alternates']" variant="public" full indexable>
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
-    <article class="mx-auto max-w-3xl space-y-6" data-blog-post>
-        <x-ui.breadcrumb :items="[
-            ['label' => __('app.name'), 'url' => url('/')],
-            ['label' => __('blog.title'), 'url' => route('blog.index')],
-            ['label' => $post->title, 'url' => '#'],
-        ]"/>
-        <header class="space-y-3">
-            <h1 class="break-words text-3xl font-bold">{{ $post->title }}</h1>
-            <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+
+    <article class="info-page" data-info-page="blog-post" aria-labelledby="info-page-title" data-blog-post>
+        <x-public.info-hero :title="$post->title" :description="$post->excerpt" image="privacy"
+            :parent="['label' => __('blog.title'), 'url' => $blog]" :cover="$cover" :cover-alt="$post->getTranslation('featured_image_alt', $locale, false)"/>
+
+        <div class="info-card mx-auto w-full max-w-4xl space-y-5">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
                 @if($category)<x-ui.badge>{{ $category->name }}</x-ui.badge>@endif
-                <time datetime="{{ $post->published_at->toAtomString() }}">{{ __('blog.published_on', ['date' => $post->published_at->locale($locale)->isoFormat('LL')]) }}</time>
-                @if(filled($author))<span>{{ __('blog.by', ['name' => $author]) }}</span>@endif
-            </p>
-        </header>
-        @if(filled($post->featured_image))
-            <img src="{{ Illuminate\Support\Facades\Storage::disk('public')->url($post->featured_image) }}" alt="{{ $post->getTranslation('featured_image_alt', $locale, false) }}"
-                width="1280" height="720" loading="eager" fetchpriority="high" decoding="async" class="aspect-video w-full rounded-xl object-cover">
-        @endif
-        @if(filled($post->excerpt))<p class="break-words text-lg font-semibold">{{ $post->excerpt }}</p>@endif
-        <div class="whitespace-pre-line break-words" dir="auto">{{ $post->body }}</div>
-        @if($post->tags->isNotEmpty())
-            <ul class="flex flex-wrap gap-2" aria-label="{{ __('blog.tags') }}">
-                @foreach($post->tags as $tag)
-                    <li><a href="{{ route('blog.index', ['tag' => \App\Domain\Content\Queries\PublicBlog::keyFor($tag, $locale)]) }}"
-                        class="inline-flex min-h-11 items-center rounded-full border border-border bg-surface px-4 text-sm font-semibold text-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ $tag->name }}</a></li>
-                @endforeach
-            </ul>
-        @endif
+                <span class="inline-flex items-center gap-2"><x-ui.icon name="calendar" class="size-4"/><time datetime="{{ $post->published_at->toAtomString() }}">{{ __('blog.published_on', ['date' => $post->published_at->locale($locale)->isoFormat('LL')]) }}</time></span>
+                @if(filled($author))<span class="inline-flex items-center gap-2 wrap-anywhere"><x-ui.icon name="user" class="size-4"/>{{ __('blog.by', ['name' => $author]) }}</span>@endif
+            </div>
+            <div class="whitespace-pre-wrap wrap-anywhere border-t border-border pt-5 text-lg leading-relaxed" dir="auto">{{ $post->body }}</div>
+
+            @if($post->tags->isNotEmpty())
+                <ul class="flex flex-wrap gap-2" aria-label="{{ __('blog.tags') }}">
+                    @foreach($post->tags as $tag)
+                        <li class="max-w-full"><a href="{{ route('public.blog.index', ['publicLocale' => $locale, 'tag' => \App\Domain\Content\Queries\PublicBlog::keyFor($tag, $locale)]) }}"
+                            class="inline-flex min-h-11 items-center rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-body wrap-anywhere hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ $tag->name }}</a></li>
+                    @endforeach
+                </ul>
+            @endif
+            <x-ui.link :href="$blog">{{ __('blog.back') }}</x-ui.link>
+        </div>
+
         @if($related->isNotEmpty())
-            <section aria-labelledby="blog-related" class="space-y-4 border-t border-border pt-6">
-                <h2 id="blog-related" class="text-xl font-bold">{{ __('blog.related') }}</h2>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <section aria-labelledby="blog-related" class="space-y-5 border-t border-border pt-6">
+                <h2 id="blog-related" class="text-xl font-bold sm:text-2xl">{{ __('blog.related') }}</h2>
+                <div class="public-card-grid grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($related as $item)@include('blog._card', ['post' => $item])@endforeach
                 </div>
             </section>
         @endif
-        <p><x-ui.link :href="route('blog.index')">{{ __('blog.back') }}</x-ui.link></p>
+
+        <x-public.info-banner :title="__('public-info.about.cta')" :description="__('public-info.about.cta_body')"
+            image="images/public-info/catalog-band.webp">
+            <x-public.info-course-link/>
+        </x-public.info-banner>
     </article>
 </x-layouts.base>

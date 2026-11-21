@@ -40,6 +40,7 @@ use App\Models\LibraryItem;
 use App\Models\User;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -120,16 +121,20 @@ final class ManageCurriculum extends Page
     {
         return [
             $this->addLessonAction(),
-            $this->addAssessmentAction(),
-            $this->scheduleLiveSessionAction(),
-            $this->addSectionAction(),
-            Action::make('viewAsLearner')->label(__('curriculum.view_as_learner'))->icon('heroicon-o-play-circle')->color('gray')
-                ->visible(fn (): bool => $this->firstPreviewItemId() !== null)
-                ->url(fn (): string => route('learn.preview', ['course' => $this->course()->getKey(), 'item' => $this->firstPreviewItemId()]), shouldOpenInNewTab: true),
-            Action::make('studentPreview')->label(__('curriculum.student_preview'))->icon('heroicon-o-eye')->color('gray')
-                ->action(function (): void {
-                    $this->previewing = ! $this->previewing;
-                }),
+            ActionGroup::make([
+                $this->addAssessmentAction(),
+                $this->scheduleLiveSessionAction(),
+                $this->addSectionAction(),
+            ])->label(__('curriculum.add_content'))->icon('heroicon-o-plus-circle')->color('gray')->button()->outlined(),
+            ActionGroup::make([
+                Action::make('viewAsLearner')->label(__('curriculum.view_as_learner'))->icon('heroicon-o-play-circle')
+                    ->visible(fn (): bool => $this->firstPreviewItemId() !== null)
+                    ->url(fn (): string => route('learn.preview', ['course' => $this->course()->getKey(), 'item' => $this->firstPreviewItemId()]), shouldOpenInNewTab: true),
+                Action::make('studentPreview')->label(__('curriculum.student_preview'))->icon('heroicon-o-eye')
+                    ->action(function (): void {
+                        $this->previewing = ! $this->previewing;
+                    }),
+            ])->label(__('curriculum.preview_menu'))->icon('heroicon-o-eye')->color('gray')->button()->outlined(),
         ];
     }
 

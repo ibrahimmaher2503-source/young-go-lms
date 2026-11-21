@@ -28,7 +28,7 @@ return [
     'notifications_empty' => 'لا توجد إشعارات.',
     'notification_generic' => 'لديك إشعار جديد.',
     'has_unread' => 'لديك إشعارات غير مقروءة',
-    'welcome_ready' => 'أهلًا :name، جاهز نكمل؟',
+    'welcome_ready' => 'أهلًا :name، لنواصل التعلّم!',
     'welcome_sub' => 'نكمّل خطوتك القادمة',
     'continue_badge' => 'واصل التعلّم',
     'lesson_progress' => 'التقدّم في الدرس',

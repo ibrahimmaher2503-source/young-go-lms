@@ -83,7 +83,7 @@ it('submits a complete independent course for review, locks it for the instructo
         ->toThrow(ValidationException::class);
     expect(fn () => app(PublishReadyCourse::class)($instructor, $submitted))->toThrow(AuthorizationException::class);
     expect($submitted->fresh()->status)->toBe(CourseStatus::PendingReview);
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('approves a pending independent course once the admin has set pricing, and audits the decision', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -97,7 +97,7 @@ it('approves a pending independent course once the admin has set pricing, and au
 
     expect($course->fresh()->status)->toBe(CourseStatus::Published)
         ->and(t303rAudit('course.review.approved', $course))->toBe(1);
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('refuses to approve without pricing set, naming the status key', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -111,7 +111,7 @@ it('refuses to approve without pricing set, naming the status key', function ():
 
     expect($course->fresh()->status)->toBe(CourseStatus::PendingReview)
         ->and(t303rAudit('course.review.approved', $course))->toBe(0);
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('rejects a review without a reason or with fewer than 10 characters and leaves the course pending without audit', function (?string $reason): void {
     $instructor = t303rUser('instructor_independent');
@@ -125,7 +125,7 @@ it('rejects a review without a reason or with fewer than 10 characters and leave
 
     expect($course->fresh()->status)->toBe(CourseStatus::PendingReview)
         ->and(t303rAudit('course.review.rejected', $course))->toBe(0);
-})->with([null, 'too short'])->group('T-P3-03', 'A1');
+})->with([null, 'too short'])->group('T-P3-03', 'A1', 'D-007');
 
 it('returns a rejected course to draft with its reason, and the instructor can edit and resubmit', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -150,7 +150,7 @@ it('returns a rejected course to draft with its reason, and the instructor can e
 
     $resubmitted = app(SubmitCourseForReview::class)($instructor, $rejected->fresh());
     expect($resubmitted->status)->toBe(CourseStatus::PendingReview)->and($resubmitted->review_reason)->toBeNull();
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('refuses a review decision on a course that is not pending', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -164,7 +164,7 @@ it('refuses a review decision on a course that is not pending', function (): voi
     expect(fn () => app(ReviewCourse::class)($admin, $course->fresh(), 'rejected', 'A long enough reason'))
         ->toThrow(ValidationException::class);
     expect($course->fresh()->status)->toBe(CourseStatus::Draft);
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('refuses submission without a lesson and names the curriculum blocker', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -175,7 +175,7 @@ it('refuses submission without a lesson and names the curriculum blocker', funct
 
     expect($course->fresh()->status)->toBe(CourseStatus::Draft)
         ->and(t303rAudit('course.submitted_for_review', $course))->toBe(0);
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 it('refuses submission of a course with missing basic data and names the basic blocker', function (): void {
     $instructor = t303rUser('instructor_independent');
@@ -185,7 +185,7 @@ it('refuses submission of a course with missing basic data and names the basic b
 
     expect(fn () => app(SubmitCourseForReview::class)($instructor, $course))
         ->toThrow(fn (ValidationException $e) => expect($e->getMessage())->toContain(__('course_wizard.check.basic')));
-})->group('T-P3-03', 'A1');
+})->group('T-P3-03', 'A1', 'D-007');
 
 /** An academy course with a category, an academy instructor and a lesson, ready for publishing except pricing. */
 function t303rAcademyCourse(User $admin): Course

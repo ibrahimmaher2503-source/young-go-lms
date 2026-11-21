@@ -5,21 +5,27 @@
     $bio = (string) $profile->getTranslation('bio', $locale, false);
     $avatar = filled($profile->avatar) ? Illuminate\Support\Facades\Storage::disk('public')->url($profile->avatar) : null;
 @endphp
-<x-layouts.base :title="$seo['title']" variant="public" wide indexable>
+<x-layouts.base :title="$seo['title']" :locale-alternates="$seo['alternates']" variant="public" wide indexable>
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
 
-    <div class="space-y-6" data-instructor-page>
-        <x-ui.breadcrumb :items="[['label' => __('catalog.title'), 'url' => route('catalog.index')], ['label' => $name]]"/>
+    <div class="public-page-stack" data-instructor-page>
+        <x-ui.breadcrumb :items="[['label' => __('catalog.title'), 'url' => \App\Domain\Seo\PublicUrl::catalog($locale)], ['label' => $name]]"/>
 
-        <section class="flex flex-wrap items-start gap-5 rounded-card border border-border bg-surface p-4 shadow-card sm:p-6" aria-labelledby="instructor-name" data-section="hero">
-            <x-ui.avatar :name="$name" :src="$avatar" class="!size-24 text-3xl"/>
-            <div class="min-w-0 flex-1 space-y-3">
-                <h1 id="instructor-name" class="break-words text-3xl font-extrabold">{{ $name }}</h1>
-                @if($headline !== '')<p class="break-words text-lg" data-instructor-headline>{{ $headline }}</p>@endif
+        <section class="grid gap-6 rounded-card border border-border bg-assistant p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:p-8"
+            aria-labelledby="instructor-name" data-section="hero">
+            <x-ui.avatar :name="$name" :src="$avatar" class="size-24! bg-surface! text-3xl ring-1 ring-border sm:size-32!" aria-hidden="true"/>
+            <div class="min-w-0 space-y-3">
+                <h1 id="instructor-name" class="wrap-anywhere text-3xl font-extrabold leading-tight sm:text-4xl">{{ $name }}</h1>
+                @if($headline !== '')<p class="max-w-prose wrap-anywhere text-lg leading-relaxed text-muted" dir="auto" data-instructor-headline>{{ $headline }}</p>@endif
                 @if($profile->disciplines->isNotEmpty())
                     <ul class="flex flex-wrap items-center gap-2" aria-label="{{ __('instructors.disciplines') }}" data-disciplines>
                         @foreach($profile->disciplines as $discipline)
-                            <li><a href="{{ route('categories.show', ['category' => \App\Domain\Catalog\Queries\PublicCategory::keyFor($discipline, $locale)]) }}" class="inline-flex min-h-11 items-center rounded-full border border-border bg-page px-4 text-sm font-semibold text-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ $discipline->name }}</a></li>
+                            <li class="max-w-full">
+                                <a href="{{ \App\Domain\Seo\PublicUrl::category($discipline, $locale) }}"
+                                    class="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-body wrap-anywhere hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                    {{ $discipline->name }} <x-ui.icon name="chevron" class="size-4"/>
+                                </a>
+                            </li>
                         @endforeach
                     </ul>
                 @endif
@@ -27,17 +33,22 @@
         </section>
 
         @if(filled($bio))
-            <x-ui.card :title="__('instructors.about')" data-section="bio"><p class="break-words" dir="auto">{!! nl2br(e($bio)) !!}</p></x-ui.card>
+            <section aria-labelledby="instructor-about" class="space-y-3" data-section="bio">
+                <h2 id="instructor-about" class="text-xl font-bold sm:text-2xl">{{ __('instructors.about') }}</h2>
+                <p class="max-w-prose whitespace-pre-line wrap-anywhere leading-relaxed text-muted" dir="auto">{{ $bio }}</p>
+            </section>
         @endif
 
-        <section aria-labelledby="instructor-courses" class="min-w-0 space-y-4" data-section="courses">
-            <h2 id="instructor-courses" class="text-xl font-bold">{{ __('instructors.courses') }}</h2>
+        <section aria-labelledby="instructor-courses" class="min-w-0 space-y-5 border-t border-border pt-6" data-section="courses">
+            <h2 id="instructor-courses" class="text-xl font-bold sm:text-2xl">{{ __('instructors.courses') }}</h2>
             @if($courses->isEmpty())
-                <x-ui.card><p>{{ __('instructors.no_courses') }}</p></x-ui.card>
+                <x-ui.empty-state :title="__('instructors.no_courses')" icon="book"/>
             @else
-                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="public-card-grid grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($courses as $course)
-                        <x-learning.course-card :course="$course"><x-ui.link :href="route('catalog.show', ['course' => \App\Domain\Catalog\Queries\PublicCourseDetail::key($course)])" data-course-link>{{ __('catalog.view_course') }}</x-ui.link></x-learning.course-card>
+                        <x-learning.course-card :course="$course" :instructor-names="''" placeholder catalog>
+                            <x-ui.link :href="\App\Domain\Seo\PublicUrl::course($course, $locale)" class="text-sm" data-course-link>{{ __('catalog.view_course') }}</x-ui.link>
+                        </x-learning.course-card>
                     @endforeach
                 </div>
                 @if($courses->hasPages())<x-ui.pagination :paginator="$courses"/>@endif

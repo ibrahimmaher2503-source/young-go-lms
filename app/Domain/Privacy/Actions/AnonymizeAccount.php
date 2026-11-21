@@ -9,7 +9,6 @@ use App\Domain\Commerce\Refund;
 use App\Domain\Identity\Models\GuardianChildLink;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -68,15 +67,24 @@ final class AnonymizeAccount
         }
 
         // Files go after the commit: a rolled-back anonymization must not lose them; one adapter failure must not abort others.
-        $this->deleteFiles(Storage::disk(Config::string('media.disk')), $files['local']);
-        $this->deleteFiles(Storage::disk('public'), $files['public']);
+        $this->deleteFiles(Config::string('media.disk'), $files['local']);
+        $this->deleteFiles('public', $files['public']);
 
         return $report;
     }
 
     /** @param list<string> $paths */
-    private function deleteFiles(Filesystem $disk, array $paths): void
+    private function deleteFiles(string $diskName, array $paths): void
     {
+        try {
+            // Resolved here so a misconfigured disk is reported, not thrown, after the account is already anonymized.
+            $disk = Storage::disk($diskName);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return;
+        }
+
         foreach (array_unique($paths) as $path) {
             try {
                 if (! $disk->delete($path)) {

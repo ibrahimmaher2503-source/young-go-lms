@@ -45,6 +45,8 @@ it('renders the auth screens for guests in both locales', function (string $path
     $this->withSession(['locale' => $locale])->get($path)->assertOk()
         ->assertSee('lang="'.$locale.'"', false)
         ->assertSee($locale === 'ar' ? 'dir="rtl"' : 'dir="ltr"', false)
+        ->assertSee('data-auth-card', false)
+        ->assertSee('href="'.url('/'.$locale).'"', false)
         ->assertSee($marker);
 })->with([
     ['/login', 'en', 'Email or username'], ['/login', 'ar', 'البريد الإلكتروني أو اسم المستخدم'],

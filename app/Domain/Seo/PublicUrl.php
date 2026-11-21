@@ -41,6 +41,11 @@ final class PublicUrl
         return url('/'.$locale.'/courses');
     }
 
+    public static function contact(string $locale): string
+    {
+        return route('public.contact.show', ['publicLocale' => $locale]);
+    }
+
     public static function course(Course $course, string $locale): string
     {
         return url('/'.$locale.'/courses/'.rawurlencode(PublicCourseDetail::keyFor($course, $locale)));

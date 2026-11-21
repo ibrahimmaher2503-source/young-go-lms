@@ -6,6 +6,7 @@ namespace App\Filament\Resources\StaffUsers;
 
 use App\Domain\Identity\Actions\AssignStaffRoles;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
+use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
@@ -108,8 +109,8 @@ final class StaffUserResource extends Resource
                         $actor = auth()->user();
                         abort_unless($actor instanceof User, 403);
                         $assignRoles->handle($actor, $record, $data['roles'] ?? []);
-                    })])->icon('heroicon-o-ellipsis-horizontal')->label(__('staff.actions')),
-            ]);
+                    })])->icon('heroicon-o-ellipsis-horizontal')->color('gray')->label(__('staff.actions')),
+            ], CompactActions::POSITION);
     }
 
     public static function getPages(): array

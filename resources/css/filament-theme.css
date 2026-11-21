@@ -165,6 +165,7 @@
 @media (min-width: 64rem) {
     .fi-main-sidebar .fi-sidebar-nav { padding-block: calc(var(--spacing) * 2); }
     .fi-main-sidebar .fi-sidebar-nav-groups { gap: var(--spacing); }
+    .fi-main-sidebar .fi-sidebar-group-btn { padding-block: var(--spacing); }
 }
 
 .fi-sidebar-item-btn,
@@ -765,7 +766,9 @@
         border-radius: var(--yg-radius-control);
         background-color: var(--yg-color-surface);
     }
+    .yg-summary-strip:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .yg-summary-strip:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .yg-summary-strip:has(> :nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 @media (max-width: 47.999rem) {
     .yg-summary-item > .yg-workspace-note { grid-column: auto; }
@@ -781,6 +784,33 @@
 }
 
 /* Tables: wrap between words only; money, numbers and references keep one line; the container scrolls instead. */
+select.fi-select-input {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+select.fi-select-input::-ms-expand {
+    display: none !important;
+}
+
+@media (min-width: 80rem) and (max-width: 94.999rem) {
+    .fi-resource-staff-users .yg-person-cell {
+        padding-inline: 0.5rem;
+        min-inline-size: 8rem;
+    }
+    .fi-resource-staff-users .yg-email {
+        max-inline-size: 11rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .fi-resource-staff-users .fi-ta-cell .fi-ta-text {
+        min-inline-size: 3.5rem;
+    }
+    .fi-resource-staff-users .fi-ta-cell {
+        padding-inline: 0.375rem;
+    }
+}
 .fi-ta-header-cell-label,
 .fi-ta-header-cell > button,
 .fi-ta-header-cell > span { white-space: normal; overflow-wrap: break-word; text-overflow: clip; overflow: visible; }
@@ -844,6 +874,9 @@
 }
 
 /* P8 fix 5: settings hub cards, dashboard all-clear row, reports at 390, staff tables at 390. */
+.yg-hub-sections { display: grid; gap: 1.75rem; }
+.yg-hub-section { display: grid; gap: 0.75rem; }
+.yg-hub-section-title { font-size: 1.125rem; font-weight: 700; color: var(--yg-color-body); margin: 0; }
 .yg-hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--yg-space-columns); }
 .yg-hub-card { display: flex; align-items: flex-start; gap: 0.875rem; padding: 1.25rem; border: 1px solid var(--yg-color-border); border-radius: var(--yg-radius-control); background-color: var(--yg-color-surface); color: var(--yg-color-body); min-block-size: 6.5rem; }
 .yg-hub-card:hover { background-color: var(--yg-color-nav-active-bg); border-color: var(--yg-brand-200); }
@@ -1232,7 +1265,7 @@
         grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
     }
     .yg-overview-metrics[data-count="5"] {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));
     }
     .yg-overview-metrics[data-count="4"] {
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1293,6 +1326,7 @@
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.35;
+    font-variant-numeric: tabular-nums;
 }
 .yg-metric-note {
     margin: 0;

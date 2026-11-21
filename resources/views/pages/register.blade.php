@@ -1,10 +1,10 @@
-<x-layouts.base variant="auth" :title="__('pages.register_title')">
-    <h1 class="mb-4 text-center text-3xl font-bold">{{ __('pages.register_title') }}</h1>
-    <x-ui.card>
+<x-layouts.base variant="auth" auth-card :title="__('pages.register_title')">
+    <x-public.auth-card :title="__('pages.register_title')">
         @if(! $available)
             <x-ui.alert tone="warning" role="status">{{ __('auth.registration_unavailable') }}</x-ui.alert>
         @else
-            <p class="mb-4 text-muted">{{ __('pages.register_intro') }}</p>
+            <p class="mb-5 text-center text-muted">{{ __('pages.register_intro') }}</p>
+            @php($policies = app(\App\Domain\Content\Queries\PublicSitePages::class)()->toBase()->only(['terms', 'privacy']))
             <x-ui.ajax-form :action="url('/register')" :success="url('/email/verify')">
                 <input type="hidden" name="terms_version" value="{{ $termsVersion }}">
                 <input type="hidden" name="privacy_version" value="{{ $privacyVersion }}">
@@ -26,6 +26,13 @@
                 <x-ui.form-field for="password" :label="__('pages.password')" :help="__('pages.password_help')" data-field><x-ui.input id="password" name="password" type="password" autocomplete="new-password" aria-describedby="password-help" data-strength required /><x-ui.strength-meter for="password" /></x-ui.form-field>
                 <x-ui.form-field for="password_confirmation" :label="__('pages.password_confirmation')" data-field><x-ui.input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required /></x-ui.form-field>
                 <div data-field class="space-y-2">
+                    @if($policies->isNotEmpty())
+                        <div class="flex flex-wrap gap-x-4">
+                            @foreach($policies as $policy)
+                                <x-ui.link :href="\App\Domain\Seo\PublicUrl::page($policy, app()->getLocale())" target="_blank" rel="noopener" class="text-sm">{{ $policy->title }}</x-ui.link>
+                            @endforeach
+                        </div>
+                    @endif
                     <x-ui.checkbox id="accept_terms" name="accept_terms" value="1" :label="__('pages.accept_terms')" />
                     <x-ui.checkbox id="accept_privacy" name="accept_privacy" value="1" :label="__('pages.accept_privacy')" />
                 </div>
@@ -33,5 +40,5 @@
             </x-ui.ajax-form>
         @endif
         <x-slot:footer><x-ui.link :href="url('/login')">{{ __('pages.have_account') }}</x-ui.link></x-slot:footer>
-    </x-ui.card>
+    </x-public.auth-card>
 </x-layouts.base>

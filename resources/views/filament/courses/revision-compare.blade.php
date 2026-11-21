@@ -3,7 +3,7 @@
     <p class="text-sm text-muted" data-revision-no-changes>{{ __('course_revisions.no_changes') }}</p>
 @else
     <p class="text-sm text-muted" data-revision-change-count>{{ trans_choice('course_revisions.change_count', count($changes), ['count' => count($changes)]) }}</p>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="{{ __('course_revisions.compare') }}">
         <table class="w-full text-start text-sm" data-revision-compare>
             <thead>
                 <tr class="border-b border-border bg-table-head">

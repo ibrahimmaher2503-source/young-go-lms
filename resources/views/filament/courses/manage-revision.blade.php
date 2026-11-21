@@ -19,7 +19,7 @@
         @if ($history->isEmpty())
             <p class="p-6 text-center text-muted">{{ __('course_revisions.history_empty') }}</p>
         @else
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="{{ __('course_revisions.history') }}">
                 <table class="w-full text-start text-sm">
                     <thead>
                         <tr class="border-b border-border bg-table-head">

@@ -1,10 +1,9 @@
-<x-layouts.base variant="auth" :title="__('auth.sign_in')">
-    <h1 class="mb-4 text-center text-3xl font-bold">{{ __('pages.login_title') }}</h1>
+<x-layouts.base variant="auth" auth-card :title="__('auth.sign_in')">
     @if(session('session_notice'))
         <x-ui.alert tone="warning" role="alert" class="mb-4" data-session-notice>{{ session('session_notice') }}</x-ui.alert>
     @endif
-    <x-ui.card>
-        <p class="mb-4 text-muted">{{ __('pages.login_intro') }}</p>
+    <x-public.auth-card :title="__('pages.login_title')">
+        <p class="mb-5 text-center text-muted">{{ __('pages.login_intro') }}</p>
         <x-ui.ajax-form :action="url('/login')" :success="url('/home')">
             <x-ui.form-field for="login" :label="__('pages.login_label')" data-field>
                 <x-ui.input id="login" name="login" dir="ltr" autocomplete="username" required />
@@ -20,5 +19,5 @@
                 <x-ui.link :href="url('/register')">{{ __('pages.register_link') }}</x-ui.link>
             </div>
         </x-slot:footer>
-    </x-ui.card>
+    </x-public.auth-card>
 </x-layouts.base>

@@ -2,16 +2,20 @@
 @include('filament.review.styles')
 <style>
     .yg-ai-tiles { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin: 0; }
+    @media (min-width: 64rem) {
+        .yg-ai-tiles:has(> :nth-child(9):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     .yg-ai-tile { display: grid; gap: .25rem; padding: .75rem 1rem; border: 1px solid var(--yg-color-border); border-radius: var(--yg-radius-card); background: var(--yg-color-surface); }
     .yg-ai-tile dt { color: var(--yg-color-muted); font-size: .875rem; }
     .yg-ai-tile dd { margin: 0; font-size: 1.5rem; font-weight: 700; }
     .yg-ai-tile[data-tone="danger"] dd { color: var(--yg-color-danger); }
     .yg-ai-tile[data-tone="success"] dd { color: var(--yg-color-success); }
-    .yg-ai-scroll { overflow-x: auto; }
+    .yg-ai-scroll { position: relative; overflow-x: auto; }
     .yg-ai-table { inline-size: 100%; border-collapse: collapse; font-size: .875rem; }
     .yg-ai-table th, .yg-ai-table td { padding: .5rem .75rem; text-align: start; border-block-end: 1px solid var(--yg-color-border); vertical-align: top; }
     .yg-ai-table thead th { background: var(--yg-color-table-head); font-weight: 700; }
     .yg-ai-num { font-variant-numeric: tabular-nums; }
+    [dir="rtl"] .yg-ai-table :is(th, td)[dir="ltr"] { text-align: end; }
     .yg-ai-row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; }
     .yg-ai-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
     .yg-ai-field { display: grid; gap: .375rem; }

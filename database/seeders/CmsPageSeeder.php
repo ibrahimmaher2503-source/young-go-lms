@@ -34,20 +34,7 @@ final class CmsPageSeeder extends Seeder
         }
 
         if (! HomepageBlock::query()->exists()) {
-            foreach (['hero', 'categories', 'featured_courses', 'how_it_works'] as $index => $type) {
-                HomepageBlock::query()->firstOrCreate(['type' => $type], [
-                    'title' => [
-                        'ar' => __('public-site.'.$type, [], 'ar'),
-                        'en' => __('public-site.'.$type, [], 'en'),
-                    ],
-                    'body' => $type === 'hero' ? [
-                        'ar' => __('public-site.hero_body', [], 'ar'),
-                        'en' => __('public-site.hero_body', [], 'en'),
-                    ] : null,
-                    'sort' => ($index + 1) * 10,
-                    'visible' => true,
-                ]);
-            }
+            $this->call(HomepageBlockSeeder::class);
         }
     }
 }

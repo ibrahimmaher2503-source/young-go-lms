@@ -24,10 +24,16 @@ function show(form, tone, text) {
 }
 
 function clearErrors(form) {
-    form.querySelectorAll('[data-field-error]').forEach((node) => node.remove());
+    const errors = Array.from(form.querySelectorAll('[data-field-error]'));
+    const errorIds = new Set(errors.map((node) => node.id));
+    errors.forEach((node) => node.remove());
     form.querySelectorAll('[aria-invalid]').forEach((node) => {
         node.removeAttribute('aria-invalid');
         node.classList.replace('border-danger', 'border-border');
+        const descriptions = (node.getAttribute('aria-describedby') ?? '').split(/\s+/)
+            .filter((id) => id && !errorIds.has(id));
+        if (descriptions.length) node.setAttribute('aria-describedby', descriptions.join(' '));
+        else node.removeAttribute('aria-describedby');
     });
     show(form, 'danger', '');
 }

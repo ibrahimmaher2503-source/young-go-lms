@@ -97,7 +97,7 @@ return [
         'sessions' => 'الجلسات', 'present' => 'حاضر', 'late' => 'متأخر', 'absent' => 'غائب', 'excused' => 'معذور', 'attempts' => 'المحاولات',
         'learners' => 'تسجيلات المتعلمين', 'upcoming_sessions' => 'الجلسات القادمة', 'grading_backlog' => 'بانتظار التصحيح', 'help_backlog' => 'بانتظار الرد',
         'course_sales' => 'مبيعات الدورات المحصّلة',
-        'passed' => 'ناجح', 'failed' => 'راسب', 'needs_review' => 'بانتظار المراجعة', 'issued' => 'الصادرة', 'revoked' => 'الملغاة', 'valid' => 'السارية',
+        'passed' => 'ناجح', 'failed' => 'راسب', 'needs_review' => 'بانتظار المراجعة', 'issued' => 'الشهادات الصادرة', 'revoked' => 'الملغاة', 'valid' => 'السارية',
         'earnings' => 'الأرباح', 'reversals' => 'العكوس', 'adjustments' => 'التعديلات', 'ai_requests' => 'الطلبات', 'ai_errors' => 'الإخفاقات',
         'ai_cost' => 'التكلفة', 'ai_avg_latency' => 'متوسط زمن الاستجابة (مللي ثانية)', 'ai_p95_latency' => 'زمن الاستجابة عند المئين 95 (مللي ثانية)', 'requests' => 'الطلبات',
         'open' => 'مفتوح', 'overdue' => 'متأخر', 'resolved' => 'تم حله', 'mismatches' => 'الفروق', 'open_mismatches' => 'الفروق المفتوحة',

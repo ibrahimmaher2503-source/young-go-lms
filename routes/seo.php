@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PublicBundleController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicCategoryController;
@@ -31,6 +33,9 @@ Route::prefix('{publicLocale}')
         Route::get('/courses/{course}', PublicCourseController::class)->name('catalog.show');
         Route::get('/courses/{course}/preview/{item}', PublicCoursePreviewController::class)->whereNumber('item')->name('catalog.preview');
         Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
+        Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
+        Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
+        Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware('throttle:newsletter')->name('newsletter.store');
         Route::get('/categories/{category}', PublicCategoryController::class)->name('categories.show');
         Route::get('/plans', PublicPlansController::class)->name('plans.index');
         Route::get('/bundles/{slug}', PublicBundleController::class)->name('bundles.show');

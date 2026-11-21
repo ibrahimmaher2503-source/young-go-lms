@@ -118,7 +118,7 @@
                         <span class="yg-cur-handle" aria-hidden="true" title="{{ __('curriculum.drag') }}">⋮⋮</span>
                         <div class="yg-cur-secinfo">
                             <h3 id="section-title-{{ $section->id }}" class="yg-cur-title">{{ str_pad((string) ($s + 1), 2, '0', STR_PAD_LEFT) }}. {{ $section->title }}</h3>
-                            <span class="yg-cur-meta">{{ __('curriculum.lessons_count', ['count' => $section->items->count()]) }} · {{ __('curriculum.minutes', ['count' => $minutes($section)]) }}</span>
+                            <span class="yg-cur-meta">{{ trans_choice('curriculum.lessons_count_choice', $section->items->count(), ['count' => $section->items->count()]) }} · {{ trans_choice('curriculum.minutes_choice', $minutes($section), ['count' => $minutes($section)]) }}</span>
                         </div>
                         <span class="yg-cur-status {{ $section->published ? 'is-published' : '' }}"><i></i>{{ $section->published ? __('curriculum.status_published') : __('curriculum.status_draft') }}</span>
                         <details class="yg-cur-menu">
@@ -143,7 +143,7 @@
                                 <span class="yg-cur-num">{{ $i + 1 }}</span>
                                 <span class="yg-cur-name">{{ $lesson->title }}</span>
                                 <span class="yg-cur-chips">
-                                    @if($minutesCount)<span class="yg-cur-meta yg-cur-withicon"><x-ui.icon name="clock" /> {{ __('curriculum.minutes', ['count' => $minutesCount]) }}</span>@endif
+                                    @if($minutesCount)<span class="yg-cur-meta yg-cur-withicon"><x-ui.icon name="clock" /> {{ trans_choice('curriculum.minutes_choice', $minutesCount, ['count' => $minutesCount]) }}</span>@endif
                                     <span class="yg-cur-iconchip" title="{{ $isLesson ? __("curriculum.types.{$lesson->type}") : __("curriculum.types.{$item->itemable_type}") }}"><x-ui.icon :name="$isLesson ? ($lesson->type === 'video' ? 'video' : 'file') : 'clipboard'" /><span class="yg-cur-sr">{{ $isLesson ? __("curriculum.types.{$lesson->type}") : __("curriculum.types.{$item->itemable_type}") }}</span></span>
                                     @if($isLesson && $lesson->media)
                                         <span class="yg-cur-badge" title="{{ __('media.tier') }}">{{ __('media.tier') }}: {{ __('media.tiers.'.\App\Domain\Media\LessonPublishRule::effectiveTier($lesson->media)) }}@if($lesson->media->hasException()) · {{ __('media.exception') }}@endif</span>

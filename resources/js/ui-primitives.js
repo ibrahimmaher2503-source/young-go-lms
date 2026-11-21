@@ -12,10 +12,11 @@ function selectTab(tab, focus = false) {
 }
 
 document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-ui-tabs] [role="tab"], [data-ui-dismiss], [command="show-modal"]');
+    const target = event.target.closest('[data-ui-tabs] [role="tab"], [data-ui-dismiss], [command="show-modal"], [data-public-menu][open] a[href]');
     if (!target) return;
     if (target.matches('[role="tab"]')) selectTab(target);
     if (target.matches('[data-ui-dismiss]')) target.closest('[role="status"]')?.remove();
+    if (target.matches('[data-public-menu][open] a[href]')) target.closest('dialog').close();
     if (target.matches('[command="show-modal"]') && !('commandForElement' in target)) {
         document.getElementById(target.getAttribute('commandfor'))?.showModal();
     }

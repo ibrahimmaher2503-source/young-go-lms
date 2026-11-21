@@ -21,6 +21,32 @@ beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
 });
 
+it('renders the reference layouts from editable About and Privacy content', function (string $locale) {
+    $this->seed(CmsPageSeeder::class);
+    CmsPage::query()->where('seed_key', 'about')->firstOrFail()->update([
+        'slug' => 'about-us',
+        'body' => ['ar' => "محتوى عن المنصة\n\nتفاصيل إضافية", 'en' => "Editable introduction\n\nAdditional detail"],
+        'status' => CmsPage::PUBLISHED,
+    ]);
+    $privacy = CmsPage::query()->where('seed_key', 'privacy')->firstOrFail();
+    $this->get('/'.$locale.'/pages/privacy')->assertNotFound();
+    $privacy->update([
+        'body' => ['ar' => "## معلومات الحساب\nمحتوى معتمد\n\n## التواصل\nفقرة أخرى", 'en' => "## Account information\nApproved copy\n\n## Contact\nAnother paragraph"],
+        'status' => CmsPage::PUBLISHED,
+    ]);
+
+    $this->get('/'.$locale.'/pages/about-us')->assertOk()
+        ->assertSee('data-info-page="about"', false)
+        ->assertSee($locale === 'ar' ? 'تفاصيل إضافية' : 'Additional detail');
+
+    $this->get('/'.$locale.'/pages/privacy')->assertOk()
+        ->assertSee('data-info-page="privacy"', false)
+        ->assertSee('href="#policy-section-2"', false)
+        ->assertSee('id="policy-section-2"', false)
+        ->assertSee($locale === 'ar' ? 'محتوى معتمد' : 'Approved copy')
+        ->assertDontSee('## ');
+})->with(['ar', 'en'])->group('T-P2-02', 'A1', 'YG-WEB-005');
+
 it('publishes pages only as explicitly requested and restricts signed previews to editors', function () {
     $this->get('/pages/workshops')->assertNotFound();
     $editor = User::factory()->create(['locale' => 'en'])->assignRole('content_manager');

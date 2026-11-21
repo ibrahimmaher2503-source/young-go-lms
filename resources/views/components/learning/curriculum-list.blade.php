@@ -33,7 +33,7 @@
                                 <span class="min-w-0 flex-1">
                                     <span class="block font-semibold break-words">{{ $number }}. {{ $entry['title'] }}</span>
                                     <span class="flex flex-wrap items-center gap-2 text-sm text-muted">
-                                        @if($entry['minutes'] > 0)<span>{{ __('curriculum.minutes', ['count' => $entry['minutes']]) }}</span>@endif
+                                        @if($entry['minutes'] > 0)<span>{{ trans_choice('curriculum.minutes_choice', $entry['minutes'], ['count' => $entry['minutes']]) }}</span>@endif
                                         @if($entry['state'] === 'preview')<x-ui.badge tone="info">{{ __('learn.preview') }}</x-ui.badge>@endif
                                         @if($entry['draft'] ?? false)<x-ui.badge tone="warning" data-item-draft>{{ __('curriculum.status_draft') }}</x-ui.badge>@endif
                                         @if($done)<x-ui.badge tone="success" data-item-completed>{{ __('learn.completed') }}</x-ui.badge>@endif

@@ -12,7 +12,7 @@ final class HomepageBlock extends Model
     use HasTranslations;
 
     public const TYPES = [
-        'hero', 'categories', 'featured_courses', 'how_it_works', 'instructors', 'testimonials', 'parents', 'faq', 'cta',
+        'hero', 'categories', 'featured_courses', 'how_it_works', 'instructors', 'testimonials', 'parents', 'faq', 'cta', 'free_courses', 'blog', 'newsletter',
     ];
 
     /** @var list<string> */

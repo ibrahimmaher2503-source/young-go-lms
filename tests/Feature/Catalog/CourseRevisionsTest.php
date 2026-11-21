@@ -13,7 +13,15 @@ use App\Domain\Catalog\Revisions\Actions\ReviewCourseRevision;
 use App\Domain\Catalog\Revisions\Actions\SaveCourseRevision;
 use App\Domain\Catalog\Revisions\Actions\SubmitCourseRevision;
 use App\Domain\Catalog\Revisions\CourseRevisionStatus;
+use App\Domain\Catalog\Revisions\Events\CourseRevisionReviewed;
 use App\Domain\Catalog\Revisions\RevisionAccess;
+use App\Domain\Curriculum\Actions\ManageAssessmentItems;
+use App\Domain\Curriculum\Actions\ManageLessons;
+use App\Domain\Curriculum\Actions\ManageSections;
+use App\Domain\Curriculum\Actions\ReorderCurriculum;
+use App\Domain\Curriculum\Actions\SetCurriculumStatus;
+use App\Domain\Notifications\Listeners\NotifyOfCourseRevision;
+use App\Domain\Notifications\Notifications\TemplatedNotice;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseRevision;
@@ -22,11 +30,14 @@ use App\Models\CurriculumItem;
 use App\Models\Lesson;
 use App\Models\MediaAsset;
 use App\Models\User;
+use Closure;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
@@ -126,7 +137,7 @@ it('keeps the old title and curriculum on the public page until an admin approve
 
     expect($course->fresh()->getTranslation('title', 'en'))->toBe('Brand new title');
     $this->get('/en/courses/'.$slug)->assertOk()->assertSee('Brand new title')->assertSee('Brand new lesson');
-})->group('T-P3-07', 'A1');
+})->group('T-P3-07', 'A1', 'YG-GAP-CHG-001');
 
 // ---------- A2 approval applies every change in one transaction ----------
 
@@ -241,7 +252,7 @@ it('rejects with a reason, keeps the live course, and lets the instructor reopen
         ->and($reopened->status)->toBe(CourseRevisionStatus::Draft);
 
     $this->get('/en/courses/'.$course->slug_en)->assertSee('Old title')->assertDontSee('Proposed title');
-})->group('T-P3-07', 'A3');
+})->group('T-P3-07', 'A3', 'YG-GAP-CHG-003');
 
 // ---------- rules ----------
 
@@ -374,7 +385,7 @@ it('does not require a revision for academy-owned published courses', function (
     $course->instructors()->attach($instructor, ['role' => 'instructor', 'scope' => Course::INSTRUCTOR_SCOPE_MANAGE]);
 
     expect(RevisionAccess::requiresRevision($instructor, $course))->toBeFalse();
-})->group('T-P3-07', 'A3');
+})->group('T-P3-07', 'A3', 'YG-GAP-CHG-002');
 
 it('records a direct live edit of an academy course by an admin with publish, and nothing when nothing changed', function (): void {
     $admin = t307User('admin');
@@ -388,4 +399,145 @@ it('records a direct live edit of an academy course by an admin with publish, an
 
     app(SaveCourseWizard::class)($admin, ['title' => ['en' => 'Direct academy edit']], $course->fresh(), 1, false);
     expect(t307Audit('course.updated_live', $course))->toBe(1);
-})->group('T-P3-07', 'A3');
+})->group('T-P3-07', 'A3', 'YG-GAP-CHG-002');
+
+// ---------- YG-GAP-CHG-001 curriculum guards on a published independent course ----------
+
+function t307RevisionRequired(Closure $call): void
+{
+    expect($call)->toThrow(fn (ValidationException $e) => expect($e->errors()['course'][0] ?? null)->toBe(__('course_revisions.use_revision')));
+}
+
+it('blocks every curriculum structure change on a published independent course until it goes through a revision', function (): void {
+    $instructor = t307User('instructor_independent');
+    $course = t307Published($instructor);
+    $section = t307Section($course);
+    $item = $section->items()->firstOrFail();
+    $lesson = $item->itemable;
+
+    t307RevisionRequired(fn () => app(ManageSections::class)->add($instructor, $course, ['title' => ['en' => 'Extra section']]));
+    t307RevisionRequired(fn () => app(ManageSections::class)->rename($instructor, $section, ['title' => ['en' => 'Renamed live']]));
+    t307RevisionRequired(fn () => app(ManageSections::class)->archive($instructor, $section));
+    t307RevisionRequired(fn () => app(ManageLessons::class)->add($instructor, $section, ['title' => ['en' => 'Extra lesson'], 'type' => 'text']));
+    t307RevisionRequired(fn () => app(ManageLessons::class)->archive($instructor, $lesson));
+    t307RevisionRequired(fn () => app(ManageLessons::class)->update($instructor, $lesson, ['title' => ['en' => 'Retitled live']]));
+    t307RevisionRequired(fn () => app(ReorderCurriculum::class)($instructor, $course, []));
+    t307RevisionRequired(fn () => app(SetCurriculumStatus::class)($instructor, $course, [$item->id], 'draft'));
+    t307RevisionRequired(fn () => app(ManageAssessmentItems::class)->add($instructor, $section, 'quiz', ['title' => ['en' => 'Extra quiz']]));
+    t307RevisionRequired(fn () => app(ManageAssessmentItems::class)->archive($instructor, $item));
+
+    expect($course->fresh()->getTranslation('title', 'en'))->toBe('Old title')
+        ->and($section->fresh()->getTranslation('title', 'en'))->toBe('Section A')
+        ->and($section->fresh()->archived_at)->toBeNull()
+        ->and($lesson->fresh()->archived_at)->toBeNull()
+        ->and($lesson->fresh()->getTranslation('title', 'en'))->toBe('Old lesson');
+})->group('T-P3-07', 'A1', 'YG-GAP-CHG-001');
+
+it('lets a published independent course keep an edit that changes no lesson title, and asks no revision of academy-owned courses', function (): void {
+    $instructor = t307User('instructor_independent');
+    $course = t307Published($instructor);
+    $lesson = t307Section($course)->items()->firstOrFail()->itemable;
+
+    app(ManageLessons::class)->update($instructor, $lesson, ['title' => $lesson->getTranslations('title'), 'duration_seconds' => 480]);
+
+    expect($lesson->fresh()->duration_seconds)->toBe(480)
+        ->and($lesson->fresh()->getTranslation('title', 'en'))->toBe('Old lesson');
+
+    $academyInstructor = t307User('instructor_academy');
+    $academy = t307Published(null);
+    $academy->instructors()->attach($academyInstructor, ['role' => 'instructor', 'scope' => Course::INSTRUCTOR_SCOPE_MANAGE]);
+    $academyLesson = t307Section($academy)->items()->firstOrFail()->itemable;
+
+    app(ManageLessons::class)->update($academyInstructor, $academyLesson, ['title' => ['en' => 'Academy retitle']]);
+
+    expect($academyLesson->fresh()->getTranslation('title', 'en'))->toBe('Academy retitle')
+        ->and(RevisionAccess::requiresRevision($academyInstructor, $academy))->toBeFalse();
+})->group('T-P3-07', 'A1', 'YG-GAP-CHG-001', 'YG-GAP-CHG-002');
+
+// ---------- Notifications (YG-GAP-CHG-001 reviewer diff, YG-GAP-CHG-003 instructor notice) ----------
+
+it('notifies active admins who may publish the course when a revision is submitted, not the author nor a publisher without course approval', function (): void {
+    Notification::fake();
+    $instructor = t307User('instructor_independent');
+    $admin = t307User('admin');
+    $course = t307Published($instructor);
+    $publisherWithoutApproval = User::factory()->create(['status' => 'active']);
+    $publisherWithoutApproval->givePermissionTo(['course.publish', 'panel.admin.access']);
+    $inactiveAdmin = t307User('admin');
+    $inactiveAdmin->forceFill(['status' => 'suspended'])->save();
+
+    t307Submitted($instructor, $course);
+
+    Notification::assertSentTo($admin, TemplatedNotice::class, fn (TemplatedNotice $n): bool => $n->event() === 'course.revision_submitted');
+    Notification::assertNotSentTo([$instructor, $publisherWithoutApproval, $inactiveAdmin], TemplatedNotice::class);
+})->group('T-P3-07', 'A2', 'YG-GAP-CHG-001');
+
+it('notifies the author and every course instructor of an approval, and the rejection reason reaches them', function (): void {
+    Notification::fake();
+    $instructor = t307User('instructor_independent');
+    $coInstructor = t307User('instructor_independent');
+    $admin = t307User('admin');
+    $course = t307Published($instructor);
+    $course->instructors()->attach($coInstructor, ['role' => 'instructor', 'scope' => Course::INSTRUCTOR_SCOPE_MANAGE]);
+
+    $approved = t307Submitted($instructor, $course);
+    app(ReviewCourseRevision::class)($admin, $approved->fresh(), 'approved');
+
+    Notification::assertSentTo([$instructor, $coInstructor], TemplatedNotice::class, fn (TemplatedNotice $n): bool => $n->event() === 'course.revision_approved');
+    Notification::assertNotSentTo($admin, TemplatedNotice::class, fn (TemplatedNotice $n): bool => $n->event() === 'course.revision_approved');
+
+    $reason = 'Please keep the original tone of the title.';
+    $rejected = t307Submitted($instructor, $course->fresh(), 'Second proposal');
+    app(ReviewCourseRevision::class)($admin, $rejected->fresh(), 'rejected', $reason);
+
+    Notification::assertSentTo([$instructor, $coInstructor], TemplatedNotice::class, fn (TemplatedNotice $n): bool => $n->event() === 'course.revision_rejected'
+        && str_contains($n->toArray($instructor)['message'], $reason));
+})->group('T-P3-07', 'A3', 'YG-GAP-CHG-003');
+
+it('sends each review notice once per recipient even when the listener runs again', function (): void {
+    Notification::fake();
+    $instructor = t307User('instructor_independent');
+    $admin = t307User('admin');
+    $course = t307Published($instructor);
+    $reason = 'Needs a clearer lesson description.';
+    $rejected = t307Submitted($instructor, $course);
+    app(ReviewCourseRevision::class)($admin, $rejected->fresh(), 'rejected', $reason);
+
+    $sent = Notification::sent($instructor, TemplatedNotice::class)->count();
+    expect($sent)->toBe(1);
+
+    app(NotifyOfCourseRevision::class)->reviewed(new CourseRevisionReviewed($rejected->fresh(), false, $reason));
+    app(NotifyOfCourseRevision::class)->reviewed(new CourseRevisionReviewed($rejected->fresh(), false, $reason));
+
+    expect(Notification::sent($instructor, TemplatedNotice::class))->toHaveCount($sent);
+})->group('T-P3-07', 'A3', 'YG-GAP-CHG-003');
+
+it('keeps an approved revision applied when the notification channel fails', function (): void {
+    $instructor = t307User('instructor_independent');
+    $admin = t307User('admin');
+    $course = t307Published($instructor);
+
+    // Swapped before any notice is sent: the mail driver is cached on first use.
+    $attempts = new stdClass;
+    $attempts->count = 0;
+    Notification::extend('mail', fn (): object => new class($attempts)
+    {
+        public function __construct(private readonly stdClass $attempts) {}
+
+        public function send(object $notifiable, object $notification): void
+        {
+            $this->attempts->count++;
+
+            throw new RuntimeException('Mail transport is down');
+        }
+    });
+
+    $revision = t307Submitted($instructor, $course, 'Approved despite mail outage');
+    $attempts->count = 0;
+
+    app(ReviewCourseRevision::class)($admin, $revision->fresh(), 'approved');
+
+    expect($attempts->count)->toBeGreaterThan(0)
+        ->and($revision->fresh()->status)->toBe(CourseRevisionStatus::Approved)
+        ->and($course->fresh()->getTranslation('title', 'en'))->toBe('Approved despite mail outage');
+})->group('T-P3-07', 'A2', 'YG-GAP-CHG-001');

@@ -73,6 +73,7 @@
             </a>
         @endif
         <div class="{{ $back ? 'hidden lg:flex' : 'flex' }} min-w-0 items-center gap-2">
+            <x-ui.theme-toggle />
             <x-ui.locale-switcher :locale="$locale" class="hidden sm:block" />
             <span class="relative inline-grid size-11 shrink-0 place-items-center text-body" title="{{ __('learner.notifications') }}">
                 <x-ui.icon name="bell" class="size-6" />

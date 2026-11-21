@@ -36,15 +36,19 @@ final class ListCourses extends WorkspaceListRecords
             $minor = $record->getAttribute('market_price');
 
             return $minor === null
-                ? __('courses.'.($record->access_mode === Course::ACCESS_FREE ? 'free' : 'unconfigured'))
-                : app(PriceFormatter::class)->format(Money::ofMinor((int) $minor, $market->currency()), $market, app()->getLocale());
+                ? match ($record->access_mode) {
+                    Course::ACCESS_FREE => __('courses.free'),
+                    Course::ACCESS_SUBSCRIPTION => __('catalog.included_in_subscription'),
+                    default => __('courses.unconfigured'),
+                }
+            : app(PriceFormatter::class)->format(Money::ofMinor((int) $minor, $market->currency()), $market, app()->getLocale());
         };
         $columns[__('courses.status')] = static fn (Course $record): string => __('courses.'.$record->status->value);
         $columns[__('courses.access')] = 'access_mode';
 
         return [
             CreateAction::make()->label(__('courses.new_course')),
-            ExportCsvAction::make('course.view', $columns, 'courses.csv'),
+            ExportCsvAction::make('course.view', $columns, 'courses.csv')->color('gray')->outlined(),
         ];
     }
 

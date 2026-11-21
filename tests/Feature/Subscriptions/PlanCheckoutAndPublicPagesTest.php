@@ -290,6 +290,7 @@ it('A4 the English plans page lists names, term, price, included courses, hrefla
         ->assertSee('Public English Plan')
         ->assertSee(tp8gpMoney(5000, 'en'))
         ->assertSee('Included English Course')
+        ->assertSee('href="'.url('/en/courses/'.$course->slug_en).'"', false)
         ->assertSee('rel="canonical"', false)
         ->assertSee('hreflang="ar"', false)
         ->assertSee('hreflang="en"', false)
@@ -349,6 +350,9 @@ it('A4 the English bundle page lists courses, price and a buy CTA, by id and by 
         ->assertSee('data-cta="sign-in"', false);
 
     $this->get('/en/bundles/'.$bundle->id.'-summer-bundle')->assertOk()->assertSee('Bundle Course Alpha');
+    $this->get('/ar/bundles/'.$bundle->id)->assertOk()
+        ->assertSee('href="'.url('/ar/courses').'"', false)
+        ->assertSee('href="'.url('/ar/courses/'.$a->slug_ar).'"', false);
 
     $learner = tp8gpUser();
     $this->actingAs($learner)->get('/en/bundles/'.$bundle->id)->assertOk()

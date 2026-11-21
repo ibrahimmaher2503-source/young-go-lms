@@ -19,6 +19,11 @@ return [
         'title' => 'Young Go settings',
         'intro' => 'Every platform setting in one place. You only see the settings you are allowed to open.',
         'empty' => 'No settings are available to you.',
+        'groups' => [
+            'platform' => 'Platform, payments and notifications',
+            'compliance' => 'Privacy, safeguarding and marketing',
+            'governance' => 'Assistant, roles and audit',
+        ],
         'entries' => [
             'general' => 'Site name, contact details, social links, language, market, banner and mail sender.',
             'payee' => 'Where payers send manual transfers.',

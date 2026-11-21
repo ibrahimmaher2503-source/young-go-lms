@@ -61,7 +61,7 @@ final class ReleaseQuizResult
         }
 
         try {
-            $hadEssayReview = $attempt->answers()->whereNotNull('reviewed_at')->exists();
+            $hadEssayReview = $attempt->answers()->whereNotNull('graded_at')->exists(); // graded_at is only set by GradeEssayAnswer (human review)
             $notice = $hadEssayReview
                 ? new EssayReviewedNotice($attempt, (int) $item->course_id, (int) $item->getKey())
                 : new QuizResultNotice($attempt, (int) $item->course_id, (int) $item->getKey());

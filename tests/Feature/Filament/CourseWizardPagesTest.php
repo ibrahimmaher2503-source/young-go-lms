@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Catalog\Actions\SaveCourseWizard;
+use App\Domain\Catalog\Actions\SubmitCourseForReview;
+use App\Domain\Catalog\CourseStatus;
 use App\Domain\Commerce\Actions\CreateOrder;
 use App\Domain\Commerce\CoursePrice;
 use App\Domain\Commerce\OrderLine;
@@ -10,10 +12,14 @@ use App\Domain\Commerce\ProductType;
 use App\Domain\Shared\Markets\Market;
 use App\Filament\Resources\Courses\Pages\CreateCourse;
 use App\Filament\Resources\Courses\Pages\EditCourse;
+use App\Filament\Resources\Courses\Pages\ListCourses;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\CourseSection;
+use App\Models\Lesson;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Filament\Actions\Action;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -326,3 +332,190 @@ it('denies unassigned and view-only instructors at the page', function (): void 
     $this->actingAs($viewOnly)->get("/instructor/courses/{$course->id}/edit")->assertForbidden();
     $this->actingAs($viewOnly)->get("/instructor/courses/{$other->id}/edit")->assertNotFound();
 })->group('T-P3-02', 'A2', 'I02');
+
+/** Independent instructor's course that passes Basic and, unless told otherwise, has one lesson so it can be submitted. */
+function wizardApprovalCourse(User $instructor, string $title = 'Approval course', bool $withLesson = true): Course
+{
+    $course = app(SaveCourseWizard::class)($instructor, [
+        'title' => ['ar' => 'دورة للمراجعة', 'en' => $title],
+        'short_description' => ['ar' => 'مقدمة', 'en' => 'Intro'],
+        'category_id' => wizardPageCategory()->id, 'level' => 'beginner', 'content_language' => 'en', 'format' => 'recorded',
+        'min_age' => 7, 'max_age' => 12,
+    ], null, 1, true);
+
+    if ($withLesson) {
+        wizardApprovalLesson($course);
+    }
+
+    return $course;
+}
+
+function wizardApprovalLesson(Course $course): void
+{
+    $section = CourseSection::query()->create(['course_id' => $course->getKey(), 'published' => true, 'sort' => 1, 'title' => ['en' => 'Section']]);
+    $lesson = Lesson::query()->create(['title' => ['en' => 'Lesson one'], 'type' => 'text', 'is_preview' => false]);
+    $lesson->item()->create(['course_id' => $course->getKey(), 'section_id' => $section->getKey(), 'sort' => 1, 'status' => 'published']);
+}
+
+function wizardApprovalPrice(User $admin, Course $course): void
+{
+    app(SaveCourseWizard::class)($admin, ['access_mode' => 'paid', 'market_prices' => ['EG' => '150']], $course, 3, true);
+}
+
+/** Academy course with category, academy instructor and a lesson; ready to publish except for pricing. */
+function wizardApprovalAcademyCourse(): Course
+{
+    $course = Course::query()->create(['title' => ['en' => 'Academy approval'], 'slug_ar' => 'aa-'.uniqid(), 'slug_en' => 'aa-'.uniqid(), 'owner_type' => Course::OWNER_ACADEMY]);
+    $course->forceFill(['category_id' => wizardPageCategory()->id, 'level' => 'beginner', 'content_language' => 'en', 'format' => 'recorded'])->save();
+    $course->instructors()->attach(wizardPageUser('instructor_academy'), ['role' => 'instructor', 'scope' => 'manage']);
+    wizardApprovalLesson($course);
+
+    return $course;
+}
+
+it('shows approve and reject only on pending courses and only to a reviewer who passes the publish gate', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $pending = wizardApprovalCourse($instructor, 'Pending course');
+    $draft = wizardApprovalCourse($instructor, 'Draft course');
+    app(SubmitCourseForReview::class)($instructor, $pending);
+
+    $this->actingAs(wizardPageUser('admin'));
+    Livewire::test(ListCourses::class)
+        ->assertTableActionVisible('approve', $pending)
+        ->assertTableActionVisible('reject', $pending)
+        ->assertTableActionHidden('approve', $draft)
+        ->assertTableActionHidden('reject', $draft);
+
+    $this->actingAs(wizardPageUser('content_manager'));
+    Livewire::test(ListCourses::class)
+        ->assertTableActionHidden('approve', $pending)
+        ->assertTableActionHidden('reject', $pending);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2', 'PRD-09-4');
+
+it('keeps the review queue away from instructors', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    app(SubmitCourseForReview::class)($instructor, wizardApprovalCourse($instructor));
+
+    $this->actingAs($instructor)->get('/admin/courses')->assertForbidden();
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-4');
+
+it('refuses a rejection whose reason is too short and leaves the course pending with no audit entry', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $pending = wizardApprovalCourse($instructor);
+    app(SubmitCourseForReview::class)($instructor, $pending);
+
+    $this->actingAs(wizardPageUser('admin'));
+    Livewire::test(ListCourses::class)
+        ->callTableAction('reject', $pending, data: ['reason' => 'short'])
+        ->assertHasTableActionErrors(['reason']);
+
+    expect($pending->fresh()->status)->toBe(CourseStatus::PendingReview)
+        ->and(Activity::query()->where('event', 'course.review.rejected')->where('subject_id', $pending->getKey())->count())->toBe(0);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');
+
+it('returns a course rejected from the queue to draft with its reason and notifies the instructor', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $pending = wizardApprovalCourse($instructor);
+    app(SubmitCourseForReview::class)($instructor, $pending);
+    $reason = 'Missing safety prerequisites in unit 1';
+
+    $this->actingAs(wizardPageUser('admin'));
+    Livewire::test(ListCourses::class)
+        ->callTableAction('reject', $pending, data: ['reason' => $reason])
+        ->assertHasNoTableActionErrors();
+
+    $rejected = $pending->fresh();
+    expect($rejected->status)->toBe(CourseStatus::Draft)
+        ->and($rejected->review_reason)->toBe($reason)
+        ->and(Activity::query()->where('event', 'course.review.rejected')->where('subject_id', $pending->getKey())->sole()->properties->get('context')['reason'])->toBe($reason)
+        ->and($instructor->notifications()->count())->toBeGreaterThan(0);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2', 'PRD-09-4');
+
+it('runs the publish checks before approving a pending course from the queue', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $admin = wizardPageUser('admin');
+    $pending = wizardApprovalCourse($instructor);
+    app(SubmitCourseForReview::class)($instructor, $pending);
+
+    $this->actingAs($admin);
+    Livewire::test(ListCourses::class)->callTableAction('approve', $pending);
+    expect($pending->fresh()->status)->toBe(CourseStatus::PendingReview)
+        ->and(Activity::query()->where('event', 'course.review.approved')->count())->toBe(0);
+
+    wizardApprovalPrice($admin, $pending);
+    Livewire::test(ListCourses::class)->callTableAction('approve', $pending)->assertHasNoTableActionErrors();
+
+    expect($pending->fresh()->status)->toBe(CourseStatus::Published)
+        ->and(Activity::query()->where('event', 'course.review.approved')->where('subject_id', $pending->getKey())->count())->toBe(1);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');
+
+/**
+ * The Finish-step buttons are declared inside the wizard schema, which Filament's table/page action lookup cannot reach,
+ * so they are read from the page's finishActions() and run with the same closures the buttons use.
+ */
+function wizardApprovalFinishAction(object $test, string $name): Action
+{
+    $page = $test->instance();
+    $actions = (new ReflectionMethod($page, 'finishActions'))->invoke($page);
+
+    return collect($actions)->firstOrFail(fn (Action $action): bool => $action->getName() === $name);
+}
+
+it('offers submit for review on an editable draft and moves it to pending review', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $course = wizardApprovalCourse($instructor);
+
+    $this->actingAs($instructor);
+    $test = Livewire::test(EditCourse::class, ['record' => $course->getKey()]);
+    expect(wizardApprovalFinishAction($test, 'submitForReview')->isVisible())->toBeTrue();
+    wizardApprovalFinishAction($test, 'submitForReview')->getActionFunction()();
+
+    expect($course->fresh()->status)->toBe(CourseStatus::PendingReview)
+        ->and(Activity::query()->where('event', 'course.submitted_for_review')->where('subject_id', $course->getKey())->count())->toBe(1);
+
+    $this->actingAs(wizardPageUser('admin'));
+    expect(wizardApprovalFinishAction(Livewire::test(EditCourse::class, ['record' => $course->getKey()]), 'submitForReview')->isVisible())->toBeFalse();
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');
+
+it('keeps an incomplete draft a draft when submit for review is refused', function (): void {
+    $instructor = wizardPageUser('instructor_independent');
+    $course = wizardApprovalCourse($instructor, 'No lesson yet', withLesson: false);
+
+    $this->actingAs($instructor);
+    $test = Livewire::test(EditCourse::class, ['record' => $course->getKey()]);
+    wizardApprovalFinishAction($test, 'submitForReview')->getActionFunction()();
+
+    expect($course->fresh()->status)->toBe(CourseStatus::Draft)
+        ->and(Activity::query()->where('event', 'course.submitted_for_review')->count())->toBe(0);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');
+
+it('offers publish now only to a publish holder and does not publish while checks are missing', function (): void {
+    $admin = wizardPageUser('admin');
+    $course = wizardApprovalAcademyCourse();
+    $assignedInstructor = wizardPageUser('instructor_academy');
+    $assigned = wizardPageInstructorCourse($assignedInstructor);
+
+    $this->actingAs($assignedInstructor);
+    expect(wizardApprovalFinishAction(Livewire::test(EditCourse::class, ['record' => $assigned->getKey()]), 'publishNow')->isVisible())->toBeFalse();
+
+    $this->actingAs($admin);
+    $test = Livewire::test(EditCourse::class, ['record' => $course->getKey()]);
+    expect(wizardApprovalFinishAction($test, 'publishNow')->isVisible())->toBeTrue();
+    wizardApprovalFinishAction($test, 'publishNow')->getActionFunction()();
+
+    expect($course->fresh()->status)->toBe(CourseStatus::Draft)
+        ->and(Activity::query()->where('event', 'course.published')->count())->toBe(0);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');
+
+it('publishes a ready course from the finish step', function (): void {
+    $admin = wizardPageUser('admin');
+    $course = wizardApprovalAcademyCourse();
+    wizardApprovalPrice($admin, $course);
+
+    $this->actingAs($admin);
+    $test = Livewire::test(EditCourse::class, ['record' => $course->getKey()]);
+    wizardApprovalFinishAction($test, 'publishNow')->getActionFunction()();
+
+    expect($course->fresh()->status)->toBe(CourseStatus::Published)
+        ->and(Activity::query()->where('event', 'course.published')->where('subject_id', $course->getKey())->count())->toBe(1);
+})->group('T-P3-03', 'A1', 'D-007', 'PRD-09-2');

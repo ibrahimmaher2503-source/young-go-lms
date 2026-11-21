@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'language' => 'Language',
+    'toggle_theme' => 'Toggle light and dark theme',
     'arabic' => 'Arabic',
     'english' => 'English',
     'save' => 'Save',

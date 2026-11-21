@@ -110,6 +110,7 @@
     --yg-color-sidebar: var(--yg-neutral-0);
     --yg-color-input: var(--yg-neutral-0);
     --yg-color-page: var(--yg-neutral-50);
+    --yg-color-public-home: #f7f9fa;
     --yg-color-body: var(--yg-neutral-900);
     --yg-color-muted: var(--yg-neutral-700);
     --yg-color-border: var(--yg-neutral-100);
@@ -182,6 +183,7 @@
     --yg-color-sidebar: var(--yg-neutral-950);
     --yg-color-input: var(--yg-neutral-950);
     --yg-color-page: var(--yg-neutral-900);
+    --yg-color-public-home: var(--yg-color-page);
     --yg-color-body: var(--yg-neutral-50);
     --yg-color-muted: var(--yg-neutral-300);
     --yg-color-border: var(--yg-neutral-700);
@@ -265,6 +267,7 @@
     --color-ai-ready: var(--yg-color-ai-ready);
     --color-on-ai-ready: var(--yg-color-on-ai-ready);
     --color-media: var(--yg-color-media);
+    --color-overlay: var(--yg-neutral-950);
     --color-on-media: var(--yg-color-on-media);
     --color-qr: var(--yg-color-qr);
     --font-sans: var(--yg-font-stack-sans);

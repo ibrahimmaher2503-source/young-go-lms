@@ -155,7 +155,11 @@ final class CourseResource extends FilamentResource
             TextColumn::make('lessons_count')->label(__('courses.lessons'))->sortable(),
             TextColumn::make('enrollments_count')->visibleFrom('md')->label(__('courses.enrollments'))->visible($canViewLearners)->sortable(),
             TextColumn::make('market_price')->label(__('courses.price'))->sortable()
-                ->placeholder(static fn (Course $record): string => __('courses.'.($record->access_mode === Course::ACCESS_FREE ? 'free' : 'unconfigured')))
+                ->placeholder(static fn (Course $record): string => match ($record->access_mode) {
+                    Course::ACCESS_FREE => __('courses.free'),
+                    Course::ACCESS_SUBSCRIPTION => __('catalog.included_in_subscription'),
+                    default => __('courses.unconfigured'),
+                })
                 ->formatStateUsing(static fn ($state): string => app(PriceFormatter::class)->format(Money::ofMinor((int) $state, $market->currency()), $market, app()->getLocale())),
             StatusBadgeColumn::make('status', ['published' => 'success', 'upcoming' => 'info', 'suspended' => 'warning', 'pending_review' => 'warning'])
                 ->label(__('courses.status'))->formatStateUsing(static fn (CourseStatus $state): string => __('courses.'.$state->value))->sortable(),

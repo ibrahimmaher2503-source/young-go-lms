@@ -99,9 +99,9 @@ Learner pages use `/login` (learners and parents). Two-factor: if `identity.two_
 2. Click the checkout button. Expected: redirect to `/checkout/orders/{order}` with status **pending**. No gateway call is made yet.
 3. On the order page, enter coupon **`DEMO-FLAT50`** (50 EGP off) and apply it. Expected: the total drops by 50 EGP to 400.00 EGP (derived from the seed; verify), a coupon chip appears, and a notice confirms it.
 4. Remove the coupon (the remove action). Expected: total returns to 450.00 EGP.
-5. Apply **`DEMO-WELCOME10`** instead (10%). Expected: 405.00 EGP. Keep this coupon on the order.
-6. Try an unknown code, e.g. `NOPE-0001`. Expected: a validation error, the order total is unchanged.
-7. Stop here. Keep the pending order with `DEMO-WELCOME10` applied for step 3.
+5. Try **`DEMO-WELCOME10`**. Omar already redeemed it on the seeded order `demo-order-002`. Expected: the per-user limit message and an unchanged total of 450.00 EGP.
+6. Try an unknown code, e.g. `NOPE-0001`. Expected: a validation error and an unchanged total of 450.00 EGP.
+7. Reapply **`DEMO-FLAT50`**. Verify the 400.00 EGP total and leave the order pending for step 3.
 
 **Notes:** the coupon is reserved at apply time and released when the order is cancelled or fails (T-P8-05). Coupon rate limits apply (`checkout-coupon` throttle). If you hit the throttle, wait one minute.
 
@@ -180,7 +180,7 @@ Verify the purchase and manual renewal on first run. Expiry requires an elapsed-
 **URL:** `/finance/refunds` (also `/admin/refunds`); `/my/payments`; `/my/payments/{order}/receipt`; `/my/payments/{order}/refunds/{refund}/receipt`.
 
 **Steps**
-1. Use the paid order from step 6 (Omar's flat-coupon order from `DEMO-FLAT50` if present, otherwise the seeded `demo-order-002` for `stage-workshop`). Pick a refund amount within the order total.
+1. Use Omar's paid order from step 3 (`DEMO-FLAT50`) or the seeded `demo-order-002` for `stage-workshop`. Pick a refund amount within the order total.
 2. As finance, open `/finance/refunds` and use the **Request refund** header action (order reference, amount, reason of at least 10 characters). Expected: a row in **requested** status.
 3. As admin, open the row and **approve** it (approve action, `payment.refund`). Expected: status **approved**.
 4. Execute the refund from the Execute action. Expected: the modal shows the gateway or manual flow depending on the method. Gateway execution uses the fake gateway in local. Manual needs an external reference (min 3 characters). Expected: status **executed**, and the order shows refunded totals.
@@ -443,7 +443,7 @@ Fill in the **Pass / Fail** column and the notes. Use **N/A** only when the step
 | 15 | Consent banner and marketing tags | Guest, admin | | Counsel wording open (YG-GAP-PRV-004) |
 | 16 | Notification templates, preferences, announcement | Admin, Omar, Sara | | Check 7/3/1-day reminders in a dated fixture. Phone delivery requires a provider. |
 | 17 | Privacy export and anonymization | Omar, admin, Laila | | Run anonymization last, then demo:reset |
-| 18 | Learner 360 and view-as banner | Admin | | Lazy expiry; no screenshots yet |
+| 18 | Learner 360 and view-as banner | Admin | | Check scope and the active banner against the [AR/EN captures](../tests/Browser/screenshots/G7-P9-review2/) |
 | 19 | Settings hub and sidebar parity | Admin, finance, Sara | | locale and market not read at runtime |
 | AR | RTL and Arabic labels across steps | All | | Check each step's AR column |
 | Setup | Finance account seeded | PO | | Confirm login before steps 3 and 7–10 |

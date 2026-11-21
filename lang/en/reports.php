@@ -97,7 +97,7 @@ return [
         'sessions' => 'Sessions', 'present' => 'Present', 'late' => 'Late', 'absent' => 'Absent', 'excused' => 'Excused', 'attempts' => 'Attempts',
         'learners' => 'Learner enrollments', 'upcoming_sessions' => 'Upcoming sessions', 'grading_backlog' => 'Waiting for grading', 'help_backlog' => 'Waiting for replies',
         'course_sales' => 'Paid course sales',
-        'passed' => 'Passed', 'failed' => 'Failed', 'needs_review' => 'Waiting for review', 'issued' => 'Issued', 'revoked' => 'Revoked', 'valid' => 'Valid',
+        'passed' => 'Passed', 'failed' => 'Failed', 'needs_review' => 'Waiting for review', 'issued' => 'Issued certificates', 'revoked' => 'Revoked', 'valid' => 'Valid',
         'earnings' => 'Earnings', 'reversals' => 'Reversals', 'adjustments' => 'Adjustments', 'ai_requests' => 'Requests', 'ai_errors' => 'Failures',
         'ai_cost' => 'Cost', 'ai_avg_latency' => 'Average latency (ms)', 'ai_p95_latency' => '95th percentile latency (ms)', 'requests' => 'Requests',
         'open' => 'Open', 'overdue' => 'Overdue', 'resolved' => 'Resolved', 'mismatches' => 'Differences', 'open_mismatches' => 'Open differences',

@@ -49,6 +49,8 @@ final class Subscription extends Model
         return match (true) {
             $this->status === SubscriptionStatus::Expired => 'expired',
             $this->cancelled_at !== null => 'cancelled',
+            // Grace has run out but the hourly subscriptions:process job has not expired the row yet.
+            $latest !== null && $latest->grace_ends_at->lte(now()) => 'expired',
             $latest !== null && $latest->ends_at->lte(now()) => 'grace',
             default => 'active',
         };

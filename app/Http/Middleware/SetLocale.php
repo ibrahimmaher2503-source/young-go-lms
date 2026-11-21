@@ -19,9 +19,10 @@ final class SetLocale
         $default = App::currentLocale();
         $locale = $default;
         $user = $request->user();
+        $publicLocale = $request->route('publicLocale');
 
         foreach ([
-            $request->route('publicLocale'),
+            $publicLocale,
             $user instanceof User ? $user->locale : null,
             $request->hasSession() ? $request->session()->get('locale') : null,
             $request->cookie('locale'),
@@ -36,7 +37,13 @@ final class SetLocale
         App::setLocale($locale);
 
         try {
-            return $next($request);
+            $response = $next($request);
+            if ($user === null && $publicLocale === $locale && $request->isMethod('GET')
+                && $request->hasSession() && $response->isSuccessful()) {
+                $request->session()->put('locale', $locale);
+            }
+
+            return $response;
         } finally {
             App::setLocale($default);
         }

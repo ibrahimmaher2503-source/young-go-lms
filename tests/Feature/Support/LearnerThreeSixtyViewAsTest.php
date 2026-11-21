@@ -80,7 +80,7 @@ it('starts a session with a trimmed reason, a 20 minute expiry and one audit row
         ->and((int) Carbon::parse($session->expires_at)->diffInMinutes($session->started_at, true))->toBe(20)
         ->and(auth()->id())->toBe($support->id)
         ->and(tp910Events('support.view_as_started'))->toBe(1);
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('refuses a reason shorter than 10 or longer than 500 characters and writes nothing', function (): void {
     $support = tp910Staff('support');
@@ -106,7 +106,7 @@ it('refuses view-as for an account without the permission and for the staff memb
 
     expect(tp910Events('support.view_as_refused'))->toBeGreaterThanOrEqual(3)
         ->and(ViewAsSession::query()->count())->toBe(0);
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('refuses staff targets, parent targets, suspended and anonymized accounts', function (): void {
     $support = tp910Staff('support');
@@ -170,7 +170,7 @@ it('returns to normal after the time limit, closes the session as expired and au
     expect($session->ended_at)->not->toBeNull()
         ->and($session->end_cause)->toBe(ViewAsSession::END_EXPIRED)
         ->and(tp910Events('support.view_as_stopped'))->toBe(1);
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('blocks writes during view-as, lets GET through, and lets only the stop route pass', function (): void {
     $support = tp910Staff('support');
@@ -191,7 +191,7 @@ it('blocks writes during view-as, lets GET through, and lets only the stop route
     expect(ViewAsSession::query()->latest('id')->first()->end_cause)->toBe(ViewAsSession::END_MANUAL);
 
     $this->delete('/guardian/context')->assertNoContent();
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('records one page view per GET of the view-as home and course pages', function (): void {
     $support = tp910Staff('support');
@@ -204,7 +204,7 @@ it('records one page view per GET of the view-as home and course pages', functio
 
     expect(tp910Events('support.view_as_page_viewed'))->toBe(2)
         ->and($session->refresh()->page_views)->toBe(2);
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 // --- Learner 360 gating and masking ------------------------------------------------------------
 
@@ -217,7 +217,7 @@ it('lets only admin, super admin and support open the Learner 360 page', functio
         $this->actingAs(tp910Staff($role));
         expect(LearnerThreeSixtyPage::canAccess())->toBeFalse();
     }
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('finds a learner by exact email or id only after two characters and never lists staff', function (): void {
     $support = tp910Staff('support');
@@ -251,7 +251,7 @@ it('masks email and phone for support and shows admin the full values, with the 
         ->and($forAdmin['privacy'])->not->toBeNull()
         ->and($forAdmin['audit'])->not->toBeNull()
         ->and($forAdmin['devices'])->not->toBeNull();
-})->group('T-P9-10', 'A1');
+})->group('T-P9-10', 'A1', 'ED-027');
 
 it('never returns private learner text, the provider id or payout data in the record array', function (): void {
     $support = tp910Staff('support');
@@ -287,3 +287,27 @@ it('refuses view-as for a child account for support, but allows admin with sensi
     $session = app(StartViewAs::class)($admin, $child, tp910Reason());
     expect($session->learner_id)->toBe($child->id);
 })->group('T-P9-10', 'A2');
+
+it('blocks the lesson assistant during view-as with a JSON refusal and creates no AI conversation', function (): void {
+    $support = tp910Staff('support');
+    $learner = tp910Learner();
+    $lesson = Lesson::query()->create(['title' => ['en' => 'T910 assistant lesson']]);
+    $this->actingAs($support);
+    app(StartViewAs::class)($support, $learner, tp910Reason());
+
+    $this->getJson(route('assistant.show', ['lesson' => $lesson->id]))
+        ->assertForbidden()
+        ->assertJson(['message' => __('support.blocked_ai')]);
+
+    expect(AiConversation::query()->count())->toBe(0);
+})->group('T-P9-10', 'ED-027');
+
+it('shows the persistent view-as banner on the view-as home page', function (): void {
+    $support = tp910Staff('support');
+    $this->actingAs($support);
+    app(StartViewAs::class)($support, tp910Learner(), tp910Reason());
+
+    $this->get('/support/view-as')->assertOk()
+        ->assertSee('data-view-as-banner', false)
+        ->assertSee('Viewing as', false);
+})->group('T-P9-10', 'ED-027');

@@ -127,6 +127,8 @@ final class DemoSeeder extends Seeder
             $this->engagement();
             app(AttachDemoLessonPdf::class)($this->admin, Lesson::query()->findOrFail($this->lessonItems['drawing-basics'][0]->itemable_id));
         });
+
+        $this->call(DemoAcceptanceSeeder::class);
     }
 
     /**
@@ -212,11 +214,11 @@ final class DemoSeeder extends Seeder
     }
 
     /**
-     * Course blueprint: key => [title ar, title en, format, access mode, price (EGP, major units) or null, owner, category offset].
+     * Course blueprint: key => [title ar, title en, format, access mode, price (EGP, major units) or null, owner, level].
      *
      * @return array<string, array{0: string, 1: string, 2: string, 3: string, 4: string|null, 5: string, 6: string}>
      */
-    private function blueprint(): array
+    public static function blueprint(): array
     {
         return [
             'drawing-basics' => ['أساسيات الرسم للمبتدئين', 'Drawing Basics for Beginners', 'recorded', 'free', null, 'academy', 'beginner'],
@@ -249,61 +251,28 @@ final class DemoSeeder extends Seeder
         };
     }
 
-    /**
-     * A generated 16:9 abstract cover (GD only, no outside file or request) at a fixed per-course path, so a repeated seed overwrites
-     * the file instead of piling up copies. `demo:reset` removes the files with the courses.
-     */
-    private function attachPlaceholderCover(Course $course, string $key, int $index): void
-    {
-        if (! function_exists('imagecreatetruecolor')) {
-            return;
-        }
-
-        // Flat tones close to the brand palette (deep, mid and soft teal, warm accent).
-        $tones = [[0, 112, 110], [0, 76, 75], [60, 150, 142], [176, 104, 78], [34, 92, 110]];
-        [$r, $g, $b] = $tones[$index % count($tones)];
-        $image = imagecreatetruecolor(1280, 720);
-        $fill = static fn (int $red, int $green, int $blue, int $alpha = 0): int => (int) imagecolorallocatealpha($image, $red, $green, $blue, $alpha);
-        imagefilledrectangle($image, 0, 0, 1280, 720, $fill($r, $g, $b));
-        imagealphablending($image, true);
-        $shift = ($index * 97) % 240;
-        imagefilledellipse($image, 220 + $shift, 640, 760, 760, $fill(255, 255, 255, 105));
-        imagefilledellipse($image, 1040 - $shift, 140, 520, 520, $fill(255, 255, 255, 98));
-        imagefilledellipse($image, 640, 360, 220, 220, $fill(255, 255, 255, 80));
-
-        ob_start();
-        imagepng($image);
-        $bytes = (string) ob_get_clean();
-
-        $path = 'courses/demo-'.$key.'.png';
-        if (Storage::disk('public')->put($path, $bytes, 'public')) {
-            Course::query()->whereKey($course->getKey())->update(['cover_image' => $path]);
-            $course->refresh();
-        }
-    }
-
     private function catalog(): void
     {
-        $categories = Category::query()->orderBy('id')->pluck('id')->all();
-        $index = 0;
+        $fallbackCategory = Category::query()->orderBy('id')->value('id');
+        $content = new DemoCourseContentSeeder;
 
-        foreach ($this->blueprint() as $key => [$titleAr, $titleEn, $format, $access, $price, $owner, $level]) {
+        foreach (self::blueprint() as $key => [$titleAr, $titleEn, $format, $access, $price, $owner, $level]) {
             $instructor = $owner === 'academy' ? $this->academy : $this->indie;
             $course = app(SaveCourseWizard::class)($instructor, [
                 'title' => ['ar' => $titleAr, 'en' => $titleEn],
                 'short_description' => $this->description($key),
-                'category_id' => $categories[$index % count($categories)], 'level' => $level, 'content_language' => 'both', 'format' => $format,
+                'category_id' => $fallbackCategory, 'level' => $level, 'content_language' => 'both', 'format' => $format,
+                ...$content->details($key),
                 'min_age' => $key === 'kids-art' ? 6 : null, 'max_age' => $key === 'kids-art' ? 14 : null,
             ], null, 1, true);
-            $index++;
 
             // Pricing and the owner of an academy course belong to the admin (SaveCourseWizard guards them).
-            $pricing = ['access_mode' => $access];
+            $pricing = ['access_mode' => $access, 'featured' => in_array($key, DemoCourseContentSeeder::FEATURED, true)];
             if ($price !== null) {
                 $pricing['market_prices'] = [Market::Egypt->value => $price];
             }
             $course = app(SaveCourseWizard::class)($this->admin, $pricing, $course, 3, true);
-            $this->attachPlaceholderCover($course, $key, $index - 1);
+            $course->update(['cover_image' => $content->storeCover($key)]);
             DemoAnchors::mark($course);
             $this->courses[$key] = $course;
             $this->curriculum($key, $course, $instructor);

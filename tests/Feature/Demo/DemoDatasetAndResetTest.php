@@ -26,6 +26,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonCurriculumDocument;
 use App\Models\User;
+use Database\Seeders\DemoCourseContentSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -73,6 +74,33 @@ function tp911Seed(): void
     test()->artisan('demo:seed')->assertExitCode(0);
 }
 
+it('seeds working course covers and bilingual details under the correct disciplines', function (): void {
+    tp911Seed();
+
+    $courses = Course::query()->whereKey(DemoAnchors::ids('courses'))->with('category')->get();
+    expect($courses)->toHaveCount(8);
+    foreach ($courses as $course) {
+        Storage::disk('public')->assertExists($course->cover_image);
+        expect($course->cover_image)->toEndWith('.webp')
+            ->and($course->outcomes[0]['text']['ar'])->not->toBeEmpty()
+            ->and($course->outcomes[0]['text']['en'])->not->toBeEmpty();
+    }
+    $drawing = $courses->firstWhere('slug_en', 'drawing-basics-for-beginners');
+    $theatre = $courses->firstWhere('slug_en', 'live-stage-workshop');
+    expect($drawing->category->slug_en)->toBe('drawing')->and($theatre->category->slug_en)->toBe('theatre');
+
+    $drawing->update(['cover_image' => null, 'outcomes' => []]);
+    $theatre->update(['cover_image' => 'courses/custom-demo-cover.webp']);
+    [$otherCourse] = tp911RealLearnerWithCourse();
+
+    $this->seed(DemoCourseContentSeeder::class);
+
+    expect($drawing->refresh()->cover_image)->toBe('courses/demo-drawing-basics.webp')
+        ->and($drawing->outcomes)->toHaveCount(2)
+        ->and($theatre->refresh()->cover_image)->toBe('courses/custom-demo-cover.webp')
+        ->and($otherCourse->refresh()->cover_image)->toBeNull();
+})->group('T-P9-11', 'YG-GAP-OPS-003');
+
 it('refuses demo:seed and demo:reset in production even when the config lists production', function (): void {
     $this->app['env'] = 'production';
     $before = tp911Counts();
@@ -104,8 +132,8 @@ it('creates the demo dataset with the documented counts, demo emails and the pub
     expect(DemoAnchors::ids('users'))->toHaveCount(10)
         ->and($demoUsers)->toHaveCount(8)
         ->and(DB::table('courses')->count())->toBe(8)
-        ->and(DB::table('orders')->count())->toBe(8)
-        ->and(DB::table('orders')->where('status', 'paid')->count())->toBe(5)
+        ->and(DB::table('orders')->count())->toBe(11)
+        ->and(DB::table('orders')->where('status', 'paid')->count())->toBe(8)
         ->and(DB::table('orders')->where('status', 'pending')->count())->toBe(1)
         ->and(DB::table('orders')->where('status', 'cancelled')->count())->toBe(1)
         ->and(DB::table('orders')->where('status', 'failed')->count())->toBe(1)

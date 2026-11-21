@@ -81,3 +81,16 @@ Owner requires full reference matching across every current/future page. D-026 r
 ## P1 milestone gate record — 2026-11-17
 
 P1 tasks T-P1-01..11 are implemented locally (commits through the T-P1-11 commit on feat/T-P0-03-bootstrap, not pushed). Local gates G1, G2, G4, G6, G7, G10 and G11 pass; 302 non-browser and 144 browser tests pass. The gate itself stays `review`: independent review waves, the staff-panel visual score (4.0 < 4.5), age-band numbers (O-015), official brand (O-027), approved terms/privacy versions, hosted CI at the new head and ED-030 budgets are open. Evidence and demo script: docs/evidence/p1-milestone/README.md. Registration now offers account type learner or parent (staff roles rejected). Local staff 2FA is enforced by default; set TWO_FACTOR_ENFORCED=false for local development only.
+
+
+## Review closure pass — 2026-11-21
+
+Orchestrator closure of the `review` queue on `feat/lms-build` at committed HEAD `86e1730` plus the working tree (nothing from this pass is committed yet). The owner accepted the deferred visual scope in [D-032](docs/07_DECISION_REGISTER.md); every other gate still applied.
+
+- **Status:** 90 of 123 tasks are `done` (15 before the pass). Every closure row in [the task board](agents/PROGRESS.md) names the suites run, their counts and the gates checked.
+- **Shared gates (working tree):** G2 Larastan, G4 Arch, G5 Invariants (11), G6 translations/RTL/composer audit/`migrate:fresh --seed` on a scratch database/`npm run build`, and G11 doctor pass. G1 fails only on `app/Filament/Resources/Courses/Pages/ListCourses.php`, an uncommitted parallel edit; the committed file passes. G8 `ai:evaluate --provider=fake` passes. G9 `--group=payments` passes (150).
+- **Milestone demos:** `tests/Feature/Milestone/P1DemoTest.php` … `P6DemoTest.php` pass end to end. Phase requirement coverage (G10) passes for P0–P6.
+- **Fixed in this pass:** subscription grace badge after `grace_ends_at`; post-commit disk resolution in `AnonymizeAccount`; `ReleaseQuizResult` queried a missing `reviewed_at` column (now `graded_at`); certificate footer overflow at A4 landscape; unfocusable revision scroll regions; uncompilable `course-thumb` component; staff-panel dark mode (new `filament/shared/theme-bridge.blade.php`). See `docs/reviews/BUGS_FOUND.md`.
+- **Parallel uncommitted work:** about 84 modified files from another tool (public header and theme toggle, curriculum action groups, Arabic copy, demo seeders) are uncommitted. Several browser suites fail only on that tree; those tasks were closed on committed-HEAD browser runs, which the board rows state. The owner must decide whether that work is committed or discarded, and the affected browser tests must be updated with it.
+- **Open:** T-P1-08 (sidebar fit at 1568 px), T-P7-06 (assistant controls overflow at 390 px), T-P2-08 (owner visual acceptance), T-P9-11 (J01–J12 qa-verifier run), milestone gates P1/P2/P7/P8/P9, T-P7-07 and P10 (blocked on owner inputs), P11/P12.
+- **Owner decisions still pending:** commission rates O-008..O-011 (zero defaults), settlement approval O-012, retention O-025, refund revoke policy, Paymob credentials B-07, legacy access O-001/O-003/O-018, AI provider key and privacy gate for T-P7-07.

@@ -14,6 +14,7 @@ return [
     'courses_of' => 'دورات :name',
     'instructor' => 'المدرّب: :name',
     'completed_of' => 'أكمل :done من :total درسًا',
+    'completed_of_choice' => '{0} أكمل :done من :total دروس|{1} أكمل :done من درس واحد|{2} أكمل :done من درسين|[3,10] أكمل :done من :total دروس|[11,*] أكمل :done من :total درساً',
     'no_courses' => ':name غير مسجّل في أي دورة بعد.',
     'results_title' => 'النتائج والشهادات',
     'results_empty' => 'ستظهر هنا نتائج الاختبارات والشهادات.',

@@ -34,4 +34,7 @@ return [
     'parents' => 'For parents',
     'faq' => 'Frequently asked questions',
     'cta' => 'Call to action',
+    'free_courses' => 'Free courses',
+    'blog' => 'Latest articles',
+    'newsletter' => 'Newsletter',
 ];

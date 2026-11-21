@@ -14,6 +14,7 @@ return [
     'courses_of' => 'Courses of :name',
     'instructor' => 'Instructor: :name',
     'completed_of' => 'Completed :done of :total lessons',
+    'completed_of_choice' => '{1} Completed :done of :total lesson|[2,*] Completed :done of :total lessons',
     'no_courses' => ':name is not enrolled in any course yet.',
     'results_title' => 'Results and certificates',
     'results_empty' => 'Quiz results and certificates will appear here.',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'language' => 'اللغة',
+    'toggle_theme' => 'تبديل المظهر الفاتح والداكن',
     'arabic' => 'العربية',
     'english' => 'الإنجليزية',
     'save' => 'حفظ',

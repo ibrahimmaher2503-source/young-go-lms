@@ -1,5 +1,5 @@
 {{-- Props: variant public/auth/student/parent, title, minimal (error pages: no session-dependent chrome), wide (public pages that need more width), indexable (public pages that fill the head slot with their own meta). --}}
-@props(['variant' => 'public', 'title' => null, 'minimal' => false, 'wide' => false, 'indexable' => false, 'full' => false])
+@props(['variant' => 'public', 'title' => null, 'minimal' => false, 'wide' => false, 'indexable' => false, 'full' => false, 'homepage' => false, 'homeInstructors' => false, 'localeAlternates' => [], 'authCard' => false])
 @php
     $locale = app()->getLocale();
     $user = $minimal ? null : auth()->user();
@@ -11,13 +11,17 @@
         $home = \App\Domain\Seo\PublicUrl::home($locale);
         $catalog = \App\Domain\Seo\PublicUrl::catalog($locale);
         $publicNav = [
-            [$home, __('public-site.home'), request()->routeIs('cms.home', 'public.home')],
-            [$catalog, __('public-site.courses'), request()->routeIs('catalog.index', 'public.catalog.index')],
-            [$catalog.'#catalog-filters', __('public-site.categories'), false],
+            [$home, __('public-site.home'), request()->routeIs('cms.home', 'public.home'), 'home'],
+            [$catalog, __('public-site.courses'), request()->routeIs('catalog.index', 'public.catalog.index'), 'book'],
+            [$catalog.'#catalog-filters', __('public-site.categories'), false, 'layers'],
         ];
-        if ($about = $publicPages->get('about')) {
-            $publicNav[] = [\App\Domain\Seo\PublicUrl::page($about, $locale), $about->title, request()->route('slug') === $about->slug];
+        if ($homepage && $homeInstructors) {
+            $publicNav[] = [$home.'#home-instructors', __('public-site.instructors_nav'), false, 'users'];
         }
+        if ($about = $publicPages->get('about')) {
+            $publicNav[] = [\App\Domain\Seo\PublicUrl::page($about, $locale), $about->title, request()->route('slug') === $about->slug, 'help'];
+        }
+        $footerNav = [...$publicNav, [\App\Domain\Seo\PublicUrl::blog($locale), __('blog.title')]];
     }
     $nav = match ($variant) {
         'parent' => [['/family', __('pages.nav_family')], ['/my', __('pages.nav_learning')], ['/profile', __('pages.nav_profile')]],
@@ -38,7 +42,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <x-consent.tags :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </head>
-<body class="min-h-screen bg-page font-sans text-body"
+<body @class(['min-h-screen bg-page font-sans text-body', 'flex flex-col public-site-shell' => $public, 'public-home-shell' => $homepage, 'public-auth-shell' => $authCard, 'public-error-shell' => $minimal && $variant === 'public'])
+    @if($public) data-public-shell @endif
     data-msg-error="{{ __('pages.error_generic') }}" data-msg-throttle="{{ __('pages.error_throttle') }}" data-msg-expired="{{ __('pages.error_expired') }}" data-msg-sending="{{ __('pages.sending') }}">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-lg focus:bg-surface focus:p-3">{{ __('pages.skip') }}</a>
 @unless($minimal)
@@ -60,51 +65,64 @@
         </div>
     </div>
 @endif
-<header class="border-b border-border bg-surface">
-    <div class="mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-8 {{ $public || $full ? 'max-w-[96rem]' : 'max-w-5xl' }}">
-        <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ $public ? $home : ($user ? url('/home') : url('/login')) }}" class="inline-flex min-h-11 items-center gap-2 text-xl font-extrabold {{ $public ? 'text-body' : 'text-primary' }}" aria-label="{{ __('app.name') }}">@if($public || isset($minimalHeader))<x-ui.icon name="book" class="size-7 text-primary" />@endif{{ __('app.name') }}</a>
+@unless($authCard)
+<header class="border-b border-border bg-surface" @if($public) data-public-header @endif>
+    <div @class([
+        'mx-auto flex items-center justify-between px-4 py-2 sm:px-8',
+        'site-header-inner' => $public,
+        'min-h-[4.25rem] gap-2 xl:gap-4' => $public,
+        'flex-wrap gap-x-4 gap-y-2' => ! $public,
+        'max-w-[96rem]' => $public || $full,
+        'max-w-5xl' => ! $public && ! $full,
+    ])>
+        <div @class(['site-header-leading flex items-center gap-5' => $public, 'flex flex-wrap items-center gap-3' => ! $public])>
+            @if($public)
+                <x-public.brand :href="$home"/>
+                <x-public.navigation :links="$publicNav" class="site-header-nav"/>
+            @else
+                <a href="{{ $user ? url('/home') : url('/login') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 text-xl font-extrabold text-primary" aria-label="{{ __('app.name') }}">@isset($minimalHeader)<x-ui.icon name="book" class="size-7 text-primary"/>@endisset<span dir="ltr">Young Go</span></a>
+            @endif
             @isset($brandAside){{ $brandAside }}@endisset
         </div>
         @isset($minimalHeader){{ $minimalHeader }}@endisset
         @unless($minimal)
-            @if($public)
-                <x-public.navigation :links="$publicNav" />
-            @elseif($nav !== [])
+            @if(! $public && $nav !== [])
             <nav aria-label="{{ __('pages.main_nav') }}" class="flex flex-wrap items-center gap-x-4">
                 @foreach($nav as [$href, $label])
                     <x-ui.link :href="url($href)" :aria-current="request()->is(ltrim($href, '/')) ? 'page' : null">{{ $label }}</x-ui.link>
                 @endforeach
             </nav>
             @endif
-            <div class="flex flex-wrap items-center gap-2">
-                <x-ui.locale-switcher :locale="$locale" />
+            <div class="{{ $public ? 'flex shrink-0 items-center gap-0.5 sm:gap-1' : 'flex flex-wrap items-center gap-2' }}">
+                <x-ui.theme-toggle class="{{ $public ? 'border-transparent! bg-transparent! text-muted! hover:bg-hover!' : '' }}"/>
+                <x-ui.locale-switcher :locale="$locale" :alternates="$localeAlternates" :variant="$public ? 'ghost' : 'secondary'"/>
                 @if($user)
-                    <x-ui.dropdown id="account-menu" :label="$name">
-                        <div class="flex flex-col gap-2">
-                            <x-ui.link :href="url('/profile')">{{ __('pages.nav_profile') }}</x-ui.link>
-                            <x-ui.link :href="url('/security/two-factor')">{{ __('pages.tf_title') }}</x-ui.link>
-                            <x-ui.ajax-form :action="url('/logout')" :success="url('/login')" class="!space-y-0">
-                                <x-ui.button type="submit" variant="secondary" class="w-full">{{ __('auth.sign_out') }}</x-ui.button>
-                            </x-ui.ajax-form>
-                        </div>
-                    </x-ui.dropdown>
+                    <div class="{{ $public ? 'site-header-account ms-2 hidden max-w-48 xl:block' : 'contents' }}">
+                        <x-ui.dropdown id="account-menu" :label="$name"><x-ui.account-actions/></x-ui.dropdown>
+                    </div>
                 @elseif($public)
-                    <a href="{{ url('/register') }}" class="hidden min-h-11 items-center rounded-lg px-2 font-semibold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:inline-flex">{{ __('pages.register_title') }}</a>
-                    <a href="{{ url('/login') }}" class="hidden min-h-11 items-center gap-2 rounded-lg bg-primary px-4 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:inline-flex">{{ __('auth.sign_in') }}<x-ui.icon name="arrow" /></a>
+                    <div class="site-header-auth ms-2 hidden items-center gap-2 border-s border-border ps-3 xl:flex">
+                        <a href="{{ url('/register') }}" class="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('public-site.register') }}</a>
+                        <a href="{{ url('/login') }}" class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><x-ui.icon name="user" class="size-4"/>{{ __('auth.sign_in') }}</a>
+                    </div>
                 @elseif($variant !== 'auth')
                     <x-ui.link :href="url('/login')">{{ __('auth.sign_in') }}</x-ui.link>
                 @endif
                 @if($public)
-                    <div class="lg:hidden">
-                        <x-ui.drawer id="public-menu" :title="__('public-site.navigation')" :trigger="__('public-site.menu')">
-                            <x-public.navigation :links="$publicNav" mobile />
-                            @unless($user)
-                                <div class="mt-3 flex flex-wrap gap-4 border-t border-border pt-3">
-                                    <x-ui.link :href="url('/login')">{{ __('auth.sign_in') }}</x-ui.link>
-                                    <x-ui.link :href="url('/register')">{{ __('pages.register_title') }}</x-ui.link>
-                                </div>
-                            @endunless
+                    <div class="site-header-drawer ms-1 xl:hidden">
+                        <x-ui.drawer id="public-menu" :title="__('public-site.menu')" placement="side" trigger-size="sm" data-public-menu>
+                            <x-slot:trigger><x-ui.icon name="menu"/><span class="sr-only">{{ __('public-site.menu') }}</span></x-slot:trigger>
+                            <x-public.navigation :links="$publicNav" class="pb-5" mobile/>
+                            <div class="mt-auto border-t border-border pt-5">
+                                @if($user)
+                                    <x-ui.account-actions/>
+                                @else
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <a href="{{ url('/login') }}" class="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-2 text-center text-sm font-bold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('auth.sign_in') }}</a>
+                                        <a href="{{ url('/register') }}" class="inline-flex min-h-12 items-center justify-center rounded-lg border border-border px-2 text-center text-sm font-semibold text-body hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('public-site.register') }}</a>
+                                    </div>
+                                @endif
+                            </div>
                         </x-ui.drawer>
                     </div>
                 @endif
@@ -112,26 +130,13 @@
         @endunless
     </div>
 </header>
-<main id="main" tabindex="-1" class="mx-auto px-4 sm:px-8 {{ $full ? 'max-w-[96rem] py-6' : 'py-8' }} {{ $full ? '' : ($variant === 'auth' || $minimal ? 'max-w-md' : ($wide ? 'max-w-6xl' : 'max-w-5xl')) }}">
+@endunless
+<main id="main" tabindex="-1" class="mx-auto px-4 sm:px-8 {{ $public ? 'w-full flex-1' : '' }} {{ $full ? 'max-w-[96rem] py-6' : 'py-8' }} {{ $public && $full ? 'site-wide-content' : '' }} {{ $full ? '' : ($variant === 'auth' || $minimal ? 'max-w-md' : ($wide ? 'max-w-6xl' : 'max-w-5xl')) }}">
     {{ $slot }}
 </main>
 @if($public)
-    <footer class="border-t border-border bg-surface">
-        <div class="mx-auto flex max-w-[96rem] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-8">
-            <a class="inline-flex min-h-11 items-center gap-2 font-bold text-body" href="{{ $home }}"><x-ui.icon name="book" class="text-primary" />{{ __('app.name') }}</a>
-            <nav aria-label="{{ __('public-site.footer') }}" class="flex flex-wrap items-center gap-x-5">
-                <x-ui.link :href="route('contact.show')">{{ __('public-site.contact') }}</x-ui.link>
-                @foreach($publicPages as $pageLink)
-                    <x-ui.link :href="\App\Domain\Seo\PublicUrl::page($pageLink, $locale)">{{ $pageLink->title }}</x-ui.link>
-                @endforeach
-                @foreach($siteSettings->socialLinks() as $platform => $destination)
-                    @if(is_string($destination) && str_starts_with($destination, 'https://') && filter_var($destination, FILTER_VALIDATE_URL))
-                        <x-ui.link :href="$destination">{{ __('public-site.'.$platform) }}</x-ui.link>
-                    @endif
-                @endforeach
-            </nav>
-        </div>
-    </footer>
+    @php($socialLinks = collect($siteSettings->socialLinks()))
+    <x-public.footer :home="$home" :links="$footerNav" :pages="$publicPages" :social-links="$socialLinks"/>
 @endif
 <x-consent.banner :variant="$variant" :minimal="$minimal" :parent="$child !== null" />
 </body>

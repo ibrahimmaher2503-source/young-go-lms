@@ -55,9 +55,13 @@ final class PageSeo
     {
         $locale = app()->getLocale();
         $title = self::first($page->getTranslation('seo_title', $locale, false), $page->getTranslation('title', $locale));
+        $body = (string) $page->getTranslation('body', $locale);
+        if ($page->seed_key === 'privacy') {
+            $body = preg_replace('/^##[ \t]+(?=\S)/mu', '', $body) ?? $body;
+        }
         $description = Str::limit(self::first(
             $page->getTranslation('seo_description', $locale, false),
-            trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) $page->getTranslation('body', $locale)))),
+            trim((string) preg_replace('/\s+/u', ' ', strip_tags($body))),
         ), 300, '');
         $urls = [];
         foreach (PublicUrl::localesWithTitle($page) as $each) {

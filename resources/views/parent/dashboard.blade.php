@@ -33,6 +33,16 @@
 
             <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
                 <div class="min-w-0 space-y-5">
+                    <section class="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="summary-title" data-widget="summary">
+                        <h2 id="summary-title" class="flex items-center justify-between gap-2 border-b border-border pb-3 text-xl font-bold"><span>{{ __('parent.summary_of', ['name' => $childName($selected)]) }}</span> <x-ui.icon name="clipboard" class="size-6" /></h2>
+                        <dl class="grid gap-4 pt-3 sm:grid-cols-4">
+                            <div><dt class="text-sm text-muted">{{ __('parent.summary_courses') }}</dt><dd class="text-2xl font-extrabold">{{ $summary['courses'] }}</dd></div>
+                            <div><dt class="text-sm text-muted">{{ __('parent.summary_completed') }}</dt><dd class="text-2xl font-extrabold">{{ $summary['completed'] }}</dd></div>
+                            <div><dt class="text-sm text-muted">{{ __('parent.summary_lessons') }}</dt><dd class="text-2xl font-extrabold"><bdi>{{ $summary['lessons_done'] }} / {{ $summary['lessons_total'] }}</bdi></dd></div>
+                            <div><dt class="text-sm text-muted">{{ __('parent.summary_average') }}</dt><dd class="text-2xl font-extrabold"><bdi>{{ $summary['average'] }}%</bdi></dd></div>
+                        </dl>
+                    </section>
+
                     <section class="space-y-3 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="child-courses" data-widget="child-courses">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
                             <h2 id="child-courses" class="flex items-center gap-2 text-xl font-bold"><x-ui.icon name="layers" class="size-6" /> {{ __('parent.courses_of', ['name' => $childName($selected)]) }}</h2>
@@ -49,7 +59,7 @@
                                     <x-ui.badge tone="warning">{{ __('learner.filters.expired') }}</x-ui.badge>
                                 @else
                                     <div class="space-y-1">
-                                        <p class="text-sm">{{ __('parent.completed_of', ['done' => $row['done'], 'total' => $row['total']]) }}</p>
+                                        <p class="text-sm">{{ trans_choice('parent.completed_of_choice', $row['total'], ['done' => $row['done'], 'total' => $row['total']]) }}</p>
                                         <div class="flex items-center gap-3">
                                             <x-ui.progress-bar class="flex-1" :label="__('learn.course_progress_label').': '.$row['course']->title" :value="$row['percent']" />
                                             <span class="w-12 shrink-0 text-sm font-semibold"><bdi>{{ $row['percent'] }}%</bdi></span>
@@ -66,16 +76,6 @@
                     <section class="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="results-title">
                         <h2 id="results-title" class="flex items-center justify-between gap-2 border-b border-border pb-3 text-xl font-bold"><span>{{ __('parent.results_title') }}</span> <x-ui.icon name="award" class="size-6" /></h2>
                         <p class="pt-3 text-muted" data-widget="results-slot">{{ __('parent.results_empty') }}</p>
-                    </section>
-
-                    <section class="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5" aria-labelledby="summary-title" data-widget="summary">
-                        <h2 id="summary-title" class="flex items-center justify-between gap-2 border-b border-border pb-3 text-xl font-bold"><span>{{ __('parent.summary_of', ['name' => $childName($selected)]) }}</span> <x-ui.icon name="clipboard" class="size-6" /></h2>
-                        <dl class="grid gap-4 pt-3 sm:grid-cols-4">
-                            <div><dt class="text-sm text-muted">{{ __('parent.summary_courses') }}</dt><dd class="text-2xl font-extrabold">{{ $summary['courses'] }}</dd></div>
-                            <div><dt class="text-sm text-muted">{{ __('parent.summary_completed') }}</dt><dd class="text-2xl font-extrabold">{{ $summary['completed'] }}</dd></div>
-                            <div><dt class="text-sm text-muted">{{ __('parent.summary_lessons') }}</dt><dd class="text-2xl font-extrabold"><bdi>{{ $summary['lessons_done'] }} / {{ $summary['lessons_total'] }}</bdi></dd></div>
-                            <div><dt class="text-sm text-muted">{{ __('parent.summary_average') }}</dt><dd class="text-2xl font-extrabold"><bdi>{{ $summary['average'] }}%</bdi></dd></div>
-                        </dl>
                     </section>
                 </div>
 

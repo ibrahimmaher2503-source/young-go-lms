@@ -21,6 +21,13 @@ final class SettingsHub extends Page
 
     protected string $view = 'filament.settings.hub';
 
+    /** @var array<string, list<string>> */
+    public const array GROUPS = [
+        'platform' => ['general', 'payee'],
+        'compliance' => ['notifications', 'marketing', 'privacy', 'safeguarding', 'data_requests'],
+        'governance' => ['ai', 'roles', 'audit'],
+    ];
+
     /** @var array<string, class-string> */
     public const array ENTRIES = [
         'general' => GeneralSettingsPage::class,
@@ -93,9 +100,37 @@ final class SettingsHub extends Page
         return $entries;
     }
 
+    /** @return list<array{key: string, label: string, items: list<array{key: string, label: string, description: string, url: string, icon: string}>}> */
+    public static function groupedEntries(): array
+    {
+        $byKey = [];
+        foreach (self::entries() as $entry) {
+            $byKey[$entry['key']] = $entry;
+        }
+
+        $groups = [];
+        foreach (self::GROUPS as $groupKey => $keys) {
+            $items = [];
+            foreach ($keys as $key) {
+                if (isset($byKey[$key])) {
+                    $items[] = $byKey[$key];
+                }
+            }
+            if ($items !== []) {
+                $groups[] = [
+                    'key' => $groupKey,
+                    'label' => (string) __('settings.hub.groups.'.$groupKey),
+                    'items' => $items,
+                ];
+            }
+        }
+
+        return $groups;
+    }
+
     /** @return array<string, mixed> */
     protected function getViewData(): array
     {
-        return ['entries' => self::entries()];
+        return ['entries' => self::entries(), 'groups' => self::groupedEntries()];
     }
 }

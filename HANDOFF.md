@@ -81,3 +81,16 @@ Owner requires full reference matching across every current/future page. D-026 r
 ## P1 handoff — 2026-11-17
 
 Resume P1 closure from [the task board](agents/PROGRESS.md), [workspace visual review](docs/reviews/WORKSPACE_VISUAL_REVIEW_2026-11-17.md) and [milestone evidence](docs/evidence/p1-milestone/README.md#closure-follow-up-2026-11-17). The identity, role-management, family and 2FA journeys have fresh local test evidence. The review still needs the remaining D-026 comparisons and independent verdicts, the O-015 age defaults and the G5 I02 coverage item. The primary checkout is on `feat/lms-build`.
+
+
+## Review closure pass — 2026-11-21
+
+Orchestrator closure of the `review` queue on `feat/lms-build` at committed HEAD `86e1730` plus the working tree (nothing from this pass is committed yet). The owner accepted the deferred visual scope in [D-032](docs/07_DECISION_REGISTER.md); every other gate still applied.
+
+- **Status:** 90 of 123 tasks are `done` (15 before the pass). Every closure row in [the task board](agents/PROGRESS.md) names the suites run, their counts and the gates checked.
+- **Shared gates (working tree):** G2 Larastan, G4 Arch, G5 Invariants (11), G6 translations/RTL/composer audit/`migrate:fresh --seed` on a scratch database/`npm run build`, and G11 doctor pass. G1 fails only on `app/Filament/Resources/Courses/Pages/ListCourses.php`, an uncommitted parallel edit; the committed file passes. G8 `ai:evaluate --provider=fake` passes. G9 `--group=payments` passes (150).
+- **Milestone demos:** `tests/Feature/Milestone/P1DemoTest.php` … `P6DemoTest.php` pass end to end. Phase requirement coverage (G10) passes for P0–P6.
+- **Fixed in this pass:** subscription grace badge after `grace_ends_at`; post-commit disk resolution in `AnonymizeAccount`; `ReleaseQuizResult` queried a missing `reviewed_at` column (now `graded_at`); certificate footer overflow at A4 landscape; unfocusable revision scroll regions; uncompilable `course-thumb` component; staff-panel dark mode (new `filament/shared/theme-bridge.blade.php`). See `docs/reviews/BUGS_FOUND.md`.
+- **Parallel uncommitted work:** about 84 modified files from another tool (public header and theme toggle, curriculum action groups, Arabic copy, demo seeders) are uncommitted. Several browser suites fail only on that tree; those tasks were closed on committed-HEAD browser runs, which the board rows state. The owner must decide whether that work is committed or discarded, and the affected browser tests must be updated with it.
+- **Open:** T-P1-08 (sidebar fit at 1568 px), T-P7-06 (assistant controls overflow at 390 px), T-P2-08 (owner visual acceptance), T-P9-11 (J01–J12 qa-verifier run), milestone gates P1/P2/P7/P8/P9, T-P7-07 and P10 (blocked on owner inputs), P11/P12.
+- **Owner decisions still pending:** commission rates O-008..O-011 (zero defaults), settlement approval O-012, retention O-025, refund revoke policy, Paymob credentials B-07, legacy access O-001/O-003/O-018, AI provider key and privacy gate for T-P7-07.

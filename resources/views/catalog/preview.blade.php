@@ -1,6 +1,7 @@
+@php($courseUrl = request()->routeIs('public.catalog.preview') ? \App\Domain\Seo\PublicUrl::course($course, app()->getLocale()) : route('catalog.show', ['course' => $key]))
 <x-layouts.base :title="$lesson->title" variant="public" wide>
-    <div class="mx-auto max-w-4xl space-y-5" data-public-preview>
-        <a href="{{ route('catalog.show', ['course' => $key]) }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back"/> {{ __('course_page.back_to_course', ['title' => $course->title]) }}</a>
+    <div class="public-page-stack mx-auto max-w-4xl" data-public-preview>
+        <a href="{{ $courseUrl }}" class="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"><x-ui.icon name="back"/> {{ __('course_page.back_to_course', ['title' => $course->title]) }}</a>
 
         <div class="space-y-4 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -42,7 +43,7 @@
         <x-ui.card :title="__('course_page.preview_note_title')">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-muted">{{ __('course_page.preview_note') }}</p>
-                <x-ui.link :href="route('catalog.show', ['course' => $key])" class="bg-primary px-4 text-on-primary no-underline hover:opacity-95">{{ __('course_page.back_to_course', ['title' => $course->title]) }}</x-ui.link>
+                <x-ui.link :href="$courseUrl" class="bg-primary px-4 text-on-primary no-underline hover:opacity-95">{{ __('course_page.back_to_course', ['title' => $course->title]) }}</x-ui.link>
             </div>
         </x-ui.card>
     </div>

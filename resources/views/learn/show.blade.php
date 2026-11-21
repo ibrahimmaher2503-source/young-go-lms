@@ -30,7 +30,7 @@
                         <span class="inline-flex items-center gap-1"><x-ui.icon name="user" class="size-4" /> {{ __('learn.by_instructor', ['name' => $instructors]) }}</span>
                         <span aria-hidden="true">&bull;</span>
                     @endif
-                    <span>{{ __('learn.lessons_count', ['count' => $flat->count()]) }}</span>
+                    <span>{{ trans_choice('learn.lessons_count_choice', $flat->count(), ['count' => $flat->count()]) }}</span>
                 </p>
             </div>
             <a href="{{ $backUrl ?? route('learner.courses') }}" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold text-primary shadow-card hover:bg-page"><x-ui.icon name="back" /> {{ $preview ? __('learn.back_to_curriculum') : __('learn.back_to_courses') }}</a>
@@ -47,7 +47,7 @@
                                 <span data-course-percent>{{ $courseProgress->percent }}%</span>
                             </div>
                             <x-ui.progress-bar :label="__('learn.course_progress_label')" :value="$courseProgress->percent" />
-                            <p class="text-sm text-muted">{{ __('learn.course_progress', ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</p>
+                            <p class="text-sm text-muted">{{ trans_choice('learn.course_progress_choice', $courseProgress->total_required, ['done' => $courseProgress->completed_required, 'total' => $courseProgress->total_required]) }}</p>
                         </div>
                     @endif
                     <x-learning.curriculum-list :course="$course" :sections="$sections" :current="$item->id" :completed="$completed" :route="$showRoute" prefix="side" embedded />
@@ -109,9 +109,9 @@
                                 <p class="bg-surface p-6">{{ __('learn.no_media') }}</p>
                             @else
                                 <div class="relative" data-player-surface>
-                                    <x-learning.lesson-media :descriptor="$descriptor" :title="$title" managed-stage />
+                                    <x-learning.lesson-media :descriptor="$descriptor" :title="$title" :poster="$course->coverUrl()" managed-stage />
                                     @if(in_array($descriptor->type, ['video', 'audio', 'embed'], true) && \App\Domain\Media\Watermark::applies($descriptor->tier))
-                                        <span class="pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] truncate select-none rounded bg-media/40 px-2 py-0.5 text-sm text-on-media/85 transition-all duration-700" data-watermark data-watermark-tier="{{ $descriptor->tier }}" data-watermark-interval="{{ max(250, (int) config('media.watermark_interval_ms', 12000)) }}" dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
+                                        <span class="pointer-events-none absolute z-10 max-w-[calc(100%-1.5rem)] truncate select-none rounded bg-media/20 px-2 py-0.5 text-sm text-on-media/70 backdrop-blur-[1px] transition-all duration-700" data-watermark data-watermark-tier="{{ $descriptor->tier }}" data-watermark-interval="{{ max(250, (int) config('media.watermark_interval_ms', 12000)) }}" dir="ltr" aria-hidden="true">{{ \App\Domain\Media\Watermark::label($learner) }}</span>
                                     @endif
                                 </div>
                             @endif
@@ -195,7 +195,7 @@
                     </section>
                 @endif
 
-                <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                     @if($previousEntry)
                         <a href="{{ route($showRoute, ['course' => $course->id, 'item' => $previousEntry['id']]) }}" class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold" rel="prev"><x-ui.icon name="back" /> {{ __('learn.previous') }}</a>
                     @else <span></span> @endif

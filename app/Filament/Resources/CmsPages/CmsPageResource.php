@@ -67,6 +67,7 @@ final class CmsPageResource extends Resource
             TranslatableTabs::make(static fn (string $locale): array => [
                 TextInput::make('title.'.$locale)->label(__('cms.title'))->required()->maxLength(160),
                 Textarea::make('body.'.$locale)->label(__('cms.body'))->required()->rows(8)->maxLength(30000)
+                    ->helperText(static fn (?CmsPage $record): ?string => $record?->seed_key === 'privacy' ? __('public-info.privacy.editor_help') : null)
                     ->rule(static fn (Get $get): Closure => static function (string $attribute, mixed $value, Closure $fail) use ($get, $locale): void {
                         if ($get('status') === CmsPage::PUBLISHED && $value === __('cms.placeholder', [], $locale)) {
                             $fail(__('cms.replace_placeholder'));

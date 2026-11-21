@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Identity\Actions\UpdatePreferredLocale;
 use App\Models\User;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -17,7 +18,12 @@ final class LocaleController
     {
         $validated = $request->validate([
             'locale' => ['required', 'string', Rule::in(Config::array('app.supported_locales'))],
-            'return_to' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:#^/(?!/)[A-Za-z0-9/_.\-]*$#'],
+            'return_to' => ['sometimes', 'nullable', 'string', 'max:2048', static function (string $attribute, mixed $value, Closure $fail): void {
+                if (! is_string($value) || ! str_starts_with($value, '/')
+                    || ! preg_match('#^/(?!/)[\pL\pM\pN/_.\-]*$#uD', rawurldecode($value))) {
+                    $fail('validation.regex')->translate();
+                }
+            }],
             'return_panel' => ['sometimes', 'required', 'string', Rule::in(['admin', 'instructor', 'finance'])],
         ]);
         $locale = $validated['locale'];

@@ -10,7 +10,8 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; width: 297mm; height: 210mm; font-family: var(--font); color: var(--body); background: var(--paper); }
     .page { position: relative; width: 297mm; height: 210mm; padding: 12mm; background: var(--brand-soft); }
-    .frame { height: 100%; border: 2mm solid var(--brand); background: var(--paper); padding: 10mm 16mm; display: flex; flex-direction: column; text-align: center; }
+    /* A fixed line height keeps tall Arabic font metrics from pushing the footer past the frame border. */
+    .frame { height: 100%; border: 2mm solid var(--brand); background: var(--paper); padding: 8mm 16mm; display: flex; flex-direction: column; text-align: center; line-height: 1.3; overflow: hidden; }
     .brand { font-size: 22pt; font-weight: 800; color: var(--brand); letter-spacing: 0.02em; }
     .rule { width: 40mm; height: 1.2mm; margin: 4mm auto; background: var(--accent); }
     h1 { margin: 0; font-size: 30pt; font-weight: 800; color: var(--brand-dark); }

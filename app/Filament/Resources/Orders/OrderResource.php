@@ -76,7 +76,7 @@ final class OrderResource extends Resource
         return OrderDirectory::query();
     }
 
-    private static function gatewayLabel(Order $order): string
+    private static function gatewayLabel(Order $order): ?string
     {
         $label = static fn (string $key): string => trans()->has('orders.gateway_'.$key) ? (string) __('orders.gateway_'.$key) : ucfirst($key);
         $manual = (string) __('orders.gateway_manual');
@@ -93,7 +93,7 @@ final class OrderResource extends Resource
             return $manual;
         }
 
-        return $order->getAttribute('last_gateway') !== null ? $label((string) $order->getAttribute('last_gateway')) : '—';
+        return $order->getAttribute('last_gateway') !== null ? $label((string) $order->getAttribute('last_gateway')) : null;
     }
 
     public static function table(Table $table): Table
@@ -106,7 +106,7 @@ final class OrderResource extends Resource
                 TextColumn::make('reference')->label(__('orders.col_reference'))->fontFamily('mono')->searchable(),
                 TextColumn::make('payer.display_name')->label(__('orders.col_learner'))->searchable(),
                 TextColumn::make('total_minor')->label(__('orders.col_amount'))->state(static fn (Order $o): string => RefundResource::money($o->total_minor, $o->currency)),
-                TextColumn::make('last_gateway')->visibleFrom('md')->label(__('orders.col_gateway'))->badge()->state(static fn (Order $o): string => self::gatewayLabel($o)),
+                TextColumn::make('last_gateway')->visibleFrom('md')->label(__('orders.col_gateway'))->badge()->placeholder('—')->state(static fn (Order $o): ?string => self::gatewayLabel($o)),
                 LocalizedDateColumn::make('created_at')->label(__('orders.col_created'))->visibleFrom('md'),
                 StatusBadgeColumn::make('status', $colors)->label(__('orders.col_status'))
                     ->formatStateUsing(static fn (mixed $state): string => __('refunds.order_status_'.($state instanceof OrderStatus ? $state->value : (string) $state))),

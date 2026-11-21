@@ -85,7 +85,7 @@ it('lets a parent reset the child password in the browser and the child signs in
     $page->refresh()->click('#account-menu-trigger, [popovertarget="account-menu"]');
     $page->click('#account-menu form[action$="/logout"] button[type="submit"]')->waitForText(__('pages.login_title'))->assertPathIs('/login');
     $page->type('#login', 'reset-kid')->type('#password', 'NewChildPass1!')
-        ->click('main form button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
+        ->click('main form[action$="/login"] button[type="submit"]')->waitForText(__('learner.my_enrolled'))->assertPathIs('/my')
         ->assertSee('Reset Kid')->assertNoJavaScriptErrors();
     $page->click('#account-menu-trigger, [popovertarget="account-menu"]');
     $page->click('#account-menu a[href$="/profile"]')->waitForText(__('pages.profile_title'))->assertPathIs('/profile')
