@@ -43,11 +43,14 @@
         'instructor' => $instructors->isNotEmpty() ? __('course_page.instructor') : null,
         'faq' => $faqs->isNotEmpty() ? __('course_page.faq') : null,
     ]);
+    $coursePlans = $coursePlans ?? collect();
+    $courseBundles = $courseBundles ?? collect();
     $cta = [
         'course' => $course,
         'entitled' => $entitled,
         'signedIn' => $signedIn,
         'purchasable' => $price !== null,
+        'subscribable' => $coursePlans->isNotEmpty(),
         'freeEnrollable' => $freeEnrollable ?? ($course->access_mode === App\Models\Course::ACCESS_FREE),
         'enrollLearners' => $enrollLearners ?? collect(),
         'enrollOwned' => $enrollOwned ?? [],
@@ -226,6 +229,39 @@
                 @if($errors->has('course'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('course') }}</x-ui.alert>@endif
                 @if($errors->has('child_id'))<x-ui.alert tone="danger" role="alert">{{ $errors->first('child_id') }}</x-ui.alert>@endif
                 @include('catalog._cta', $cta + ['showLearnerPicker' => true])
+                @if(! $entitled && $coursePlans->isNotEmpty())
+                    <div class="space-y-2 rounded-lg border border-border bg-assistant p-3 text-sm" data-course-plans>
+                        <p class="font-bold">{{ __('subscriptions.course_plans_title') }}</p>
+                        <ul class="space-y-1.5">
+                            @foreach($coursePlans as $planOffer)
+                                @php $planPrice = $planOffer->priceFor($market); @endphp
+                                <li class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="font-semibold"><bdi>{{ $planOffer->name }}</bdi></span>
+                                    @if($planPrice)
+                                        <span class="text-muted"><x-ui.price :money="\App\Domain\Shared\Money\Money::ofMinor($planPrice->amount_minor, $planPrice->currency)" :market="$market" /> / {{ __('subscriptions.term_'.$planOffer->term->value) }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                        <a href="{{ \App\Domain\Seo\PublicUrl::plans($locale) }}" class="{{ $linkClass }} text-sm">{{ __('subscriptions.subscribe_to_access') }}</a>
+                    </div>
+                @endif
+                @if(! $entitled && $courseBundles->isNotEmpty())
+                    <div class="space-y-2 rounded-lg border border-border bg-page p-3 text-sm" data-course-bundles>
+                        <p class="font-bold">{{ __('subscriptions.course_bundles_title') }}</p>
+                        <ul class="space-y-2">
+                            @foreach($courseBundles as $bundleOffer)
+                                @php $bundlePrice = $bundleOffer->priceFor($market); @endphp
+                                <li class="flex flex-wrap items-center justify-between gap-2">
+                                    <a href="{{ \App\Domain\Seo\PublicUrl::bundle($bundleOffer, $locale) }}" class="{{ $linkClass }}"><bdi>{{ $bundleOffer->name }}</bdi></a>
+                                    @if($bundlePrice)
+                                        <span class="font-semibold"><x-ui.price :money="\App\Domain\Shared\Money\Money::ofMinor($bundlePrice->amount_minor, $bundlePrice->currency)" :market="$market" /></span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 @if($entitled && ($cta['freeEnrollable']) && ! ($isParentContext ?? false))
                     @php
                         $unenrolledChildren = $cta['enrollLearners']->filter(fn ($u) => $u->getKey() !== auth()->id() && ! ($cta['enrollOwned'][$u->getKey()] ?? false))->values();

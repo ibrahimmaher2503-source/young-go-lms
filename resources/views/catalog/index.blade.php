@@ -9,9 +9,18 @@
     <x-slot:head><x-seo.head :seo="$seo"/></x-slot:head>
     <div class="public-page-stack">
         <header id="catalog-filters" class="public-band public-band-header scroll-mt-4 space-y-3" data-catalog-hero>
-            <div class="space-y-1">
-                <h1 class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ __('catalog.hero_title') }}</h1>
-                <p class="max-w-prose text-muted sm:text-lg">{{ __('catalog.hero_subtitle') }}</p>
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div class="space-y-1">
+                    <h1 class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ __('catalog.hero_title') }}</h1>
+                    <p class="max-w-prose text-muted sm:text-lg">{{ __('catalog.hero_subtitle') }}</p>
+                </div>
+                @if(app(\App\Domain\Subscriptions\Queries\PublicPlans::class)->paidForMarket($market)->isNotEmpty())
+                    <a href="{{ \App\Domain\Seo\PublicUrl::plans(app()->getLocale()) }}" data-catalog-offers
+                        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary bg-assistant px-4 py-2 text-sm font-bold text-primary hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-ui.icon name="layers" class="size-4"/>
+                        <span>{{ __('subscriptions.catalog_offers_cta') }}</span>
+                    </a>
+                @endif
             </div>
             <form method="get" action="{{ $catalogUrl() }}" class="flex items-center gap-2 rounded-xl border border-border bg-surface p-1 shadow-card focus-within:border-primary" role="search">
                 @foreach(array_diff_key($filters, ['q' => true]) as $name => $value)

@@ -40,5 +40,46 @@
                 </x-ui.card>
             @endforeach
         </div>
+
+        @php $bundles = $bundles ?? collect(); @endphp
+        @if($bundles->isNotEmpty())
+            <section class="space-y-4 border-t border-border pt-6" aria-labelledby="plans-bundles-title" data-bundles-section>
+                <div class="space-y-1">
+                    <h2 id="plans-bundles-title" class="text-2xl font-extrabold sm:text-3xl">{{ __('subscriptions.bundles_section_title') }}</h2>
+                    <p class="max-w-prose text-muted">{{ __('subscriptions.bundles_section_intro') }}</p>
+                </div>
+                <div class="grid items-stretch gap-x-4 gap-y-5 sm:gap-x-6 sm:gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach($bundles as $bundle)
+                        @php $bundlePrice = $bundle->priceFor($market); @endphp
+                        <x-ui.card data-bundle="{{ $bundle->getKey() }}" class="flex flex-col gap-5 shadow-card">
+                            <div class="space-y-2 rounded-xl bg-assistant p-4 sm:p-5">
+                                <h3 class="text-xl font-bold wrap-anywhere"><bdi>{{ $bundle->name }}</bdi></h3>
+                                @if($bundlePrice)
+                                    <p class="text-3xl font-extrabold"><x-ui.price :money="\App\Domain\Shared\Money\Money::ofMinor($bundlePrice->amount_minor, $bundlePrice->currency)" :market="$market" /></p>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1 space-y-2">
+                                <h4 class="font-bold">{{ __('subscriptions.bundle_includes') }}</h4>
+                                <ul role="list" class="divide-y divide-border">
+                                    @foreach($bundle->items as $item)
+                                        @if($item->course)
+                                            <li class="flex min-w-0 items-center gap-3 py-1">
+                                                <x-ui.icon name="book" class="size-4 text-primary"/>
+                                                <x-ui.link :href="\App\Domain\Seo\PublicUrl::course($item->course, app()->getLocale())" class="min-w-0 wrap-anywhere">
+                                                    <bdi>{{ $item->course->title }}</bdi>
+                                                </x-ui.link>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <a href="{{ \App\Domain\Seo\PublicUrl::bundle($bundle, app()->getLocale()) }}" class="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                {{ __('subscriptions.view_bundle') }}
+                            </a>
+                        </x-ui.card>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 </x-layouts.base>

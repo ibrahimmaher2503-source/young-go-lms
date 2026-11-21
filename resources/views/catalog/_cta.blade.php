@@ -34,6 +34,9 @@
 @elseif($purchasable ?? false)
     <a href="{{ route('checkout.product', ['type' => 'course', 'id' => $course->id]) }}" data-cta="buy"
         class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('checkout.buy_now') }}</a>
+@elseif($subscribable ?? false)
+    <a href="{{ \App\Domain\Seo\PublicUrl::plans(app()->getLocale()) }}" data-cta="subscribe"
+        class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{{ __('subscriptions.subscribe_to_access') }}</a>
 @else
     <x-ui.button type="button" size="lg" disabled class="w-full" data-cta="soon">{{ __('course_page.enrollment_soon') }}</x-ui.button>
 @endif

@@ -14,6 +14,7 @@ use App\Domain\Subscriptions\Subscription;
 use App\Domain\Subscriptions\SubscriptionPlan;
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 /**
  * What the checkout may sell right now (T-P8-12): the display hook for the course and bundle call to action and the guard of
@@ -94,5 +95,39 @@ final class CheckoutOffers
         $latest = Subscription::query()->where(['plan_id' => $planId, 'learner_id' => $learner->getKey()])->first()?->latestPeriod();
 
         return $latest !== null && $latest->ends_at->gt(now()->addDays((int) config('subscriptions.renewal_window_days', 7)));
+    }
+
+    /** @return Collection<int, SubscriptionPlan> */
+    public function sellablePlans(Market $market): Collection
+    {
+        return $this->plans->paidForMarket($market);
+    }
+
+    /** @return Collection<int, Bundle> */
+    public function sellableBundles(Market $market): Collection
+    {
+        return $this->bundles->forMarket($market)
+            ->filter(static fn (Bundle $b): bool => (int) $b->priceFor($market)?->amount_minor > 0)
+            ->values();
+    }
+
+    /** @return Collection<int, SubscriptionPlan> */
+    public function plansForCourse(Course $course, Market $market): Collection
+    {
+        if (! in_array($course->access_mode, [Course::ACCESS_SUBSCRIPTION, Course::ACCESS_BOTH], true)) {
+            return new Collection;
+        }
+
+        return $this->sellablePlans($market)
+            ->filter(static fn (SubscriptionPlan $p): bool => $p->courses->contains('course_id', $course->getKey()))
+            ->values();
+    }
+
+    /** @return Collection<int, Bundle> */
+    public function bundlesForCourse(Course $course, Market $market): Collection
+    {
+        return $this->sellableBundles($market)
+            ->filter(static fn (Bundle $b): bool => $b->items->contains('course_id', $course->getKey()))
+            ->values();
     }
 }

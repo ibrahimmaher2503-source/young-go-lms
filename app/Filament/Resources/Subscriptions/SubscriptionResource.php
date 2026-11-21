@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Subscriptions;
 
 use App\Domain\Subscriptions\Actions\CancelSubscription;
+use App\Domain\Subscriptions\Actions\UpdateSubscriptionPeriod;
 use App\Domain\Subscriptions\Subscription;
 use App\Domain\Subscriptions\SubscriptionStatus;
 use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
@@ -12,6 +13,9 @@ use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\StatusBadgeColumn;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -20,8 +24,10 @@ use Filament\Tables\Table;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /**
  * T-P8-08: staff list of subscriptions (admin and finance panels), read for `payment.view`. Finance and admin
@@ -99,6 +105,38 @@ final class SubscriptionResource extends Resource
                 ]),
             ])
             ->recordActions(CompactActions::group([
+                Action::make('edit')->label(__('subscriptions.edit_period'))->icon('heroicon-o-pencil-square')
+                    ->visible(static fn (Subscription $record): bool => Gate::allows('payment.approve_manual') && Gate::allows('manual_entitlement.grant') && $record->latestPeriod() !== null)
+                    ->modalHeading(__('subscriptions.edit_period'))
+                    ->fillForm(static fn (Subscription $record): array => [
+                        'ends_at' => $record->latestPeriod()?->ends_at->toDateString(),
+                        'reactivate' => true,
+                        'reason' => '',
+                    ])
+                    ->schema([
+                        DatePicker::make('ends_at')->label(__('subscriptions.period_end'))->native(false)->required(),
+                        Toggle::make('reactivate')->label(__('subscriptions.reactivate'))->default(true),
+                        Textarea::make('reason')->label(__('subscriptions.reason'))->required()->minLength(3)->maxLength(500),
+                    ])
+                    ->action(static function (Subscription $record, array $data, Action $action): void {
+                        $actor = Auth::user();
+                        abort_unless($actor instanceof User, 401);
+                        try {
+                            app(UpdateSubscriptionPeriod::class)(
+                                $actor,
+                                $record,
+                                Carbon::parse($data['ends_at'])->endOfDay()->setMicrosecond(0),
+                                (bool) ($data['reactivate'] ?? true),
+                                (string) $data['reason'],
+                            );
+                            Notification::make()->success()->title(__('subscriptions.updated'))->send();
+                        } catch (AuthorizationException) {
+                            abort(403);
+                        } catch (ValidationException $exception) {
+                            Notification::make()->danger()->title((string) collect($exception->errors())->flatten()->first())->send();
+                            $action->halt();
+                        }
+                    }),
                 Action::make('cancel')->label(__('subscriptions.cancel'))->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->modalDescription(__('subscriptions.cancel_confirm'))
                     ->visible(static fn (Subscription $record): bool => Gate::allows('payment.approve_manual') && $record->cancelled_at === null && $record->status === SubscriptionStatus::Active)

@@ -57,6 +57,8 @@ final class PublicCourseController
             'seats' => CohortAvailability::stateFor($found, $learner instanceof User ? $learner : null),
             'market' => $market,
             'price' => $offers->coursePrice($found, $market),
+            'coursePlans' => $offers->plansForCourse($found, $market),
+            'courseBundles' => $offers->bundlesForCourse($found, $market),
             'freeEnrollable' => $freeEnrollable,
             'enrollLearners' => $enrollLearners,
             'enrollOwned' => $enrollOwned,
