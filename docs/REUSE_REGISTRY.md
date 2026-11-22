@@ -86,6 +86,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | UploadCurriculumDocument + ApproveCurriculumDocument + PdfInspector + ManageLessonResources | `app/Domain/Media/Actions/`, `app/Domain/Media/PdfInspector.php` | Versioned curriculum PDF (AI source foundation) and lesson materials | built | T-P3-08 |
 | LocalizedDateColumn | `app/Filament/Shared/Tables/` | Date in user tz | built | T-P1-08 |
 | ExportCsvAction | `app/Filament/Shared/Actions/` | Permission-aware CSV export | built | T-P1-08 |
+| CreateManagedAccount | `app/Domain/Identity/Actions/CreateManagedAccount.php` | Audited creation of an unassigned account with password setup through the existing recovery flow | built | T-P1-08, D-053 |
 | WorkspaceListRecords | `app/Filament/Shared/Pages/WorkspaceListRecords.php` | Native ListRecords shell with optional summary strip and Section/View schema sidebar; resource keeps ownership of the table | built | T-P1-08 |
 | EntitlementService, AccessDecision, GrantEntitlement, RevokeEntitlement, ExpireEntitlements | `app/Domain/Entitlements/` | The single learner-access authority, including the layered canAccessItem decision and reason codes | built | T-P4-01, T-P4-09 |
 | EnrollInFreeCourse, CourseAccessSummary, ManualGrantResource | `app/Domain/Entitlements/` | Free enrollment, manual grants, access summary | built | T-P4-02 |
@@ -96,7 +97,7 @@ Status: `planned` (defined, not built) · `built` · `deprecated` (with replacem
 | DuplicateCourse, ArchiveCourse, DeleteCourse, CourseHistoryChecker (tag course.history) | `app/Domain/Catalog/` | Course lifecycle with history guard | built | T-P3-12 |
 | LibraryAccess, AddLibraryItem, AttachLibraryItem, DeleteLibraryItem, LibraryResource | `app/Domain/Library/`, `app/Filament/Resources/Library/` | Reusable content library attached by reference through the course curriculum page | built | T-P3-13 |
 | ParentDashboardController, LearnerCourseRows | `app/Http/Controllers/`, `app/Domain/Progress/Queries/` | Parent overview per linked child; shared course rows | built | T-P4-08 |
-| SessionLimiter, EnforceSessionLimits, ResetUserDevices, LearnerDeviceResource, Watermark | `app/Domain/Identity/`, `app/Http/Middleware/`, `app/Filament/Resources/LearnerDevices/` | Session/device limits and playback watermark | built | T-P4-07 |
+| SessionLimiter, EnforceSessionLimits, ResetUserDevices, Watermark | `app/Domain/Identity/`, `app/Http/Middleware/`, `app/Filament/Resources/StaffUsers/` | Session/device limits, audited reset from the Users row actions, and playback watermark | built | T-P4-07, D-054 |
 | Workspace table scroll region | `resources/views/filament/shared/table-scroll-hint.blade.php` | Labels overflowing table wrappers and makes them reachable by keyboard, including empty tables | built | T-P2-02 |
 | WorkspaceDashboard | `app/Filament/Pages/WorkspaceDashboard.php` | Shared panel landing with permission-scoped actual resource links and summary | built | T-P1-08 |
 | WorkspaceLogin | `app/Filament/Auth/WorkspaceLogin.php` | Native Filament authentication in the shared bilingual responsive layout | built | T-P1-08 |

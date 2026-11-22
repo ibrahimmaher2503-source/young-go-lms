@@ -171,6 +171,12 @@ recommendations and open dependencies.
 
 **D-052 · 2026-11-21 · Configurable email verification after signup.** Staff with the existing site-settings permission can turn off the automatic verification email and the post-signup verification prompt. The default is on. The change is audited. Existing signed verification and resend routes, actual verification timestamps, guardian and instructor requirements, staff two-factor authentication, and consent versions retain their behavior.
 
+**D-053 · 2026-11-22 · Add User in the staff users header.** Replace the Users list CSV action with Add User. Use the existing user-management permission and audit account creation. The new account starts without roles or a verification or consent record. Its owner sets the password through the existing recovery flow. Keep existing role-assignment permissions and the shared CSV action for other workspaces.
+
+**D-054 · 2026-11-22 · Remove the standalone Learner Devices page.** Remove the route and navigation entry. Move the confirmed, audited device reset to the Users row actions for eligible learner accounts, using the existing user-management permission. Keep device and session limits and per-learner device details in Learner 360.
+
+**D-055 · 2026-11-22 · Add notification template from the list header.** Add Template creates a wording override for an editable matrix event that has no saved custom wording. Use the existing permissions, bilingual fields, validation and audit. Saved overrides remain editable from their row. Event definitions and delivery behavior stay in the existing matrix.
+
 ## B. Technical recommendations (not owner-locked)
 
 **O-015 · Educational catalog defaults (2026-11-18).** The owner asked for research-based defaults. Seed 0–9, 10–17 and 18+ as editable educational bands for Egypt. WHO defines adolescence as 10–19. CRC Article 1 defines childhood as under 18, subject to its stated exception. The LMS split is an educational grouping. Guardian verification, privacy, consent and AI eligibility still require the applicable reviewed policy. [WHO adolescent health](https://www.who.int/health-topics/adolescent-health) · [CRC Article 1](https://www.unicef.org/child-rights-convention/convention-text)
