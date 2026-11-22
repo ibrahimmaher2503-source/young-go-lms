@@ -43,9 +43,11 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource as FilamentResource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -247,15 +249,37 @@ final class CourseResource extends FilamentResource
 
     public static function infolist(Schema $schema): Schema
     {
-        return $schema->components([
-            TextEntry::make('title')->label(__('courses.name'))->state(static fn (Course $record): string => $record->title),
-            TextEntry::make('status')->label(__('courses.status'))->formatStateUsing(static fn (CourseStatus $state): string => __('courses.'.$state->value)),
-            TextEntry::make('owner_type')->label(__('courses.ownership'))->formatStateUsing(static fn (string $state): string => __('courses.'.$state)),
-            TextEntry::make('format')->label(__('courses.format'))->formatStateUsing(static fn (string $state): string => __('courses.'.$state)),
-            TextEntry::make('category.name')->label(__('courses.category'))
-                ->state(static fn (Course $record): string => $record->category->name ?? __('courses.unassigned')),
-            TextEntry::make('description')->label(__('courses.description'))->columnSpanFull()
-                ->formatStateUsing(static fn (string $state): HtmlString => new HtmlString(CourseDescription::clean($state))),
+        return $schema->columns(['lg' => 3])->components([
+            Section::make(__('courses.overview'))->icon('heroicon-o-document-text')
+                ->columnSpan(['lg' => 2])->extraAttributes(['data-course-overview' => ''])
+                ->schema([
+                    ImageEntry::make('cover')->hiddenLabel()
+                        ->state(static fn (Course $record): ?string => ($url = $record->coverUrl()) ? asset($url) : null)
+                        ->hidden(static fn (Course $record): bool => $record->coverUrl() === null)
+                        ->width('100%')->height('auto')
+                        ->extraImgAttributes(['class' => 'aspect-video rounded-lg object-cover']),
+                    TextEntry::make('description')->hiddenLabel()->prose()->size('md')
+                        ->state(static fn (Course $record): ?string => filled($record->description) ? $record->description : $record->short_description)
+                        ->placeholder(__('courses.description_empty'))
+                        ->formatStateUsing(static fn (string $state): HtmlString => new HtmlString(CourseDescription::clean($state))),
+                ]),
+            Section::make(__('courses.details'))->icon('heroicon-o-information-circle')
+                ->extraAttributes(['data-course-facts' => ''])->columns(['default' => 2])
+                ->schema([
+                    TextEntry::make('status')->label(__('courses.status'))->badge()
+                        ->color(static fn (CourseStatus $state): string => match ($state) {
+                            CourseStatus::Published => 'success',
+                            CourseStatus::Upcoming => 'info',
+                            CourseStatus::PendingReview, CourseStatus::Suspended => 'warning',
+                            default => 'gray',
+                        })
+                        ->formatStateUsing(static fn (CourseStatus $state): string => __('courses.'.$state->value)),
+                    TextEntry::make('format')->label(__('courses.format'))->formatStateUsing(static fn (string $state): string => __('courses.'.$state)),
+                    TextEntry::make('category.name')->label(__('courses.category'))->placeholder(__('courses.unassigned')),
+                    TextEntry::make('owner_type')->label(__('courses.ownership'))->formatStateUsing(static fn (string $state): string => __('courses.'.$state)),
+                    TextEntry::make('instructors.name')->label(__('courses.instructors'))->columnSpanFull()
+                        ->listWithLineBreaks()->placeholder(__('courses.unassigned')),
+                ]),
         ]);
     }
 

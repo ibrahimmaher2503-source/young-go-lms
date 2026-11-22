@@ -34,14 +34,24 @@ it('captures the scoped directory and course details in both panel languages and
 
     foreach (['directory' => "/{$panel}/courses", 'details' => "/{$panel}/courses/{$course->id}"] as $screen => $path) {
         $page = $this->visit($path)->resize($width, $height);
-        $page->script("() => { localStorage.setItem('theme', '{$theme}'); window.dispatchEvent(new CustomEvent('theme-changed', {detail: '{$theme}'})); }");
+        $page->script("() => localStorage.setItem('filament:theme:mode', '{$theme}')");
         $page->refresh();
         $page->script('async () => { await document.fonts.ready; }');
         $page->assertSee($course->getTranslation('title', $locale))->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
         expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
         expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
         expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
+        if ($screen === 'details') {
+            expect($page->script("() => document.querySelector('h1.fi-header-heading')?.textContent.trim()"))
+                ->toBe($course->getTranslation('title', $locale));
+            $page->assertSeeIn('[data-course-overview]', $course->getTranslation('description', $locale))
+                ->assertSeeIn('[data-course-facts]', $viewer->name);
+            expect($page->script("() => document.querySelector('[data-course-facts] .fi-badge')?.textContent.trim()"))
+                ->toBe($locale === 'ar' ? 'منشورة' : 'Published');
+            expect($page->script("() => [...document.querySelectorAll('main .fi-breadcrumbs a')].some(link => new URL(link.href).pathname === '/{$panel}/courses' && link.getClientRects().length > 0)"))->toBeTrue();
+            expect($page->script("() => [...document.querySelectorAll('main a')].some(link => new URL(link.href).pathname === '{$path}/curriculum')"))->toBeTrue();
+        }
         $page->screenshot(fullPage: true, filename: "T-P3-01/{$panel}-{$screen}-{$locale}-{$theme}-{$width}");
     }
 })->with(['admin', 'instructor'])->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])
-    ->group('browser', 'T-P3-01');
+    ->group('browser', 'T-P3-01', 'PRD-09.1');

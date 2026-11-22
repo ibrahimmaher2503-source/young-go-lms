@@ -47,11 +47,15 @@ it('scopes instructor listings, detail URLs and update authorization to assignme
 
     $this->actingAs($instructor)->get('/instructor/courses')->assertOk()
         ->assertSee('Assigned Workshop')->assertDontSee('Outside Workshop');
-    $this->get('/instructor/courses/'.$assigned->id)->assertOk();
+    $this->get('/instructor/courses/'.$assigned->id)->assertOk()
+        ->assertSee('/instructor/courses/'.$assigned->id.'/edit')
+        ->assertSee('/instructor/courses/'.$assigned->id.'/curriculum');
     $this->get('/instructor/courses/'.$outside->id)->assertNotFound();
     $viewOnly = directoryCourse('view-only');
     $viewOnly->instructors()->attach($instructor);
-    $this->get('/instructor/courses/'.$viewOnly->id)->assertOk();
+    $this->get('/instructor/courses/'.$viewOnly->id)->assertOk()
+        ->assertDontSee('/instructor/courses/'.$viewOnly->id.'/edit')
+        ->assertDontSee('/instructor/courses/'.$viewOnly->id.'/curriculum');
     expect(Gate::allows('update', $assigned))->toBeTrue()
         ->and(Gate::allows('update', $viewOnly))->toBeFalse()
         ->and(Gate::allows('update', $outside))->toBeFalse();

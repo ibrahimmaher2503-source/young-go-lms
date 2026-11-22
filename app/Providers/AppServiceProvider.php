@@ -17,6 +17,7 @@ use App\Domain\AI\Resilience\CircuitBreaker;
 use App\Domain\AI\Resilience\ProviderRegistry;
 use App\Domain\AI\Resilience\ResilientProvider;
 use App\Domain\Assessment\AssessmentHistory;
+use App\Domain\Catalog\CourseReferenceHistory;
 use App\Domain\Catalog\Events\CourseReviewed;
 use App\Domain\Catalog\Revisions\Events\CourseRevisionReviewed;
 use App\Domain\Catalog\Revisions\Events\CourseRevisionSubmitted;
@@ -167,7 +168,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LegacySourceReader::class, static fn (): LegacySourceReader => new ReadOnlyLegacyConnection);
         $this->app->scoped(LegacyIdMap::class);
         $this->app->scoped(EntitlementService::class);
-        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class, OrderHistory::class], 'course.history');
+        $this->app->tag([EntitlementHistory::class, ProgressHistory::class, CohortHistory::class, AssessmentHistory::class, OrderHistory::class, CourseReferenceHistory::class], 'course.history');
         $this->app->bind(LessonAccessChecker::class, EntitlementService::class);
         $this->app->bind(PdfTextExtractor::class, PdftotextExtractor::class);
         $this->app->bind(PageRenderer::class, PdftoppmRenderer::class);
