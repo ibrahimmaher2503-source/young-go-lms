@@ -21,6 +21,11 @@ final class NotificationTemplate extends Model
 {
     protected $guarded = ['id'];
 
+    public function hasCustomWording(): bool
+    {
+        return $this->title_ar !== null || $this->title_en !== null || $this->body_ar !== null || $this->body_en !== null;
+    }
+
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];

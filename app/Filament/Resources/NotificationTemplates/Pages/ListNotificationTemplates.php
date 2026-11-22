@@ -7,8 +7,10 @@ namespace App\Filament\Resources\NotificationTemplates\Pages;
 use App\Domain\Notifications\Actions\SyncNotificationTemplateRows;
 use App\Domain\Notifications\NotificationMatrix;
 use App\Domain\Notifications\NotificationTemplate;
+use App\Filament\Resources\NotificationTemplates\NotificationTemplateForm;
 use App\Filament\Resources\NotificationTemplates\NotificationTemplateResource;
 use App\Filament\Shared\Pages\WorkspaceListRecords;
+use Filament\Actions\Action;
 
 final class ListNotificationTemplates extends WorkspaceListRecords
 {
@@ -16,9 +18,20 @@ final class ListNotificationTemplates extends WorkspaceListRecords
 
     public function mount(): void
     {
+        abort_unless(NotificationTemplateResource::canViewAny(), 403);
         app(SyncNotificationTemplateRows::class)();
 
         parent::mount();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [NotificationTemplateForm::configure(
+            Action::make('addTemplate')->label(__('notification_events.template_add'))->icon('heroicon-o-plus')
+                ->modalDescription(__('notification_events.template_add_help'))->modalSubmitActionLabel(__('staff.save_changes'))
+                ->stickyModalHeader()->stickyModalFooter(),
+            adding: true,
+        )];
     }
 
     /** @return array<array{label: string, value: int|string, icon?: string, tone?: string}> */

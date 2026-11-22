@@ -71,19 +71,23 @@ final class NotificationTemplateResource extends Resource
     public static function table(Table $table): Table
     {
         $groups = collect(NotificationMatrix::all())->pluck('group')->unique()->mapWithKeys(static fn (string $g): array => [$g => __('notification_events.groups.'.$g)])->all();
+        $eventLabel = static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->label() ?? $t->event_key;
+        $groupLabel = static fn (NotificationTemplate $t): string => __('notification_events.groups.'.(NotificationMatrix::find($t->event_key)->group ?? 'account'));
+        $category = static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->mandatory === true ? 'mandatory' : 'optional';
+        $wording = static fn (NotificationTemplate $t): string => $t->is_active && $t->hasCustomWording() ? 'custom' : 'default';
 
         return $table->defaultSort('event_key')
             ->columns([
-                TextColumn::make('event_key')->label(__('notification_events.col_event'))->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->label() ?? $t->event_key)->wrap()->searchable(['event_key']),
-                TextColumn::make('group')->label(__('notification_events.col_group'))->state(static fn (NotificationTemplate $t): string => __('notification_events.groups.'.(NotificationMatrix::find($t->event_key)->group ?? 'account')))->wrap(),
+                TextColumn::make('event_key')->label(__('notification_events.col_event'))->state($eventLabel)->wrap()->searchable(['event_key']),
+                TextColumn::make('group')->label(__('notification_events.col_group'))->state($groupLabel)->wrap(),
                 StatusBadgeColumn::make('category', ['mandatory' => 'warning', 'optional' => 'info'])->label(__('notification_events.col_category'))
-                    ->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)?->mandatory === true ? 'mandatory' : 'optional')
+                    ->state($category)
                     ->formatStateUsing(static fn (mixed $state): string => __('notification_events.category_'.$state)),
                 StatusBadgeColumn::make('source', ['wired' => 'success', 'pending' => 'gray'])->label(__('notification_events.col_source'))
                     ->state(static fn (NotificationTemplate $t): string => NotificationMatrix::find($t->event_key)->status ?? 'wired')
                     ->formatStateUsing(static fn (mixed $state): string => __('notification_events.source_'.$state)),
                 StatusBadgeColumn::make('custom', ['custom' => 'success', 'default' => 'gray'])->label(__('notification_events.col_wording'))
-                    ->state(static fn (NotificationTemplate $t): string => $t->is_active && ($t->title_ar !== null || $t->title_en !== null || $t->body_ar !== null || $t->body_en !== null) ? 'custom' : 'default')
+                    ->state($wording)
                     ->formatStateUsing(static fn (mixed $state): string => __('notification_events.wording_'.$state)),
             ])
             ->filters([SelectFilter::make('group')->label(__('notification_events.col_group'))->options($groups)
@@ -92,7 +96,13 @@ final class NotificationTemplateResource extends Resource
                     : $query)])
             ->recordActions([
                 NotificationTemplateForm::configure(Action::make('edit')->label(__('notification_events.template_edit'))->icon('heroicon-o-pencil-square')
-                    ->modalHeading(__('notification_events.template_edit'))),
+                    ->modalHeading(static fn (NotificationTemplate $t): string => __('notification_events.template_edit_event', ['event' => $eventLabel($t)]))
+                    ->modalDescription(static fn (NotificationTemplate $t): string => __('notification_events.template_edit_context', [
+                        'group' => $groupLabel($t),
+                        'category' => __('notification_events.category_'.$category($t)),
+                        'wording' => __('notification_events.wording_'.$wording($t)),
+                    ]))
+                    ->modalSubmitActionLabel(__('staff.save_changes'))->stickyModalHeader()->stickyModalFooter()),
             ]);
     }
 

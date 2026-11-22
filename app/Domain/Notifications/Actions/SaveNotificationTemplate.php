@@ -23,7 +23,7 @@ final class SaveNotificationTemplate
     public function __construct(private readonly AuditLogger $audit) {}
 
     /** @param array{title_ar?: string|null, title_en?: string|null, body_ar?: string|null, body_en?: string|null, is_active?: bool} $data */
-    public function __invoke(User $actor, string $eventKey, array $data): NotificationTemplate
+    public function __invoke(User $actor, string $eventKey, array $data, bool $onlyUncustomized = false): NotificationTemplate
     {
         if ($actor->getAttribute('status') !== 'active' || ! $actor->can('system.settings.manage')) {
             throw new AuthorizationException;
@@ -42,8 +42,16 @@ final class SaveNotificationTemplate
             'is_active' => (bool) ($data['is_active'] ?? true),
         ];
 
-        return DB::transaction(function () use ($actor, $eventKey, $values): NotificationTemplate {
+        if ($onlyUncustomized && ! array_any($values, static fn (mixed $value): bool => is_string($value))) {
+            throw ValidationException::withMessages(['title_ar' => __('notification_events.template_wording_required')]);
+        }
+
+        return DB::transaction(function () use ($actor, $eventKey, $values, $onlyUncustomized): NotificationTemplate {
             $template = NotificationTemplate::query()->lockForUpdate()->firstOrNew(['event_key' => $eventKey]);
+            if ($onlyUncustomized && $template->hasCustomWording()) {
+                throw ValidationException::withMessages(['event_key' => __('notification_events.template_already_customized')]);
+            }
+
             $before = $template->exists ? $template->only(['title_ar', 'title_en', 'body_ar', 'body_en', 'is_active']) : null;
             $template->fill($values);
             $template->setAttribute('updated_by', $actor->getKey());
