@@ -34,6 +34,8 @@ document.addEventListener('click', (event) => {
     applyTheme(nextDark);
     try {
         window.localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+        // Keep the staff panels (Filament) on the same choice.
+        window.localStorage.setItem('filament:theme:mode', nextDark ? 'dark' : 'light');
     } catch {
         // Ignore storage errors when private browsing blocks writes.
     }

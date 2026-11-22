@@ -174,10 +174,9 @@ final class WorkspaceDashboard extends Dashboard
     }
 
     /**
-     * @param  list<array<string, mixed>>  $kpis
      * @return list<array<string, mixed>>
      */
-    private function buildSummary(bool $isAdmin, array $kpis): array
+    private function buildSummary(bool $isAdmin): array
     {
         $summary = [];
         $registered = Filament::getCurrentOrDefaultPanel()->getResources();
@@ -201,23 +200,6 @@ final class WorkspaceDashboard extends Dashboard
             }
             if ($isAdmin && $resource === HelpRequestResource::class) {
                 $summary[] = ['label' => __('staff.overview_help'), 'value' => HelpRequestResource::getEloquentQuery()->whereIn('status', HelpRequestStatus::openValues())->count(), 'icon' => 'heroicon-o-lifebuoy', 'tone' => 'info', 'url' => HelpRequestResource::getUrl()];
-            }
-        }
-
-        if ($isAdmin) {
-            foreach ($kpis as $kpi) {
-                if (($kpi['key'] ?? null) === 'revenue') {
-                    $lines = $kpi['lines'] ?? ['—'];
-                    $summary[] = [
-                        'label' => __('dashboard.kpi.revenue'),
-                        'value' => is_array($lines) ? implode(' · ', $lines) : '—',
-                        'icon' => 'heroicon-o-banknotes',
-                        'tone' => 'primary',
-                        'ltr' => true,
-                        'url' => ReportsPage::canAccess() ? ReportsPage::getUrl() : null,
-                    ];
-                    break;
-                }
             }
         }
 
@@ -313,11 +295,11 @@ final class WorkspaceDashboard extends Dashboard
         $isAdmin = $this->isAdminOverview();
         $chartDays = in_array($this->chartDays, [7, 30, 90], true) ? $this->chartDays : 30;
         $role = $this->roleDashboardData();
-        $summary = $this->buildSummary($isAdmin, $role['kpis']);
+        $summary = $this->buildSummary($isAdmin);
 
         return $schema->components([
             View::make('filament.staff.dashboard-intro')->viewData(['panel' => $this->getTitle()])->visible(! $isAdmin),
-            View::make('filament.shared.summary-strip')->viewData(['items' => $summary])->visible($summary !== []),
+            View::make('filament.shared.summary-strip')->viewData(['items' => $summary, 'variant' => 'tiles'])->visible($summary !== []),
             View::make('filament.staff.dashboard-kpis')->viewData([
                 ...$role,
                 'isAdminOverview' => $isAdmin,

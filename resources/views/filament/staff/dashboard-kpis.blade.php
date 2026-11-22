@@ -68,7 +68,26 @@
                             }
 
                             $yTicks = [0, (int) ($yMax / 4), (int) ($yMax / 2), (int) ($yMax * 3 / 4), $yMax];
-                            $xLabelStep = $pointCount > 7 ? 2 : 1;
+                            $xLabelStep = max(1, (int) ceil($pointCount / 10));
+                            $shownLabelIdx = [];
+                            foreach (array_keys($coords) as $i) {
+                                if ($i === $pointCount - 1 || ($i % $xLabelStep === 0 && ($pointCount - 1 - $i) >= $xLabelStep / 2)) {
+                                    $shownLabelIdx[] = $i;
+                                }
+                            }
+                            $shownTotal = count($shownLabelIdx);
+                            foreach ($coords as $idx => &$coordRef) {
+                                $shownPos = array_search($idx, $shownLabelIdx, true);
+                                $coordRef['showLabel'] = $shownPos !== false;
+                                $coordRef['isMinor'] = $shownPos !== false && $idx !== $pointCount - 1 && (($shownPos % 2) === 1 || ($shownTotal >= 3 && $shownPos === $shownTotal - 2));
+                                $coordRef['anchor'] = 'middle';
+                                if ($shownPos === 0) {
+                                    $coordRef['anchor'] = $isRtl ? 'end' : 'start';
+                                } elseif ($idx === $pointCount - 1) {
+                                    $coordRef['anchor'] = $isRtl ? 'start' : 'end';
+                                }
+                            }
+                            unset($coordRef);
                         @endphp
 
                         <header class="yg-overview-card-header">
@@ -141,12 +160,12 @@
                                 @endif
 
                                 @foreach ($coords as $idx => $coord)
-                                    @if ($idx % $xLabelStep === 0 || $idx === $pointCount - 1)
+                                    @if ($coord['showLabel'])
                                         <text
                                             x="{{ $coord['x'] }}"
                                             y="{{ $svgHeight - 10 }}"
-                                            text-anchor="middle"
-                                            class="yg-chart-axis-label"
+                                            text-anchor="{{ $coord['anchor'] }}"
+                                            @class(['yg-chart-axis-label', 'is-minor' => $coord['isMinor']])
                                         >{{ $coord['label'] }}</text>
                                     @endif
 
@@ -213,7 +232,7 @@
 
                             <dl class="yg-overview-metrics" data-count="{{ count($kpis) }}">
                                 @foreach ($kpis as $kpi)
-                                    <div class="yg-metric-cell" data-tone="{{ $kpi['tone'] }}" data-kpi="{{ $kpi['key'] }}">
+                                    <div @class(['yg-metric-cell', 'is-empty' => $kpi['empty']]) data-tone="{{ $kpi['tone'] }}" data-kpi="{{ $kpi['key'] }}">
                                         <dt class="yg-metric-label" title="{{ $kpi['label'] }}">
                                             <x-filament::icon :icon="$kpi['icon']" class="yg-metric-icon" aria-hidden="true" />
                                             <span>{{ $kpi['label'] }}</span>
@@ -259,12 +278,14 @@
                             @foreach ($queues as $queue)
                                 <li>
                                     @php($tag = $queue['url'] ? 'a' : 'div')
-                                    <{{ $tag }} @if ($queue['url']) href="{{ $queue['url'] }}" @endif class="yg-attention-row" data-queue-link="{{ $queue['key'] }}">
+                                    <{{ $tag }} @if ($queue['url']) href="{{ $queue['url'] }}" @endif class="yg-attention-row is-zero" data-queue-link="{{ $queue['key'] }}">
                                         <span class="yg-attention-icon" aria-hidden="true">
                                             <x-filament::icon :icon="$queue['icon']" />
                                         </span>
                                         <span class="yg-attention-label">{{ $queue['label'] }}</span>
-                                        <span class="yg-attention-pill is-zero">0</span>
+                                        @if ($queue['url'])
+                                            <x-filament::icon icon="heroicon-o-chevron-left" class="yg-directional-icon yg-attention-chevron" aria-hidden="true" />
+                                        @endif
                                     </{{ $tag }}>
                                 </li>
                             @endforeach
@@ -274,7 +295,7 @@
                             @foreach ($queues as $queue)
                                 <li>
                                     @php($tag = $queue['url'] ? 'a' : 'div')
-                                    <{{ $tag }} @if ($queue['url']) href="{{ $queue['url'] }}" @endif class="yg-attention-row @if (! $queue['empty']) is-pending @endif" data-queue="{{ $queue['key'] }}" data-queue-count="{{ $queue['raw'] }}">
+                                    <{{ $tag }} @if ($queue['url']) href="{{ $queue['url'] }}" @endif class="yg-attention-row @if ($queue['empty']) is-zero @else is-pending @endif" data-queue="{{ $queue['key'] }}" data-queue-count="{{ $queue['raw'] }}">
                                         <span class="yg-attention-icon" aria-hidden="true">
                                             <x-filament::icon :icon="$queue['icon']" />
                                         </span>

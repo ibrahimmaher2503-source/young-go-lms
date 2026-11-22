@@ -1,7 +1,7 @@
-@props(['items' => []])
+@props(['items' => [], 'variant' => null])
 
 @if ($items)
-    <dl class="yg-summary-strip">
+    <dl @class(['yg-summary-strip', 'is-tiles' => ($variant ?? null) === 'tiles'])>
         @foreach ($items as $item)
             <div class="yg-summary-item @if (filled($item['url'] ?? null)) is-link @endif" data-tone="{{ $item['tone'] ?? 'primary' }}">
                 @if (filled($item['icon'] ?? null))

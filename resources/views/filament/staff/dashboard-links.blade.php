@@ -20,7 +20,7 @@
                         @foreach($group['links'] as $link)
                             <a href="{{ $link['url'] }}" class="yg-dashboard-link">
                                 <span class="yg-quick-link-icon" aria-hidden="true"><x-filament::icon :icon="$link['icon']" /></span>
-                                <span>{{ $link['label'] }}</span>
+                                <span class="yg-dashboard-link-label" title="{{ $link['label'] }}">{{ $link['label'] }}</span>
                                 <x-filament::icon icon="heroicon-o-chevron-left" class="yg-directional-icon" aria-hidden="true" />
                             </a>
                         @endforeach
