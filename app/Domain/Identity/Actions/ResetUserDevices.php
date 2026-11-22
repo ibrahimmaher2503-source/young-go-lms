@@ -19,7 +19,8 @@ final class ResetUserDevices
 
     public function __invoke(User $actor, User $learner): int
     {
-        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('user.manage')) {
+        if ($actor->getAttribute('status') !== 'active' || ! $actor->can('user.manage')
+            || ! $learner->hasAnyRole(config()->array('security.sessions.roles'))) {
             throw new AuthorizationException;
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'certificate.template_updated' => 'Certificate template updated',
     'user.roles_changed' => 'User roles updated',
+    'user.created' => 'User added',
     'role.permissions_changed' => 'Role permissions updated',
     'permission.super_admin_bypass' => 'Super admin override',
     'guardian.otp_sent' => 'Guardian verification code sent',

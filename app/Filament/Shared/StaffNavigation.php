@@ -32,6 +32,7 @@ use App\Filament\Resources\CmsPages\CmsPageResource;
 use App\Filament\Resources\CommissionRules\CommissionRuleResource;
 use App\Filament\Resources\ContactEnquiries\ContactEnquiryResource;
 use App\Filament\Resources\Coupons\CouponResource;
+use App\Filament\Resources\CourseCustomFields\CourseCustomFieldResource;
 use App\Filament\Resources\CourseRevisions\CourseRevisionResource;
 use App\Filament\Resources\Courses\CourseResource;
 use App\Filament\Resources\Courses\Pages\CreateCourse;
@@ -42,7 +43,6 @@ use App\Filament\Resources\HomepageBlocks\HomepageBlockResource;
 use App\Filament\Resources\InstructorAgreements\InstructorAgreementResource;
 use App\Filament\Resources\InstructorApplications\InstructorApplicationResource;
 use App\Filament\Resources\InstructorProfiles\InstructorProfileResource;
-use App\Filament\Resources\LearnerDevices\LearnerDeviceResource;
 use App\Filament\Resources\LedgerEntries\LedgerEntryResource;
 use App\Filament\Resources\Library\LibraryResource;
 use App\Filament\Resources\ManualGrants\ManualGrantResource;
@@ -86,7 +86,7 @@ final class StaffNavigation
             CourseRevisionResource::class, SubmissionReviewResource::class, EssayReviewResource::class, CourseReviewResource::class,
         ],
         'courses' => [
-            CourseResource::class, LibraryResource::class, CategoryResource::class,
+            CourseResource::class, LibraryResource::class, CategoryResource::class, CourseCustomFieldResource::class,
         ],
         'site' => [
             HomepageBlockResource::class, CmsPageResource::class, BlogPostResource::class, InstructorProfileResource::class,
@@ -101,7 +101,7 @@ final class StaffNavigation
             MyEarningsResource::class, MyStatementsResource::class, MyPayoutProfile::class, InstructorAgreementPage::class,
         ],
         'people' => [
-            StaffUserResource::class, LearnerThreeSixtyPage::class, InstructorApplicationResource::class, LearnerDeviceResource::class,
+            StaffUserResource::class, LearnerThreeSixtyPage::class, InstructorApplicationResource::class,
             InstructorAgreementResource::class, RolePermissionResource::class,
         ],
         'inbox' => [

@@ -13,7 +13,7 @@ use App\Domain\Identity\Models\UserSession;
 use App\Domain\Identity\SessionLimiter;
 use App\Domain\Media\Actions\AttachLessonMedia;
 use App\Domain\Media\Watermark;
-use App\Filament\Resources\LearnerDevices\Pages\ListLearnerDevices;
+use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Models\Course;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -129,18 +129,24 @@ it('lets an admin reset devices, signs the learner out everywhere and audits it'
         ->and(fn () => app(ResetUserDevices::class)(User::factory()->create()->assignRole('instructor_academy'), $learner))->toThrow(AuthorizationException::class);
 })->group('T-P4-07', 'A2');
 
-it('offers the reset in the learner devices screen for admins only', function (): void {
+it('retires the learner devices screen and offers the audited reset on eligible user rows', function (): void {
     $learner = User::factory()->create(['name' => 'Device Kid'])->assignRole('student');
     slCheck($learner, 's1', 'd1');
     $admin = User::factory()->create()->assignRole('admin');
 
-    $this->actingAs($admin)->get('/admin/learner-devices')->assertOk()->assertSee('Device Kid');
-    Livewire::test(ListLearnerDevices::class)->assertCanSeeTableRecords([$learner])->callTableAction('reset', $learner)->assertNotified();
+    $this->actingAs($admin)->get('/admin/learner-devices')->assertNotFound();
+    $this->get('/admin/staff-users')->assertOk()->assertDontSee('/admin/learner-devices');
+    $page = Livewire::test(ListStaffUsers::class)->assertCanSeeTableRecords([$learner])
+        ->assertTableActionHidden('reset_devices', $admin)
+        ->mountTableAction('reset_devices', $learner);
+    expect($page->instance()->getMountedAction()?->getModalDescription())->toBe(__('devices.reset_confirm', ['name' => $learner->name]));
+    $page->callMountedTableAction()->assertNotified();
     expect(UserDevice::query()->count())->toBe(0);
 
-    $this->actingAs(User::factory()->create()->assignRole('student'))->get('/admin/learner-devices')->assertForbidden();
-    $this->actingAs(User::factory()->create()->assignRole('instructor_academy'))->get('/instructor/learner-devices')->assertNotFound();
-})->group('T-P4-07', 'A2');
+    $this->actingAs(User::factory()->create()->assignRole('support'))->get('/admin/staff-users')->assertOk();
+    Livewire::test(ListStaffUsers::class)->assertTableActionHidden('reset_devices', $learner);
+    expect(fn () => app(ResetUserDevices::class)($admin, $admin))->toThrow(AuthorizationException::class);
+})->group('T-P4-07', 'A2', 'YG-GAP-SEC-001');
 
 it('registers devices during login, without inserting on learner dashboard reads', function (): void {
     $user = User::factory()->create()->assignRole('student');

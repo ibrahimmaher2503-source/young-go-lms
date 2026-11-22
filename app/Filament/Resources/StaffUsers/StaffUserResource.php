@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\StaffUsers;
 
 use App\Domain\Identity\Actions\AssignStaffRoles;
+use App\Domain\Identity\Actions\ResetUserDevices;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Shared\Tables\CompactActions;
 use App\Filament\Shared\Tables\LocalizedDateColumn;
@@ -13,6 +14,7 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -77,7 +79,12 @@ final class StaffUserResource extends Resource
     {
         return $table->columns([
             TextColumn::make('name')->view('filament.shared.tables.person')->label(__('staff.table_user'))->searchable(),
-            TextColumn::make('email')->label(__('staff.email'))->tooltip(static fn (User $record): string => $record->email)->extraAttributes(['dir' => 'ltr', 'class' => 'yg-email'])->searchable(),
+            TextColumn::make('email')
+                ->label(__('staff.email'))
+                ->state(static fn (User $record): string => filled($record->email) ? $record->email : ($record->username ? '@'.$record->username : '—'))
+                ->tooltip(static fn (User $record): ?string => $record->email ?? ($record->username ? '@'.$record->username : null))
+                ->extraAttributes(['dir' => 'ltr', 'class' => 'yg-email'])
+                ->searchable(['email', 'username']),
             TextColumn::make('roles.name')->label(__('staff.table_role'))->badge()->color(static fn (string $state): string => match ($state) {
                 'student', 'parent' => 'info', 'super_admin', 'admin' => 'success', default => 'primary'
             })->formatStateUsing(static fn (string $state): string => __('roles.'.$state)),
@@ -98,18 +105,32 @@ final class StaffUserResource extends Resource
             ->filtersTriggerAction(static fn (Action $action): Action => $action->button()->label(__('staff.filter'))->color('gray')->outlined()->badge(null)->extraAttributes(['class' => 'yg-filter-trigger']))
             ->recordActionsColumnLabel(__('staff.actions'))
             ->recordActions([
-                ActionGroup::make([Action::make('assign_roles')->label(__('staff.assign_roles'))->modalHeading(__('staff.assign_roles'))->modalDescription(static fn (User $record): string => __('staff.role_assignment_help', ['name' => $record->name]))->modalSubmitActionLabel(__('staff.save_changes'))
-                    ->visible(static fn (User $record): bool => auth()->user()?->getAttribute('status') === 'active'
-                        && auth()->user()->hasRole('super_admin') && ! $record->hasRole('super_admin'))
-                    ->schema([Select::make('roles')->label(__('staff.roles'))->multiple()->options(
-                        static fn () => Role::query()->where('guard_name', 'web')->where('name', '!=', 'super_admin')->get()->mapWithKeys(static fn (Role $role): array => [$role->name => __('roles.'.$role->name)])->all(),
-                    )])
-                    ->fillForm(static fn (User $record): array => ['roles' => $record->getRoleNames()->all()])
-                    ->action(static function (User $record, array $data, AssignStaffRoles $assignRoles): void {
-                        $actor = auth()->user();
-                        abort_unless($actor instanceof User, 403);
-                        $assignRoles->handle($actor, $record, $data['roles'] ?? []);
-                    })])->icon('heroicon-o-ellipsis-horizontal')->color('gray')->label(__('staff.actions')),
+                ActionGroup::make([
+                    Action::make('assign_roles')->label(__('staff.assign_roles'))->modalHeading(__('staff.assign_roles'))->modalDescription(static fn (User $record): string => __('staff.role_assignment_help', ['name' => $record->name]))->modalSubmitActionLabel(__('staff.save_changes'))
+                        ->visible(static fn (User $record): bool => auth()->user()?->getAttribute('status') === 'active'
+                            && auth()->user()->hasRole('super_admin') && ! $record->hasRole('super_admin'))
+                        ->schema([Select::make('roles')->label(__('staff.roles'))->multiple()->options(
+                            static fn () => Role::query()->where('guard_name', 'web')->where('name', '!=', 'super_admin')->get()->mapWithKeys(static fn (Role $role): array => [$role->name => __('roles.'.$role->name)])->all(),
+                        )])
+                        ->fillForm(static fn (User $record): array => ['roles' => $record->getRoleNames()->all()])
+                        ->action(static function (User $record, array $data, AssignStaffRoles $assignRoles): void {
+                            $actor = auth()->user();
+                            abort_unless($actor instanceof User, 403);
+                            $assignRoles->handle($actor, $record, $data['roles'] ?? []);
+                        }),
+                    Action::make('reset_devices')->label(__('devices.reset'))->icon('heroicon-o-arrow-path')->color('danger')
+                        ->authorize(static fn (User $record): bool => Gate::allows('user.manage')
+                            && $record->hasAnyRole(config()->array('security.sessions.roles')))
+                        ->requiresConfirmation()->modalHeading(__('devices.reset'))
+                        ->modalDescription(static fn (User $record): string => __('devices.reset_confirm', ['name' => $record->name]))
+                        ->modalSubmitActionLabel(__('devices.reset'))
+                        ->action(static function (User $record, ResetUserDevices $reset): void {
+                            $actor = auth()->user();
+                            abort_unless($actor instanceof User, 403);
+                            $removed = $reset($actor, $record);
+                            Notification::make()->success()->title(__('devices.reset_done', ['count' => $removed]))->send();
+                        }),
+                ])->icon('heroicon-o-ellipsis-horizontal')->color('gray')->label(__('staff.actions')),
             ], CompactActions::POSITION);
     }
 

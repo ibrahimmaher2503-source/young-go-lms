@@ -174,6 +174,34 @@ it('keeps the mobile staff table keyboard reachable after search updates', funct
         ->assertNoAccessibilityIssues();
 })->group('browser', 'T-P1-08', 'A4', 'D-026');
 
+it('opens the add user form from the localized staff header', function (string $locale, string $theme, int $width, int $height): void {
+    $this->seed(RolePermissionSeeder::class);
+    $this->actingAs(User::factory()->create(['locale' => $locale])->assignRole('admin'));
+
+    $page = $this->visit('/admin/staff-users')->resize($width, $height);
+    $page->script("() => localStorage.setItem('filament:theme:mode', '{$theme}')");
+    $page->refresh();
+
+    $button = 'main .fi-header-actions-ctn button';
+    $label = __('staff.add_user', [], $locale);
+    expect($page->script("() => document.querySelector('{$button}')?.textContent.trim()"))->toBe($label);
+    $directory = 'T-P1-08/user-creation';
+    $screenshots = base_path('tests/Browser/Screenshots/'.$directory);
+    if (! is_dir($screenshots)) {
+        mkdir($screenshots, 0755, true);
+    }
+    $page->screenshot(filename: "{$directory}/header-{$locale}-{$theme}-{$width}");
+
+    $page->click($button)->assertVisible('.fi-modal-window:visible')
+        ->assertVisible('.fi-modal-window:visible input[type=email]')
+        ->assertSee(__('staff.add_user_help', [], $locale))
+        ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues();
+    expect($page->script('() => document.documentElement.scrollWidth <= innerWidth'))->toBeTrue();
+    expect($page->script("() => document.documentElement.classList.contains('dark')"))->toBe($theme === 'dark');
+    expect($page->script('() => document.documentElement.dir'))->toBe($locale === 'ar' ? 'rtl' : 'ltr');
+    $page->screenshot(filename: "{$directory}/form-{$locale}-{$theme}-{$width}");
+})->with(['ar', 'en'])->with(['light', 'dark'])->with([[390, 844], [1440, 900]])->group('browser', 'T-P1-08', 'A4', 'PRD-19.1');
+
 it('opens the active staff sidebar group after a direct visit', function (): void {
     $this->seed(RolePermissionSeeder::class);
     $this->actingAs(User::factory()->create(['locale' => 'en'])->assignRole('super_admin'));

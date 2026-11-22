@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace App\Filament\Resources\StaffUsers\Pages;
 
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Identity\Actions\CreateManagedAccount;
 use App\Filament\Resources\Audit\AuditLogResource;
 use App\Filament\Resources\RolePermissions\RolePermissionResource;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
-use App\Filament\Shared\Actions\ExportCsvAction;
 use App\Filament\Shared\Pages\WorkspaceListRecords;
+use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 
@@ -35,7 +39,37 @@ final class ListStaffUsers extends WorkspaceListRecords
 
     protected function getHeaderActions(): array
     {
-        return [ExportCsvAction::make('user.export', [__('staff.name') => 'name', __('staff.email') => 'email', __('staff.status') => 'status'], 'users.csv')->icon('heroicon-o-arrow-down-tray')];
+        return [
+            Action::make('addUser')->label(__('staff.add_user'))->icon('heroicon-o-plus')
+                ->authorize('user.manage')
+                ->modalDescription(__('staff.add_user_help'))
+                ->modalSubmitActionLabel(__('staff.add_user'))
+                ->schema([
+                    TextInput::make('name')->label(__('staff.name'))->required()->maxLength(255),
+                    TextInput::make('email')->label(__('staff.email'))->email()->required()->maxLength(255),
+                ])
+                ->action(function (array $data, CreateManagedAccount $create): void {
+                    $actor = Auth::user();
+                    abort_unless($actor instanceof User, 403);
+
+                    try {
+                        $create($actor, $data['name'], $data['email']);
+                    } catch (ValidationException $exception) {
+                        $prefix = $this->getMountedActionSchema()?->getStatePath();
+                        if ($prefix === null) {
+                            throw $exception;
+                        }
+
+                        $errors = [];
+                        foreach ($exception->errors() as $field => $messages) {
+                            $errors[$prefix.'.'.$field] = $messages;
+                        }
+
+                        throw ValidationException::withMessages($errors);
+                    }
+                })
+                ->successNotificationTitle(__('staff.user_added')),
+        ];
     }
 
     public function getTabs(): array

@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Domain\Identity\Actions\CreateManagedAccount;
 use App\Filament\Resources\StaffUsers\Pages\ListStaffUsers;
 use App\Filament\Resources\StaffUsers\StaffUserResource;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Filament\Actions\Testing\TestAction;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 
@@ -44,7 +47,7 @@ it('shows the searchable and filterable users list only to users with view permi
         ->assertCanNotSeeTableRecords([$second]);
 });
 
-it('keeps user records read only outside the audited role assignment action', function () {
+it('keeps the generic user CRUD disabled outside the explicit audited actions', function () {
     expect(StaffUserResource::canCreate())->toBeFalse()
         ->and(StaffUserResource::canEdit(new User))->toBeFalse()
         ->and(StaffUserResource::canDelete(new User))->toBeFalse()
@@ -88,29 +91,41 @@ it('prevents non-super-admins from submitting the role assignment action', funct
     expect($target->fresh()->getRoleNames()->all())->toBe(['student']);
 });
 
-it('exports the current user filter only with the separate export permission', function () {
-    $actor = User::factory()->create()->assignRole('super_admin');
-    User::factory()->create(['name' => 'Visible export', 'email' => 'export@example.test', 'status' => 'active']);
-    User::factory()->create(['name' => 'Hidden export', 'email' => 'hidden@example.test', 'status' => 'suspended']);
-    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))->assertOk();
+it('replaces user export with audited account creation for a user manager', function () {
+    $actor = User::factory()->create()->assignRole('admin');
+    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))
+        ->assertOk()->assertSee(__('staff.add_user'))->assertDontSee(__('common.export_csv'));
 
-    $component = Livewire::test(ListStaffUsers::class)
-        ->filterTable('status', 'active')->searchTable('export@example.test')
-        ->callAction(TestAction::make('exportCsv'))
-        ->assertFileDownloaded('users.csv');
+    $page = Livewire::test(ListStaffUsers::class)
+        ->assertActionDoesNotExist('exportCsv')
+        ->callAction('addUser', ['name' => '', 'email' => 'invalid'])->assertHasActionErrors(['name', 'email'])
+        ->unmountAction()
+        ->callAction('addUser', ['name' => 'Managed account', 'email' => 'Managed@Example.test'])
+        ->assertHasNoActionErrors();
 
-    $csv = base64_decode($component->effects['download']['content'], true);
-    expect($csv)->toContain('Visible export', 'export@example.test')->not->toContain('Hidden export', 'hidden@example.test');
-})->group('T-P1-08', 'A3');
+    $account = User::where('email', 'managed@example.test')->sole();
+    expect($account->name)->toBe('Managed account')
+        ->and($account->getRoleNames())->toBeEmpty()
+        ->and($account->hasVerifiedEmail())->toBeFalse();
+    $this->assertDatabaseMissing('consents', ['user_id' => $account->id]);
+    $this->assertDatabaseHas('activity_log', ['event' => 'user.created', 'subject_id' => $account->id, 'causer_id' => $actor->id]);
+    $page->callAction('addUser', ['name' => 'Duplicate', 'email' => 'MANAGED@example.test'])->assertHasActionErrors(['email']);
 
-it('does not download users for a viewer without export permission', function () {
-    $actor = User::factory()->create();
-    $actor->givePermissionTo('panel.admin.access', 'user.view');
-    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))->assertOk();
+    $this->post(route('password.update'), [
+        'token' => Password::createToken($account), 'email' => $account->email,
+        'password' => 'new password from mailbox', 'password_confirmation' => 'new password from mailbox',
+    ])->assertNoContent();
+})->group('T-P1-08', 'A3', 'PRD-19.1');
 
-    Livewire::test(ListStaffUsers::class)
-        ->assertActionHidden(TestAction::make('exportCsv'))
-        ->assertNoFileDownloaded();
+it('does not expose user creation to a read-only staff viewer', function () {
+    $actor = User::factory()->create()->assignRole('support');
+    $this->actingAs($actor)->get(route('filament.admin.resources.staff-users.index'))
+        ->assertOk()->assertDontSee(__('staff.add_user'));
+
+    Livewire::test(ListStaffUsers::class)->assertActionHidden('addUser');
+    expect(fn () => app(CreateManagedAccount::class)($actor, 'Blocked', 'blocked@example.test'))
+        ->toThrow(AuthorizationException::class);
+    $this->assertDatabaseMissing('users', ['email' => 'blocked@example.test']);
 })->group('T-P1-08', 'A3');
 
 it('renders localized user headings and account statuses in both locales', function (string $locale) {

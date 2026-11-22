@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'certificate.template_updated' => 'تحديث قالب الشهادة',
     'user.roles_changed' => 'تحديث أدوار مستخدم',
+    'user.created' => 'إضافة مستخدم',
     'role.permissions_changed' => 'تحديث صلاحيات دور',
     'permission.super_admin_bypass' => 'تجاوز صلاحية المشرف العام',
     'guardian.child_created' => 'إنشاء حساب طفل',
