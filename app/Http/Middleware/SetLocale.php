@@ -20,9 +20,12 @@ final class SetLocale
         $locale = $default;
         $user = $request->user();
         $publicLocale = $request->route('publicLocale');
+        $pathLocale = $request->segment(1);
+        $pathLocale = is_string($pathLocale) && in_array($pathLocale, $supported, true) ? $pathLocale : null;
 
         foreach ([
             $publicLocale,
+            $pathLocale,
             $user instanceof User ? $user->locale : null,
             $request->hasSession() ? $request->session()->get('locale') : null,
             $request->cookie('locale'),

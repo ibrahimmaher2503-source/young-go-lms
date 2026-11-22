@@ -53,6 +53,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -501,7 +502,8 @@ final class ManageCurriculum extends Page
                     ->mapWithKeys(static fn (CourseSection $section): array => [$section->getKey() => $section->title])->all()) : null,
             TextInput::make('title.ar')->label(__('curriculum.lesson_title').' (AR)')->maxLength(150)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),
             TextInput::make('title.en')->label(__('curriculum.lesson_title').' (EN)')->maxLength(150)->extraInputAttributes(['dir' => 'ltr', 'lang' => 'en']),
-            Select::make('type')->label(__('curriculum.lesson_type'))->default('video')
+            Select::make('type')->label(__('curriculum.lesson_type'))->default('video')->live()
+                ->afterStateUpdated(static fn (Set $set): mixed => $set('media_provider', null))
                 ->options(array_combine(Lesson::TYPES, array_map(static fn (string $type): string => __("curriculum.types.{$type}"), Lesson::TYPES))),
             TextInput::make('duration_minutes')->label(__('curriculum.duration_minutes'))->numeric()->minValue(0)->maxValue(1440)->helperText(__('curriculum.duration_help')),
             Textarea::make('description.ar')->label(__('curriculum.description').' (AR)')->rows(2)->maxLength(5000)->extraInputAttributes(['dir' => 'rtl', 'lang' => 'ar']),

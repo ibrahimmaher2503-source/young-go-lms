@@ -31,7 +31,7 @@ trait PersistsCourseWizard
         abort_unless($user instanceof User, 401);
 
         try {
-            $course = app(SaveCourseWizard::class)($user, $this->form->getRawState(), $this->currentCourse(), $step, $complete);
+            $course = app(SaveCourseWizard::class)($user, $this->filteredFormState($user), $this->currentCourse(), $step, $complete);
         } catch (ValidationException $exception) {
             // The form state lives under "data", so field errors must carry that prefix.
             throw ValidationException::withMessages(array_combine(
@@ -128,11 +128,34 @@ trait PersistsCourseWizard
         ]);
     }
 
+    /**
+     * Strip admin-only fields that Filament still leaves in raw form state when hidden from instructors/content managers.
+     *
+     * @return array<string, mixed>
+     */
+    private function filteredFormState(User $user): array
+    {
+        $state = $this->form->getRawState();
+        $admin = $user->can('panel.admin.access');
+
+        if (! ($admin && $user->can('course.create'))) {
+            unset($state['owner_type'], $state['owner_instructor_id']);
+        }
+        if (! ($admin && $user->can('course.publish'))) {
+            unset($state['status'], $state['featured']);
+        }
+        if (! SaveCourseWizard::canSetPricing($user)) {
+            unset($state['access_mode'], $state['access_duration_days'], $state['bundle_eligible'], $state['manual_access_allowed'], $state['market_prices']);
+        }
+
+        return $state;
+    }
+
     protected function saveDraftAction(): Action
     {
         return Action::make('saveDraft')->label(__('courses.save_draft'))->color('primary')->icon('heroicon-o-bookmark')
             ->action(function (): void {
-                $this->persistStep((int) ($this->currentCourse()->wizard_step ?? 1), false);
+                $this->persistStep((int) ($this->currentCourse()?->wizard_step ?? 1), false);
                 Notification::make()->title(__('courses.draft_saved'))->success()->send();
             });
     }

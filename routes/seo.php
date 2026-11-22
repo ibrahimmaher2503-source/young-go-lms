@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CmsController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\InstructorApplicationController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PublicBundleController;
 use App\Http\Controllers\PublicCatalogController;
@@ -35,7 +36,9 @@ Route::prefix('{publicLocale}')
         Route::get('/pages/{slug}', [CmsController::class, 'show'])->name('cms.show');
         Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
         Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
+        Route::get('/newsletter', [NewsletterController::class, 'show'])->name('newsletter.show');
         Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware('throttle:newsletter')->name('newsletter.store');
+        Route::get('/teach', [InstructorApplicationController::class, 'show'])->name('instructors.teach');
         Route::get('/categories/{category}', PublicCategoryController::class)->name('categories.show');
         Route::get('/plans', PublicPlansController::class)->name('plans.index');
         Route::get('/bundles/{slug}', PublicBundleController::class)->name('bundles.show');
